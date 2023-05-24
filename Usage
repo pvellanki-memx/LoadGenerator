@@ -1,0 +1,66 @@
+Load Generator Framework
+The Load Generator Framework is a flexible and configurable tool for generating load on a trading system using the FIX protocol. It allows you to establish multiple FIX sessions, generate and send load messages, and track the performance of your trading system.
+
+Features
+Establish multiple FIX sessions with configurable connection settings.
+Generate load messages based on provided templates and probabilities.
+Control the message rate and adjust it dynamically during the load test.
+Pause and resume the load generation process.
+Track the number of established sessions.
+Configurable through a configuration file.
+Prerequisites
+Python 3.x
+Required Python packages (install using pip):
+fixmsg (FIX message library)
+pandas (data analysis library)
+Getting Started
+Clone or download the Load Generator Framework repository to your local machine.
+
+Install the required Python packages using the following command:
+
+Copy code
+pip install -r requirements.txt
+Create a configuration file (config.ini) with the following sections and options:
+
+[Load] section:
+message_rate - The initial message rate (messages per second).
+[Session_<session_id>] sections (one for each FIX session):
+host - The host address of the trading system.
+port - The port number for establishing the FIX session.
+sender - The sender ID for the FIX session.
+target - The target ID for the FIX session.
+[MessageTemplates] section:
+Specify the message types and their probabilities:
+makefile
+Copy code
+[MessageTemplates]
+NewOrderSingle = 0.5
+OrderCancelRequest = 0.3
+ExecutionReport = 0.2
+Note: You can include additional configuration options according to your requirements.
+
+Customize the message templates by creating template files (e.g., new_order_single.template, order_cancel_request.template, etc.) in the templates directory. Replace the dynamic fields in the templates with appropriate placeholders (e.g., <Sender>, <Target>, etc.) to be filled in during message generation.
+
+Run the load generator using the following command:
+
+Copy code
+python load_generator.py
+The load generator will establish the FIX sessions, generate and send load messages based on the configured parameters, and display the progress and statistics.
+
+Follow the on-screen instructions to pause, resume, change the message rate, or quit the load generator.
+
+Results and Reporting
+The load generator provides real-time progress updates during the load test. Additionally, it generates a log file (load_generator.log) that contains detailed information about the load test, including the sent messages, timestamps, and any errors encountered.
+
+For further analysis and reporting, the load generator exports performance metrics and statistics to a CSV file (performance_metrics.csv) upon completion of the load test. You can use tools like Microsoft Excel or Python's pandas library to analyze the data and generate reports.
+
+Conclusion
+The Load Generator Framework offers a versatile solution for load testing trading systems using the FIX protocol. It provides flexibility, configurability, and real-time insights into the system's performance. By following the steps outlined in this README, you can easily set up and execute load tests tailored to your specific requirements.
+
+For additional information or support, please contact [your email address or support contact].
+
+
+
+
+
+
