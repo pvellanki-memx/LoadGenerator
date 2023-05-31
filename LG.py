@@ -1,4 +1,5 @@
 import random
+import quickfix as fix
 
 class FIXSession:
     def __init__(self, session_id, host, port, sender, target):
@@ -7,6 +8,8 @@ class FIXSession:
         self.port = port
         self.sender = sender
         self.target = target
+        self.log_file_path = log_file_path
+        self.session = None
 
 
 def generate_message(templates):
@@ -27,6 +30,33 @@ def generate_message(templates):
     message = message.replace('<Price>', str(round(random.uniform(1, 100), 2)))
     message = message.replace('<Quantity>', str(random.randint(1, 100)))
     return message
+
+    def establish_session(self):
+        try:
+            settings = fix.SessionSettings()
+            settings.setString(fix.BeginString, "FIX.4.4")
+            settings.setString(fix.SenderCompID, self.sender)
+            settings.setString(fix.TargetCompID, self.target)
+            settings.setString(fix.SocketConnectHost, self.host)
+            settings.setString(fix.SocketConnectPort, str(self.port))
+            settings.setString(fix.DataDictionary, "FIX44.xml")  # Specify the path to the data dictionary
+
+            file_store_factory = fix.FileStoreFactory(settings)
+            file_log_factory = fix.FileLogFactory(settings)
+            application = YourApplication()  # Replace with your custom Application class
+
+            self.session = fix.SocketInitiator(application, file_store_factory, settings, file_log_factory)
+            self.session.start()
+
+            return True
+
+        except fix.ConfigError as e:
+            print(f"Configuration error: {str(e)}")
+            return False
+
+        except fix.RuntimeError as e:
+            print(f"Runtime error: {str(e)}")
+            return False
 
 def load_generator(config_file):
     # Read and parse the configuration from the file
