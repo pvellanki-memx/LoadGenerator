@@ -1,0 +1,729 @@
+MEMO FIX (US Equities)
+Overview
+The MEMO FIX protocol is the application layer message standard used to facilitate the electronic exchange of information related to
+securities transactions placed on the MEMX exchange. MEMO FIX is a text key=value formatted protocol based on the FIX Trading
+Community FIX 5.0 SP2 specifications.
+Transport Layer
+The MEMO FIX protocol uses the Transmission Control Protocol (TCP) to provide reliable and ordered delivery of messages between
+clients and MEMO servers.
+Session Layer
+The MEMO FIX protocol uses the FIXT 1.1 specification session messages to establish and maintain a session.
+Application Layer
+MEMO FIX protocol application layer messages are based on the Financial Information Exchange (FIX) Protocol version 5.0 and are
+key=value text encoded.
+Headers and Trailers
+All messages begin with a Standard Header and must end with a Standard Trailer.
+Standard Header
+The Standard Header must contain the required fields listed and can contain any of the non-required listed fields:
+8 BeginString Y "FIXT.1.1" This must be the first field in the message.
+9 BodyLength Y The length of the FIX message. This must be the second field in the message.
+35 MsgType Y The type of message. This must be the third field in the message.
+49 SenderCompID Y The sender's id, assigned by MEMX at on-boarding time.
+56 TargetCompID Y "MEMX"
+34 MsgSeqNum Y The message sequence number.
+52 SendingTime Y The time of message transmission in Universal Time coordinated. See UTCTimestamp in
+FIX 5.0 SP2 specification.
+43 PossDupFlag N Always required for retransmitted messages, whether prompted by the sending system or
+as the result of a resend request.
+97 PossResend N Required when message may be duplicate of another message sent under a different
+sequence number.
+122 OrigSendingTime N Required for message resent as a result of a ResendRequest. If data is not available set to
+same value as SendingTime.
+Tag Field Name Req'd Meaning/Values
+Standard Trailer
+The Standard Trailer must contain the CheckSum field.
+Messages
+This section defines the messages that make up the protocol. For each message, it lists the fields in the message by tag id and name,
+whether the field is required and acceptable values or description of the field. MEMX will reject any messages that contain unspecified tags.
+Session Messages
+This section defines the session level messages supported.
+Heartbeat (Sent by exchange and client)
+The Heartbeat message confirms the status of the communication link.
+Logon
+The logon message is sent by the client to establish a connection to the exchange. The logon message must be the first message sent by
+the application requesting to initiate a FIX session.
+Note: In version 1.9 and beyond, if the DefaultCstmApplVerID (tag 1408) is invalid, the client connection is dropped.
+Logout
+The logout message initiates or confirms the termination of a FIX session. This may be sent by the exchange or the client.
+10 CheckSum Y The message checksum. This must be the last field in the message.
+Tag Field Name Req'd Meaning/Values
+Standard Header Y With tag 35 (MsgType) = 0
+112 TestReqID N Identifier included in Test Request message to be returned in resulting Heartbeat.
+Standard Trailer Y
+Tag Field Name Req'd Meaning/Values
+Standard Header Y With tag 35 (MsgType) = A
+98 EncryptMethod Y Required to be 0.
+108 HeartBtInt Y Heartbeat interval, in seconds. An interval of 0 indicates there are no heartbeats. The maximum supported interval is 90 seconds.
+141 ResetSeqNumFlag N MEMX will reject logon if this flag is 'Y'. MEMX operations can reset the inbound and outbound sequence numbers on request.
+1137 DefaultApplVerID Y Required to be 9. ("FIX50SP2")
+1408 DefaultCstmApplVerID Y The schema version, required as of version 1.9, is used to ensure consistency across message formats.
+Standard Trailer Y
+Tag Field Name Req'd Meaning/Values
+Standard Header Y With tag 35 (MsgType) = 5
+58 Text N Text explaining reason for logout.
+Tag Field Name Req'd Meaning/Values
+Reject
+The reject message should be issued when a message is received but cannot be properly processed due to a session-level rule violation.
+ResendRequest
+The resend request is sent by the receiving application to initiate the retransmission of messages.
+SequenceReset
+The sequence reset message is used to reset the incoming sequence number on the opposing side.
+TestRequest
+The test request message forces a heartbeat from the opposing application. The opposite application responds to the Test Request with a
+Heartbeat containing the TestReqID.
+Standard Trailer Y
+Standard Header Y With tag 35 (MsgType) = 3
+45 RefSeqNum Y Reference message sequence number.
+371 RefTagID N The tag number of the FIX field that was rejected.
+372 RefMsgType N The MsgType of the FIX message that was rejected.
+58 Text N Explanatory reason.
+Standard Trailer Y
+Tag Field Name Req'd Meaning/Values
+Standard Header Y With tag 35 (MsgType) = 2
+7 BeginSeqNo Y Message sequence number of first message in range to be resent.
+16 EndSeqNo Y Message sequence number of last message in range to be resent.
+Standard Trailer Y
+Tag Field Name Req'd Meaning/Values
+Standard Header Y With tag 35 (MsgType) = 4
+123 GapFillFlag N Indicates that this message is replacing administrative or application messages which will not be resent.
+36 NewSeqNo Y New sequence number
+Standard Trailer Y
+Tag Field Name Req'd Meaning/Values
+Standard Header Y With tag 35 (MsgType) = 1
+112 TestReqID Y Identifier included in Test Request message to be returned in resulting Heartbeat.
+Tag Field Name Req'd Meaning/Values
+BusinessMessageReject
+MEMX will not send any BusinessMessageReject messages. Instead MEMX will send either a Reject for session level issues or the
+appropriate application reject message.MEMX does support receiving BusinessMessageReject messages from the client.
+Session Management
+The client establishes a session by opening a TCP connection to an exchange Memo FIX port, (server) and sending a FIX logon message
+with the appropriate credentials and MsgSeqNum set. Values for SenderCompID and TargetCompID will be provisioned by the exchange
+and will be verified by the server upon receipt of the Logon message. If the Logon message is accepted, the server will send a Logon
+response. If the MsgSeqNum on the inbound logon is less than expected by the server, the logon will be rejected.
+If the MsgSeqNum on the inbound logon is greater than expected, the server will reply with a Logon and shall send a ResendRequest for
+the missing messages. The client application should gap fill any session level messages and may opt to resend any business level
+messages with the PossDup flag set (see FIXT 1.1 specification Message Recovery). For example, if a client opts to resend a stale
+NewOrderSingle during a gap fill, the server will process the message, and that order may become eligible for execution.
+When the client application receives the Logon response it should compare the MsgSeqNum to the expected server sequence number. If a
+gap is detected, it should send a ResendRequest message to the server. The server will resend any missing business level messages with
+the PossDup flag set. Instead of resending session-level messages, the server will issue sequence reset messages with the GapFillFlag
+set.
+If the session gets interrupted intra-day and cancel on disconnect is enabled for the port, the server will cancel all orders associated with
+that session. The Canceled execution reports generated by the cancel on disconnect shall be stored by the server, and will be available for
+resending when the client re-establishes the session. If cancel on disconnect is not provisioned, then any orders that were active when the
+connection was closed shall be eligible for execution. By default cancel on disconnect is enabled.
+When the client terminates a session it should send a Logout message and wait for the Logout response from the server before closing the
+connection. This procedure facilitates gap detection and processing before the connection is closed.
+At the end of the trading day, the FIX inbound and outbound sequence numbers are set to 1. All inbound FIX messages shall be rejected if
+a FIX session has not been established. The server will send a Logout if it receives a message without PossDup flag set, and with a
+MsgSeqNum less than the expected client sequence number. In the event of a failover to a backup port, the backup port will maintain the
+sequence numbers of the primary, and it will have the ability to replay any messages that the primary port sent.
+The server will process any business level messages with the PossResend flag set. The server will reject any messages that it has already
+seen-- for example, NewOrderSingle or CancelReplace messages with duplicate ClOrdID.
+Standard Header Y With tag 35 (MsgType) = j
+45 RefSeqNum N Reference message sequence number.
+380 BusinessRejectReason Y Code to identify reason for a Business Message Reject message.
+372 RefMsgType N The MsgType of the FIX message that was rejected.
+58 Text N Explanatory reason.
+Standard Trailer Y
+Tag Field Name Req'd Meaning/Values
+Application Messages From Exchange to Client
+OrderCancelReject
+The order cancel reject message is used by the exchange to indicate a cancel or a cancel/replace request cannot be honored.
+Standard Header Y With tag 35 (MsgType) = 9
+37 OrderID Y Unique identifier for an Order as assigned by the exchange. Uniqueness must be guaranteed within a single trading day. If the ClOrdId on the
+CancelRequest is unknown this field will contain "Unknown".
+11 ClOrdID Y Unique identifier from the cancel or cancel/replace message.
+41 OrigClOrdID Y As specified on cancel/replace request.
+39 OrdStatus Y The status of the order after this reject was applied.
+0 - New
+1 - PartialFilled
+2 - Filled
+4 - Canceled
+6 - PendingCancel
+8 - Rejected
+A - PendingNew
+C - Expired
+E - PendingReplace
+434 CxlRejResponseTo Y Identifies the type of request that a Cancel Reject is in response to.
+1 - OrderCancelRequest
+2 - OrderCancelReplaceRequest
+102 CxlRejReason Y Code to identify reason for cancel rejection.
+1 - UnknownOrder
+3 - OrderAlreadyPendingCancelOrReplace
+6 - DuplicateClOrdID
+18 - InvalidPriceIncrement
+99 - Other
+MEMX Custom codes
+100 - MissingSymbol
+101 - MissingLocate
+102 - MissingClOrdID
+103 - InvalidOrderQuantity
+104 - InvalidSymbol
+105 - InvalidLimitPrice
+107 - SymbolHaltedOrPaused
+108 - OrderSizeExceedsLimit
+109 - ExceededMaxOrderNotionalAmt
+110 - MissingOrigOrderIdentifiers
+111 - AmbiguousOrigOrderIdentifiers
+112 - OrigOrderSymbolNotMatchingRequestSymbol
+113 - UnsupportedDisplayQuantityChange
+114 - UnsupportedOrdTypeChange
+115 - UnsupportedSideChange
+116 - UnsupportedQuantityChange
+117 - InvalidLocate
+118 - ExchangeClosed
+119 - BlockSessionRiskRuleViolated
+120 - BlockSellShortRiskRuleViolated
+121 - MaxSharesPerOrderRiskRuleBreach
+122 - NoNBBOAvailable
+123 - MaxNotionalValuePerOrderRiskRuleBreach
+124 - MaxADVPercentPerOrderRiskRuleBreach
+125 - PricePercentCollarRiskRuleViolated
+126 - PriceValueCollarRiskRuleViolated
+127 - HardToBorrowSecurityRiskRuleViolate
+128 - InvalidSide
+129 - InvalidOrdType
+130 - InvalidClOrdId
+131 - InvalidLnkId
+583 LnkID N As stated in the order as long as the order is a live order.
+Standard Trailer Y
+Tag Field Name Req'd Meaning/Values
+ExecutionReport
+The ExecutionReport message is used to communicate order events and the current state of an order.
+Pending New
+The Pending New execution report is a response to NewOrderSingle message indicating the request has been received by the exchange
+and is in the process of being handled. This message is sent by default and may be disabled upon request.
+Standard Header Y With tag 35 (MsgType) = 8
+37 OrderID Y Unique identifier for an Order assigned by the exchange. This is guaranteed to be unique for a trading day.
+11 ClOrdID Y As stated in the order.
+17 ExecID Y Unique identifier of execution message as assigned by the exchange. Uniqueness is guaranteed within a single trading day.
+150 ExecType Y A - Pending New
+39 OrdStatus Y A - Pending New
+55 Symbol Y As stated in the order.
+65 SymbolSfx N As stated in the order.
+54 Side Y As stated in the order.
+151 LeavesQty Y Quantity open for further execution.
+14 CumQty Y 0
+6 AvgPrice Y 0
+44 Price N As stated in the order.
+38 OrderQty Y As stated in the order.
+40 OrdType Y As stated in the order.
+59 TimeInForce Y As stated in the order.
+528 OrderCapacity Y As stated in the order.
+18 ExecInst Y As stated in the order.
+9416 ExtendedExecInst N As stated in the order.
+211 PegOffsetValue N As stated in the order
+1094 PegPriceType N As stated in the order.
+126 ExpireTime N As stated in the order.
+110 MinQty N As stated in the order.
+1138 DisplayQty N As stated in the order.
+1084 DisplayMethod N As stated in the order.
+1087 DisplayMinInc N As stated in the order.
+21006 ReserveReplenishTimeTyp
+e
+N As stated in the order. This is a custom MEMX tag.
+114 LocateReqd N Must always be 'N' if present in the order.
+21001 SelfTradePrevention N As stated in the order. This is a custom MEMX tag.
+2362 StpGroupID N As stated in the order.
+21005 RiskGroupID N As stated in the order. This is a custom MEMX tag.
+21020 RepriceFrequencyType N As stated in the order. This is a custom MEMX tag.
+21021 RepriceBehaviorType N As stated in the order. This is a custom MEMX tag.
+582 CustOrderCapacity Y As stated in the order.
+60 TransactTime Y The time at which the transaction occurred. UTC timestamp since epoch with millisecond precision.
+21007 MPID Y As stated in the order, or the default MPID for the Account if not specified in the order. This is a custom MEMX tag.
+583 LnkID N As stated in the order.
+Standard Trailer Y
+Tag Field Name Req'd Meaning/Values
+New Order Acknowledge
+The New Order Acknowledge execution report is a response to the NewOrderSingle message in the event the order was accepted by the
+exchange. This message echos back to the requester the accepted state of the order.
+Standard Header Y With tag 35 (MsgType) = 8
+37 OrderID Y Unique identifier for an Order assigned by the exchange. This is guaranteed to be unique for a trading day.
+11 ClOrdID Y As stated in the order.
+17 ExecID Y Unique identifier of execution message as assigned by the exchange. Uniqueness is guaranteed within a single trading day.
+150 ExecType Y 0 - New
+39 OrdStatus Y 0 - New
+55 Symbol Y As stated in the order.
+65 SymbolSfx N As stated in the order.
+54 Side Y As stated in the order.
+151 LeavesQty Y Quantity open for further execution.
+14 CumQty Y 0
+6 AvgPrice Y 0
+44 Price N As stated in the order.
+38 OrderQty Y As stated in the order.
+40 OrdType Y As stated in the order.
+59 TimeInForce Y As stated in the order.
+528 OrderCapacity Y As stated in the order.
+18 ExecInst Y As stated in the order.
+9416 ExtendedExecInst N As stated in the order.
+211 PegOffsetValue N As stated in the order
+1094 PegPriceType N As stated in the order.
+126 ExpireTime N As stated in the order.
+110 MinQty N As stated in the order.
+1138 DisplayQty N As stated in the order.
+1084 DisplayMethod N As stated in the order.
+1087 DisplayMinInc N As stated in the order.
+21006 ReserveReplenishTimeTyp
+e
+N As stated in the order. This is a custom MEMX tag.
+114 LocateReqd N Must always be 'N' if present in the order.
+21001 SelfTradePrevention N As stated in the order. This is a custom MEMX tag.
+2362 StpGroupID N As stated in the order.
+21005 RiskGroupID N As stated in the order. This is a custom MEMX tag.
+21020 RepriceFrequencyType N As stated in the order. This is a custom MEMX tag.
+21021 RepriceBehaviorType N As stated in the order. This is a custom MEMX tag.
+582 CustOrderCapacity Y As Stated in the order.
+60 TransactTime Y The time at which the transaction occurred. UTC timestamp since epoch with millisecond precision.
+21007 MPID Y As stated in the order, or the default MPID for the Account if not specified in the order. This is a custom MEMX tag.
+583 LnkID N As stated in the order.
+Standard Trailer Y
+Tag Field Name Req'd Meaning/Values
+Rejected Order
+The Rejected Order execution report is sent in response to a NewOrderSingle message that was rejected by the exchange.
+Standard Header Y With tag 35 (MsgType) = 8
+11 ClOrdID Y As stated in the order.
+37 OrderID Y This will be the same value as ExecID.
+17 ExecID Y Unique identifier of execution message as assigned by the exchange. Uniqueness is guaranteed within a single trading day.
+150 ExecType Y 8 - Rejected
+39 OrdStatus Y 8 - Rejected
+55 Symbol Y As stated in the order.
+65 SymbolSfx N As stated in the order.
+54 Side Y As stated in the order.
+151 LeavesQty Y 0
+14 CumQty Y 0
+6 AvgPx Y 0
+44 Price N As stated in the order.
+38 OrderQty Y As stated in the order.
+40 OrdType Y As stated in the order.
+60 TransactTime Y UTC timestamp since epoch with millisecond precision.
+Tag Field Name Req'd Meaning/Values
+Trade
+The Trade execution report is sent when a trade occurs.
+103 RejectReason Y Reason code for order rejection.
+1 - InvalidSymbol
+2 - ExchangeClosed
+3 - OrderExceedsLimit
+6 - DuplicateOrder
+18 - InvalidPriceIncrement
+19 - NoNBBOAvailable
+20 - NotionalValueExceedsThreshold
+22 - BlockSellShortRiskRuleViolated
+23 - HardToBorrowSecurityRiskRuleViolated
+27 - MaxNotionalValuePerOrderRiskRuleViolated
+99 - Other
+MEMX specific reject codes
+100 - MissingSymbol
+101 - MissingLocateReqd
+102 - InvalidLocateReqd
+103 - MissingClOrdId
+104 - InvalidClOrdId
+105 - MissingSide
+106 - InvalidSide
+107 - MissingOrderQty
+108 - InvalidOrderQty
+109 - MissingOrderType
+110 - InvalidOrderType
+111 - MissingTimeInForce
+112 - InvalidTimeInForce
+113 - MissingOrderCapacity
+114 - InvalidCapacity
+116 - MissingLimitPrice
+117 - InvalidLimitPrice
+118 - MissingMaxFloor
+119 - InvalidMaxFloor
+120 - MissingReserveReplenishAmountType
+121 - InvalidReserveReplenishAmountType
+122 - MissingReserveReplenishTimeType
+123 - InvalidReserveReplenishTimeType
+124 - MissingRandomReplenishmentValue
+125 - InvalidRandomReplenishmentValue
+126 - InvalidRandomReplenishValueForReserveType
+127 - MissingRepriceFrequencyType
+128 - InvalidRepriceFrequencyType
+129 - MissingRepriceBehaviorType
+130 - InvalidRepriceBehaviorType
+131 - InvalidRepriceBehaviorForRepriceFrequency
+132 - MissingCustomerCapacityType
+133 - InvalidCustomerCapacityType
+134 - MissingExpireTime
+135 - InvalidExpireTime
+136 - MissingPegType
+137 - InvalidPegType
+Standard Header Y With tag 35 (MsgType) = 8
+37 OrderID Y Unique identifier for an Order assigned by the exchange. This is guaranteed to be unique for a trading day.
+11 ClOrdID Y Unique identifier for an Order as assigned by the client. Uniqueness must be guaranteed within a single trading day.
+17 ExecID Y Unique identifier of execution message as assigned by the exchange. Uniqueness is guaranteed within a single trading day.
+150 ExecType Y F - Trade (partial fill or fill).
+39 OrdStatus Y 1 - Partially filled
+2 - Filled
+55 Symbol Y As stated in the order.
+65 SymbolSfx N As stated in the order.
+54 Side Y As stated in the order.
+32 LastQty Y Quantity (e.g. shares) bought/sold on this (last) fill.
+Tag Field Name Req'd Meaning/Values
+Pending Replace
+The Pending Replace execution report is sent in response to a replace request.
+31 LastPx Y Price of this (last) fill.
+151 LeavesQty Y Quantity open for execution.
+14 CumQty Y Total quantity filled on the order.
+6 AvgPx Y The calculated average price of all fills for the executed order.
+44 Price N As stated in the order.
+38 OrderQty Y As stated in the order.
+40 OrdType Y As stated on the previous order.
+60 TransactTime Y The time at which the transaction occurred.
+880 TrdMatchID Y Identifier assigned to the Trade by the matching system. In case of executions on orders routed to another exchange, the TrdMatchID field will be filled
+on a best-effort basis.
+851 LastLiquidityInd Y Indicator denoting whether the referenced order removed liquidity from or added liquidity to the MEMX book.
+1 - AddDisplayedLiquidity
+2 - RemovedLiquidity
+3 - LiquidityRoutedOut
+4 - Cross (currently not used)
+51 - AddHidden
+52 - AddMidpoint
+53 - AddNbboImprove
+54 - AddNbboJoin
+55 - (reserved)
+56 - (reserved)
+57 - (reserved)
+58 - (reserved)
+59 - (reserved)
+60 - RemovedOnEntry (currently not used)
+61 - ImmediateMidpointRemoveOnEntry
+101 - RetailAddDisplayedLiquidity
+102 - RetailRemovedLiquidity
+103 - RetailLiquidityRoutedOut
+104 - RetailCross (currently not used)
+151 - RetailAddHidden
+152 - RetailAddMidpoint
+153 - RetailAddNbboImprove
+154 - RetailAddNbboJoin
+155 - (reserved)
+156 - (reserved)
+157 - (reserved)
+158 - (reserved)
+159 - (reserved)
+160 - RetailRemovedOnEntry
+161 - RetailImmediateMidpointRemoveOnEntry
+Note: values 51 .. 160 are custom MEMX values.
+30 LastMkt Y Market of execution for last fill, or an indication of the market where an order was routed. Uses ISO 10383 (MIC).
+583 LnkID N As stated in the order.
+1151 SecurityGroup Y Security ListingTape indicator (“A”, “B”, “C”).
+Standard Trailer Y
+Standard Header Y With tag 35 (MsgType) = 8
+37 OrderID Y Unique identifier for an Order assigned by the exchange. This is guaranteed to be unique for a trading day.
+11 ClOrdID Y As stated in the replace request.
+41 OrigClOrdID Y As stated in the replace request.
+17 ExecID Y Unique identifier of execution message as assigned by the exchange. Uniqueness is guaranteed within a single trading day.
+150 ExecType Y E - PendingReplace
+39 OrdStatus Y E - PendingReplace
+Tag Field Name Req'd Meaning/Values
+Replaced
+The Replaced execution report is sent when an order has been replaced.
+Pending Cancel
+The Pending Cancel execution report is sent in response to a cancel request.
+55 Symbol Y As stated on the previous order.
+65 SymbolSfx N As stated on the previous order.
+54 Side Y As stated on the previous order.
+151 LeavesQty Y Quantity open for further execution.
+14 CumQty Y Quantity filled on the order.
+6 AvgPx Y The calculated average price of all fills for the executed portion of the order.
+44 Price N Limit price of the previous order if applicable.
+38 OrderQty Y As stated on the previous order.
+40 OrdType Y As stated on the previous order.
+59 TimeInForce N As stated on the previous order.
+1138 DisplayQty N As stated on the previous order.
+114 LocateReqd N As stated on the previous order.
+60 TransactTime Y The time at which the transaction occurred. UTC timestamp since epoch with millisecond precision.
+583 LnkID N As stated on the replace request, or the original order if not supplied on the replace request.
+Standard Header Y With tag 35 (MsgType) = 8
+37 OrderID Y Unique identifier for an Order assigned by the exchange. This is guaranteed to be unique for a trading day.
+11 ClOrdID Y As stated in the replace request.
+41 OrigClOrdID Y The ClOrdID associated with the replaced order.
+17 ExecID Y Unique identifier of execution message as assigned by the exchange. Uniqueness is guaranteed within a single trading day.
+150 ExecType Y 5 - Replaced
+39 OrdStatus Y 0 - New
+1 - PartiallyFilled
+55 Symbol Y As stated in the replace request.
+65 SymbolSfx N As stated in the replace request.
+54 Side Y As stated in the replace request.
+151 LeavesQty Y Quantity open for execution.
+14 CumQty Y Total quantity filled on the order
+6 AvgPx Y The calculated average price of all fills for the executed order.
+44 Price N As stated in the replace request.
+38 OrderQty Y As stated in the replace request.
+40 OrdType Y As stated in the replace request.
+59 TimeInForce Y As stated in the replace request.
+1138 DisplayQty N As stated in the replace request.
+114 LocateReqd N As stated in the replace request.
+60 TransactTime Y UTC timestamp since epoch with millisecond precision.
+583 LnkID N As stated on the replace request, or the original order if not supplied on the replace request.
+Standard Trailer Y
+Tag Field Name Req'd Meaning/Values
+Canceled
+The Canceled execution report is sent when an order has been canceled. This may be because of a client requested cancel, a replace, or a
+cancel initiated by the exchange. Orders that are canceled by the exchange because of Time in Force instructions shall have an ExecType
+and OrdStatus as Expired. All other cases shall have ExecType and OrdStatus as Canceled.
+Standard Header Y With tag 35 (MsgType) = 8
+37 OrderID Y Unique identifier for an Order assigned by the exchange. This is guaranteed to be unique for a trading day.
+11 ClOrdID Y Unique identifier for an Order as assigned by the client. Uniqueness must be guaranteed within a single trading day.
+41 OrigClOrdID Y The ClOrdID associated with the order being canceled.
+17 ExecID Y Unique identifier of execution message as assigned by the exchange. Uniqueness is guaranteed within a single trading day.
+150 ExecType Y 6 - PendingCancel
+39 OrdStatus Y 6 - PendingCancel
+55 Symbol Y As stated on the order.
+65 SymbolSfx N As stated on the order.
+54 Side Y As stated on the order.
+151 LeavesQty Y The quantity open for execution on the order.
+14 CumQty Y Total quantity filled on the order
+6 AvgPx Y The calculated average price of all fills for the executed order.
+44 Price N As stated on the order.
+38 OrderQty Y As stated on the order.
+60 TransactTime Y UTC timestamp since epoch with millisecond precision.
+583 LnkID N As stated on the order.
+St d d T il Y
+Tag Field Name Req'd Meaning/Values
+Standard Header Y With tag 35 (MsgType) = 8
+37 OrderID Y Unique identifier for an Order assigned by the exchange. This is guaranteed to be unique for a trading day.
+11 ClOrdID Y As stated in the cancel request or the ClOrdID of the order if an unsolicited cancel.
+41 OrigClOrdID Y The ClOrdID associated with the canceled order.
+17 ExecID Y Unique identifier of execution message as assigned by the exchange. Uniqueness is guaranteed within a single trading day.
+150 ExecType Y 4 - Canceled
+C - Expired
+39 OrdStatus Y 4 - Canceled
+C - Expired
+55 Symbol Y As stated in the cancel request.
+65 SymbolSfx N As stated in the cancel request.
+54 Side Y As stated in the cancel request.
+151 LeavesQty Y 0
+14 CumQty Y Total quantity filled on the order
+6 AvgPx Y The calculated average price of all fills for the executed order.
+44 Price N As stated on the order.
+38 OrderQty Y As stated on the order.
+Tag Field Name Req'd Meaning/Values
+Restatement
+The Restatement execution report is is an unsolicited event to notify the client that an open order has been updated by the MEMX system.
+This message may be sent for orders configured for automatic repricing via the RepriceFrequency instruction. A restatement message will
+be sent if the order quantity is partially or fully cancelled because of Self Trade Prevention. This message will not be sent for Pegged
+Orders. In version 1.9 and beyond, clients can elect to receive an optional Restatement execution report when an order is booked and it
+either sets a new NBBO, or joins the existing NBBO.
+NOTE: This message will be sent in the case of an order entered with the SingleReprice instruction, when the system is able to display the
+order at the booking price, if the order was repriced and displayed away from its booking price upon entry. In this case, the lastPx field will
+be the same as the previous Restatement, to indicate that the position on order book has not changed, but the message still will be sent to
+allow for correlation with the displayed orders on the MEMOIR Depth feed.
+21004 CancelReason Y Reason code for order cancellation. This is a custom MEMX FIX tag.
+0 - Other
+1 - UserRequestedCancel
+4 - EndOfTrading
+5 - LimitUpLimitDown
+6 - Halted
+7 - ExchangeSupervisory
+8 - OrderExpired
+9 - LockOrCrossBook
+10 - SelfTradePrevention
+11 - InsufficientQuotes
+12 - NonCompliantPrice
+13 - ParticipantDisconnect
+14 - OrderNotBookable
+15 - TradeProtectionLimits
+Standard Header Y With tag 35 (MsgType) = 8
+37 OrderID Y Unique identifier for an Order assigned by the exchange. This is guaranteed to be unique for a trading day.
+11 ClOrdID Y The ClOrdID associated with the order.
+17 ExecID Y Unique identifier of execution message as assigned by the exchange. Uniqueness is guaranteed within a single trading day.
+150 ExecType Y D - Restated
+39 OrdStatus Y 0 - New
+1 - Partially filled
+4 - Canceled
+55 Symbol Y As stated in the order.
+65 SymbolSfx N As stated in the order.
+54 Side Y As stated in the order.
+151 LeavesQty Y Quantity open for execution.
+14 CumQty Y Total quantity filled on the order.
+6 AvgPx Y The calculated average price of all fills for the executed order.
+44 Price N As stated in the order.
+38 OrderQty Y The quantity after the restatement.
+31 LastPx Y For ExecRestatementReason (3): The updated booked price.
+For ExecRestatementReason (5): The match price if this order had not been prevented from executing due to STP restrictions.
+32 LastShares N For ExecRestatementReason (5): The number of shares that would have matched if this order had not been prevented from executing due to STP
+restrictions.
+378 ExecRestatementRea
+son
+Y 3 - RepricingOrder
+5 - Partial decline of OrderQty (38)
+99 - Other (When value is 99 (Other), see the ExtendedRestatementReason for more information.)
+60 TransactTime Y UTC timestamp since epoch with millisecond precision.
+21022 ExtendedRestatement
+Reason
+N This is a custom MEMX FIX tag.
+0 - None
+1 - SetNBBO
+2 - JoinedNBBO
+Tag Field Name Req'd Meaning/Values
+Trade Cancel/Correct
+The Trade Cancel/Correct execution report is sent to indicate that the price or quantity of a trade has been corrected. A trade cancel
+execution report is sent to bust a previous trade.
+Application Messages from Client to Exchange
+NewOrderSingle
+The new order message type is used by institutions wishing to electronically submit securities orders to the exchange for execution.
+583 LnkID N As stated in the order.
+Standard
+Header
+Y With tag 35 (MsgType) = 8
+37 OrderID Y Unique identifier for an Order assigned by the exchange. This is guaranteed to be unique for a trading day.
+11 ClOrdID Y The ClOrdID associated with the order.
+17 ExecID Y Unique identifier of execution message as assigned by the exchange. Uniqueness is guaranteed within a single trading day.
+19 ExecRefID Y The execID of the trade been referenced.
+150 ExecType Y G - TradeCorrect
+H - TradeCancel
+39 OrdStatus Y 1 - Partially filled
+2 - Filled
+55 Symbol Y As stated in the order.
+65 SymbolSfx N As stated in the order.
+54 Side Y As stated in the order.
+151 LeavesQty Y Quantity open for execution.
+14 CumQty Y Total quantity filled on the order.
+44 Price N As stated on the order
+38 OrderQty Y As stated in the order.
+31 LastPx N The corrected price. Required if Trade Correct.
+32 LastQty N The corrected quantity. Required if Trade Correct.
+6 AvgPx Y The calculated average price of all fills for the executed order.
+60 TransactTime Y UTC timestamp since epoch with millisecond precision.
+583 LnkID N As stated in the order.
+1151 SecurityGroup Y Security ListingTape indicator (“A”, “B”, “C”).
+Standard Trailer Y
+Tag Field Name Req'd Meaning/Values
+Standard
+Header
+Y With tag 35 (MsgType) = D
+11 ClOrdID Y Unique identifier of the order as assigned by the client. The ClOrdID length must be <= 16.
+55 Symbol Y CMS symbol tradable instrument.
+65 SymbolSfx N Additional information about the security (e.g. preferred, warrants, etc.).
+54 Side Y Side of order.
+1 - Buy
+2 - Sell
+5 - SellShort
+6 - SellShortExempt
+Tag Field Name Req'd Meaning/Values
+38 OrderQty Y Quantity ordered. This represents the number of shares. The maximum order size permitted is 1,000,000 shares. The maximum notional value permitted is
+$30,000,000
+40 OrdType Y Type of the order.
+1 - Market
+2 - Limit
+P - Pegged
+44 Price N Price per unit of quantity (e.g. per share).
+59 TimeInForce Y Defines the time during which an order is eligible for execution.
+0 - Day
+3 - ImmediateOrCancel
+4 - FillOrKill
+A - GoodForTime
+F - RegularHoursOnly. This is a custom MEMX value.
+528 OrderCapacity Y Designates the capacity of the firm placing the order.
+A - Agency
+P - Principal
+R - RisklessPrincipal
+18 ExecInst N Instructions for order handling on the exchange. If more than one instruction is required then separate each character by a space.
+6 - ParticipateDoNotInitiate (Post only)
+f - IntermarketSweep
+h - ExternalRoutingNotAllowed
+9416 ExtendedExecIn
+st
+N Instructions related to retail order handling on the exchange.
+R - Retail (Seeker)
+T - Retail Liquidity Provider
+211 PegOffsetValue N Amount (signed) added to the peg for a pegged order.
+1094 PegPriceType N Defines the type of peg.
+2 - MidPricePeg
+5 - PrimaryPeg
+126 ExpireTime N Time/Date of order expiration, this is the expiration time of a GoodForTime TimeInForce. If omitted, expiration time will be set to the end of the MEMX postmarket trading session. This is in FIX UTCTimestamp format.
+110 MinQty N Minimum quantity of an order to be executed.
+1138 DisplayQty N Quantity of the order to be displayed.
+1084 DisplayMethod N Defines the replenishment size behavior for a reserve order. Selecting 'Undisclosed' will result in a fully hidden order. This tag should be specified for Pegged
+and Market orders. This tag should not be specified for fully displayed Limit orders. Currently if this tag is not specified for a Pegged or Market order the
+default value shall be Undisclosed. This is not recommended as this behavior may change in a future revision of the specification.
+1 - Initial
+3 - RandomizeBySize
+4 - Undisclosed (hidden)
+21006 ReserveRepleni
+shTimeType
+N Defines the replenishment timing behavior for a reserve order. This is a custom MEMX tag.
+1 - Immediate
+2 - Random
+1087 DisplayMinIncr N Defines the minimum increment to be used when calculating a random refresh of DisplayQty.
+60 TransactTime Y UTCTimestamp since epoch with millisecond precision.
+114 LocateReqd N Required on Short Sell orders only. Only acceptable value is 'N' which indicates the member have secured the required locate.
+21001 SelfTradePreven
+tionType
+N Defines the desired behavior in the event of a wash. This is a custom MEMX tag.
+0 - CancelNewest
+1 - CancelOldest
+2 - DecrementAndCancel
+3 - CancelBoth
+4 - CancelSmallest
+2362 StpGroupID N Unique identifier of self trade prevention group.
+0 - Prevents orders from the same firm trading with each other.
+1 - Prevents orders from the same MPID trading with each other.
+2 - Prevents orders from same SenderCompIDtrading with each other.
+3 to 65534 Prevents orders with the same StpGroupID across a firm from trading with each other.
+21005 RiskGroupID N Unique identifier of a custom risk control set to be applied to this order. This is a custom MEMX tag.
+21020 RepriceFrequen
+cyType
+N Defines the frequency of a reprice. If this tag is not sent then the order will not be repriced. This is a custom MEMX tag.
+0 - SingleReprice. The order will only be repriced upon entry for regulatory compliance.
+1 - ContinuousReprice. The order will continuously be repriced for regulatory compliance.
+2 - None. The order will not be repriced.
+21021 RepriceBehavior
+Type
+N Reprice behavior when market is locked or crossed. This is a custom MEMX tag.
+1 - RepriceLockCancelCross. Reprice if the market is locked, cancel if market is crossed.
+2 - RepriceLockRepriceCross. Reprice if the market is locked or crossed.
+OrderCancelReplaceRequest
+The order cancel/replace request is used to change the parameters of an existing order.
+OrderCancelRequest
+The order cancel request message requests the cancellation of all remaining size on an order.
+21007 MPID N The MPID associated with the new order, if it is not supplied, the MPID assigned as the default MPID for the Port/Account is associated with the new order.
+This is a custom MEMX tag.
+582 CustOrderCapa
+city
+Y Capacity of the customer placing the order.
+1 - Member trading for their own account
+5 - Retail Customer
+Standard
+Header
+Y With tag 35 (MsgType) = G
+41 OrigClOrdID Y ClOrdID (11) of the previous order (NOT the initial order of the day) as assigned by the client, used to identify the previous order in cancel and
+cancel/replace requests.
+11 ClOrdID Y Unique identifier for an Order as assigned by the client. Uniqueness must be guaranteed within a single trading day. The ClOrdID length must be <= 16.
+55 Symbol Y This field may not change from the value stated in the original order.
+65 SymbolSfx N This field may not change from the value stated in the original order.
+54 Side Y Side may only change between Sell and SellShort.
+1 - Buy
+2 - Sell
+5 - SellShort
+6 - SellShortExempt
+38 OrderQty Y Quantity ordered. This represents the number of shares. Increasing the size will cause the order to lose its priority in the book.
+40 OrdType Y OrderType may only change from Limit order to Market order.
+1 - Market
+2 - Limit
+P - Pegged
+44 Price N Price per share of the order. Changing the price will cause the order to lose its priority in the book.
+1138 DisplayQty N Quantity of the order to be displayed.
+114 LocateReqd N Required on Short Sell orders only. Only acceptable value is 'N' which indicates the member have secured the required locate.
+60 TransactTime Y FIX UTCTimestamp since epoch with millisecond precision.
+583 LnkID N Permits clients to assign a link identifier used for their own order tracking.
+Standard Trailer Y
+Tag Field Name Req'd Meaning/Values
+Standard Header Y With tag 35 (MsgType) = F
+41 OrigClOrdID Y ClOrdID (11) of the previous order (NOT the initial order of the day) as assigned by the customer, used to identify the previous order in cancel and
+cancel/replace requests.
+11 ClOrdID Y A Unique identifier for the cancel request. The ClOrdID length must be <= 16.
+37 OrderID N Unique identifier for an Order previously assigned by the exchange.
+55 Symbol Y Must be the same as the original order.
+65 SymbolSfx N Additional information about the security (e.g. preferred, warrants, etc.).
+54 Side Y Side of order.
+1 - Buy
+2 - Sell
+5 - SellShort
+6 - SellShortExempt
+60 TransactTime Y UTC timestamp since epoch with millisecond precision.
+Tag Field Name Req'd Meaning/Values
+Standard Trailer Y
