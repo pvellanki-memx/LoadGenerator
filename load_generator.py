@@ -51,6 +51,18 @@ def increment_outgoing_seq_num(session_id):
     if session is not None:
         session.incrementNextSenderMsgSeqNum()
 
+# Function to send heartbeat messages at a specified interval
+def send_heartbeats(session_id, interval):
+    while sessions[session_id]:
+        session = fix.Session.lookupSession(fix.SessionID(session_id))
+        if session is not None:
+            heartbeat_message = fix.Message()
+            heartbeat_message.getHeader().setField(35, '0')  # Heartbeat message type
+            heartbeat_message.getHeader().setField(34, str(get_outgoing_seq_num(session_id)))
+            fix.Session.sendToTarget(heartbeat_message, session_id)
+            increment_outgoing_seq_num(session_id)
+        time.sleep(interval)
+
 # Function to send messages at the specified rate for a duration
 def send_messages(template, message_weights, rate, duration):
     start_time = time.time()
@@ -73,36 +85,36 @@ config.read('config.ini')
 template_file = config.get('LoadGenerator', 'template_file')
 connection_config_file = config.get('LoadGenerator', 'connection_config_file')
 message_rate = float(config.get('LoadGenerator', 'message_rate'))
+heartbeat_interval = float(config.get('LoadGenerator', 'heartbeat_interval'))
 
 # Load the template file
 with open(template_file, 'r') as file:
     template = file.read()
 
-# Load message weights from config.ini
-message_weights = dict(config.items('MessageTypes'))
+# Load the connection configuration file
+connections = configparser.ConfigParser()
+connections.read(connection_config_file)
 
-# Load connection configuration from connections.cfg file
+# Get the message types and their weights
+message_weights = dict(connections.items('MessageTypes'))
+
+# Initialize FIX settings
 settings = fix.SessionSettings(connection_config_file)
-application = fix.Application()
-storeFactory = fix.FileStoreFactory(settings)
-logFactory = fix.ScreenLogFactory(settings)
-initiator = fix.SocketInitiator(application, storeFactory, settings, logFactory)
+initiator = fix.SocketInitiator(fromAdmin, None, settings)
 
 # Start the FIX sessions
 initiator.start()
 
-# Get the session IDs
-session_ids = initiator.getSessions()
-
-# Initialize session state
-for session_id in session_ids:
+# Establish the sessions
+for section in connections.sections():
+    session_id = connections.get(section, 'SessionID')
     sessions[session_id] = False
 
 # Wait for sessions to be established
 while not all(sessions.values()):
     time.sleep(1)
 
-# Send messages
+# Send messages and heartbeats
 send_duration = 60  # Duration in seconds
 send_messages(template, message_weights, message_rate, send_duration)
 
