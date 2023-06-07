@@ -47,12 +47,12 @@ def generate_message(template, message_weights, session_id):
             # Calculate the message length (excluding SOH characters)
             message_length = len(message) - message.count('|')
             
+            # Calculate the CheckSum
+            checksum = calculate_checksum(message)
+            
             # Replace the placeholders for message length and CheckSum
             message = message.replace('<BodyLength>', str(message_length))
             message = message.replace('<CheckSum>', checksum)
-            
-            # Calculate the CheckSum
-            checksum = calculate_checksum(message)
             
             # Append the CheckSum to the message
             message += f'|10={checksum}|'
@@ -105,7 +105,7 @@ def send_messages(template, message_weights, rate, duration):
 # Function to initialize the FIX logger
 def initialize_logger(log_file):
     settings = fix.SessionSettings()
-    settings.set(fix.FileStoreFactory(),FILE_LOG_PATH, log_file)
+    settings.set(fix.FILE_LOG_PATH, log_file)
     settings.setBool(fix.FILE_LOG_HEARTBEATS, True)
     logger = fix.FileLogFactory(settings)
     return logger
@@ -129,12 +129,20 @@ connections = configparser.ConfigParser()
 connections.read(connection_config_file)
 
 # Get the message types and their weights
-message_weights = dict(config.items('MessageTypes'))
+message_weights = dict(connections.items('MessageTypes'))
 
 # Initialize FIX settings
-settings = fix.SessionSettings(connection_config_file)
-logger = initialize_logger(log_file)
+settings = fix.SessionSettings()
+settings.setString(fix.CONNECTION_TYPE, 'initiator')
+settings.setString(fix.FILE_LOG_PATH, log_file)
+
+# Create the initiator and store factory
 initiator = fix.SocketInitiator(fromAdmin, None, settings)
+storeFactory = fix.FileStoreFactory(settings)
+
+# Create the application and message factory
+application = fix.Application()
+messageFactory = fix.DefaultMessageFactory()
 
 # Start the FIX sessions
 initiator.start()
@@ -153,16 +161,3 @@ send_messages(template, message_weights, message_rate, send_duration)
 
 # Stop the FIX sessions
 initiator.stop()
-
-
-Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/LG.py", line 136, in <module>
-    logger = initialize_logger(log_file)
-  File "/home/pvellanki/loadgenerator/LG.py", line 108, in initialize_logger
-    settings.set(fix.FileStoreFactory(),FILE_LOG_PATH, log_file)
-  File "/home/pvellanki/loadgenerator/myenv/lib/python3.10/site-packages/quickfix.py", line 39483, in __init__
-    this = _quickfix.new_FileStoreFactory(*args)
-NotImplementedError: Wrong number or type of arguments for overloaded function 'new_FileStoreFactory'.
-  Possible C/C++ prototypes are:
-    FIX::FileStoreFactory::FileStoreFactory(FIX::SessionSettings const &)
-    FIX::FileStoreFactory::FileStoreFactory(std::string const &)
