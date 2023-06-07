@@ -180,12 +180,37 @@ send_messages(template, message_weights, message_rate, send_duration)
 initiator.stop()
 
 
-Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/LG2.py", line 137, in <module>
-    settings.set(key, value)
-  File "/home/pvellanki/loadgenerator/myenv/lib/python3.10/site-packages/quickfix.py", line 38638, in set
-    return _quickfix.SessionSettings_set(self, *args)
-NotImplementedError: Wrong number or type of arguments for overloaded function 'SessionSettings_set'.
-  Possible C/C++ prototypes are:
-    FIX::SessionSettings::set(FIX::SessionID const &,FIX::Dictionary)
-    FIX::SessionSettings::set(FIX::Dictionary const &)
+default_settings = connections["DEFAULT"]
+
+# Read and set individual attributes
+connection_type = default_settings.get("ConnectionType")
+reconnect_interval = default_settings.get("ReconnectInterval")
+file_store_path = default_settings.get("FileStorePath")
+file_log_path = default_settings.get("FileLogPath")
+start_time = default_settings.get("StartTime")
+end_time = default_settings.get("EndTime")
+use_data_dictionary = default_settings.get("UseDataDictionary")
+data_dictionary = default_settings.get("DataDictionary")
+http_accept_port = default_settings.get("HttpAcceptPort")
+validate_user_defined_fields = default_settings.get("ValidateUserDefinedFields")
+reset_on_logout = default_settings.get("ResetOnLogout")
+reset_on_logon = default_settings.get("ResetOnLogon")
+validate_fields_out_of_order = default_settings.get("ValidateFieldsOutOfOrder")
+default_appl_ver_id = default_settings.get("DefaultApplVerID")
+
+# Set the attributes in the settings object
+settings.setString(fix.CONNECTION_TYPE, connection_type)
+settings.setLong(fix.RECONNECT_INTERVAL, int(reconnect_interval))
+settings.setString(fix.FILE_STORE_PATH, file_store_path)
+settings.setString(fix.FILE_LOG_PATH, file_log_path)
+settings.setString(fix.START_TIME, start_time)
+settings.setString(fix.END_TIME, end_time)
+settings.setString(fix.USE_DATA_DICTIONARY, use_data_dictionary)
+settings.setString(fix.DATA_DICTIONARY, data_dictionary)
+settings.setString(fix.HTTP_ACCEPT_PORT, http_accept_port)
+settings.setString(fix.VALIDATE_USER_DEFINED_FIELDS, validate_user_defined_fields)
+settings.setString(fix.RESET_ON_LOGOUT, reset_on_logout)
+settings.setString(fix.RESET_ON_LOGON, reset_on_logon)
+settings.setString(fix.VALIDATE_FIELDS_OUT_OF_ORDER, validate_fields_out_of_order)
+settings.setString(fix.DEFAULT_APPL_VER_ID, default_appl_ver_id)
+
