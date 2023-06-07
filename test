@@ -155,3 +155,68 @@ def main():
 
 if __name__ == '__main__':
     main()
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    import configparser
+import quickfix as fix
+
+def send_logon(template_file, connections_file):
+    # Load the template and connections configurations
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+
+    # Read the template file path
+    template_path = config.get('CONFIG', 'TemplateFile')
+
+    # Read the connections file path
+    connections_path = config.get('CONFIG', 'ConnectionsFile')
+
+    # Create and configure the SessionSettings object
+    settings = fix.SessionSettings(connections_path)
+
+    # Create the message store factory
+    store_factory = fix.FileStoreFactory(settings)
+
+    # Create the application
+    application = fix.NullApplication()
+
+    # Initialize the message factory
+    message_factory = fix.DefaultMessageFactory()
+
+    # Create the initiator
+    initiator = fix.SocketInitiator(application, store_factory, settings, message_factory)
+
+    # Start the initiator
+    initiator.start()
+
+    # Create a session ID based on the settings
+    session_id = fix.SessionID(settings.get().getString('BeginString'),
+                               settings.get().getString('SenderCompID'),
+                               settings.get().getString('TargetCompID'))
+
+    # Create a logon message
+    logon_message = fix.Message()
+    logon_message.getHeader().setField(35, fix.MsgType_Logon)
+
+    # Send the logon message
+    fix.Session.sendToTarget(logon_message, session_id)
+
+    # Wait for the logon message to be sent
+    fix.Session.flush()
+
+    # Stop the initiator
+    initiator.stop()
+
+if __name__ == '__main__':
+    send_logon('template_file.txt', 'connections.cfg')
+
