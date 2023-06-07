@@ -13,13 +13,17 @@ def fromAdmin(message, session):
     incoming_msg_seq_num = int(message.getHeader().getField(34))
     msg_type = message.getHeader().getField(35)
 
-    if msg_type == 'A':  # Logon message
+    if msg_type == fix.MsgType_Logon:  # Logon message
         if incoming_msg_seq_num == 1:
             print(f"Session established for {session_id}")
             sessions[session_id] = True
-    elif msg_type == '5':  # Logout message
+    elif msg_type == fix.MsgType_Logout:  # Logout message
         print(f"Session disconnected for {session_id}")
         sessions[session_id] = False
+
+# Function to generate a random ClOrdID
+def generate_clordid():
+    return str(random.randint(100000, 999999))
 
 # Function to generate a random message based on weightage
 def generate_message(template, message_weights, session_id):
@@ -34,10 +38,24 @@ def generate_message(template, message_weights, session_id):
     for msg_type, weight in message_weights.items():
         cumulative_weight += weight
         if random_num <= cumulative_weight:
-            # Replace placeholders in the template with the message type and outgoing sequence number
-            message = template.replace('<MessageType>', msg_type)
+            # Replace placeholders in the template with the message type, ClOrdID, and outgoing sequence number
+            message = template.replace('<MsgType>', msg_type)
+            message = message.replace('<ClOrdID>', generate_clordid())
             message = message.replace('<SeqNum>', str(get_outgoing_seq_num(session_id)))
+            message = message.replace('<SendingTime>', fix.UtcTimeStamp().getString())
+            
+            # Calculate the CheckSum
+            checksum = calculate_checksum(message)
+            
+            # Append the CheckSum to the message
+            message += f'|10={checksum}|'
+            
             return message
+
+# Function to calculate the CheckSum (Tag 10) for a given FIX message
+def calculate_checksum(message):
+    checksum = sum(ord(c) for c in message) % 256
+    return f'{checksum:03}'  # Ensure the CheckSum is three digits
 
 # Function to get the outgoing sequence number for a session
 def get_outgoing_seq_num(session_id):
@@ -57,7 +75,6 @@ def send_heartbeats(session_id, interval):
         session = fix.Session.lookupSession(fix.SessionID(session_id))
         if session is not None:
             heartbeat_message = fix.Message()
-            heartbeat_message.getHeader().setField(35, '0')  # Heartbeat message type
             heartbeat_message.getHeader().setField(34, str(get_outgoing_seq_num(session_id)))
             fix.Session.sendToTarget(heartbeat_message, session_id)
             increment_outgoing_seq_num(session_id)
