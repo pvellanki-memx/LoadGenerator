@@ -165,3 +165,16 @@ send_messages(template, message_weights, message_rate, send_duration)
 
 # Stop the FIX sessions
 initiator.stop()
+
+
+Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/LG2.py", line 140, in <module>
+    initiator = fix.SocketInitiator(fromAdmin, None, settings)
+  File "/home/pvellanki/loadgenerator/myenv/lib/python3.10/site-packages/quickfix.py", line 39995, in __init__
+    SocketInitiatorBase.__init__(self, application, storeFactory, settings)
+  File "/home/pvellanki/loadgenerator/myenv/lib/python3.10/site-packages/quickfix.py", line 39742, in __init__
+    this = _quickfix.new_SocketInitiatorBase(*args)
+NotImplementedError: Wrong number or type of arguments for overloaded function 'new_SocketInitiatorBase'.
+  Possible C/C++ prototypes are:
+    FIX::SocketInitiator::SocketInitiator(FIX::Application &,FIX::MessageStoreFactory &,FIX::SessionSettings const &)
+    FIX::SocketInitiator::SocketInitiator(FIX::Application &,FIX::MessageStoreFactory &,FIX::SessionSettings const &,FIX::LogFactory &)
