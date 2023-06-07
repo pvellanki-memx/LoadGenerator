@@ -105,9 +105,8 @@ def send_messages(template, message_weights, rate, duration):
 # Function to initialize the FIX logger
 def initialize_logger(log_file):
     settings = fix.SessionSettings()
-    settings.setString("ConnectionType", "initiator")
-    settings.setString("FileLogPath", log_file)
-    settings.setBool("FileLogHeartbeats", True)
+    settings.setString(fix.FILE_LOG_PATH, log_file)
+    settings.setBool(fix.FILE_LOG_HEARTBEATS, True)
     logger = fix.FileLogFactory(settings)
     return logger
 
@@ -133,17 +132,20 @@ connections.read(connection_config_file)
 message_weights = dict(config.items('MessageTypes'))
 
 # Initialize FIX settings
-logger = initialize_logger(log_file)
 settings = fix.SessionSettings()
-settings.setLong("HeartBtInt", int(heartbeat_interval))
-settings.setString("ResetOnLogon", "Y")
-settings.setBool("UseDataDictionary", True)
-settings.setString("DataDictionary", "FIX44.xml")
-settings.setString("SocketConnectHost", "localhost")
-settings.setLong("SocketConnectPort", 12345)
+
+for section in connections.sections():
+    session_id = connections.get(section, 'SessionID')
+    for key, value in connections.items(section):
+        settings.setString(key, value)
 
 # Create the initiator and store factory
-initiator = fix.SocketInitiator(application, storeFactory, settings, logger, messageFactory)
+initiator = fix.SocketInitiator(fromAdmin, None, settings)
+storeFactory = fix.FileStoreFactory(settings)
+
+# Create the application and message factory
+application = fix.Application()
+messageFactory = fix.DefaultMessageFactory()
 
 # Start the FIX sessions
 initiator.start()
@@ -162,22 +164,3 @@ send_messages(template, message_weights, message_rate, send_duration)
 
 # Stop the FIX sessions
 initiator.stop()
-
-
-[DEFAULT]
-ConnectionType=initiator
-ReconnectInterval=60
-FileStorePath=store
-FileLogPath=log
-StartTime=00:00:00
-EndTime=00:00:00
-UseDataDictionary=Y
-DataDictionary=FIX50SP2.xml
-HttpAcceptPort=9911
-ValidateUserDefinedFields=N
-ResetOnLogout=Y
-ResetOnLogon=Y
-ValidateFieldsOutOfOrder=N
-DefaultApplVerID=FIX.5.0SP2
-
-
