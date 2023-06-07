@@ -105,8 +105,8 @@ def send_messages(template, message_weights, rate, duration):
 # Function to initialize the FIX logger
 def initialize_logger(log_file):
     settings = fix.SessionSettings()
-    settings.setString(fix.FILE_LOG_PATH, log_file)
-    settings.setBool(fix.FILE_LOG_HEARTBEATS, True)
+    settings.setString("FileLogPath", log_file)
+    settings.setBool("FileLogHeartbeats", True)
     logger = fix.FileLogFactory(settings)
     return logger
 
@@ -134,7 +134,7 @@ settings = fix.SessionSettings()
 # Set the default settings
 default_settings = connections["DEFAULT"]
 for key, value in default_settings.items():
-    settings.setString(key, value)
+    settings.set(key, value)
 
 # Iterate over each section except for "DEFAULT" in the connection configuration file
 for section in connections.sections():
