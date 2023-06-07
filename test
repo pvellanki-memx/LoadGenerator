@@ -129,7 +129,7 @@ connections = configparser.ConfigParser()
 connections.read(connection_config_file)
 
 # Get the message types and their weights
-message_weights = dict(connections.items('MessageTypes'))
+message_weights = dict(config.items('MessageTypes'))
 
 # Initialize FIX settings
 settings = fix.SessionSettings()
