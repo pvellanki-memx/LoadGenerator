@@ -114,12 +114,19 @@ def main():
     # Read the initiator settings from the [DEFAULT] section
     initiator_settings = connections["DEFAULT"]
 
+    # Read the session settings from the [SESSION] section
+    session_settings = connections["SESSION"]
+
     # Create and configure the SessionSettings object
     settings = fix.SessionSettings()
 
     # Set the initiator settings
     for key, value in initiator_settings.items():
-        setattr(settings,key, value)
+        setattr(settings, key, value)
+
+    # Set the session settings
+    for key, value in session_settings.items():
+        setattr(settings, key, value)
 
     # Create the message store factory
     store_factory = fix.FileStoreFactory(settings)
@@ -155,4 +162,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    
