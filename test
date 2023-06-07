@@ -39,30 +39,30 @@ def generate_message(template, message_weights, session_id):
         cumulative_weight += weight
         if random_num <= cumulative_weight:
             # Replace placeholders in the template with the message type, ClOrdID, and outgoing sequence number
-            message = template.replace("<MsgType>", msg_type)
-            message = message.replace("<ClOrdID>", generate_clordid())
-            message = message.replace("<SeqNum>", str(get_outgoing_seq_num(session_id)))
-            message = message.replace("<SendingTime>", fix.UtcTimeStamp().getString())
+            message = template.replace('<MsgType>', msg_type)
+            message = message.replace('<ClOrdID>', generate_clordid())
+            message = message.replace('<SeqNum>', str(get_outgoing_seq_num(session_id)))
+            message = message.replace('<SendingTime>', fix.UtcTimeStamp().getString())
 
             # Calculate the message length (excluding SOH characters)
-            message_length = len(message) - message.count("|")
+            message_length = len(message) - message.count('|')
 
             # Calculate the CheckSum
             checksum = calculate_checksum(message)
 
             # Replace the placeholders for message length and CheckSum
-            message = message.replace("<BodyLength>", str(message_length))
-            message = message.replace("<CheckSum>", checksum)
+            message = message.replace('<BodyLength>', str(message_length))
+            message = message.replace('<CheckSum>', checksum)
 
             # Append the CheckSum to the message
-            message += f"|10={checksum}|"
+            message += f'|10={checksum}|'
 
             return message
 
 # Function to calculate the CheckSum (Tag 10) for a given FIX message
 def calculate_checksum(message):
     checksum = sum(ord(c) for c in message) % 256
-    return f"{checksum:03}"  # Ensure the CheckSum is three digits
+    return f'{checksum:03}'  # Ensure the CheckSum is three digits
 
 # Function to get the outgoing sequence number for a session
 def get_outgoing_seq_num(session_id):
@@ -105,23 +105,23 @@ def send_messages(template, message_weights, rate, duration):
 # Function to initialize the FIX logger
 def initialize_logger(log_file):
     settings = fix.SessionSettings()
-    settings.setString("FileLogPath", log_file)
-    settings.setBool("FileLogHeartbeats", True)
+    settings.set(fix.FILE_LOG_PATH, log_file)
+    settings.setBool(fix.FILE_LOG_HEARTBEATS, True)
     logger = fix.FileLogFactory(settings)
     return logger
 
 # Read configuration from config.ini file
 config = configparser.ConfigParser()
-config.read("config.ini")
+config.read('config.ini')
 
-template_file = config.get("LoadGenerator", "template_file")
-connection_config_file = config.get("LoadGenerator", "connection_config_file")
-message_rate = float(config.get("LoadGenerator", "message_rate"))
-heartbeat_interval = float(config.get("LoadGenerator", "heartbeat_interval"))
-log_file = config.get("LoadGenerator", "log_file")
+template_file = config.get('LoadGenerator', 'template_file')
+connection_config_file = config.get('LoadGenerator', 'connection_config_file')
+message_rate = float(config.get('LoadGenerator', 'message_rate'))
+heartbeat_interval = float(config.get('LoadGenerator', 'heartbeat_interval'))
+log_file = config.get('LoadGenerator', 'log_file')
 
 # Load the template file
-with open(template_file, "r") as file:
+with open(template_file, 'r') as file:
     template = file.read()
 
 # Load the connection configuration file
@@ -131,27 +131,10 @@ connections.read(connection_config_file)
 # Initialize FIX settings
 settings = fix.SessionSettings()
 
-# Set the default settings
+# Set up the FIX settings individually
 default_settings = connections["DEFAULT"]
 for key, value in default_settings.items():
-    settings.set(key, value)
-
-# Iterate over each section except for "DEFAULT" in the connection configuration file
-for section in connections.sections():
-    if section != "DEFAULT":
-        # Get the session ID
-        session_id = connections.get(section, "SessionID")
-
-        # Create a dictionary for the session-specific settings
-        session_settings = fix.Dictionary()
-
-        # Iterate over the key-value pairs in the section
-        for key, value in connections.items(section):
-            # Set the key-value pair in the session-specific settings dictionary
-            session_settings.setString(key, value)
-
-        # Set the session-specific settings for the session ID
-        settings.set(fix.SessionID(session_id), session_settings)
+    setattr(settings, key, value)
 
 # Create the initiator and store factory
 initiator = fix.SocketInitiator(fromAdmin, None, settings)
@@ -166,8 +149,12 @@ initiator.start()
 
 # Establish the sessions
 for section in connections.sections():
-    session_id = connections.get(section, "SessionID")
-    sessions[session_id] = False
+    if section != "DEFAULT":
+        session_settings = fix.SessionSettings()
+        for key, value in connections.items(section):
+            setattr(session_settings, key, value)
+        session_id = session_settings.getSessionID()
+        sessions[session_id] = False
 
 # Wait for sessions to be established
 while not all(sessions.values()):
@@ -178,39 +165,3 @@ send_messages(template, message_weights, message_rate, send_duration)
 
 # Stop the FIX sessions
 initiator.stop()
-
-
-default_settings = connections["DEFAULT"]
-
-# Read and set individual attributes
-connection_type = default_settings.get("ConnectionType")
-reconnect_interval = default_settings.get("ReconnectInterval")
-file_store_path = default_settings.get("FileStorePath")
-file_log_path = default_settings.get("FileLogPath")
-start_time = default_settings.get("StartTime")
-end_time = default_settings.get("EndTime")
-use_data_dictionary = default_settings.get("UseDataDictionary")
-data_dictionary = default_settings.get("DataDictionary")
-http_accept_port = default_settings.get("HttpAcceptPort")
-validate_user_defined_fields = default_settings.get("ValidateUserDefinedFields")
-reset_on_logout = default_settings.get("ResetOnLogout")
-reset_on_logon = default_settings.get("ResetOnLogon")
-validate_fields_out_of_order = default_settings.get("ValidateFieldsOutOfOrder")
-default_appl_ver_id = default_settings.get("DefaultApplVerID")
-
-# Set the attributes in the settings object
-settings.setString(fix.CONNECTION_TYPE, connection_type)
-settings.setLong(fix.RECONNECT_INTERVAL, int(reconnect_interval))
-settings.setString(fix.FILE_STORE_PATH, file_store_path)
-settings.setString(fix.FILE_LOG_PATH, file_log_path)
-settings.setString(fix.START_TIME, start_time)
-settings.setString(fix.END_TIME, end_time)
-settings.setString(fix.USE_DATA_DICTIONARY, use_data_dictionary)
-settings.setString(fix.DATA_DICTIONARY, data_dictionary)
-settings.setString(fix.HTTP_ACCEPT_PORT, http_accept_port)
-settings.setString(fix.VALIDATE_USER_DEFINED_FIELDS, validate_user_defined_fields)
-settings.setString(fix.RESET_ON_LOGOUT, reset_on_logout)
-settings.setString(fix.RESET_ON_LOGON, reset_on_logon)
-settings.setString(fix.VALIDATE_FIELDS_OUT_OF_ORDER, validate_fields_out_of_order)
-settings.setString(fix.DEFAULT_APPL_VER_ID, default_appl_ver_id)
-
