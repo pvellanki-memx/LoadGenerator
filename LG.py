@@ -1,129 +1,112 @@
+import configparser
 import random
+import time
 import quickfix as fix
 
-class FIXSession:
-    def __init__(self, session_id, host, port, sender, target):
-        self.session_id = session_id
-        self.host = host
-        self.port = port
-        self.sender = sender
-        self.target = target
-        self.log_file_path = log_file_path
-        self.session = None
+# Global variables
+sessions = {}
 
+# Function to handle the fromAdmin message
+def fromAdmin(message, session):
+    global sessions
+    session_id = session.getSessionID()
+    incoming_msg_seq_num = int(message.getHeader().getField(34))
+    msg_type = message.getHeader().getField(35)
 
-def generate_message(templates):
-    # Randomly select a message template based on probabilities
-    message_type = random.choices(
-        population=list(templates.keys()),
-        weights=list(templates.values()),
-        k=1
-    )[0]
+    if msg_type == 'A':  # Logon message
+        if incoming_msg_seq_num == 1:
+            print(f"Session established for {session_id}")
+            sessions[session_id] = True
+    elif msg_type == '5':  # Logout message
+        print(f"Session disconnected for {session_id}")
+        sessions[session_id] = False
 
-    # Get the selected message template
-    template = templates[message_type]
-
-    # Replace placeholder values in the template with random values
-    message = template.replace('<Sender>', session.sender)
-    message = message.replace('<Target>', session.target)
-    message = message.replace('<ClOrdID>', str(random.randint(1, 1000000)))
-    message = message.replace('<Price>', str(round(random.uniform(1, 100), 2)))
-    message = message.replace('<Quantity>', str(random.randint(1, 100)))
-    return message
-
-    def establish_session(self):
-        try:
-            settings = fix.SessionSettings()
-            settings.setString(fix.BeginString, "FIX.4.4")
-            settings.setString(fix.SenderCompID, self.sender)
-            settings.setString(fix.TargetCompID, self.target)
-            settings.setString(fix.SocketConnectHost, self.host)
-            settings.setString(fix.SocketConnectPort, str(self.port))
-            settings.setString(fix.DataDictionary, "FIX44.xml")  # Specify the path to the data dictionary
-
-            file_store_factory = fix.FileStoreFactory(settings)
-            file_log_factory = fix.FileLogFactory(settings)
-            application = YourApplication()  # Replace with your custom Application class
-
-            self.session = fix.SocketInitiator(application, file_store_factory, settings, file_log_factory)
-            self.session.start()
-
-            return True
-
-        except fix.ConfigError as e:
-            print(f"Configuration error: {str(e)}")
-            return False
-
-        except fix.RuntimeError as e:
-            print(f"Runtime error: {str(e)}")
-            return False
-
-def load_generator(config_file):
-    # Read and parse the configuration from the file
-    config = configparser.ConfigParser()
-    config.read(config_file)
-
-    # Configure the FIX connection settings
-    sessions = []
-    for section in config.sections():
-        session_id = section
-        host = config.get(section, 'host')
-        port = config.getint(section, 'port')
-        sender = config.get(section, 'sender')
-        target = config.get(section, 'target')
-        session = FIXSession(session_id, host, port, sender, target)
-        sessions.append(session)
-
-    # Configure the message rate
-    message_rate = config.getfloat('Load', 'message_rate')
-
-    # Configure the message templates and their probabilities
-    templates = {}
-    for section in config.sections():
-        if section.startswith('Message'):
-            message_type = section
-            probability = config.getfloat('MessageTemplates', message_type)
-            template_file = config.get(section, 'template_file')
-            with open(template_file, 'r') as file:
-                template = file.read()
-            templates[message_type] = {
-                'template': template,
-                'probability': probability
-            }
+# Function to generate a random message based on weightage
+def generate_message(template, message_weights, session_id):
+    # Calculate total weightage
+    total_weight = sum(message_weights.values())
     
-    # Track the number of established sessions
-    num_established_sessions = 0
+    # Generate a random number within the total weightage
+    random_num = random.randint(1, total_weight)
+    
+    # Find the message type based on the random number
+    cumulative_weight = 0
+    for msg_type, weight in message_weights.items():
+        cumulative_weight += weight
+        if random_num <= cumulative_weight:
+            # Replace placeholders in the template with the message type, ClOrdID, and outgoing sequence number
+            message = template.replace('<MsgType>', msg_type)
+            message = message.replace('<ClOrdID>', generate_clordid())
+            message = message.replace('<SeqNum>', str(get_outgoing_seq_num(session_id)))
+            message = message.replace('<SendingTime>', fix.UtcTimeStamp().getString())
+            
+            # Calculate the CheckSum
+            checksum = calculate_checksum(message)
+            
+            # Calculate the message length (excluding SOH characters)
+            message_length = len(message) - message.count('|')
+            
+            # Replace the placeholders for message length and CheckSum
+            message = message.replace('<BodyLength>', str(message_length))
+            message = message.replace('<CheckSum>', checksum)
+            
+            return message
 
-    # Establish connections for all sessions
-    for session in sessions:
-        session.establish_connection()
-        if session.is_established:
-            num_established_sessions += 1
+# Function to calculate the CheckSum (Tag 10) for a given FIX message
+def calculate_checksum(message):
+    checksum = sum(ord(c) for c in message) % 256
+    return f'{checksum:03}'  # Ensure the CheckSum is three digits
 
-    # Start the initial load generation
-    is_paused = False  # Variable to track the load generator's pause state
+# Function to initialize the FIX logger
+def initialize_logger(log_file):
+    settings = fix.SessionSettings()
+    settings.setString(fix.FILE_LOG_PATH, log_file)
+    settings.setBool(fix.FILE_LOG_HEARTBEATS, True)
+    logger = fix.FileLogFactory(settings)
+    return logger
 
-    # Main loop for load generation
-    while True:
-        if not is_paused:
-            for session in sessions:
-                message = generate_message(templates)
-                print(f"Sending message for session {session.session_id}:")
-                print(message)
-                time.sleep(1 / message_rate)
-        else:
-            print("Load generation paused.")
-            print("To resume the load generation, enter 'r'.")
-            print("To change the message rate, enter 'c' followed by the new rate.")
-            print("To quit, enter 'q'.")
-            user_input = input()
+# Read configuration from config.ini file
+config = configparser.ConfigParser()
+config.read('config.ini')
 
-            if user_input.lower() == 'r':
-                print("Resuming load generation...")
-                is_paused = False
-            elif user_input.lower().startswith('c'):
-                new_rate = float(user_input[1:].strip())
-                message_rate = new_rate
-                print("Changing the message rate to", message_rate)
-                print("Resuming load generation...")
-                is_paused = False
+template_file = config.get('LoadGenerator', 'template_file')
+connection_config_file = config.get('LoadGenerator', 'connection_config_file')
+message_rate = float(config.get('LoadGenerator', 'message_rate'))
+heartbeat_interval = float(config.get('LoadGenerator', 'heartbeat_interval'))
+log_file = config.get('LoadGenerator', 'log_file')
+send_duration = int(config.get('LoadGenerator', 'send_duration'))
+
+# Load the template file
+with open(template_file, 'r') as file:
+    template = file.read()
+
+# Load the connection configuration file
+connections = configparser.ConfigParser()
+connections.read(connection_config_file)
+
+# Get the message types and their weights
+message_weights = dict(connections.items('MessageTypes'))
+
+# Initialize FIX settings
+settings = fix.SessionSettings(connection_config_file)
+logger = initialize_logger(log_file)
+initiator = fix.SocketInitiator(fromAdmin, logger, settings)
+
+# Start the FIX sessions
+initiator.start()
+
+# Establish the sessions
+for section in connections.sections():
+    session_id = connections.get(section, 'SessionID')
+    sessions[session_id] = False
+
+# Wait for sessions to be established
+while not all(sessions.values()):
+    time.sleep(1)
+
+# Send messages and heartbeats
+send_messages(template, message_weights, message_rate, send_duration)
+
+# Stop the FIX sessions
+initiator.stop()
+
