@@ -88,93 +88,70 @@ def send_heartbeats(session_id, interval):
         time.sleep(interval)
 
 # Function to send messages at the specified rate for a duration
-def send_messages(template, message_weights, rate, duration):
+def send_messages(template, message_weights, session_id, rate, duration):
     start_time = time.time()
     end_time = start_time + duration
 
     while time.time() < end_time:
-        for session_id in sessions:
-            if sessions[session_id]:
-                session = fix.Session.lookupSession(fix.SessionID(session_id))
-                if session is not None:
-                    message = fix.Message(generate_message(template, message_weights, session_id))
-                    fix.Session.sendToTarget(message, session_id)
-                    increment_outgoing_seq_num(session_id)
-                    time.sleep(1 / rate)
+        message = generate_message(template, message_weights, session_id)
+        session = fix.Session.lookupSession(fix.SessionID(session_id))
+        if session is not None:
+            fix.Session.sendToTarget(message, session_id)
+            increment_outgoing_seq_num(session_id)
 
-# Function to initialize the FIX logger
-def initialize_logger(log_file):
+        time.sleep(1 / rate)
+
+    # Disconnect session after duration
+    session = fix.Session.lookupSession(fix.SessionID(session_id))
+    if session is not None:
+        session.disconnect("Time's up")
+
+def main():
+    # Load the connections configuration file
+    connections = configparser.ConfigParser()
+    connections.read('connections.cfg')
+
+    # Read the initiator settings from the [DEFAULT] section
+    initiator_settings = connections["DEFAULT"]
+
+    # Create and configure the SessionSettings object
     settings = fix.SessionSettings()
-    settings.set(fix.FILE_LOG_PATH, log_file)
-    settings.setBool(fix.FILE_LOG_HEARTBEATS, True)
-    logger = fix.FileLogFactory(settings)
-    return logger
 
-# Read configuration from config.ini file
-config = configparser.ConfigParser()
-config.read('config.ini')
+    # Set the initiator settings
+    for key, value in initiator_settings.items():
+        settings.setString(key, value)
 
-template_file = config.get('LoadGenerator', 'template_file')
-connection_config_file = config.get('LoadGenerator', 'connection_config_file')
-message_rate = float(config.get('LoadGenerator', 'message_rate'))
-heartbeat_interval = float(config.get('LoadGenerator', 'heartbeat_interval'))
-log_file = config.get('LoadGenerator', 'log_file')
+    # Create the message store factory
+    store_factory = fix.FileStoreFactory(settings)
 
-# Load the template file
-with open(template_file, 'r') as file:
-    template = file.read()
+    # Create the application
+    class MyApplication(fix.Application):
+        def __init__(self):
+            super().__init__()
 
-# Load the connection configuration file
-connections = configparser.ConfigParser()
-connections.read(connection_config_file)
+        def fromAdmin(self, message, session_id):
+            fromAdmin(message, session_id)
 
-# Initialize FIX settings
-settings = fix.SessionSettings()
+        # Implement other application methods as needed
 
-# Set up the FIX settings individually
-default_settings = connections["DEFAULT"]
-for key, value in default_settings.items():
-    setattr(settings, key, value)
+    # Initialize the application
+    application = MyApplication()
 
-# Create the initiator and store factory
-initiator = fix.SocketInitiator(fromAdmin, None, settings)
-storeFactory = fix.FileStoreFactory(settings)
+    # Create the initiator
+    initiator = fix.SocketInitiator(application, store_factory, settings)
 
-# Create the application and message factory
-application = fix.Application()
-messageFactory = fix.DefaultMessageFactory()
+    # Start the initiator
+    initiator.start()
 
-# Start the FIX sessions
-initiator.start()
+    # Access the sessions created by the initiator
+    session_ids = initiator.getSessions()
 
-# Establish the sessions
-for section in connections.sections():
-    if section != "DEFAULT":
-        session_settings = fix.SessionSettings()
-        for key, value in connections.items(section):
-            setattr(session_settings, key, value)
-        session_id = session_settings.getSessionID()
-        sessions[session_id] = False
+    # Store the session IDs and their connection status
+    for session_id in session_ids:
+        sessions[session_id.toString()] = True
 
-# Wait for sessions to be established
-while not all(sessions.values()):
-    time.sleep(1)
+    # Join the initiator thread
+    initiator.join()
 
-# Send messages and heartbeats
-send_messages(template, message_weights, message_rate, send_duration)
-
-# Stop the FIX sessions
-initiator.stop()
-
-
-Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/LG2.py", line 140, in <module>
-    initiator = fix.SocketInitiator(fromAdmin, None, settings)
-  File "/home/pvellanki/loadgenerator/myenv/lib/python3.10/site-packages/quickfix.py", line 39995, in __init__
-    SocketInitiatorBase.__init__(self, application, storeFactory, settings)
-  File "/home/pvellanki/loadgenerator/myenv/lib/python3.10/site-packages/quickfix.py", line 39742, in __init__
-    this = _quickfix.new_SocketInitiatorBase(*args)
-NotImplementedError: Wrong number or type of arguments for overloaded function 'new_SocketInitiatorBase'.
-  Possible C/C++ prototypes are:
-    FIX::SocketInitiator::SocketInitiator(FIX::Application &,FIX::MessageStoreFactory &,FIX::SessionSettings const &)
-    FIX::SocketInitiator::SocketInitiator(FIX::Application &,FIX::MessageStoreFactory &,FIX::SessionSettings const &,FIX::LogFactory &)
+if __name__ == '__main__':
+    main()
