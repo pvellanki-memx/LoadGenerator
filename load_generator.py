@@ -149,7 +149,6 @@ while not all(sessions.values()):
     time.sleep(1)
 
 # Send messages and heartbeats
-send_duration = 60  # Duration in seconds
 send_messages(template, message_weights, message_rate, send_duration)
 
 # Stop the FIX sessions
