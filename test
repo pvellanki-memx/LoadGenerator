@@ -153,3 +153,16 @@ send_messages(template, message_weights, message_rate, send_duration)
 
 # Stop the FIX sessions
 initiator.stop()
+
+
+Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/LG.py", line 136, in <module>
+    logger = initialize_logger(log_file)
+  File "/home/pvellanki/loadgenerator/LG.py", line 108, in initialize_logger
+    settings.set(fix.FileStoreFactory(),FILE_LOG_PATH, log_file)
+  File "/home/pvellanki/loadgenerator/myenv/lib/python3.10/site-packages/quickfix.py", line 39483, in __init__
+    this = _quickfix.new_FileStoreFactory(*args)
+NotImplementedError: Wrong number or type of arguments for overloaded function 'new_FileStoreFactory'.
+  Possible C/C++ prototypes are:
+    FIX::FileStoreFactory::FileStoreFactory(FIX::SessionSettings const &)
+    FIX::FileStoreFactory::FileStoreFactory(std::string const &)
