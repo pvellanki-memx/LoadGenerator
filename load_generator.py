@@ -44,6 +44,13 @@ def generate_message(template, message_weights, session_id):
             message = message.replace('<SeqNum>', str(get_outgoing_seq_num(session_id)))
             message = message.replace('<SendingTime>', fix.UtcTimeStamp().getString())
             
+            # Calculate the message length (excluding SOH characters)
+            message_length = len(message) - message.count('|')
+            
+            # Replace the placeholders for message length and CheckSum
+            message = message.replace('<BodyLength>', str(message_length))
+            message = message.replace('<CheckSum>', checksum)
+            
             # Calculate the CheckSum
             checksum = calculate_checksum(message)
             
