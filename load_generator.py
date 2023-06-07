@@ -101,6 +101,14 @@ def send_messages(template, message_weights, rate, duration):
                     fix.Session.sendToTarget(message, session_id)
                     increment_outgoing_seq_num(session_id)
                     time.sleep(1 / rate)
+                    
+# Function to initialize the FIX logger
+def initialize_logger(log_file):
+    settings = fix.SessionSettings()
+    settings.setString(fix.FILE_LOG_PATH, log_file)
+    settings.setBool(fix.FILE_LOG_HEARTBEATS, True)
+    logger = fix.FileLogFactory(settings)
+    return logger
 
 # Read configuration from config.ini file
 config = configparser.ConfigParser()
@@ -110,6 +118,7 @@ template_file = config.get('LoadGenerator', 'template_file')
 connection_config_file = config.get('LoadGenerator', 'connection_config_file')
 message_rate = float(config.get('LoadGenerator', 'message_rate'))
 heartbeat_interval = float(config.get('LoadGenerator', 'heartbeat_interval'))
+log_file = config.get('LoadGenerator', 'log_file')
 
 # Load the template file
 with open(template_file, 'r') as file:
@@ -124,6 +133,7 @@ message_weights = dict(connections.items('MessageTypes'))
 
 # Initialize FIX settings
 settings = fix.SessionSettings(connection_config_file)
+logger = initialize_logger(log_file)
 initiator = fix.SocketInitiator(fromAdmin, None, settings)
 
 # Start the FIX sessions
