@@ -29,40 +29,40 @@ def generate_clordid():
 def generate_message(template, message_weights, session_id):
     # Calculate total weightage
     total_weight = sum(message_weights.values())
-    
+
     # Generate a random number within the total weightage
     random_num = random.randint(1, total_weight)
-    
+
     # Find the message type based on the random number
     cumulative_weight = 0
     for msg_type, weight in message_weights.items():
         cumulative_weight += weight
         if random_num <= cumulative_weight:
             # Replace placeholders in the template with the message type, ClOrdID, and outgoing sequence number
-            message = template.replace('<MsgType>', msg_type)
-            message = message.replace('<ClOrdID>', generate_clordid())
-            message = message.replace('<SeqNum>', str(get_outgoing_seq_num(session_id)))
-            message = message.replace('<SendingTime>', fix.UtcTimeStamp().getString())
-            
+            message = template.replace("<MsgType>", msg_type)
+            message = message.replace("<ClOrdID>", generate_clordid())
+            message = message.replace("<SeqNum>", str(get_outgoing_seq_num(session_id)))
+            message = message.replace("<SendingTime>", fix.UtcTimeStamp().getString())
+
             # Calculate the message length (excluding SOH characters)
-            message_length = len(message) - message.count('|')
-            
+            message_length = len(message) - message.count("|")
+
             # Calculate the CheckSum
             checksum = calculate_checksum(message)
-            
+
             # Replace the placeholders for message length and CheckSum
-            message = message.replace('<BodyLength>', str(message_length))
-            message = message.replace('<CheckSum>', checksum)
-            
+            message = message.replace("<BodyLength>", str(message_length))
+            message = message.replace("<CheckSum>", checksum)
+
             # Append the CheckSum to the message
-            message += f'|10={checksum}|'
-            
+            message += f"|10={checksum}|"
+
             return message
 
 # Function to calculate the CheckSum (Tag 10) for a given FIX message
 def calculate_checksum(message):
     checksum = sum(ord(c) for c in message) % 256
-    return f'{checksum:03}'  # Ensure the CheckSum is three digits
+    return f"{checksum:03}"  # Ensure the CheckSum is three digits
 
 # Function to get the outgoing sequence number for a session
 def get_outgoing_seq_num(session_id):
@@ -101,7 +101,7 @@ def send_messages(template, message_weights, rate, duration):
                     fix.Session.sendToTarget(message, session_id)
                     increment_outgoing_seq_num(session_id)
                     time.sleep(1 / rate)
-                    
+
 # Function to initialize the FIX logger
 def initialize_logger(log_file):
     settings = fix.SessionSettings()
@@ -112,32 +112,46 @@ def initialize_logger(log_file):
 
 # Read configuration from config.ini file
 config = configparser.ConfigParser()
-config.read('config.ini')
+config.read("config.ini")
 
-template_file = config.get('LoadGenerator', 'template_file')
-connection_config_file = config.get('LoadGenerator', 'connection_config_file')
-message_rate = float(config.get('LoadGenerator', 'message_rate'))
-heartbeat_interval = float(config.get('LoadGenerator', 'heartbeat_interval'))
-log_file = config.get('LoadGenerator', 'log_file')
+template_file = config.get("LoadGenerator", "template_file")
+connection_config_file = config.get("LoadGenerator", "connection_config_file")
+message_rate = float(config.get("LoadGenerator", "message_rate"))
+heartbeat_interval = float(config.get("LoadGenerator", "heartbeat_interval"))
+log_file = config.get("LoadGenerator", "log_file")
 
 # Load the template file
-with open(template_file, 'r') as file:
+with open(template_file, "r") as file:
     template = file.read()
 
 # Load the connection configuration file
 connections = configparser.ConfigParser()
 connections.read(connection_config_file)
 
-# Get the message types and their weights
-message_weights = dict(config.items('MessageTypes'))
-
 # Initialize FIX settings
 settings = fix.SessionSettings()
 
+# Set the default settings
+default_settings = connections["DEFAULT"]
+for key, value in default_settings.items():
+    settings.setString(key, value)
+
+# Iterate over each section except for "DEFAULT" in the connection configuration file
 for section in connections.sections():
-    session_id = connections.get(section, 'SessionID')
-    for key, value in connections.items(section):
-        settings.setString(key, value)
+    if section != "DEFAULT":
+        # Get the session ID
+        session_id = connections.get(section, "SessionID")
+
+        # Create a dictionary for the session-specific settings
+        session_settings = fix.Dictionary()
+
+        # Iterate over the key-value pairs in the section
+        for key, value in connections.items(section):
+            # Set the key-value pair in the session-specific settings dictionary
+            session_settings.setString(key, value)
+
+        # Set the session-specific settings for the session ID
+        settings.set(fix.SessionID(session_id), session_settings)
 
 # Create the initiator and store factory
 initiator = fix.SocketInitiator(fromAdmin, None, settings)
@@ -152,7 +166,7 @@ initiator.start()
 
 # Establish the sessions
 for section in connections.sections():
-    session_id = connections.get(section, 'SessionID')
+    session_id = connections.get(section, "SessionID")
     sessions[session_id] = False
 
 # Wait for sessions to be established
