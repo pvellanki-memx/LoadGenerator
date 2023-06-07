@@ -105,8 +105,9 @@ def send_messages(template, message_weights, rate, duration):
 # Function to initialize the FIX logger
 def initialize_logger(log_file):
     settings = fix.SessionSettings()
-    settings.set(fix.FILE_LOG_PATH, log_file)
-    settings.setBool(fix.FILE_LOG_HEARTBEATS, True)
+    settings.setString("ConnectionType", "initiator")
+    settings.setString("FileLogPath", log_file)
+    settings.setBool("FileLogHeartbeats", True)
     logger = fix.FileLogFactory(settings)
     return logger
 
@@ -132,17 +133,17 @@ connections.read(connection_config_file)
 message_weights = dict(config.items('MessageTypes'))
 
 # Initialize FIX settings
+logger = initialize_logger(log_file)
 settings = fix.SessionSettings()
-settings.setString(fix.CONNECTION_TYPE, 'initiator')
-settings.setString(fix.FILE_LOG_PATH, log_file)
+settings.setLong("HeartBtInt", int(heartbeat_interval))
+settings.setString("ResetOnLogon", "Y")
+settings.setBool("UseDataDictionary", True)
+settings.setString("DataDictionary", "FIX44.xml")
+settings.setString("SocketConnectHost", "localhost")
+settings.setLong("SocketConnectPort", 12345)
 
 # Create the initiator and store factory
-initiator = fix.SocketInitiator(fromAdmin, None, settings)
-storeFactory = fix.FileStoreFactory(settings)
-
-# Create the application and message factory
-application = fix.Application()
-messageFactory = fix.DefaultMessageFactory()
+initiator = fix.SocketInitiator(application, storeFactory, settings, logger, messageFactory)
 
 # Start the FIX sessions
 initiator.start()
@@ -161,16 +162,3 @@ send_messages(template, message_weights, message_rate, send_duration)
 
 # Stop the FIX sessions
 initiator.stop()
-
-
-Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/LG1.py", line 136, in <module>
-    settings.set(fix.CONNECTION_TYPE, 'initiator')
-  File "/home/pvellanki/loadgenerator/myenv/lib/python3.10/site-packages/quickfix.py", line 38638, in set
-    return _quickfix.SessionSettings_set(self, *args)
-NotImplementedError: Wrong number or type of arguments for overloaded function 'SessionSettings_set'.
-  Possible C/C++ prototypes are:
-    FIX::SessionSettings::set(FIX::SessionID const &,FIX::Dictionary)
-    FIX::SessionSettings::set(FIX::Dictionary const &)
-
-
