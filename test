@@ -130,3 +130,14 @@ if __name__ == '__main__':
 
 
 
+
+Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/session.py", line 63, in <module>
+    main()
+  File "/home/pvellanki/loadgenerator/session.py", line 60, in main
+    send_logon()
+  File "/home/pvellanki/loadgenerator/session.py", line 26, in send_logon
+    application = fix.Application()
+  File "/home/pvellanki/loadgenerator/myenv/lib/python3.10/site-packages/quickfix.py", line 39589, in __init__
+    this = _quickfix.new_Application(_self, )
+RuntimeError: accessing abstract class or protected constructor
