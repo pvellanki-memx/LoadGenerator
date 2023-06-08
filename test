@@ -216,11 +216,24 @@ if __name__ == '__main__':
     main()
     
     
+Session created - FIXT.1.1:EXP01_14->MEMX
 Traceback (most recent call last):
   File "/home/pvellanki/loadgenerator/session.py", line 88, in <module>
     main()
   File "/home/pvellanki/loadgenerator/session.py", line 85, in main
     send_logon()
-  File "/home/pvellanki/loadgenerator/session.py", line 63, in send_logon
-    session = initiator.getSessions()[0]
-TypeError: 'SwigPyObject' object is not subscriptable
+  File "/home/pvellanki/loadgenerator/session.py", line 76, in send_logon
+    fix.Session.sendToTarget(logon_message, session)
+NotImplementedError: Wrong number or type of arguments for overloaded function 'Session_sendToTarget'.
+  Possible C/C++ prototypes are:
+    FIX::Session::sendToTarget(FIX::Message &,std::string const &)
+    FIX::Session::sendToTarget(FIX::Message &)
+    FIX::Session::sendToTarget(FIX::Message &,FIX::SessionID const &)
+    FIX::Session::sendToTarget(FIX::Message &,FIX::SenderCompID const &,FIX::TargetCompID const &,std::string const &)
+    FIX::Session::sendToTarget(FIX::Message &,FIX::SenderCompID const &,FIX::TargetCompID const &)
+    FIX::Session::sendToTarget(FIX::Message &,std::string const &,std::string const &,std::string const &)
+    FIX::Session::sendToTarget(FIX::Message &,std::string const &,std::string const &)
+
+Sending admin message - 8=FIXT.1.19=7635=A34=549=EXP01_1452=20230608-14:51:46.85356=MEMX98=0108=11137=1.1010=064
+terminate called without an active exception
+Aborted
