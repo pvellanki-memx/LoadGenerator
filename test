@@ -214,5 +214,19 @@ def main():
 
 if __name__ == '__main__':
     main()
+    
+    
+    
+    Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/session.py", line 84, in <module>
+    main()
+  File "/home/pvellanki/loadgenerator/session.py", line 81, in main
+    send_logon()
+  File "/home/pvellanki/loadgenerator/session.py", line 50, in send_logon
+    initiator = fix.SocketInitiator(application, store_factory, settings)
+  File "/home/pvellanki/loadgenerator/myenv/lib/python3.10/site-packages/quickfix.py", line 39995, in __init__
+    SocketInitiatorBase.__init__(self, application, storeFactory, settings)
+  File "/home/pvellanki/loadgenerator/myenv/lib/python3.10/site-packages/quickfix.py", line 39742, in __init__
+    this = _quickfix.new_SocketInitiatorBase(*args)
+quickfix.ConfigError: Configuration failed: TransportDataDictionary not defined
 
-RuntimeError: accessing abstract class or protected constructor
