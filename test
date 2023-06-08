@@ -14,28 +14,35 @@ class MyApplication(fix.Application):
 
     def onCreate(self, sessionID):
         print("Session created -", sessionID.toString())
-        self.session_id = sessionID
+        self.session_id = sessionID.toString()
 
     # Implement other required methods of the Application class
 
+    def toAdmin(self, message, sessionID):
+        print("toAdmin:", message)
+        return
+    
+    def onLogout(self, sessionID):
+        print("Session disconnected for", sessionID.toString())
+        
 
-# Function to handle the fromAdmin message
-def fromAdmin(message, session):
-    global sessions
-    session_id = session.getSessionID()
-    incoming_msg_seq_num = int(message.getHeader().getField(34))
-    msg_type = message.getHeader().getField(35)
+    # Function to handle the fromAdmin message
+    def fromAdmin(self,message, sessionID):
+        global sessions
+        session_id = sessionID
+        incoming_msg_seq_num = int(message.getHeader().getField(34))
+        msg_type = message.getHeader().getField(35)
 
-    if msg_type == 'A':  # Logon message
-        if incoming_msg_seq_num == 1:
-            print(f"Session established for {session_id}")
-            sessions[session_id] = True
-    elif msg_type == '5':  # Logout message
-        print(f"Session disconnected for {session_id}")
-        sessions[session_id] = False
+        if msg_type == 'A':  # Logon message
+            if incoming_msg_seq_num == 1:
+                print(f"Session established for {session_id}")
+                sessions[self.session_id] = True
+        elif msg_type == '5':  # Logout message
+            print(f"Session disconnected for {session_id}")
+            sessions[self.session_id] = False
 
 # Function to generate a random message based on weightage
-def generate_message(template, message_weights, session_id):
+def generate_message(template, message_weights, session_id ):
     # Calculate total weightage
     total_weight = sum(message_weights.values())
     
@@ -46,9 +53,10 @@ def generate_message(template, message_weights, session_id):
     cumulative_weight = 0
     for msg_type, weight in message_weights.items():
         cumulative_weight += weight
-        if random_num <= cumulative_weight:
+        if random_num <= cumulative_weight and msg_type in message_types:
             # Replace placeholders in the template with the message type, ClOrdID, and outgoing sequence number
-            message = template.replace('<MsgType>', msg_type)
+            #message = template.replace('<MsgType>', msg_type)
+            message = message_types[msg_type]
             message = message.replace('<ClOrdID>', generate_clordid())
             message = message.replace('<SeqNum>', str(get_outgoing_seq_num(session_id)))
             message = message.replace('<SendingTime>', fix.UtcTimeStamp().getString())
@@ -62,6 +70,7 @@ def generate_message(template, message_weights, session_id):
             # Replace the placeholders for message length and CheckSum
             message = message.replace('<BodyLength>', str(message_length))
             message = message.replace('<CheckSum>', checksum)
+            print(message)
             
             return message
 
@@ -82,6 +91,7 @@ def get_outgoing_seq_num(session_id):
 def send_messages(template, message_weights, message_rate, send_duration):
     start_time = time.time()
     end_time = start_time + send_duration
+    print(template, message_weights, message_rate, send_duration)
 
     while time.time() < end_time:
         for session_id in sessions.keys():
@@ -120,7 +130,8 @@ connections = configparser.ConfigParser()
 connections.read(connection_config_file)
 
 # Get the message types and their weights
-message_weights = dict(connections.items('MessageTypes'))
+message_types = config.items('MessageTypes')
+message_weights = {msg_type: int(weight) for msg_type, weight in message_types}
 
 # Initialize FIX settings and application
 settings = fix.SessionSettings(connection_config_file)
@@ -143,15 +154,3 @@ send_messages(template, message_weights, message_rate, send_duration)
 
 # Stop the FIX sessions
 initiator.stop()
-
-
-
-
-Session created - FIXT.1.1:EXP01_14->MEMX
-toAdmin: 8=FIXT.1.19=7735=A34=1549=EXP01_1452=20230608-19:55:11.41656=MEMX98=0108=11137=1.1010=110
-Session disconnected for FIXT.1.1:EXP01_14->MEMX
-toAdmin: 8=FIXT.1.19=5635=534=1649=EXP01_1452=20230608-19:55:11.41756=MEMX10=176
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.10/dist-packages/quickfix.py", line 39570, in onLogout
-    return _quickfix.Application_onLogout(self, arg0)
-RuntimeError: SWIG director pure virtual method called FIX::Application::onLogout
