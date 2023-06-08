@@ -56,18 +56,22 @@ class MyApplication(fix.Application):
     def generate_load(self):
         # Read the template file and extract message templates
         with open(self.template_file, 'r') as file:
-            templates = file.read().splitlines()
+            templates = file.readlines()
 
         # Generate messages based on weights
         load = []
-        for msg_type, weight in self.message_weights.items():
-            if msg_type in templates:
-                template = templates[templates.index(msg_type) + 1]
-                for _ in range(weight):
-                    message = self.generate_message(template)
-                    load.append(message)
+        for template in templates:
+            load.extend([template.strip()]* message_weights[get_message_type(template)])
 
+        random.shuffle(load)
         return load
+
+    def get_message_type(template):
+        fields = template.split('|')
+        for field in fields:
+            if field.startswith('35='):
+               return field.split('=')[1]
+        return None  
 
     def run(self):
         # Initialize FIX settings
