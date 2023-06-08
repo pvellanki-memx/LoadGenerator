@@ -26,7 +26,7 @@ class MyApplication(fix.Application):
     def fromApp(self, message, sessionID):
         print("Receiving application message -", message.toString())
 
-def get_session_id():
+def send_logon():
     # Load the configuration from config.ini
     config = configparser.ConfigParser()
     config.read('config.ini')
@@ -53,38 +53,26 @@ def get_session_id():
     while not fix.Session.isLoggedOn():
         fix.sleep(1)
 
-    # Get the sessions
-    sessions = list(fix.Session.getSessions())
-
-    # Check if there are any sessions
-    if len(sessions) > 0:
-        session_id = sessions[0].getSessionID()
+    # Get the session ID
+    session_id = initiator.getSessionID()
+    if session_id:
         print("Session ID:", session_id.toString())
     else:
-        print("No sessions found")
+        print("Session not found.")
+
+    # Create and send the logon message
+    logon_message = fix.Message()
+    logon_message.getHeader().setField(fix.MsgType("A"))
+    # Set other logon message fields as needed
+    # ...
+
+    fix.Session.sendToTarget(logon_message, session_id)
 
     # Stop the initiator
     initiator.stop()
 
 def main():
-    get_session_id()
+    send_logon()
 
 if __name__ == '__main__':
     main()
-    
-    
-    
-    
-    
-    
-        # Get the session ID
-    session_id = None
-    for section in settings:
-        if section.startswith("SESSION"):
-            session_id = fix.Session.lookupSession(settings.get(section).getString("BeginString"))
-            break
-
-    if session_id is not None:
-        print("Session ID:", session_id.toString())
-    else:
-        print("Session not found.")
