@@ -147,7 +147,7 @@ initiator.stop()
 
 
 
-
-def toAdmin(self, message, sessionID):
-        print("toAdmin:", message)
-        return
+Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/LG3.py", line 36, in fromAdmin
+    print(f"Session disconnected for {sessionID}")
+NameError: name 'sessionID' is not defined. Did you mean: 'session'?
