@@ -216,8 +216,11 @@ if __name__ == '__main__':
     main()
     
     
-   session_id = initiator.getSessions()[0].getSessionID()
-    if session_id is not None and session_id in sessions and sessions[session_id]:
-        print("Logon successful!")
-    else:
-        print("Logon failed!")
+Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/session.py", line 88, in <module>
+    main()
+  File "/home/pvellanki/loadgenerator/session.py", line 85, in main
+    send_logon()
+  File "/home/pvellanki/loadgenerator/session.py", line 63, in send_logon
+    session = initiator.getSessions()[0]
+TypeError: 'SwigPyObject' object is not subscriptable
