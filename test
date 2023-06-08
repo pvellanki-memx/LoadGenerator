@@ -1,138 +1,6 @@
 import configparser
 import quickfix as fix
 
-def send_logon():
-    # Load the configuration from config.ini
-    config = configparser.ConfigParser()
-    config.read('config.ini')
-
-    # Read the configuration values
-    template_file = config.get('LoadGenerator', 'template_file')
-    connection_config_file = config.get('LoadGenerator', 'connection_config_file')
-    log_file = config.get('LoadGenerator', 'log_file')
-    message_rate = float(config.get('LoadGenerator', 'message_rate'))
-    send_duration = int(config.get('LoadGenerator', 'send_duration'))
-
-    # Create and configure the SessionSettings object
-    settings = fix.SessionSettings(connection_config_file)
-
-    # Create the message store factory
-    store_factory = fix.FileStoreFactory(settings)
-
-    # Set the log file path
-    settings.setString(fix.FileLogFactory.SETTING_FILE_LOG_PATH, log_file)
-
-    # Create the application
-    application = fix.NullApplication()
-
-    # Initialize the message factory
-    message_factory = fix.DefaultMessageFactory()
-
-    # Create the initiator
-    initiator = fix.SocketInitiator(application, store_factory, settings, message_factory)
-
-    # Start the initiator
-    initiator.start()
-
-    # Create a session ID based on the settings
-    session_id = fix.SessionID(settings.get().getString('BeginString'),
-                               settings.get().getString('SenderCompID'),
-                               settings.get().getString('TargetCompID'))
-
-    # Create a logon message
-    logon_message = fix.Message()
-    logon_message.getHeader().setField(35, fix.MsgType_Logon)
-
-    # Send the logon message at the specified rate for the specified duration
-    start_time = fix.UtcTimeStamp().getTime()
-    end_time = start_time + send_duration
-
-    while fix.UtcTimeStamp().getTime() < end_time:
-        fix.Session.sendToTarget(logon_message, session_id)
-        fix.Session.flush()
-
-        # Delay based on the message rate
-        delay = 1 / message_rate
-        fix.Session.delay(delay)
-
-    # Stop the initiator
-    initiator.stop()
-
-if __name__ == '__main__':
-    send_logon()
-    
-    
-    
-    
-import configparser
-import quickfix as fix
-
-def send_logon():
-    # Load the configuration from config.ini
-    config = configparser.ConfigParser()
-    config.read('config.ini')
-
-    # Read the configuration values
-    template_file = config.get('LoadGenerator', 'template_file')
-    connection_config_file = config.get('LoadGenerator', 'connection_config_file')
-    log_file = config.get('LoadGenerator', 'log_file')
-    message_rate = config.getint('LoadGenerator', 'message_rate')
-    send_duration = config.getint('LoadGenerator', 'send_duration')
-
-    # Create the SessionSettings object
-    settings = fix.SessionSettings(connection_config_file)
-
-    # Set the log file path
-    settings.setString(fix.FILE_LOG_PATH, log_file)
-
-    # Create the message store factory
-    store_factory = fix.FileStoreFactory(settings)
-
-    # Create the application
-    application = fix.Application()
-
-    # Create the initiator
-    initiator = fix.SocketInitiator(application, store_factory, settings)
-
-    # Start the initiator
-    initiator.start()
-
-    # Wait for the session to logon
-    initiator.waitForLogon()
-
-    # Create and send the logon message
-    session = initiator.getSessions()[0]
-    logon_message = fix.Message()
-
-    # Set the required fields for the logon message
-    logon_message.getHeader().setField(fix.MsgType("A"))
-    logon_message.setField(fix.Username("username"))
-    logon_message.setField(fix.Password("password"))
-
-    # Set any other custom fields as needed
-    logon_message.setField(fix.SenderCompID("SENDER"))
-    logon_message.setField(fix.TargetCompID("TARGET"))
-    # ...
-
-    fix.Session.sendToTarget(logon_message, session)
-
-    # Wait for the specified duration
-    fix.sleep(send_duration)
-
-    # Stop the initiator
-    initiator.stop()
-
-def main():
-    send_logon()
-
-if __name__ == '__main__':
-    main()
-
-
-
-import configparser
-import quickfix as fix
-
 class MyApplication(fix.Application):
     def __init__(self):
         super().__init__()
@@ -184,11 +52,15 @@ def send_logon():
     # Start the initiator
     initiator.start()
 
-    # Wait for the session to logon
-    initiator.waitForLogon()
+    # Check if the session is logged on
+    #session_id = fix.Session.lookupSession(settings.getSectionName(0))
+    #if session_id is not None and session_id in sessions and sessions[session_id]:
+    #    print("Logon successful!")
+    #else:
+    #    print("Logon failed!")    
 
     # Create and send the logon message
-    session = initiator.getSessions()[0]
+    session = initiator.getSessions()
     logon_message = fix.Message()
 
     # Set the required fields for the logon message
@@ -214,26 +86,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    
-    
-Session created - FIXT.1.1:EXP01_14->MEMX
-Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/session.py", line 88, in <module>
-    main()
-  File "/home/pvellanki/loadgenerator/session.py", line 85, in main
-    send_logon()
-  File "/home/pvellanki/loadgenerator/session.py", line 76, in send_logon
-    fix.Session.sendToTarget(logon_message, session)
-NotImplementedError: Wrong number or type of arguments for overloaded function 'Session_sendToTarget'.
-  Possible C/C++ prototypes are:
-    FIX::Session::sendToTarget(FIX::Message &,std::string const &)
-    FIX::Session::sendToTarget(FIX::Message &)
-    FIX::Session::sendToTarget(FIX::Message &,FIX::SessionID const &)
-    FIX::Session::sendToTarget(FIX::Message &,FIX::SenderCompID const &,FIX::TargetCompID const &,std::string const &)
-    FIX::Session::sendToTarget(FIX::Message &,FIX::SenderCompID const &,FIX::TargetCompID const &)
-    FIX::Session::sendToTarget(FIX::Message &,std::string const &,std::string const &,std::string const &)
-    FIX::Session::sendToTarget(FIX::Message &,std::string const &,std::string const &)
-
-Sending admin message - 8=FIXT.1.19=7635=A34=549=EXP01_1452=20230608-14:51:46.85356=MEMX98=0108=11137=1.1010=064
-terminate called without an active exception
-Aborted
