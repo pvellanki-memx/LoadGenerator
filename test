@@ -13,3 +13,19 @@ def generate_load(self):
 
     random.shuffle(load)
     return load
+
+
+
+
+
+  load_length = len(load)
+    iterations = int(self.message_rate * send_duration_sec)
+
+    # Repeat load if necessary to achieve desired send duration
+    if iterations > load_length:
+        quotient, remainder = divmod(iterations, load_length)
+        load = load * quotient + load[:remainder]
+    else:
+        load = load[:iterations]
+
+    return load
