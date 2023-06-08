@@ -26,7 +26,7 @@ class MyApplication(fix.Application):
     def fromApp(self, message, sessionID):
         print("Receiving application message -", message.toString())
 
-def send_logon():
+def get_session_id():
     # Load the configuration from config.ini
     config = configparser.ConfigParser()
     config.read('config.ini')
@@ -50,30 +50,18 @@ def send_logon():
     initiator.start()
 
     # Wait for the session to logon
-    while not application.isLoggedOn():
+    while not fix.Session.isLoggedOn():
         fix.sleep(1)
 
-    # Create and send the logon message
-    logon_message = fix.Message()
-
-    # Set the required fields for the logon message
-    logon_message.getHeader().setField(fix.MsgType("A"))
-
-    # Set any other custom fields as needed
-    logon_message.setField(fix.SenderCompID("SENDER"))
-    logon_message.setField(fix.TargetCompID("TARGET"))
-    # ...
-
-    fix.Session.sendToTarget(logon_message, application.getSessionID())
-
-    # Wait for the specified duration
-    fix.sleep(send_duration)
+    # Get the session ID of the logged-on session
+    session_id = fix.Session.getSessions()[0].getSessionID()
+    print("Session ID:", session_id.toString())
 
     # Stop the initiator
     initiator.stop()
 
 def main():
-    send_logon()
+    get_session_id()
 
 if __name__ == '__main__':
     main()
