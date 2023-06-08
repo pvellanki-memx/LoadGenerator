@@ -53,9 +53,15 @@ def get_session_id():
     while not fix.Session.isLoggedOn():
         fix.sleep(1)
 
-    # Get the session ID of the logged-on session
-    session_id = fix.Session.getSessions()[0].getSessionID()
-    print("Session ID:", session_id.toString())
+    # Get the sessions
+    sessions = list(fix.Session.getSessions())
+
+    # Check if there are any sessions
+    if len(sessions) > 0:
+        session_id = sessions[0].getSessionID()
+        print("Session ID:", session_id.toString())
+    else:
+        print("No sessions found")
 
     # Stop the initiator
     initiator.stop()
