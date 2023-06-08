@@ -37,8 +37,9 @@ class MyApplication(fix.Application):
         print("Logout initiated -", sessionID.toString())
 
     def generate_message(self, template):
-        # Replace other placeholders in the message template as needed
-        message = template.replace('<SeqNum>', str(get_outgoing_seq_num(self.session_id)))
+        # Replace placeholders in the message template
+        message = template.replace('<ClOrdID>', generate_clordid())
+        message = message.replace('<SeqNum>', str(get_outgoing_seq_num(self.session_id)))
         message = message.replace('<SendingTime>', fix.UtcTimeStamp().getString())
 
         # Calculate the CheckSum
@@ -61,17 +62,17 @@ class MyApplication(fix.Application):
         # Generate messages based on weights
         load = []
         for template in templates:
-            load.extend([template.strip()]* message_weights[get_message_type(template)])
+            load.extend([template.strip()] * self.message_weights[get_message_type(template)])
 
         random.shuffle(load)
         return load
 
-    def get_message_type(template):
+    def get_message_type(self, template):
         fields = template.split('|')
         for field in fields:
             if field.startswith('35='):
-               return field.split('=')[1]
-        return None  
+                return field.split('=')[1]
+        return None
 
     def run(self):
         # Initialize FIX settings
@@ -102,7 +103,7 @@ class MyApplication(fix.Application):
             if message_count >= len(load):
                 message_count = 0
 
-            message = fix.Message(load[message_count])
+            message = fix.Message(self.generate_message(load[message_count]))
             fix.Session.sendToTarget(message, self.session_id)
 
             message_count += 1
