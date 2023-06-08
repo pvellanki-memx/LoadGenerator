@@ -216,8 +216,7 @@ if __name__ == '__main__':
     main()
     
     
-    # Check if the session is logged on
-    session_id = fix.Session.lookupSession(settings.getSectionName(0))
+   session_id = initiator.getSessions()[0].getSessionID()
     if session_id is not None and session_id in sessions and sessions[session_id]:
         print("Logon successful!")
     else:
