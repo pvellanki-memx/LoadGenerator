@@ -62,7 +62,7 @@ class MyApplication(fix.Application):
         # Generate messages based on weights
         load = []
         for template in templates:
-            load.extend([template.strip()] * self.message_weights[get_message_type(template)])
+            load.extend([template.strip()] * self.message_weights[self.get_message_type(template)])
 
         random.shuffle(load)
         return load
@@ -114,7 +114,6 @@ class MyApplication(fix.Application):
         application.stop()
 
 # Read configuration from config.ini
-
 config = configparser.ConfigParser()
 config.read('config.ini')
 
