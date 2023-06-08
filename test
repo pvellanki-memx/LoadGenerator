@@ -64,17 +64,69 @@ if __name__ == '__main__':
     
     
     
-    
-    
-      File "/home/pvellanki/loadgenerator/session.py", line 62, in <module>
+import configparser
+import quickfix as fix
+
+def send_logon():
+    # Load the configuration from config.ini
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+
+    # Read the configuration values
+    template_file = config.get('LoadGenerator', 'template_file')
+    connection_config_file = config.get('LoadGenerator', 'connection_config_file')
+    log_file = config.get('LoadGenerator', 'log_file')
+    message_rate = config.getint('LoadGenerator', 'message_rate')
+    send_duration = config.getint('LoadGenerator', 'send_duration')
+
+    # Create the SessionSettings object
+    settings = fix.SessionSettings(connection_config_file)
+
+    # Set the log file path
+    settings.setString(fix.FILE_LOG_PATH, log_file)
+
+    # Create the message store factory
+    store_factory = fix.FileStoreFactory(settings)
+
+    # Create the application
+    application = fix.Application()
+
+    # Create the initiator
+    initiator = fix.SocketInitiator(application, store_factory, settings)
+
+    # Start the initiator
+    initiator.start()
+
+    # Wait for the session to logon
+    initiator.waitForLogon()
+
+    # Create and send the logon message
+    session = initiator.getSessions()[0]
+    logon_message = fix.Message()
+
+    # Set the required fields for the logon message
+    logon_message.getHeader().setField(fix.MsgType("A"))
+    logon_message.setField(fix.Username("username"))
+    logon_message.setField(fix.Password("password"))
+
+    # Set any other custom fields as needed
+    logon_message.setField(fix.SenderCompID("SENDER"))
+    logon_message.setField(fix.TargetCompID("TARGET"))
+    # ...
+
+    fix.Session.sendToTarget(logon_message, session)
+
+    # Wait for the specified duration
+    fix.sleep(send_duration)
+
+    # Stop the initiator
+    initiator.stop()
+
+def main():
     send_logon()
-  File "/home/pvellanki/loadgenerator/session.py", line 23, in send_logon
-    settings.set(fix.FileLogFactory, log_file)
-  File "/home/pvellanki/loadgenerator/myenv/lib/python3.10/site-packages/quickfix.py", line 38638, in set
-    return _quickfix.SessionSettings_set(self, *args)
-NotImplementedError: Wrong number or type of arguments for overloaded function 'SessionSettings_set'.
-  Possible C/C++ prototypes are:
-    FIX::SessionSettings::set(FIX::SessionID const &,FIX::Dictionary)
-    FIX::SessionSettings::set(FIX::Dictionary const &)
+
+if __name__ == '__main__':
+    main()
+
 
 
