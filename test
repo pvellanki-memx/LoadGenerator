@@ -217,7 +217,7 @@ if __name__ == '__main__':
     
     
     
-    Traceback (most recent call last):
+Traceback (most recent call last):
   File "/home/pvellanki/loadgenerator/session.py", line 84, in <module>
     main()
   File "/home/pvellanki/loadgenerator/session.py", line 81, in main
@@ -228,5 +228,5 @@ if __name__ == '__main__':
     SocketInitiatorBase.__init__(self, application, storeFactory, settings)
   File "/home/pvellanki/loadgenerator/myenv/lib/python3.10/site-packages/quickfix.py", line 39742, in __init__
     this = _quickfix.new_SocketInitiatorBase(*args)
-quickfix.ConfigError: Configuration failed: TransportDataDictionary not defined
+quickfix.ConfigError: Configuration failed: FIXT.1.1.xml: Configuration failed: major attribute not found on <fix>
 
