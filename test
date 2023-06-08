@@ -52,19 +52,16 @@ def send_logon():
     # Start the initiator
     initiator.start()
 
-    # Check if the session is logged on
-    #session_id = fix.Session.lookupSession(settings.getSectionName(0))
-    #if session_id is not None and session_id in sessions and sessions[session_id]:
-    #    print("Logon successful!")
-    #else:
-    #    print("Logon failed!")    
+    # Wait for the session to log on
+    initiator.getSessions()[0].logon()
+    fix.sleep(1)  # Add a small delay to allow the logon to complete
 
     # Create and send the logon message
-    session = initiator.getSessions()
+    session = initiator.getSessions()[0]
     logon_message = fix.Message()
 
     # Set the required fields for the logon message
-    logon_message.getHeader().setField(fix.MsgType("A"))
+    logon_message.getHeader().setField(fix.MsgType(fix.MsgType_Logon))
     logon_message.setField(fix.Username("username"))
     logon_message.setField(fix.Password("password"))
 
