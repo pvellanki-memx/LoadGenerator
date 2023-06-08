@@ -2,29 +2,7 @@ import configparser
 import quickfix as fix
 
 class MyApplication(fix.Application):
-    def __init__(self):
-        super().__init__()
-
-    def onCreate(self, sessionID):
-        print("Session created -", sessionID.toString())
-
-    def onLogon(self, sessionID):
-        print("Logged on -", sessionID.toString())
-
-    def onLogout(self, sessionID):
-        print("Logged out -", sessionID.toString())
-
-    def toAdmin(self, message, sessionID):
-        print("Sending admin message -", message.toString())
-
-    def fromAdmin(self, message, sessionID):
-        print("Receiving admin message -", message.toString())
-
-    def toApp(self, message, sessionID):
-        print("Sending application message -", message.toString())
-
-    def fromApp(self, message, sessionID):
-        print("Receiving application message -", message.toString())
+    # Application implementation goes here
 
 def send_logon():
     # Load the configuration from config.ini
@@ -32,10 +10,7 @@ def send_logon():
     config.read('config.ini')
 
     # Read the configuration values
-    template_file = config.get('LoadGenerator', 'template_file')
     connection_config_file = config.get('LoadGenerator', 'connection_config_file')
-    message_rate = config.getint('LoadGenerator', 'message_rate')
-    send_duration = config.getint('LoadGenerator', 'send_duration')
 
     # Create the SessionSettings object
     settings = fix.SessionSettings(connection_config_file)
@@ -52,25 +27,22 @@ def send_logon():
     # Start the initiator
     initiator.start()
 
-    # Wait for the session to log on
-    initiator.getSessions()[0].logon()
-    fix.sleep(1)  # Add a small delay to allow the logon to complete
+    # Wait for the session to logon
+    while not application.isLoggedOn():
+        fix.sleep(1)
 
     # Create and send the logon message
-    session = initiator.getSessions()[0]
     logon_message = fix.Message()
 
     # Set the required fields for the logon message
-    logon_message.getHeader().setField(fix.MsgType(fix.MsgType_Logon))
-    logon_message.setField(fix.Username("username"))
-    logon_message.setField(fix.Password("password"))
+    logon_message.getHeader().setField(fix.MsgType("A"))
 
     # Set any other custom fields as needed
     logon_message.setField(fix.SenderCompID("SENDER"))
     logon_message.setField(fix.TargetCompID("TARGET"))
     # ...
 
-    fix.Session.sendToTarget(logon_message, session)
+    fix.Session.sendToTarget(logon_message, application.getSessionID())
 
     # Wait for the specified duration
     fix.sleep(send_duration)
