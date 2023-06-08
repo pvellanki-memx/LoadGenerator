@@ -148,10 +148,6 @@ initiator.stop()
 
 
 
-
-
-Session created - FIXT.1.1:EXP01_14->MEMX
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.10/dist-packages/quickfix.py", line 39573, in toAdmin
-    return _quickfix.Application_toAdmin(self, arg0, arg1)
-RuntimeError: SWIG director pure virtual method called FIX::Application::toAdmin
+def toAdmin(self, message, sessionID):
+        print("toAdmin:", message)
+        return
