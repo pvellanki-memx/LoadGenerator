@@ -60,3 +60,21 @@ def send_logon():
 
 if __name__ == '__main__':
     send_logon()
+    
+    
+    
+    
+    
+    
+      File "/home/pvellanki/loadgenerator/session.py", line 62, in <module>
+    send_logon()
+  File "/home/pvellanki/loadgenerator/session.py", line 23, in send_logon
+    settings.set(fix.FileLogFactory, log_file)
+  File "/home/pvellanki/loadgenerator/myenv/lib/python3.10/site-packages/quickfix.py", line 38638, in set
+    return _quickfix.SessionSettings_set(self, *args)
+NotImplementedError: Wrong number or type of arguments for overloaded function 'SessionSettings_set'.
+  Possible C/C++ prototypes are:
+    FIX::SessionSettings::set(FIX::SessionID const &,FIX::Dictionary)
+    FIX::SessionSettings::set(FIX::Dictionary const &)
+
+
