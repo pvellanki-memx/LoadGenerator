@@ -147,7 +147,11 @@ initiator.stop()
 
 
 
+Session created - FIXT.1.1:EXP01_14->MEMX
+toAdmin: 8=FIXT.1.19=7735=A34=1549=EXP01_1452=20230608-19:55:11.41656=MEMX98=0108=11137=1.1010=110
+Session disconnected for FIXT.1.1:EXP01_14->MEMX
+toAdmin: 8=FIXT.1.19=5635=534=1649=EXP01_1452=20230608-19:55:11.41756=MEMX10=176
 Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/LG3.py", line 36, in fromAdmin
-    print(f"Session disconnected for {sessionID}")
-NameError: name 'sessionID' is not defined. Did you mean: 'session'?
+  File "/usr/local/lib/python3.10/dist-packages/quickfix.py", line 39570, in onLogout
+    return _quickfix.Application_onLogout(self, arg0)
+RuntimeError: SWIG director pure virtual method called FIX::Application::onLogout
