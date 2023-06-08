@@ -132,3 +132,24 @@ app.connection_config_file = connection_config_file
 
 # Run the FIX application
 app.run()
+
+
+
+
+
+
+def generate_load(self):
+    # Read the template file and extract message templates
+    with open(self.template_file, 'r') as file:
+        templates = file.readlines()
+
+    # Generate messages based on weights
+    load = []
+    for template in templates:
+        message_type = self.get_message_type(template)
+        weight = self.message_weights.get(message_type, 0)
+        load.extend([template.strip()] * weight)
+
+    random.shuffle(load)
+    return load
+
