@@ -1,6 +1,12 @@
 import configparser
+import random
+import time
 import quickfix as fix
 
+# Global variables
+sessions = {}
+
+# Custom Application class
 class MyApplication(fix.Application):
     def __init__(self):
         super().__init__()
@@ -10,71 +16,130 @@ class MyApplication(fix.Application):
         print("Session created -", sessionID.toString())
         self.session_id = sessionID
 
-    def onLogon(self, sessionID):
-        print("Logged on -", sessionID.toString())
+    # Implement other required methods of the Application class
 
-    def onLogout(self, sessionID):
-        print("Logged out -", sessionID.toString())
 
-    def toAdmin(self, message, sessionID):
-        print("Sending admin message -", message.toString())
+# Function to handle the fromAdmin message
+def fromAdmin(message, session):
+    global sessions
+    session_id = session.getSessionID()
+    incoming_msg_seq_num = int(message.getHeader().getField(34))
+    msg_type = message.getHeader().getField(35)
 
-    def fromAdmin(self, message, sessionID):
-        print("Receiving admin message -", message.toString())
+    if msg_type == 'A':  # Logon message
+        if incoming_msg_seq_num == 1:
+            print(f"Session established for {session_id}")
+            sessions[session_id] = True
+    elif msg_type == '5':  # Logout message
+        print(f"Session disconnected for {session_id}")
+        sessions[session_id] = False
 
-    def toApp(self, message, sessionID):
-        print("Sending application message -", message.toString())
+# Function to generate a random message based on weightage
+def generate_message(template, message_weights, session_id):
+    # Calculate total weightage
+    total_weight = sum(message_weights.values())
+    
+    # Generate a random number within the total weightage
+    random_num = random.randint(1, total_weight)
+    
+    # Find the message type based on the random number
+    cumulative_weight = 0
+    for msg_type, weight in message_weights.items():
+        cumulative_weight += weight
+        if random_num <= cumulative_weight:
+            # Replace placeholders in the template with the message type, ClOrdID, and outgoing sequence number
+            message = template.replace('<MsgType>', msg_type)
+            message = message.replace('<ClOrdID>', generate_clordid())
+            message = message.replace('<SeqNum>', str(get_outgoing_seq_num(session_id)))
+            message = message.replace('<SendingTime>', fix.UtcTimeStamp().getString())
+            
+            # Calculate the CheckSum
+            checksum = calculate_checksum(message)
+            
+            # Calculate the message length (excluding SOH characters)
+            message_length = len(message) - message.count('|')
+            
+            # Replace the placeholders for message length and CheckSum
+            message = message.replace('<BodyLength>', str(message_length))
+            message = message.replace('<CheckSum>', checksum)
+            
+            return message
 
-    def fromApp(self, message, sessionID):
-        print("Receiving application message -", message.toString())
+# Function to calculate the CheckSum (Tag 10) for a given FIX message
+def calculate_checksum(message):
+    checksum = sum(ord(c) for c in message) % 256
+    return f'{checksum:03}'  # Ensure the CheckSum is three digits
 
-def send_logon():
-    # Load the configuration from config.ini
-    config = configparser.ConfigParser()
-    config.read('config.ini')
+# Function to generate a unique ClOrdID for each message
+def generate_clordid():
+    return str(int(time.time()))
 
-    # Read the configuration values
-    connection_config_file = config.get('LoadGenerator', 'connection_config_file')
+# Function to get the outgoing sequence number for a session
+def get_outgoing_seq_num(session_id):
+    return fix.Session.lookupSession(session_id).getResponder().getNextSenderMsgSeqNum()
 
-    # Create the SessionSettings object
-    settings = fix.SessionSettings(connection_config_file)
+# Function to send messages and heartbeats
+def send_messages(template, message_weights, message_rate, send_duration):
+    start_time = time.time()
+    end_time = start_time + send_duration
 
-    # Create the message store factory
-    store_factory = fix.FileStoreFactory(settings)
+    while time.time() < end_time:
+        for session_id in sessions.keys():
+            if sessions[session_id]:
+                session = fix.Session.lookupSession(session_id)
 
-    # Create the application
-    application = MyApplication()
+                # Generate and send a random message
+                message = generate_message(template, message_weights, session_id)
+                session.send(message)
 
-    # Create the initiator
-    initiator = fix.SocketInitiator(application, store_factory, settings)
+                # Send a heartbeat message
+                heartbeat = fix.Message()
+                heartbeat.getHeader().setField(35, '0')
+                session.send(heartbeat)
 
-    # Start the initiator
-    initiator.start()
+        # Sleep based on the desired message rate
+        time.sleep(1 / message_rate)
 
-    # Wait for the session to logon
-    while not application.session_id:
-        fix.sleep(1)
+# Read configuration from config.ini file
+config = configparser.ConfigParser()
+config.read('config.ini')
 
-    # Get the session ID
-    session_id = application.session_id
-    if session_id:
-        print("Session ID:", session_id.toString())
-    else:
-        print("Session not found.")
+template_file = config.get('LoadGenerator', 'template_file')
+connection_config_file = config.get('LoadGenerator', 'connection_config_file')
+message_rate = float(config.get('LoadGenerator', 'message_rate'))
+heartbeat_interval = float(config.get('LoadGenerator', 'heartbeat_interval'))
+log_file = config.get('LoadGenerator', 'log_file')
+send_duration = int(config.get('LoadGenerator', 'send_duration'))
 
-    # Create and send the logon message
-    logon_message = fix.Message()
-    logon_message.getHeader().setField(fix.MsgType("A"))
-    # Set other logon message fields as needed
-    # ...
+# Load the template file
+with open(template_file, 'r') as file:
+    template = file.read()
 
-    fix.Session.sendToTarget(logon_message, session_id)
+# Load the connection configuration file
+connections = configparser.ConfigParser()
+connections.read(connection_config_file)
 
-    # Stop the initiator
-    initiator.stop()
+# Get the message types and their weights
+message_weights = dict(connections.items('MessageTypes'))
 
-def main():
-    send_logon()
+# Initialize FIX settings and application
+settings = fix.SessionSettings(connection_config_file)
+application = MyApplication()
+storeFactory = fix.FileStoreFactory(settings)
+logFactory = fix.FileLogFactory(settings)
 
-if __name__ == '__main__':
-    main()
+# Create the FIX initiator
+initiator = fix.SocketInitiator(application, storeFactory, settings, logFactory)
+
+# Start the FIX sessions
+initiator.start()
+
+# Wait for sessions to be established
+while not all(sessions.values()):
+    time.sleep(1)
+
+# Send messages and heartbeats
+send_messages(template, message_weights, message_rate, send_duration)
+
+# Stop the FIX sessions
+initiator.stop()
