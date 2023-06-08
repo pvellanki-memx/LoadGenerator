@@ -71,3 +71,20 @@ def main():
 
 if __name__ == '__main__':
     main()
+    
+    
+    
+    
+    
+    
+        # Get the session ID
+    session_id = None
+    for section in settings:
+        if section.startswith("SESSION"):
+            session_id = fix.Session.lookupSession(settings.get(section).getString("BeginString"))
+            break
+
+    if session_id is not None:
+        print("Session ID:", session_id.toString())
+    else:
+        print("Session not found.")
