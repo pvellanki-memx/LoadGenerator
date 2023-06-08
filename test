@@ -2,7 +2,29 @@ import configparser
 import quickfix as fix
 
 class MyApplication(fix.Application):
-    # Application implementation goes here
+    def __init__(self):
+        super().__init__()
+
+    def onCreate(self, sessionID):
+        print("Session created -", sessionID.toString())
+
+    def onLogon(self, sessionID):
+        print("Logged on -", sessionID.toString())
+
+    def onLogout(self, sessionID):
+        print("Logged out -", sessionID.toString())
+
+    def toAdmin(self, message, sessionID):
+        print("Sending admin message -", message.toString())
+
+    def fromAdmin(self, message, sessionID):
+        print("Receiving admin message -", message.toString())
+
+    def toApp(self, message, sessionID):
+        print("Sending application message -", message.toString())
+
+    def fromApp(self, message, sessionID):
+        print("Receiving application message -", message.toString())
 
 def send_logon():
     # Load the configuration from config.ini
