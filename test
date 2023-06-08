@@ -4,9 +4,11 @@ import quickfix as fix
 class MyApplication(fix.Application):
     def __init__(self):
         super().__init__()
+        self.session_id = None
 
     def onCreate(self, sessionID):
         print("Session created -", sessionID.toString())
+        self.session_id = sessionID
 
     def onLogon(self, sessionID):
         print("Logged on -", sessionID.toString())
@@ -50,11 +52,11 @@ def send_logon():
     initiator.start()
 
     # Wait for the session to logon
-    while not fix.Session.isLoggedOn():
+    while not application.session_id:
         fix.sleep(1)
 
     # Get the session ID
-    session_id = initiator.getSessionID()
+    session_id = application.session_id
     if session_id:
         print("Session ID:", session_id.toString())
     else:
