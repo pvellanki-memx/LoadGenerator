@@ -97,3 +97,19 @@ class LoadGenerator:
 ['a', 'd', '1', 'f', '5']
 weights: [1, 100, 1, 1, 1]
 weight: 1
+
+
+
+pvellanki@qa2434:~/loadgenerator$ python3 LG5.py 
+Session created - FIXT.1.1:EXP01_14->MEMX
+['d', 'f']
+weights: [100, 1]
+Generated load: []
+Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/LG5.py", line 230, in <module>
+    app.run()
+  File "/home/pvellanki/loadgenerator/LG5.py", line 187, in run
+    load = self.generate_load()
+  File "/home/pvellanki/loadgenerator/LG5.py", line 150, in generate_load
+    quotient, remainder = divmod(iterations, load_length)
+ZeroDivisionError: integer division or modulo by zero
