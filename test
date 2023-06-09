@@ -3,12 +3,15 @@ def generate_load(self):
     with open(self.template_file, 'r') as file:
         templates = file.readlines()
 
+    # Convert message weights to integers
+    message_weights = {key: int(value) for key, value in self.message_weights.items()}
+
     # Generate messages based on weights
     load = []
     for template in templates:
         message_type = self.get_message_type(template)
-        if message_type and message_type in self.message_weights:
-            weight = int(self.message_weights[message_type])
+        if message_type and message_type in message_weights:
+            weight = message_weights[message_type]
             load.extend([template.strip()] * weight)
 
     random.shuffle(load)
