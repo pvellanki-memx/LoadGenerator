@@ -305,28 +305,62 @@ def get_outgoing_seq_num(self, session_id):
 Session created - FIXT.1.1:EXP01_14->MEMX
 1
 Iterations 600
-27
-Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/LG4.py", line 215, in <module>
-    app.run()
-  File "/home/pvellanki/loadgenerator/LG4.py", line 186, in run
-    message = fix.Message(self.generate_message(load[message_count]))
-  File "/home/pvellanki/loadgenerator/LG4.py", line 87, in generate_message
-    fix_message.setField(fix.CheckSum(checksum))
-sent admin message 8=FIXT.1.19=7735=A34=2749=EXP01_1452=20230609-13:59:28.19556=MEMX98=0108=11137=1.1010=124
-  File "/usr/local/lib/python3.10/dist-packages/quickfix.py", line 40053, in __init__
-    quickfix.CheckSumField.__init__(self, 10, data)
-  File "/usr/local/lib/python3.10/dist-packages/quickfix.py", line 1197, in __init__
+30
+generated_message 8=FIXT.1.19=5635=534=3049=EXP01_1452=20230609-14:11:02.22656=MEMX10=21910=158
+generated_message 8=FIXT.1.19=5635=534=3049=EXP01_1452=20230609-14:11:02.22656=MEMX10=21910=158
+56
+sent admin message 8=FIXT.1.19=5635=534=3049=EXP01_1452=20230609-14:11:02.22656=MEMX10=21910=158
+sent admin message 8=FIXT.1.19=7735=A34=3149=EXP01_1452=20230609-14:11:02.22656=MEMX98=0108=11137=1.1010=095
 Session disconnected for FIXT.1.1:EXP01_14->MEMX
-    this = _quickfix.new_CheckSumField(*args)
-NotImplementedError: Wrong number or type of arguments for overloaded function 'new_CheckSumField'.
-  Possible C/C++ prototypes are:
-    FIX::CheckSumField::CheckSumField(int,int)
-    FIX::CheckSumField::CheckSumField(int)
-
-sent admin message 8=FIXT.1.19=5635=534=2849=EXP01_1452=20230609-13:59:28.20056=MEMX10=176
-terminate called without an active exception
-Aborted
+sent admin message 8=FIXT.1.19=5635=534=3249=EXP01_1452=20230609-14:11:02.22756=MEMX10=161
+Logout initiated - FIXT.1.1:EXP01_14->MEMX
+sent admin message 8=FIXT.1.19=7735=A34=3349=EXP01_1452=20230609-14:11:02.22756=MEMX98=0108=11137=1.1010=098
+Logout initiated - FIXT.1.1:EXP01_14->MEMX
+34
+generated_message 8=FIXT.1.19=5635=534=3449=EXP01_1452=20230609-14:11:03.22856=MEMX10=22410=165
+generated_message 8=FIXT.1.19=5635=534=3449=EXP01_1452=20230609-14:11:03.22856=MEMX10=22410=165
+56
+sent admin message 8=FIXT.1.19=5635=534=3449=EXP01_1452=20230609-14:11:03.22856=MEMX10=22410=165
+35
+generated_message 8=FIXT.1.19=5635=534=3549=EXP01_1452=20230609-14:11:04.22956=MEMX10=23010=168
+generated_message 8=FIXT.1.19=5635=534=3549=EXP01_1452=20230609-14:11:04.22956=MEMX10=23010=168
+56
+sent admin message 8=FIXT.1.19=5635=534=3549=EXP01_1452=20230609-14:11:04.23056=MEMX10=23010=160
+36
+generated_message 8=FIXT.1.19=5635=534=3649=EXP01_1452=20230609-14:11:05.23156=MEMX10=22010=163
+generated_message 8=FIXT.1.19=5635=534=3649=EXP01_1452=20230609-14:11:05.23156=MEMX10=22010=163
+56
+sent admin message 8=FIXT.1.19=5635=534=3649=EXP01_1452=20230609-14:11:05.23156=MEMX10=22010=163
+37
+generated_message 8=FIXT.1.19=5635=534=3749=EXP01_1452=20230609-14:11:06.23256=MEMX10=22610=166
+generated_message 8=FIXT.1.19=5635=534=3749=EXP01_1452=20230609-14:11:06.23256=MEMX10=22610=166
+56
+sent admin message 8=FIXT.1.19=5635=534=3749=EXP01_1452=20230609-14:11:06.23356=MEMX10=22610=167
+38
+generated_message 8=FIXT.1.19=5635=534=3849=EXP01_1452=20230609-14:11:07.23456=MEMX10=22510=170
+generated_message 8=FIXT.1.19=5635=534=3849=EXP01_1452=20230609-14:11:07.23456=MEMX10=22510=170
+56
+sent admin message 8=FIXT.1.19=5635=534=3849=EXP01_1452=20230609-14:11:07.23456=MEMX10=22510=170
+39
+generated_message 8=FIXT.1.19=5635=534=3949=EXP01_1452=20230609-14:11:08.23656=MEMX10=23310=174
+generated_message 8=FIXT.1.19=5635=534=3949=EXP01_1452=20230609-14:11:08.23656=MEMX10=23310=174
+56
+sent admin message 8=FIXT.1.19=5635=534=3949=EXP01_1452=20230609-14:11:08.23656=MEMX10=23310=174
+40
+generated_message 8=FIXT.1.19=5635=534=4049=EXP01_1452=20230609-14:11:09.23756=MEMX10=23010=168
+generated_message 8=FIXT.1.19=5635=534=4049=EXP01_1452=20230609-14:11:09.23756=MEMX10=23010=168
+56
+sent admin message 8=FIXT.1.19=5635=534=4049=EXP01_1452=20230609-14:11:09.23756=MEMX10=23010=168
+41
+generated_message 8=FIXT.1.19=5635=534=4149=EXP01_1452=20230609-14:11:10.23956=MEMX10=22010=163
+generated_message 8=FIXT.1.19=5635=534=4149=EXP01_1452=20230609-14:11:10.23956=MEMX10=22010=163
+56
+sent admin message 8=FIXT.1.19=5635=534=4149=EXP01_1452=20230609-14:11:10.23956=MEMX10=22010=163
+42
+generated_message 8=FIXT.1.19=5635=534=4249=EXP01_1452=20230609-14:11:11.24056=MEMX10=21710=157
+generated_message 8=FIXT.1.19=5635=534=4249=EXP01_1452=20230609-14:11:11.24056=MEMX10=21710=157
+56
+sent admin message 8=FIXT.1.19=5635=534=4249=EXP01_1452=20230609-14:11:11.24056=MEMX10=21710=157
 
 
 
