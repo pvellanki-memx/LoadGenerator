@@ -186,21 +186,17 @@ app.run()
 
 
 
+import datetime
 
-def get_outgoing_seq_num(self, session_id):
-    session_id_components = session_id.split(":")
-    if len(session_id_components) == 2:
-        begin_string, sender_comp_id = session_id_components
-        session_id_obj = fix.SessionID(begin_string, sender_comp_id, "MEMX")
-        session = fix.Session.lookupSession(session_id_obj)
-        if session is not None:
-            return session.getNextSenderMsgSeqNum()
 
 def generate_message(self, template):
     # Replace placeholders in the message template
     message = template.replace('<ClOrdID>', self.generate_clordid())
     message = message.replace('<SeqNum>', str(self.get_outgoing_seq_num(self.session_id.toString())))
-    message = message.replace('<SendingTime>', fix.UtcTimeStamp().getString())
+
+    # Generate the SendingTime in the desired format
+    sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
+    message = message.replace('<SendingTime>', sending_time)
 
     # Calculate the CheckSum
     checksum = self.calculate_checksum(message)
@@ -213,4 +209,5 @@ def generate_message(self, template):
     message = message.replace('<CheckSum>', checksum)
 
     return message
+
 
