@@ -234,6 +234,33 @@ def generate_message(self, template):
     message = message.replace('<CheckSum>', checksum)
 
     return message
+    
+    
+    
+    def generate_message(self, template):
+    # Replace placeholders in the message template
+    message = template.replace('<ClOrdID>', self.generate_clordid())
+    message = message.replace('<SeqNum>', str(self.get_outgoing_seq_num(self.session_id.toString())))
+
+    # Generate the SendingTime in the desired format
+    sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
+    message = message.replace('<SendingTime>', sending_time)
+
+    # Calculate the CheckSum
+    checksum = self.calculate_checksum(message)
+
+    # Calculate the message length (excluding SOH characters)
+    message_length = len(message) - message.count('|')
+
+    # Replace the placeholders for message length and CheckSum
+    message = message.replace('<BodyLength>', str(message_length))
+    message = message.replace('<CheckSum>', checksum)
+
+    # Ensure proper field termination
+    message = message.replace('|', '\x01')  # Replace '|' with SOH character
+
+    return message
+
 
 
 
