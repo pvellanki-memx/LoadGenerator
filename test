@@ -1,6 +1,8 @@
+pvellanki@qa2434:~/loadgenerator$ cat LG4.py
 import configparser
 import random
 import time
+import datetime
 import quickfix as fix
 
 # Global variables
@@ -42,34 +44,64 @@ class MyApplication(fix.Application):
     def generate_clordid(self):
         return str(random.randint(100000, 999999))
 
-    def generate_message(self, template):
-        # Replace placeholders in the message template
-        message = template.replace('<ClOrdID>', generate_clordid())
-        message = message.replace('<SeqNum>', str(get_outgoing_seq_num(self.session_id)))
-        message = message.replace('<SendingTime>', fix.UtcTimeStamp().getString())
-
-        # Calculate the CheckSum
-        checksum = calculate_checksum(message)
-
-        # Calculate the message length (excluding SOH characters)
-        message_length = len(message) - message.count('|')
-
-        # Replace the placeholders for message length and CheckSum
-        message = message.replace('<BodyLength>', str(message_length))
-        message = message.replace('<CheckSum>', checksum)
-
-        return message
 
         # Function to calculate the CheckSum (Tag 10) for a given FIX message
     def calculate_checksum(self,message):
         checksum = sum(ord(c) for c in message) % 256
         return f'{checksum:03}'  # Ensure the CheckSum is three digits
 
-        # Function to get the outgoing sequence number for a session
-    def get_outgoing_seq_num(self,session_id):
-        session = fix.Session.lookupSession(fix.SessionID(session_id))
+
+    def get_outgoing_seq_num(self, session_id):
+        session = fix.Session.lookupSession(session_id)
         if session is not None:
-            return session.getNextSenderMsgSeqNum()
+           #session_id = session.getSessionID()
+           #print(session_id)
+           return session.getExpectedSenderNum()
+        return 0
+
+ 
+    
+    def generate_message(self, template):
+        # Replace placeholders in the message template
+        message = template.replace('<ClOrdID>', self.generate_clordid())
+
+        # Get the outgoing sequence number
+        seq_num = str(self.get_outgoing_seq_num(self.session_id))
+        print(seq_num)
+
+        # Replace the <SeqNum> placeholder with the sequence number
+        message = message.replace('<MsgSeqNum>', seq_num)
+
+        # Generate the SendingTime in the desired format
+        sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
+        message = message.replace('<SendingTime>', sending_time)
+       
+        # Replace the field delimiter from '|' to SOH character
+        message = message.replace('|', chr(0x01))
+
+        # Calculate the CheckSum
+        #message_factory = fix.MessageFactory()
+        fix_message = fix.Message(message, False)
+        #fix_message.setString(message, False, message_factory)
+        checksum = self.calculate_checksum(fix_message.toString())
+
+        fix_message.setField(10, checksum)
+        print("generated_message",fix_message)
+
+        # Calculate the message length (excluding SOH characters)
+        #body_start_index = message.index('9=')
+        #body_end_index = message.index('10=')
+        body_length = fix_message.getHeader().getField(9)
+        print("generated_message",fix_message)
+        print(body_length)
+
+        # Replace the placeholders for message length and CheckSum
+        #message = message.replace('<BodyLength>', str(body_length))
+        #message = message.replace('<CheckSum>', checksum)
+        #print(message)
+
+        return fix_message
+
 
         # Function to increment the outgoing sequence number for a session
     def increment_outgoing_seq_num(self,session_id):
@@ -83,9 +115,9 @@ class MyApplication(fix.Application):
             session = fix.Session.lookupSession(fix.SessionID(session_id))
             if session is not None:
                 heartbeat_message = fix.Message()
-                heartbeat_message.getHeader().setField(34, str(get_outgoing_seq_num(session_id)))
+                heartbeat_message.getHeader().setField(34, str(self.get_outgoing_seq_num(session_id)))
                 fix.Session.sendToTarget(heartbeat_message, session_id)
-                increment_outgoing_seq_num(session_id)
+                self.increment_outgoing_seq_num(session_id)
         time.sleep(interval)
 
     def generate_load(self):
@@ -182,187 +214,3 @@ app.send_duration = send_duration
 
 # Run the FIX application
 app.run()
-
-
-
-
-import datetime
-
-def generate_message(self, template):
-    # Replace placeholders in the message template
-    message = template.replace('<ClOrdID>', self.generate_clordid())
-    message = message.replace('<SeqNum>', str(self.get_outgoing_seq_num(self.session_id.toString())))
-
-    # Generate the SendingTime in the desired format
-    sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
-    message = message.replace('<SendingTime>', sending_time)
-
-    # Calculate the CheckSum
-    checksum = self.calculate_checksum(message)
-
-    # Calculate the message length (excluding SOH characters)
-    message_length = len(message) - message.count('|')
-
-    # Replace the placeholders for message length and CheckSum
-    message = message.replace('<BodyLength>', str(message_length))
-    message = message.replace('<CheckSum>', checksum)
-
-    # Ensure proper field termination
-    message = message.replace('|', '\x01')  # Replace '|' with SOH character
-
-    return message
-    
-    
-    
-def generate_message(self, template):
-    # Replace placeholders in the message template
-    message = template.replace('<ClOrdID>', self.generate_clordid())
-    message = message.replace('<SeqNum>', str(self.get_outgoing_seq_num(self.session_id.toString())))
-
-    # Generate the SendingTime in the desired format
-    sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
-    message = message.replace('<SendingTime>', sending_time)
-
-    # Calculate the CheckSum
-    checksum = self.calculate_checksum(message)
-
-    # Calculate the message length (excluding SOH characters)
-    message_length = len(message) - message.count('\x01')  # Exclude the BodyLength field itself
-
-    # Replace the placeholders for message length and CheckSum
-    message = message.replace('<BodyLength>', str(message_length))
-    message = message.replace('<CheckSum>', checksum)
-
-    return message
-    
-    
-    
-    def generate_message(self, template):
-    # Replace placeholders in the message template
-    message = template.replace('<ClOrdID>', self.generate_clordid())
-    message = message.replace('<SeqNum>', str(self.get_outgoing_seq_num(self.session_id.toString())))
-
-    # Generate the SendingTime in the desired format
-    sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
-    message = message.replace('<SendingTime>', sending_time)
-
-    # Calculate the CheckSum
-    checksum = self.calculate_checksum(message)
-
-    # Calculate the message length (excluding SOH characters)
-    message_length = len(message) - message.count('|')
-
-    # Replace the placeholders for message length and CheckSum
-    message = message.replace('<BodyLength>', str(message_length))
-    message = message.replace('<CheckSum>', checksum)
-
-    # Ensure proper field termination
-    message = message.replace('|', '\x01')  # Replace '|' with SOH character
-
-    return message
-
-
-   65     def generate_message(self, template):
-     66         # Replace placeholders in the message template
-     67         message = template.replace('<ClOrdID>', self.generate_clordid())
-     68 
-     69         # Get the outgoing sequence number
-     70         seq_num = str(self.get_outgoing_seq_num(self.session_id))
-     71         print(seq_num)
-     72 
-     73         # Replace the <SeqNum> placeholder with the sequence number
-     74         message = message.replace('<MsgSeqNum>', seq_num)
-     75 
-     76         # Generate the SendingTime in the desired format
-     77         sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
-     78         message = message.replace('<SendingTime>', sending_time)
-     79       
-     80         # Replace the field delimiter from '|' to SOH character
-     81         message = message.replace('|', chr(0x01))
-     82 
-     83         # Calculate the CheckSum
-     84         checksum = self.calculate_checksum(message)
-     85 
-     86         # Calculate the message length (excluding SOH characters)
-     87         message_length = len(message) - message.count(chr(0x01))
-     88 
-     89         # Replace the placeholders for message length and CheckSum
-     90         message = message.replace('<BodyLength>', str(message_length))
-     91         message = message.replace('<CheckSum>', checksum)
-     92         print(message)
-     93 
-     94         return message
-    
-def get_outgoing_seq_num(self, session_id):
-    session = fix.Session.lookupSession(session_id)
-    if session is not None:
-        session_id = session.getSessionID()
-        return session_id.getSenderSeqNum()
-    return 0
-    
-    
-    
-Session created - FIXT.1.1:EXP01_14->MEMX
-1
-Iterations 600
-30
-generated_message 8=FIXT.1.19=5635=534=3049=EXP01_1452=20230609-14:11:02.22656=MEMX10=21910=158
-generated_message 8=FIXT.1.19=5635=534=3049=EXP01_1452=20230609-14:11:02.22656=MEMX10=21910=158
-56
-sent admin message 8=FIXT.1.19=5635=534=3049=EXP01_1452=20230609-14:11:02.22656=MEMX10=21910=158
-sent admin message 8=FIXT.1.19=7735=A34=3149=EXP01_1452=20230609-14:11:02.22656=MEMX98=0108=11137=1.1010=095
-Session disconnected for FIXT.1.1:EXP01_14->MEMX
-sent admin message 8=FIXT.1.19=5635=534=3249=EXP01_1452=20230609-14:11:02.22756=MEMX10=161
-Logout initiated - FIXT.1.1:EXP01_14->MEMX
-sent admin message 8=FIXT.1.19=7735=A34=3349=EXP01_1452=20230609-14:11:02.22756=MEMX98=0108=11137=1.1010=098
-Logout initiated - FIXT.1.1:EXP01_14->MEMX
-34
-generated_message 8=FIXT.1.19=5635=534=3449=EXP01_1452=20230609-14:11:03.22856=MEMX10=22410=165
-generated_message 8=FIXT.1.19=5635=534=3449=EXP01_1452=20230609-14:11:03.22856=MEMX10=22410=165
-56
-sent admin message 8=FIXT.1.19=5635=534=3449=EXP01_1452=20230609-14:11:03.22856=MEMX10=22410=165
-35
-generated_message 8=FIXT.1.19=5635=534=3549=EXP01_1452=20230609-14:11:04.22956=MEMX10=23010=168
-generated_message 8=FIXT.1.19=5635=534=3549=EXP01_1452=20230609-14:11:04.22956=MEMX10=23010=168
-56
-sent admin message 8=FIXT.1.19=5635=534=3549=EXP01_1452=20230609-14:11:04.23056=MEMX10=23010=160
-36
-generated_message 8=FIXT.1.19=5635=534=3649=EXP01_1452=20230609-14:11:05.23156=MEMX10=22010=163
-generated_message 8=FIXT.1.19=5635=534=3649=EXP01_1452=20230609-14:11:05.23156=MEMX10=22010=163
-56
-sent admin message 8=FIXT.1.19=5635=534=3649=EXP01_1452=20230609-14:11:05.23156=MEMX10=22010=163
-37
-generated_message 8=FIXT.1.19=5635=534=3749=EXP01_1452=20230609-14:11:06.23256=MEMX10=22610=166
-generated_message 8=FIXT.1.19=5635=534=3749=EXP01_1452=20230609-14:11:06.23256=MEMX10=22610=166
-56
-sent admin message 8=FIXT.1.19=5635=534=3749=EXP01_1452=20230609-14:11:06.23356=MEMX10=22610=167
-38
-generated_message 8=FIXT.1.19=5635=534=3849=EXP01_1452=20230609-14:11:07.23456=MEMX10=22510=170
-generated_message 8=FIXT.1.19=5635=534=3849=EXP01_1452=20230609-14:11:07.23456=MEMX10=22510=170
-56
-sent admin message 8=FIXT.1.19=5635=534=3849=EXP01_1452=20230609-14:11:07.23456=MEMX10=22510=170
-39
-generated_message 8=FIXT.1.19=5635=534=3949=EXP01_1452=20230609-14:11:08.23656=MEMX10=23310=174
-generated_message 8=FIXT.1.19=5635=534=3949=EXP01_1452=20230609-14:11:08.23656=MEMX10=23310=174
-56
-sent admin message 8=FIXT.1.19=5635=534=3949=EXP01_1452=20230609-14:11:08.23656=MEMX10=23310=174
-40
-generated_message 8=FIXT.1.19=5635=534=4049=EXP01_1452=20230609-14:11:09.23756=MEMX10=23010=168
-generated_message 8=FIXT.1.19=5635=534=4049=EXP01_1452=20230609-14:11:09.23756=MEMX10=23010=168
-56
-sent admin message 8=FIXT.1.19=5635=534=4049=EXP01_1452=20230609-14:11:09.23756=MEMX10=23010=168
-41
-generated_message 8=FIXT.1.19=5635=534=4149=EXP01_1452=20230609-14:11:10.23956=MEMX10=22010=163
-generated_message 8=FIXT.1.19=5635=534=4149=EXP01_1452=20230609-14:11:10.23956=MEMX10=22010=163
-56
-sent admin message 8=FIXT.1.19=5635=534=4149=EXP01_1452=20230609-14:11:10.23956=MEMX10=22010=163
-42
-generated_message 8=FIXT.1.19=5635=534=4249=EXP01_1452=20230609-14:11:11.24056=MEMX10=21710=157
-generated_message 8=FIXT.1.19=5635=534=4249=EXP01_1452=20230609-14:11:11.24056=MEMX10=21710=157
-56
-sent admin message 8=FIXT.1.19=5635=534=4249=EXP01_1452=20230609-14:11:11.24056=MEMX10=21710=157
-
-
-
-
-
