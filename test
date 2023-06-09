@@ -307,19 +307,16 @@ def get_outgoing_seq_num(self, session_id):
     body_end_index = message.index('10=')
     body_length = body_end_index - body_start_index
     
-    Session created - FIXT.1.1:EXP01_14->MEMX
-1
-Iterations 600
-21
+generated_message 8=FIXT.1.19=4935=549=EXP01_1456=MEMX34=2252=20230609-13:35:17.54510=<CheckSum>
 61
-8=FIXT.1.19=4935=549=EXP01_1456=MEMX34=2152=20230609-13:27:29.17210=219
+8=FIXT.1.19=4935=549=EXP01_1456=MEMX34=2252=20230609-13:35:17.54510=220
 Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/LG4.py", line 208, in <module>
+  File "/home/pvellanki/loadgenerator/LG4.py", line 209, in <module>
     app.run()
-  File "/home/pvellanki/loadgenerator/LG4.py", line 179, in run
+  File "/home/pvellanki/loadgenerator/LG4.py", line 180, in run
     message = fix.Message(self.generate_message(load[message_count]))
+sent admin message 8=FIXT.1.19=7735=A34=2249=EXP01_1452=20230609-13:35:17.54556=MEMX98=0108=11137=1.1010=110
   File "/usr/local/lib/python3.10/dist-packages/quickfix.py", line 1395, in __init__
-sent admin message 8=FIXT.1.19=7735=A34=2149=EXP01_1452=20230609-13:27:29.17256=MEMX98=0108=11137=1.1010=109
     this = _quickfix.new_Message(*args)
 quickfix.InvalidMessage: Invalid message: Expected BodyLength=56, Received BodyLength=49
 
