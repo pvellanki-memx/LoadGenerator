@@ -17,8 +17,5 @@ def generate_load(self):
 
 
 
-
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.10/dist-packages/quickfix.py", line 39573, in toAdmin
-    return _quickfix.Application_toAdmin(self, arg0, arg1)
-RuntimeError: SWIG director pure virtual method called FIX::Application::toAdmin
+    load.extend([template.strip()] * weight)
+TypeError: can't multiply sequence by non-int of type 'str'
