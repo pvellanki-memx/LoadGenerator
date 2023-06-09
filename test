@@ -262,32 +262,36 @@ def generate_message(self, template):
     return message
 
 
-def generate_message(self, template):
-    # Replace placeholders in the message template
-    message = template.replace('<ClOrdID>', self.generate_clordid())
-
-    # Get the outgoing sequence number
-    seq_num = str(self.get_outgoing_seq_num(self.session_id))
-
-    # Replace the <SeqNum> placeholder with the sequence number
-    message = message.replace('<SeqNum>', seq_num)
-
-    message = message.replace('<SendingTime>', fix.UtcTimeStamp().getString())
-
-    # Replace the field delimiter from '|' to SOH character
-    message = message.replace('|', chr(0x01))
-
-    # Calculate the CheckSum
-    checksum = self.calculate_checksum(message)
-
-    # Calculate the message length (excluding SOH characters)
-    message_length = len(message) - message.count(chr(0x01))
-
-    # Replace the placeholders for message length and CheckSum
-    message = message.replace('<BodyLength>', str(message_length))
-    message = message.replace('<CheckSum>', checksum)
-
-    return message
+   65     def generate_message(self, template):
+     66         # Replace placeholders in the message template
+     67         message = template.replace('<ClOrdID>', self.generate_clordid())
+     68 
+     69         # Get the outgoing sequence number
+     70         seq_num = str(self.get_outgoing_seq_num(self.session_id))
+     71         print(seq_num)
+     72 
+     73         # Replace the <SeqNum> placeholder with the sequence number
+     74         message = message.replace('<MsgSeqNum>', seq_num)
+     75 
+     76         # Generate the SendingTime in the desired format
+     77         sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
+     78         message = message.replace('<SendingTime>', sending_time)
+     79       
+     80         # Replace the field delimiter from '|' to SOH character
+     81         message = message.replace('|', chr(0x01))
+     82 
+     83         # Calculate the CheckSum
+     84         checksum = self.calculate_checksum(message)
+     85 
+     86         # Calculate the message length (excluding SOH characters)
+     87         message_length = len(message) - message.count(chr(0x01))
+     88 
+     89         # Replace the placeholders for message length and CheckSum
+     90         message = message.replace('<BodyLength>', str(message_length))
+     91         message = message.replace('<CheckSum>', checksum)
+     92         print(message)
+     93 
+     94         return message
     
     
     Session created - FIXT.1.1:EXP01_14->MEMX
