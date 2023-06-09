@@ -1,90 +1,236 @@
-def generate_load(self):
-    # Read the template file and extract message templates
-    with open(self.template_file, 'r') as file:
-        templates = file.readlines()
 
-    # Generate messages based on weights
-    load = []
-    for template in templates:
-        message_type = self.get_message_type(template)
-        if message_type and message_type in self.message_weights:
-            weight = int(self.message_weights[message_type])
-            print(f"Adding {weight} instances of message type {message_type}")
-            load.extend([template.strip()] * weight)
+import configparser
+import random
+import time
+import datetime
+import quickfix as fix
 
-    print(f"Generated load: {load}")
-    random.shuffle(load)
-    load_length = len(load)
-    iterations = int(self.message_rate * self.send_duration)
+# Global variables
+sessions = {}
 
-    # Repeat load if necessary to achieve desired send duration
-    if iterations > load_length:
-        quotient, remainder = divmod(iterations, load_length)
-        print(f"Repeating load: {quotient} times, with remainder: {remainder}")
-        load = load * quotient + load[:remainder]
-    else:
-        load = load[:iterations]
+# Class representing the FIX application
+class MyApplication(fix.Application):
+    def __init__(self, template_file, message_weights, message_rate):
+        super().__init__()
+        self.template_file = template_file
+        self.message_weights = message_weights
+        self.message_rate = message_rate
+        self.session_id = None
 
-    return load
+    def onCreate(self, sessionID):
+        print("Session created -", sessionID.toString())
+        self.session_id = sessionID
+
+    def toAdmin(self,message, sessionID):
+        print("sent admin message", message.toString())
+
+    def toApp(self,message, sessionID):
+        print("sent application message", message.toString())
+
+    def fromApp(self,message, sessionID):
+        print("Received application message", message.toString())
+
+    def fromAdmin(self, message, sessionID):
+        global sessions
+        session_id = sessionID.toString()
+        incoming_msg_seq_num = int(message.getHeader().getField(34))
+        msg_type = message.getHeader().getField(35)
+
+        if msg_type == 'A':  # Logon message
+            if incoming_msg_seq_num == 1:
+                print(f"Session established for {session_id}")
+                sessions[session_id] = True
+        elif msg_type == '5':  # Logout message
+            print(f"Session disconnected for {session_id}")
+            sessions[session_id] = False
+
+    def onLogout(self, sessionID):
+        print("Logout initiated -", sessionID.toString())
+
+    def generate_clordid(self):
+        return str(random.randint(100000, 999999))
+
+
+        # Function to calculate the CheckSum (Tag 10) for a given FIX message
+    def calculate_checksum(self,message):
+        checksum = sum(ord(c) for c in message) % 256
+        return f'{checksum:03}'  # Ensure the CheckSum is three digits
+
+
+    def get_outgoing_seq_num(self, session_id):
+        session = fix.Session.lookupSession(session_id)
+        if session is not None:
+           #session_id = session.getSessionID()
+           #print(session_id)
+           return session.getExpectedSenderNum()
+        return 0
+
+ 
     
+    def generate_message(self, template):
+        # Replace placeholders in the message template
+        message = template.replace('<ClOrdID>', self.generate_clordid())
+
+        # Get the outgoing sequence number
+        seq_num = str(self.get_outgoing_seq_num(self.session_id))
+        print(seq_num)
+
+        # Replace the <SeqNum> placeholder with the sequence number
+        message = message.replace('<MsgSeqNum>', seq_num)
+
+        # Generate the SendingTime in the desired format
+        sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
+        message = message.replace('<SendingTime>', sending_time)
+       
+        # Replace the field delimiter from '|' to SOH character
+        message = message.replace('|', chr(0x01))
+
+        # Calculate the CheckSum
+        #message_factory = fix.MessageFactory()
+        fix_message = fix.Message(message, False)
+        #fix_message.setString(message, False, message_factory)
+        checksum = self.calculate_checksum(fix_message.toString())
+
+        fix_message.setField(10, checksum)
+        print("generated_message",fix_message)
+
+        # Calculate the message length (excluding SOH characters)
+        #body_start_index = message.index('9=')
+        #body_end_index = message.index('10=')
+        body_length = fix_message.getHeader().getField(9)
+        print("generated_message",fix_message)
+        print(body_length)
+
+        # Replace the placeholders for message length and CheckSum
+        #message = message.replace('<BodyLength>', str(body_length))
+        #message = message.replace('<CheckSum>', checksum)
+        #print(message)
+
+        return fix_message
+
+
+        # Function to increment the outgoing sequence number for a session
+    def increment_outgoing_seq_num(self,session_id):
+        session = fix.Session.lookupSession(fix.SessionID(session_id))
+        if session is not None:
+            session.incrementNextSenderMsgSeqNum()
+
+        # Function to send heartbeat messages at a specified interval
+    def send_heartbeats(self,session_id, interval):
+        while sessions[session_id]:
+            session = fix.Session.lookupSession(fix.SessionID(session_id))
+            if session is not None:
+                heartbeat_message = fix.Message()
+                heartbeat_message.getHeader().setField(34, str(self.get_outgoing_seq_num(session_id)))
+                fix.Session.sendToTarget(heartbeat_message, session_id)
+                self.increment_outgoing_seq_num(session_id)
+        time.sleep(interval)
+
+    def generate_load(self):
+        # Read the template file and extract message templates
+        with open(self.template_file, 'r') as file:
+            templates = file.readlines()
+
+        # Generate messages based on weights
+        load = []
+        #message_types = list(self.message_weights.keys())
+        #print(message_types)
+        #weights = [int(self.message_weights[type]) for type in message_types]
+        #print("weights:",weights)
+        for template in templates:
+            message_type = self.get_message_type(template)
+            if message_type and message_type in self.message_weights:
+                #index = message_types.index(message_type)
+                weight = int(self.message_weights[message_type])
+                #print("weight:", weight)
+                #print(f"Adding {weight} instances of message type {message_type}")
+                load.extend([template.strip()] * weight)
+
+        print(f"Generated load: {load}")
+        random.shuffle(load)
+        load_length = len(load)
+        iterations = int(self.message_rate * self.send_duration)
+
+        # Repeat load if necessary to achieve desired send duration
+        if iterations > load_length:
+            quotient, remainder = divmod(iterations, load_length)
+            print(f"Repeating load: {quotient} times, with remainder: {remainder}")
+            load = load * quotient + load[:remainder]
+        else:
+            load = load[:iterations]
+
+        return load
+
+        #def get_message_type(self, template):
+        #    fields = template.split('|')
+        #    for field in fields:
+        #        if field.startswith('35='):
+        #            return field.split('=')[1]
+        #    return ''
     
-    
-Session created - FIXT.1.1:EXP01_14->MEMX
-Generated load: ['8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=78|35=F|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|']
-Repeating load: 5 times, with remainder: 95
-131
-generated_message 8=FIXT.1.19=7135=D34=13149=EXP01_1452=20230609-16:27:29.45456=MEMX10=00911=<ClOrddID>10=208
-generated_message 8=FIXT.1.19=7135=D34=13149=EXP01_1452=20230609-16:27:29.45456=MEMX10=00911=<ClOrddID>10=208
-71
-sent admin message 8=FIXT.1.19=7835=A34=13149=EXP01_1452=20230609-16:27:29.45556=MEMX98=0108=11137=1.1010=167
-sent application message 8=FIXT.1.19=7135=D34=13249=EXP01_1452=20230609-16:27:29.45556=MEMX10=00911=<ClOrddID>10=210
-Session disconnected for FIXT.1.1:EXP01_14->MEMX
-sent admin message 8=FIXT.1.19=5735=534=13349=EXP01_1452=20230609-16:27:29.45556=MEMX10=233
-Logout initiated - FIXT.1.1:EXP01_14->MEMX
-sent admin message 8=FIXT.1.19=7835=A34=13449=EXP01_1452=20230609-16:27:29.45556=MEMX98=0108=11137=1.1010=170
-Logout initiated - FIXT.1.1:EXP01_14->MEMX
-135
-generated_message 8=FIXT.1.19=7135=D34=13549=EXP01_1452=20230609-16:27:30.45656=MEMX10=00511=<ClOrddID>10=206
-generated_message 8=FIXT.1.19=7135=D34=13549=EXP01_1452=20230609-16:27:30.45656=MEMX10=00511=<ClOrddID>10=206
-71
-sent application message 8=FIXT.1.19=7135=D34=13549=EXP01_1452=20230609-16:27:30.45756=MEMX10=00511=<ClOrddID>10=207
-136
-generated_message 8=FIXT.1.19=7135=D34=13649=EXP01_1452=20230609-16:27:31.45856=MEMX10=00411=<ClOrddID>10=210
-generated_message 8=FIXT.1.19=7135=D34=13649=EXP01_1452=20230609-16:27:31.45856=MEMX10=00411=<ClOrddID>10=210
-71
-sent application message 8=FIXT.1.19=7135=D34=13649=EXP01_1452=20230609-16:27:31.45856=MEMX10=00411=<ClOrddID>10=210
-137
-generated_message 8=FIXT.1.19=7135=D34=13749=EXP01_1452=20230609-16:27:32.45956=MEMX10=01011=<ClOrddID>10=213
-generated_message 8=FIXT.1.19=7135=D34=13749=EXP01_1452=20230609-16:27:32.45956=MEMX10=01011=<ClOrddID>10=213
-71
-sent application message 8=FIXT.1.19=7135=D34=13749=EXP01_1452=20230609-16:27:32.46056=MEMX10=01011=<ClOrddID>10=205
-138
-generated_message 8=FIXT.1.19=7135=D34=13849=EXP01_1452=20230609-16:27:33.46156=MEMX10=00911=<ClOrddID>10=208
-generated_message 8=FIXT.1.19=7135=D34=13849=EXP01_1452=20230609-16:27:33.46156=MEMX10=00911=<ClOrddID>10=208
-71
-sent application message 8=FIXT.1.19=7135=D34=13849=EXP01_1452=20230609-16:27:33.46156=MEMX10=00911=<ClOrddID>10=208
-139
-generated_message 8=FIXT.1.19=7135=D34=13949=EXP01_1452=20230609-16:27:34.46356=MEMX10=00811=<ClOrddID>10=212
-generated_message 8=FIXT.1.19=7135=D34=13949=EXP01_1452=20230609-16:27:34.46356=MEMX10=00811=<ClOrddID>10=212
-71
-sent application message 8=FIXT.1.19=7135=D34=13949=EXP01_1452=20230609-16:27:34.46356=MEMX10=00811=<ClOrddID>10=212
-140
-generated_message 8=FIXT.1.19=7135=D34=14049=EXP01_1452=20230609-16:27:35.46456=MEMX10=00511=<ClOrddID>10=206
-generated_message 8=FIXT.1.19=7135=D34=14049=EXP01_1452=20230609-16:27:35.46456=MEMX10=00511=<ClOrddID>10=206
-71
-sent application message 8=FIXT.1.19=7135=D34=14049=EXP01_1452=20230609-16:27:35.46456=MEMX10=00511=<ClOrddID>10=206
-141
-generated_message 8=FIXT.1.19=7135=D34=14149=EXP01_1452=20230609-16:27:36.46656=MEMX10=00411=<ClOrddID>10=210
-generated_message 8=FIXT.1.19=7135=D34=14149=EXP01_1452=20230609-16:27:36.46656=MEMX10=00411=<ClOrddID>10=210
-71
-sent application message 8=FIXT.1.19=7135=D34=14149=EXP01_1452=20230609-16:27:36.46656=MEMX10=00411=<ClOrddID>10=210
-142
-generated_message 8=FIXT.1.19=7135=D34=14249=EXP01_1452=20230609-16:27:37.46756=MEMX10=01011=<ClOrddID>10=213
-generated_message 8=FIXT.1.19=7135=D34=14249=EXP01_1452=20230609-16:27:37.46756=MEMX10=01011=<ClOrddID>10=213
-71
-sent application message 8=FIXT.1.19=7135=D34=14249=EXP01_1452=20230609-16:27:37.46856=MEMX10=01011=<ClOrddID>10=214
-143
-generated_message 8=FIXT.1.19=7135=D34=14349=EXP01_1452=20230609-16:27:38.46956=MEMX10=01811=<ClOrddID>10=217
-generated_message 8=FIXT.1.19=7135=D34=14349=EXP01_1452=20230609-16:27:38.46956=MEMX10=01811=<ClOrddID>10=217
-71
-sent application message 8=FIXT.1.19=7135=D34=14349=EXP01_1452=20230609-16:27:38.46956=MEMX10=01811=<ClOrddID>10=217
+    def get_message_type(self, message):
+        fields = message.split('|')
+        for field in fields:
+            if field.startswith('35='):
+                return field.split('=')[1].lower()
+        return ''
+
+    def run(self):
+        # Initialize FIX settings
+        settings = fix.SessionSettings(self.connection_config_file)
+
+        # Initialize FIX application
+        application = fix.SocketInitiator(self, fix.FileStoreFactory(settings), settings)
+
+        # Start the FIX sessions
+        application.start()
+
+        # Wait for sessions to be established
+        while not all(sessions.values()):
+            time.sleep(1)
+
+        # Generate and send messages
+        load = self.generate_load()
+
+        start_time = time.time()
+        message_count = 0
+
+        while True:
+            elapsed_time = time.time() - start_time
+
+            if elapsed_time >= self.message_rate:
+                break
+
+            if message_count >= len(load):
+                message_count = 0
+
+            message = fix.Message(self.generate_message(load[message_count]))
+            fix.Session.sendToTarget(message, self.session_id)
+
+            message_count += 1
+
+            time.sleep(1)
+
+        # Stop the FIX sessions
+        application.stop()
+
+# Read configuration from config.ini
+config = configparser.ConfigParser()
+config.read('config.ini')
+
+# Load configuration values
+template_file = config.get('LoadGenerator', 'template_file')
+connection_config_file = config.get('LoadGenerator', 'connection_config_file')
+log_file = config.get('LoadGenerator', 'log_file')
+message_rate = float(config.get('LoadGenerator', 'message_rate'))
+send_duration = int(config.get('LoadGenerator', 'send_duration'))
+
+message_weights = dict(config.items('MessageTypes'))
+
+# Initialize the FIX application
+app = MyApplication(template_file, message_weights, message_rate)
+app.connection_config_file = connection_config_file
+app.send_duration = send_duration
+
+# Run the FIX application
+app.run()
