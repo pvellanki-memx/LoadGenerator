@@ -214,18 +214,30 @@ def generate_message(self, template):
     
     
     
-    Session created - FIXT.1.1:EXP01_14->MEMX
-1
-Iterations 600
-Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/LG4.py", line 196, in <module>
-    app.run()
-  File "/home/pvellanki/loadgenerator/LG4.py", line 167, in run
-sent admin message 8=FIXT.1.19=7635=A34=249=EXP01_1452=20230609-01:02:25.83256=MEMX98=0108=11137=1.1010=048
-    message = fix.Message(self.generate_message(load[message_count]))
-  File "/usr/local/lib/python3.10/dist-packages/quickfix.py", line 1395, in __init__
-    this = _quickfix.new_Message(*args)
-quickfix.InvalidMessage: Invalid message: Expected BodyLength=65, Received BodyLength=49
+def generate_message(self, template):
+    # Replace placeholders in the message template
+    message = template.replace('<ClOrdID>', self.generate_clordid())
+    message = message.replace('<SeqNum>', str(self.get_outgoing_seq_num(self.session_id.toString())))
+
+    # Generate the SendingTime in the desired format
+    sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
+    message = message.replace('<SendingTime>', sending_time)
+
+    # Calculate the CheckSum
+    checksum = self.calculate_checksum(message)
+
+    # Calculate the message length (excluding SOH characters)
+    message_length = len(message)
+
+    # Replace the placeholders for message length and CheckSum
+    message = message.replace('<BodyLength>', str(message_length))
+    message = message.replace('<CheckSum>', checksum)
+
+    # Ensure proper field termination
+    message = message.replace('|', '\x01')  # Replace '|' with SOH character
+
+    return message
+
 
 
 
