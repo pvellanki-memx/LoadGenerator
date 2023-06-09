@@ -262,19 +262,33 @@ def generate_message(self, template):
     return message
 
 
-Session created - FIXT.1.1:EXP01_14->MEMX
-1
-Iterations 600
-8=FIXT.1.1|9=49|35=5|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=20230609-12:05:13.383|10=066|
-Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/LG4.py", line 196, in <module>
-    app.run()
-  File "/home/pvellanki/loadgenerator/LG4.py", line 167, in run
-    message = fix.Message(self.generate_message(load[message_count]))
-  File "/usr/local/lib/python3.10/dist-packages/quickfix.py", line 1395, in __init__
-    this = _quickfix.new_Message(*args)
-sent admin message 8=FIXT.1.19=7635=A34=549=EXP01_1452=20230609-12:05:13.38356=MEMX98=0108=11137=1.1010=054
-quickfix.InvalidMessage: Invalid message: SOH not found at end of field
+def generate_message(self, template):
+    # Replace placeholders in the message template
+    message = template.replace('<ClOrdID>', self.generate_clordid())
+
+    # Get the outgoing sequence number
+    seq_num = str(self.get_outgoing_seq_num(self.session_id))
+
+    # Replace the <SeqNum> placeholder with the sequence number
+    message = message.replace('<SeqNum>', seq_num)
+
+    message = message.replace('<SendingTime>', fix.UtcTimeStamp().getString())
+
+    # Replace the field delimiter from '|' to SOH character
+    message = message.replace('|', chr(0x01))
+
+    # Calculate the CheckSum
+    checksum = self.calculate_checksum(message)
+
+    # Calculate the message length (excluding SOH characters)
+    message_length = len(message) - message.count(chr(0x01))
+
+    # Replace the placeholders for message length and CheckSum
+    message = message.replace('<BodyLength>', str(message_length))
+    message = message.replace('<CheckSum>', checksum)
+
+    return message
+
 
 
 
