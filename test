@@ -288,6 +288,23 @@ def generate_message(self, template):
     message = message.replace('<CheckSum>', checksum)
 
     return message
+    
+    
+    Session created - FIXT.1.1:EXP01_14->MEMX
+1
+Iterations 600
+FIXT.1.1:EXP01_14->MEMX
+None
+8=FIXT.1.19=4935=549=EXP01_1456=MEMX34=None52=20230609-12:22:16.79410=008
+Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/LG4.py", line 207, in <module>
+    app.run()
+  File "/home/pvellanki/loadgenerator/LG4.py", line 178, in run
+    message = fix.Message(self.generate_message(load[message_count]))
+sent admin message 8=FIXT.1.19=7735=A34=1049=EXP01_1452=20230609-12:22:16.79556=MEMX98=0108=11137=1.1010=108
+  File "/usr/local/lib/python3.10/dist-packages/quickfix.py", line 1395, in __init__
+    this = _quickfix.new_Message(*args)
+quickfix.InvalidMessage: Invalid message: Expected BodyLength=58, Received BodyLength=49
 
 
 
