@@ -188,7 +188,6 @@ app.run()
 
 import datetime
 
-
 def generate_message(self, template):
     # Replace placeholders in the message template
     message = template.replace('<ClOrdID>', self.generate_clordid())
@@ -208,6 +207,10 @@ def generate_message(self, template):
     message = message.replace('<BodyLength>', str(message_length))
     message = message.replace('<CheckSum>', checksum)
 
+    # Ensure proper field termination
+    message = message.replace('|', '\x01')  # Replace '|' with SOH character
+
     return message
+
 
 
