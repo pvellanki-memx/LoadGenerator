@@ -234,3 +234,32 @@ app.send_duration = send_duration
 
 # Run the FIX application
 app.run()
+
+
+
+
+
+
+def generate_message(self, template):
+    # Replace placeholders in the message template
+    message = template.replace('<ClOrdID>', self.generate_clordid())
+    
+    # Create a FIX message factory
+    message_factory = fix.MessageFactory()
+    
+    # Parse the message string into a fix.Message object
+    fix_message = message_factory.create(message)
+
+    # Get the outgoing sequence number
+    seq_num = self.get_outgoing_seq_num(self.session_id)
+    fix_message.getHeader().setField(34, str(seq_num))
+
+    # Generate the SendingTime in the desired format
+    sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
+    fix_message.getHeader().setField(52, sending_time)
+
+    # Calculate the CheckSum
+    checksum = self.calculate_checksum(fix_message.toString())
+    fix_message.setField(10, checksum)
+
+    return fix_message
