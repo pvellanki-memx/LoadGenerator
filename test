@@ -18,14 +18,7 @@ def generate_load(self):
 
 
 
-  load_length = len(load)
-    iterations = int(self.message_rate * send_duration_sec)
-
-    # Repeat load if necessary to achieve desired send duration
-    if iterations > load_length:
-        quotient, remainder = divmod(iterations, load_length)
-        load = load * quotient + load[:remainder]
-    else:
-        load = load[:iterations]
-
-    return load
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/dist-packages/quickfix.py", line 39573, in toAdmin
+    return _quickfix.Application_toAdmin(self, arg0, arg1)
+RuntimeError: SWIG director pure virtual method called FIX::Application::toAdmin
