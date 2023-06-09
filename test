@@ -211,6 +211,21 @@ def generate_message(self, template):
     message = message.replace('|', '\x01')  # Replace '|' with SOH character
 
     return message
+    
+    
+    
+    Session created - FIXT.1.1:EXP01_14->MEMX
+1
+Iterations 600
+Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/LG4.py", line 196, in <module>
+    app.run()
+  File "/home/pvellanki/loadgenerator/LG4.py", line 167, in run
+sent admin message 8=FIXT.1.19=7635=A34=249=EXP01_1452=20230609-01:02:25.83256=MEMX98=0108=11137=1.1010=048
+    message = fix.Message(self.generate_message(load[message_count]))
+  File "/usr/local/lib/python3.10/dist-packages/quickfix.py", line 1395, in __init__
+    this = _quickfix.new_Message(*args)
+quickfix.InvalidMessage: Invalid message: Expected BodyLength=65, Received BodyLength=49
 
 
 
