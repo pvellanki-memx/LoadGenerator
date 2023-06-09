@@ -182,3 +182,31 @@ app.send_duration = send_duration
 
 # Run the FIX application
 app.run()
+
+
+
+
+
+Session created - FIXT.1.1:EXP01_14->MEMX
+1
+Iterations 600
+Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/LG4.py", line 184, in <module>
+    app.run()
+  File "/home/pvellanki/loadgenerator/LG4.py", line 155, in run
+    message = fix.Message(self.generate_message(load[message_count]))
+  File "/home/pvellanki/loadgenerator/LG4.py", line 48, in generate_message
+    message = message.replace('<SeqNum>', str(self.get_outgoing_seq_num(self.session_id)))
+  File "/home/pvellanki/loadgenerator/LG4.py", line 70, in get_outgoing_seq_num
+    session = fix.Session.lookupSession(fix.SessionID(session_id))
+  File "/usr/local/lib/python3.10/dist-packages/quickfix.py", line 35193, in __init__
+    this = _quickfix.new_SessionID(*args)
+NotImplementedError: Wrong number or type of arguments for overloaded function 'new_SessionID'.
+  Possible C/C++ prototypes are:
+    FIX::SessionID::SessionID()
+    FIX::SessionID::SessionID(std::string const &,std::string const &,std::string const &,std::string const &)
+    FIX::SessionID::SessionID(std::string const &,std::string const &,std::string const &)
+
+sent admin message 8=FIXT.1.19=7635=A34=149=EXP01_1452=20230609-00:52:15.91356=MEMX98=0108=11137=1.1010=050
+terminate called without an active exception
+Aborted
