@@ -29,87 +29,62 @@ def generate_load(self):
     
     
     
-def get_message_type(self, message):
-    fields = message.split('|')
-    for field in fields:
-        if field.startswith('35='):
-            return field.split('=')[1]
-    return None
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    import configparser
-
-class LoadGenerator:
-    def __init__(self, config_file):
-        self.config = configparser.ConfigParser()
-        self.config.read(config_file)
-        self.template_file = self.config.get('LoadGenerator', 'template_file')
-        self.connection_config_file = self.config.get('LoadGenerator', 'connection_config_file')
-        self.log_file = self.config.get('LoadGenerator', 'log_file')
-        self.message_rate = int(self.config.get('LoadGenerator', 'message_rate'))
-        self.send_duration = int(self.config.get('LoadGenerator', 'send_duration'))
-        self.heartbeat_interval = int(self.config.get('LoadGenerator', 'heartbeat_interval'))
-        self.message_weights = dict(self.config.items('MessageTypes'))
-
-    def generate_load(self):
-        # Read the template file and extract message templates
-        with open(self.template_file, 'r') as file:
-            templates = file.readlines()
-
-        # Generate messages based on weights
-        load = []
-        for template in templates:
-            message_type = self.get_message_type(template)
-            if message_type and message_type in self.message_weights:
-                weight = int(self.message_weights[message_type])
-                load.extend([template.strip()] * weight)
-
-        random.shuffle(load)
-        load_length = len(load)
-        iterations = int(self.message_rate * self.send_duration)
-
-        # Repeat load if necessary to achieve desired send duration
-        if iterations > load_length:
-            quotient, remainder = divmod(iterations, load_length)
-            load = load * quotient + load[:remainder]
-        else:
-            load = load[:iterations]
-
-        return load
-
-    def get_message_type(self, template):
-        # Extract the message type from the template
-        # This implementation assumes the message type is always located at position 35 in the template
-        fields = template.split('|')
-        for field in fields:
-            if field.startswith('35='):
-                return field.split('=')[1]
-        return None
-
-['a', 'd', '1', 'f', '5']
-weights: [1, 100, 1, 1, 1]
-weight: 1
-
-
-
-pvellanki@qa2434:~/loadgenerator$ python3 LG5.py 
 Session created - FIXT.1.1:EXP01_14->MEMX
-['d', 'f']
-weights: [100, 1]
-Generated load: []
-Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/LG5.py", line 230, in <module>
-    app.run()
-  File "/home/pvellanki/loadgenerator/LG5.py", line 187, in run
-    load = self.generate_load()
-  File "/home/pvellanki/loadgenerator/LG5.py", line 150, in generate_load
-    quotient, remainder = divmod(iterations, load_length)
-ZeroDivisionError: integer division or modulo by zero
+Generated load: ['8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=80|35=D|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|', '8=FIXT.1.1|9=78|35=F|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|']
+Repeating load: 5 times, with remainder: 95
+131
+generated_message 8=FIXT.1.19=7135=D34=13149=EXP01_1452=20230609-16:27:29.45456=MEMX10=00911=<ClOrddID>10=208
+generated_message 8=FIXT.1.19=7135=D34=13149=EXP01_1452=20230609-16:27:29.45456=MEMX10=00911=<ClOrddID>10=208
+71
+sent admin message 8=FIXT.1.19=7835=A34=13149=EXP01_1452=20230609-16:27:29.45556=MEMX98=0108=11137=1.1010=167
+sent application message 8=FIXT.1.19=7135=D34=13249=EXP01_1452=20230609-16:27:29.45556=MEMX10=00911=<ClOrddID>10=210
+Session disconnected for FIXT.1.1:EXP01_14->MEMX
+sent admin message 8=FIXT.1.19=5735=534=13349=EXP01_1452=20230609-16:27:29.45556=MEMX10=233
+Logout initiated - FIXT.1.1:EXP01_14->MEMX
+sent admin message 8=FIXT.1.19=7835=A34=13449=EXP01_1452=20230609-16:27:29.45556=MEMX98=0108=11137=1.1010=170
+Logout initiated - FIXT.1.1:EXP01_14->MEMX
+135
+generated_message 8=FIXT.1.19=7135=D34=13549=EXP01_1452=20230609-16:27:30.45656=MEMX10=00511=<ClOrddID>10=206
+generated_message 8=FIXT.1.19=7135=D34=13549=EXP01_1452=20230609-16:27:30.45656=MEMX10=00511=<ClOrddID>10=206
+71
+sent application message 8=FIXT.1.19=7135=D34=13549=EXP01_1452=20230609-16:27:30.45756=MEMX10=00511=<ClOrddID>10=207
+136
+generated_message 8=FIXT.1.19=7135=D34=13649=EXP01_1452=20230609-16:27:31.45856=MEMX10=00411=<ClOrddID>10=210
+generated_message 8=FIXT.1.19=7135=D34=13649=EXP01_1452=20230609-16:27:31.45856=MEMX10=00411=<ClOrddID>10=210
+71
+sent application message 8=FIXT.1.19=7135=D34=13649=EXP01_1452=20230609-16:27:31.45856=MEMX10=00411=<ClOrddID>10=210
+137
+generated_message 8=FIXT.1.19=7135=D34=13749=EXP01_1452=20230609-16:27:32.45956=MEMX10=01011=<ClOrddID>10=213
+generated_message 8=FIXT.1.19=7135=D34=13749=EXP01_1452=20230609-16:27:32.45956=MEMX10=01011=<ClOrddID>10=213
+71
+sent application message 8=FIXT.1.19=7135=D34=13749=EXP01_1452=20230609-16:27:32.46056=MEMX10=01011=<ClOrddID>10=205
+138
+generated_message 8=FIXT.1.19=7135=D34=13849=EXP01_1452=20230609-16:27:33.46156=MEMX10=00911=<ClOrddID>10=208
+generated_message 8=FIXT.1.19=7135=D34=13849=EXP01_1452=20230609-16:27:33.46156=MEMX10=00911=<ClOrddID>10=208
+71
+sent application message 8=FIXT.1.19=7135=D34=13849=EXP01_1452=20230609-16:27:33.46156=MEMX10=00911=<ClOrddID>10=208
+139
+generated_message 8=FIXT.1.19=7135=D34=13949=EXP01_1452=20230609-16:27:34.46356=MEMX10=00811=<ClOrddID>10=212
+generated_message 8=FIXT.1.19=7135=D34=13949=EXP01_1452=20230609-16:27:34.46356=MEMX10=00811=<ClOrddID>10=212
+71
+sent application message 8=FIXT.1.19=7135=D34=13949=EXP01_1452=20230609-16:27:34.46356=MEMX10=00811=<ClOrddID>10=212
+140
+generated_message 8=FIXT.1.19=7135=D34=14049=EXP01_1452=20230609-16:27:35.46456=MEMX10=00511=<ClOrddID>10=206
+generated_message 8=FIXT.1.19=7135=D34=14049=EXP01_1452=20230609-16:27:35.46456=MEMX10=00511=<ClOrddID>10=206
+71
+sent application message 8=FIXT.1.19=7135=D34=14049=EXP01_1452=20230609-16:27:35.46456=MEMX10=00511=<ClOrddID>10=206
+141
+generated_message 8=FIXT.1.19=7135=D34=14149=EXP01_1452=20230609-16:27:36.46656=MEMX10=00411=<ClOrddID>10=210
+generated_message 8=FIXT.1.19=7135=D34=14149=EXP01_1452=20230609-16:27:36.46656=MEMX10=00411=<ClOrddID>10=210
+71
+sent application message 8=FIXT.1.19=7135=D34=14149=EXP01_1452=20230609-16:27:36.46656=MEMX10=00411=<ClOrddID>10=210
+142
+generated_message 8=FIXT.1.19=7135=D34=14249=EXP01_1452=20230609-16:27:37.46756=MEMX10=01011=<ClOrddID>10=213
+generated_message 8=FIXT.1.19=7135=D34=14249=EXP01_1452=20230609-16:27:37.46756=MEMX10=01011=<ClOrddID>10=213
+71
+sent application message 8=FIXT.1.19=7135=D34=14249=EXP01_1452=20230609-16:27:37.46856=MEMX10=01011=<ClOrddID>10=214
+143
+generated_message 8=FIXT.1.19=7135=D34=14349=EXP01_1452=20230609-16:27:38.46956=MEMX10=01811=<ClOrddID>10=217
+generated_message 8=FIXT.1.19=7135=D34=14349=EXP01_1452=20230609-16:27:38.46956=MEMX10=01811=<ClOrddID>10=217
+71
+sent application message 8=FIXT.1.19=7135=D34=14349=EXP01_1452=20230609-16:27:38.46956=MEMX10=01811=<ClOrddID>10=217
