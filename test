@@ -214,12 +214,8 @@ app.run()
 
 
 
-settings = fix.SessionSettings(connection_config_file)
-dictionary = fix.DataDictionary()
-
-for session_id in settings.getSessions():
-    session_settings = settings.getSessionSettings(session_id)
-    dictionary.readFromUrl(session_settings.getString("DataDictionary"))
-
-    session = fix.Session(dictionary, fix.FileStoreFactory(session_settings), session_settings, MyApplication(template_file, message_weights, message_rate))
-    sessions[session_id] = session
+swig/python detected a memory leak of type 'std::set< FIX::SessionID > *', no destructor found.
+Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/LG5.py", line 210, in <module>
+    for session_id in settings.getSessions():
+TypeError: 'SwigPyObject' object is not iterable
