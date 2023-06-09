@@ -187,26 +187,30 @@ app.run()
 
 
 
-Session created - FIXT.1.1:EXP01_14->MEMX
-1
-Iterations 600
-Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/LG4.py", line 184, in <module>
-    app.run()
-  File "/home/pvellanki/loadgenerator/LG4.py", line 155, in run
-    message = fix.Message(self.generate_message(load[message_count]))
-  File "/home/pvellanki/loadgenerator/LG4.py", line 48, in generate_message
-    message = message.replace('<SeqNum>', str(self.get_outgoing_seq_num(self.session_id)))
-  File "/home/pvellanki/loadgenerator/LG4.py", line 70, in get_outgoing_seq_num
-    session = fix.Session.lookupSession(fix.SessionID(session_id))
-  File "/usr/local/lib/python3.10/dist-packages/quickfix.py", line 35193, in __init__
-    this = _quickfix.new_SessionID(*args)
-NotImplementedError: Wrong number or type of arguments for overloaded function 'new_SessionID'.
-  Possible C/C++ prototypes are:
-    FIX::SessionID::SessionID()
-    FIX::SessionID::SessionID(std::string const &,std::string const &,std::string const &,std::string const &)
-    FIX::SessionID::SessionID(std::string const &,std::string const &,std::string const &)
+def get_outgoing_seq_num(self, session_id):
+    session_id_components = session_id.split(":")
+    if len(session_id_components) == 2:
+        begin_string, sender_comp_id = session_id_components
+        session_id_obj = fix.SessionID(begin_string, sender_comp_id, "MEMX")
+        session = fix.Session.lookupSession(session_id_obj)
+        if session is not None:
+            return session.getNextSenderMsgSeqNum()
 
-sent admin message 8=FIXT.1.19=7635=A34=149=EXP01_1452=20230609-00:52:15.91356=MEMX98=0108=11137=1.1010=050
-terminate called without an active exception
-Aborted
+def generate_message(self, template):
+    # Replace placeholders in the message template
+    message = template.replace('<ClOrdID>', self.generate_clordid())
+    message = message.replace('<SeqNum>', str(self.get_outgoing_seq_num(self.session_id.toString())))
+    message = message.replace('<SendingTime>', fix.UtcTimeStamp().getString())
+
+    # Calculate the CheckSum
+    checksum = self.calculate_checksum(message)
+
+    # Calculate the message length (excluding SOH characters)
+    message_length = len(message) - message.count('|')
+
+    # Replace the placeholders for message length and CheckSum
+    message = message.replace('<BodyLength>', str(message_length))
+    message = message.replace('<CheckSum>', checksum)
+
+    return message
+
