@@ -227,16 +227,14 @@ def generate_message(self, template):
     checksum = self.calculate_checksum(message)
 
     # Calculate the message length (excluding SOH characters)
-    message_length = len(message)
+    message_length = len(message) - message.count('\x01')  # Exclude the BodyLength field itself
 
     # Replace the placeholders for message length and CheckSum
     message = message.replace('<BodyLength>', str(message_length))
     message = message.replace('<CheckSum>', checksum)
 
-    # Ensure proper field termination
-    message = message.replace('|', '\x01')  # Replace '|' with SOH character
-
     return message
+
 
 
 
