@@ -211,3 +211,15 @@ app.send_duration = send_duration
 
 # Run the FIX application
 app.run()
+
+
+
+settings = fix.SessionSettings(connection_config_file)
+dictionary = fix.DataDictionary()
+
+for session_id in settings.getSessions():
+    session_settings = settings.getSessionSettings(session_id)
+    dictionary.readFromUrl(session_settings.getString("DataDictionary"))
+
+    session = fix.Session(dictionary, fix.FileStoreFactory(session_settings), session_settings, MyApplication(template_file, message_weights, message_rate))
+    sessions[session_id] = session
