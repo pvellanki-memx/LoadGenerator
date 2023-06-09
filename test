@@ -22,7 +22,7 @@ class MyApplication(fix.Application):
 
     def toAdmin(self, message, sessionID):
         if message.getHeader().getField(fix.MsgType()).getString() == fix.MsgType_Logon:
-            message.getHeader().setField(fix.DecimalField(1408, "1.10"))
+            message.getHeader().setField(1408, "1.10")
             print("sent admin message", message.toString())
         return True
 
@@ -48,6 +48,9 @@ class MyApplication(fix.Application):
 
     def onLogout(self, sessionID):
         print("Logout initiated -", sessionID.toString())
+
+    def onLogon(self, sessionID):
+        print("Logon Successful -", sessionID.toString())
 
     def generate_clordid(self):
         return str(random.randint(100000, 999999))
@@ -171,9 +174,15 @@ class MyApplication(fix.Application):
 
             if message_count >= len(load):
                 message_count = 0
+            print(sessions)
 
-            message = self.generate_message(load[message_count])
-            fix.Session.sendToTarget(message, self.session_id)
+            for session_id in sessions:
+                session = fix.Session.lookupSession(session_id)
+                print(session)
+
+                if session is not None and session.isLoggedOn():
+                   message = self.generate_message(load[message_count])
+                   fix.Session.sendToTarget(message, self.session_id)
 
             message_count += 1
 
