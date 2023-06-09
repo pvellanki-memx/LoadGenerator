@@ -299,6 +299,13 @@ def get_outgoing_seq_num(self, session_id):
         session_id = session.getSessionID()
         return session_id.getSenderSeqNum()
     return 0
+    
+    
+    
+    # Calculate the message length (excluding SOH characters)
+    body_start_index = message.index('9=')
+    body_end_index = message.index('10=')
+    body_length = body_end_index - body_start_index
 
 
 
