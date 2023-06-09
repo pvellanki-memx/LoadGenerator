@@ -302,23 +302,31 @@ def get_outgoing_seq_num(self, session_id):
     
     
     
-    # Calculate the message length (excluding SOH characters)
-    body_start_index = message.index('9=')
-    body_end_index = message.index('10=')
-    body_length = body_end_index - body_start_index
-    
-generated_message 8=FIXT.1.19=4935=549=EXP01_1456=MEMX34=2252=20230609-13:35:17.54510=<CheckSum>
-61
-8=FIXT.1.19=4935=549=EXP01_1456=MEMX34=2252=20230609-13:35:17.54510=220
+Session created - FIXT.1.1:EXP01_14->MEMX
+1
+Iterations 600
+27
 Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/LG4.py", line 209, in <module>
+  File "/home/pvellanki/loadgenerator/LG4.py", line 215, in <module>
     app.run()
-  File "/home/pvellanki/loadgenerator/LG4.py", line 180, in run
+  File "/home/pvellanki/loadgenerator/LG4.py", line 186, in run
     message = fix.Message(self.generate_message(load[message_count]))
-sent admin message 8=FIXT.1.19=7735=A34=2249=EXP01_1452=20230609-13:35:17.54556=MEMX98=0108=11137=1.1010=110
-  File "/usr/local/lib/python3.10/dist-packages/quickfix.py", line 1395, in __init__
-    this = _quickfix.new_Message(*args)
-quickfix.InvalidMessage: Invalid message: Expected BodyLength=56, Received BodyLength=49
+  File "/home/pvellanki/loadgenerator/LG4.py", line 87, in generate_message
+    fix_message.setField(fix.CheckSum(checksum))
+sent admin message 8=FIXT.1.19=7735=A34=2749=EXP01_1452=20230609-13:59:28.19556=MEMX98=0108=11137=1.1010=124
+  File "/usr/local/lib/python3.10/dist-packages/quickfix.py", line 40053, in __init__
+    quickfix.CheckSumField.__init__(self, 10, data)
+  File "/usr/local/lib/python3.10/dist-packages/quickfix.py", line 1197, in __init__
+Session disconnected for FIXT.1.1:EXP01_14->MEMX
+    this = _quickfix.new_CheckSumField(*args)
+NotImplementedError: Wrong number or type of arguments for overloaded function 'new_CheckSumField'.
+  Possible C/C++ prototypes are:
+    FIX::CheckSumField::CheckSumField(int,int)
+    FIX::CheckSumField::CheckSumField(int)
+
+sent admin message 8=FIXT.1.19=5635=534=2849=EXP01_1452=20230609-13:59:28.20056=MEMX10=176
+terminate called without an active exception
+Aborted
 
 
 
