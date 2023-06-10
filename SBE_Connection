@@ -1,14 +1,8 @@
-MEMX-TCP
-Overview
-Request Modes
-Connection Procedure
-State Diagram
-Miscellaneous Notes
-Binary Message Format
-Common Header
+
 Message Types
 Server-to-Client And Client-To-Server
 Heartbeat (Message Type = 0)
+
 Client-to-Server
 Login Request (Message Type = 100)
 Replay Request (Message Type = 101)
@@ -27,6 +21,8 @@ Stream Begin (Message Type = 8)
 Stream Rejected (Message Type = 9)
 Stream Complete (Message Type = 10)
 Sequenced Message (Message Type = 11)
+
+
 Overview
 MEMX-TCP is a TCP-based session-layer protocol for reliable delivery of business messages. Use-cases include filling gaps from a MEMXUDP or similar unreliable message source, or for streaming data.
 All fields in MEMX-TCP are formatted on the wire in network (big endian) byte order. Any numeric fields are unsigned.
@@ -35,6 +31,7 @@ protocols may apply additional restrictions on the MEMX-TCP connection procedure
 If a malformed or unexpected session-level message is received by the server, the client will be forcibly disconnected via the server sending
 a TCP RST packet. Business level messages may have additional error handling semantics in addition to those applied at the session layer
 by MEMX-TCP.
+
 Request Modes
 Memx-TCP servers operate in one of two distinct modes: Replay or Stream . Servers identify the mode they operate in to the client with a
 Login Accepted message.
@@ -48,6 +45,8 @@ In Stream mode, the server will accept requests for data which starts at a speci
 messages beginning at the requested sequence number to the client as quickly as they are able to process them. Once the client no
 longer wishes to receive messages, the client should initiate a TCP disconnection. Any Replay request received by a server operating
 in Stream mode will be rejected.
+
+
 Connection Procedure
 Once a TCP connection is established, clients should send a login message to authorize the session.
 If the client’s credentials are not accepted, a Login Rejected message will be sent to the client and the TCP connection will be closed.
@@ -77,6 +76,7 @@ If the session which is in progress is terminated while a client is streaming or
 stream or replay request and deliver the complete set of messages to the client.In the event that the server is unable to completely
 deliver all requested messages to the client before the session must be closed, clients will be forcibly disconnected before receiving
 a Stream Complete or Replay Complete message, and should attempt to reconnect to the server.
+
 Binary Message Format
 Common Header
 Offset Length Type Name Description
