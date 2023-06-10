@@ -1,47 +1,28 @@
 import sbe
 
-# Load the schema
+# Step 1: Parse the schema
 with open('your-schema.xml', 'r') as f:
     schema = sbe.Schema.parse(f)
 
-# Define the input message
-input_message = {
-    'name': 'NewOrderSingle',
-    'fields': {
-        'SendingTime': 1623157199000000000,
-        'ClOrdID': 'ORDER001',
-        'OptionsSecurityID': 'OPT123',
-        'Side': 'Buy',
-        'OrderQty': 100,
-        'OrdType': 'Limit',
-        'Price': 123.45,
-        'TimeInForce': 'Day'
-    }
-}
+# Step 2: Define the message ID and input message for encoding
+message_id = 3
+message = schema.messages[message_id].create_message()
 
-# Encode the input message
-encoded = schema.encode(input_message['name'], input_message['fields'])
+# Step 3: Set field values in the message object
+message.userId = 11
+message.price = 5678.0
+# ...
 
-# Save the encoded message to a file
-with open('encoded.sbe', 'wb') as f:
-    f.write(encoded)
+# Step 4: Encoding
+encoded = schema.encode(message)
 
-# Read the encoded message from the file
-with open('encoded.sbe', 'rb') as f:
-    encoded_data = f.read()
-
-# Decode the encoded message
-decoded = schema.decode(encoded_data)
-
-# Print the original input message
-print("Input Message:")
-print(input_message)
-
-# Print the encoded message
-print("Encoded Message:")
+# Print the encoded bytes
+print("Encoded message:")
 print(encoded)
 
+# Step 5: Decoding
+decoded = schema.decode(encoded)
+
 # Print the decoded message
-print("Decoded Message:")
-print(decoded.name)
-print(decoded.value)
+print("Decoded message:")
+print(decoded)
