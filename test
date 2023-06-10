@@ -49,3 +49,12 @@ print(encoded)
 print("Decoded Message:")
 print(name)
 print(value)
+
+
+
+
+
+Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/sbe/LG.py", line 23, in <module>
+    encoded = schema.encode(input_message)
+TypeError: Schema.encode() missing 1 required positional argument: 'obj'
