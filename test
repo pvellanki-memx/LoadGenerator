@@ -25,14 +25,20 @@ obj = {
     ]
 }
 
-# Step 6: Encoding
-encoded = schema.encode(schema.messages[message_id], obj)
+# Step 4: Remove optional fields from the message object
+message = schema.messages[message_id]
+fields_to_remove = [f.name for f in message.fields if f.presence == 'optional']
+for field_name in fields_to_remove:
+    obj.pop(field_name, None)
+
+# Step 5: Encoding
+encoded = schema.encode(message, obj)
 
 # Print the encoded bytes
 print("Encoded message:")
 print(encoded)
 
-# Step 7: Decoding
+# Step 6: Decoding
 decoded = schema.decode(encoded)
 
 # Print the decoded message
