@@ -1,20 +1,21 @@
 import sbe
 
 # Step 1: Parse the schema
-with open('your-schema.xml', 'r') as f:
+with open('sbe-schema.xml', 'r') as f:
     schema = sbe.Schema.parse(f)
 
 # Step 2: Define the message ID and input message for encoding
 message_id = 3
-message = schema.messages[message_id].create_message()
+#message = schema.messages[message_id].message()
 
 # Step 3: Set field values in the message object
-message.userId = 11
-message.price = 5678.0
+obj = {
+  'userId': 11,
+'price': 5678.0}
 # ...
 
 # Step 4: Encoding
-encoded = schema.encode(message)
+encoded = schema.encode(schema.messages[message_id],obj)
 
 # Print the encoded bytes
 print("Encoded message:")
