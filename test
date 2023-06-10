@@ -1,5 +1,5 @@
-from sbe_tool.sbe import Encoder, Decoder
-from sbe_tool.sbe_types import *
+from sbe import Encoder, Decoder
+from sbe.types import *
 
 # Define the schema
 schema_xml = """
