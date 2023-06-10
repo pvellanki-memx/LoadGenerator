@@ -12,26 +12,17 @@ obj = {
     'SendingTime': 1623155790000000000,
     'ClOrdID': 'ABC123',
     'OptionsSecurityID': 'XYZ456',
-    'Side': 1,  # Assuming 'Side' field expects an integer
+    'Side': 'Buy',
     'OrderQty': 100,
-    'OrdType': 1,  # Assuming 'OrdType' field expects an integer
+    'OrdType': 'Market',
     'Price': 5678.0,
-    'TimeInForce': 3,  # Assuming 'TimeInForce' field expects an integer
-    'OpenOrClose': 1,  # Assuming 'OpenOrClose' field expects an integer
-    'ExecInst': 4,  # Assuming 'ExecInst' field expects an integer
-    'TradingCapacity': 1,  # Assuming 'TradingCapacity' field expects an integer
-    'RepriceFrequency': 1,  # Assuming 'RepriceFrequency' field expects an integer
-    'RepriceBehavior': 1,  # Assuming 'RepriceBehavior' field expects an integer
-    'MtpGroupID': 1,
-    'MatchTradePrevention': 1,  # Assuming 'MatchTradePrevention' field expects an integer
-    'CancelGroupID': 2,
-    'RiskGroupID': 3,
+    'TimeInForce': 'Day',
+    'ExecInst': 'DoNotIncrease',
+    'TradingCapacity': 'Principal',
     'Parties': [
         {'PartyID': 'PARTY1', 'PartyIDSource': 'D', 'PartyRole': 1},
         {'PartyID': 'PARTY2', 'PartyIDSource': 'D', 'PartyRole': 2}
     ]
-    # Add values for other fields of message_id = 1
-    # ...
 }
 
 # Step 6: Encoding
