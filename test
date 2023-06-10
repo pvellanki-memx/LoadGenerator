@@ -1,48 +1,35 @@
-from pysbe import SbeEncoder, SbeDecoder
+from sbe import Codec
 
-# Step 1: Define the SBE schema file path
-schema_file = 'path/to/your/sbe-schema.xml'
+# Step 1: Parse the schema
+with open('sbe-schema.xml', 'r') as f:
+    schema_xml = f.read()
 
-# Step 2: Create an instance of SbeEncoder
-encoder = SbeEncoder(schema_file)
+# Step 2: Create a codec instance
+codec = Codec(schema_xml)
 
-# Step 3: Create an instance of SbeDecoder
-decoder = SbeDecoder(schema_file)
-
-# Step 4: Define the message ID and input message for encoding
+# Step 3: Define the message ID and input message for encoding
 message_id = 1
 
-# Step 5: Set field values in the message object
-obj = {
-    'SendingTime': 1623155790000000000,
-    'ClOrdID': 'ABC123',
-    'OptionsSecurityID': 'XYZ456',
-    'Side': 'Buy',
-    'OrderQty': 100,
-    'OrdType': 'Market',
-    'Price': '5678.0',
-    'TimeInForce': 'Day',
-    'OpenOrClose': 'Open',
-    'ExecInst': 'DoNotIncrease',
-    'TradingCapacity': 'Principal',
-    'RepriceFrequency': 'Daily',
-    'RepriceBehavior': 'CancelOldest',
-    'MtpGroupID': 1,
-    'MatchTradePrevention': 'PreventSelfMatch',
-    'CancelGroupID': 2,
-    'RiskGroupID': 3,
-}
+# Step 4: Set field values in the message object
+message = codec.get_message_template(message_id)
+message.set_field('userId', 11)
+message.set_field('timestamp', 1598784004840)
+message.set_field('orderSize', 0)
+message.set_field('price', 5678.0)
+# Add other field assignments based on your schema
 
-# Step 6: Encoding
-encoded_message = encoder.encode(message_id, obj)
+# Step 5: Encoding
+encoded = codec.encode(message)
 
-# Print the encoded message
+# Print the encoded bytes
 print("Encoded message:")
-print(encoded_message)
+print(encoded)
 
-# Step 7: Decoding
-decoded_message = decoder.decode(message_id, encoded_message)
+# Step 6: Decoding
+decoded_message = codec.decode(encoded)
 
-# Print the decoded message
+# Print the decoded message fields
 print("Decoded message:")
-print(decoded_message)
+for field_name in decoded_message.fields:
+    field_value = decoded_message.get_field(field_name)
+    print(f"{field_name}: {field_value}")
