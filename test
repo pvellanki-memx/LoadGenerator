@@ -1,48 +1,48 @@
-import sbe
+from pysbe import SbeEncoder, SbeDecoder
 
-# Step 1: Parse the schema
-with open('sbe-schema.xml', 'r') as f:
-    schema = sbe.Schema.parse(f)
+# Step 1: Define the SBE schema file path
+schema_file = 'path/to/your/sbe-schema.xml'
 
-# Step 2: Define the message ID and input message for encoding
+# Step 2: Create an instance of SbeEncoder
+encoder = SbeEncoder(schema_file)
+
+# Step 3: Create an instance of SbeDecoder
+decoder = SbeDecoder(schema_file)
+
+# Step 4: Define the message ID and input message for encoding
 message_id = 1
 
-# Step 3: Create a class based on the message structure
-message_struct = schema.messages[message_id].structure
+# Step 5: Set field values in the message object
+obj = {
+    'SendingTime': 1623155790000000000,
+    'ClOrdID': 'ABC123',
+    'OptionsSecurityID': 'XYZ456',
+    'Side': 'Buy',
+    'OrderQty': 100,
+    'OrdType': 'Market',
+    'Price': '5678.0',
+    'TimeInForce': 'Day',
+    'OpenOrClose': 'Open',
+    'ExecInst': 'DoNotIncrease',
+    'TradingCapacity': 'Principal',
+    'RepriceFrequency': 'Daily',
+    'RepriceBehavior': 'CancelOldest',
+    'MtpGroupID': 1,
+    'MatchTradePrevention': 'PreventSelfMatch',
+    'CancelGroupID': 2,
+    'RiskGroupID': 3,
+}
 
-class MessageClass(sbe.Struct):
-    _fields = message_struct
+# Step 6: Encoding
+encoded_message = encoder.encode(message_id, obj)
 
-# Step 4: Create an instance of the message class and set field values
-obj = MessageClass()
-obj.SendingTime = 1623155790000000000
-obj.ClOrdID = 'ABC123'
-obj.OptionsSecurityID = 'XYZ456'
-obj.Side = 'Buy'
-obj.OrderQty = 100
-obj.OrdType = 'Market'
-obj.Price = '5678.0'
-obj.TimeInForce = 'Day'
-obj.OpenOrClose = 'Open'
-obj.ExecInst = 'DoNotIncrease'
-obj.TradingCapacity = 'Principal'
-obj.RepriceFrequency = 'Daily'
-obj.RepriceBehavior = 'CancelOldest'
-obj.MtpGroupID = 1
-obj.MatchTradePrevention = 'PreventSelfMatch'
-obj.CancelGroupID = 2
-obj.RiskGroupID = 3
-
-# Step 5: Encoding
-encoded = schema.encode(schema.messages[message_id], obj)
-
-# Print the encoded bytes
+# Print the encoded message
 print("Encoded message:")
-print(encoded)
+print(encoded_message)
 
-# Step 6: Decoding
-decoded = schema.decode(encoded)
+# Step 7: Decoding
+decoded_message = decoder.decode(message_id, encoded_message)
 
 # Print the decoded message
 print("Decoded message:")
-print(decoded)
+print(decoded_message)
