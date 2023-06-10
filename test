@@ -1,60 +1,51 @@
-from sbe import Encoder, Decoder
-from sbe.types import *
+import sbe
 
-# Define the schema
-schema_xml = """
-<your_schema_xml_here>
-"""
+# Load the schema
+with open('your-schema.xml', 'r') as f:
+    schema = sbe.Schema.parse(f)
 
 # Define the input message
 input_message = {
-    "SendingTime": UTCTimestampNanos(123456789),
-    "ClOrdID": NewOrderSingleClOrdID("ORD123456789"),
-    "OptionsSecurityID": NewOrderSingleOptionsSecurityID("OPT123456"),
-    "Side": SideType.Buy,
-    "OrderQty": UInt32(100),
-    "OrdType": OrdType.Limit,
-    "Price": PriceType(10.5),
-    "TimeInForce": TimeInForceType.GoodTillCancel,
-    "OpenOrClose": OpenOrCloseType.Open,
-    "ExecInst": ExecInstType.DoNotIncrease,
-    "TradingCapacity": TradingCapacityType.Principal,
-    "RepriceFrequency": RepriceFrequencyType(5),
-    "RepriceBehavior": RepriceBehaviorType.CancelAndReprice,
-    "MtpGroupID": UInt16(1),
-    "MatchTradePrevention": MatchTradePreventionType.Enabled,
-    "CancelGroupID": UInt16(2),
-    "RiskGroupID": UInt16(3),
-    "Parties": [
-        {
-            "PartyID": NewOrderSinglePartyID("Party1"),
-            "PartyIDSource": "1",
-            "PartyRole": UInt8(1)
-        },
-        {
-            "PartyID": NewOrderSinglePartyID("Party2"),
-            "PartyIDSource": "2",
-            "PartyRole": UInt8(2)
-        }
-    ]
+    'name': 'NewOrderSingle',
+    'fields': {
+        'SendingTime': 1623157199000000000,
+        'ClOrdID': 'ORDER001',
+        'OptionsSecurityID': 'OPT123',
+        'Side': 'Buy',
+        'OrderQty': 100,
+        'OrdType': 'Limit',
+        'Price': 123.45,
+        'TimeInForce': 'Day'
+    }
 }
 
-# Create an instance of the Encoder
-encoder = Encoder(schema_xml)
-
 # Encode the input message
-encoded_message = encoder.encode_message("NewOrderSingle", input_message)
+encoded = schema.encode(input_message)
 
-# Print the encoded message
-print("Encoded message:")
-print(encoded_message)
+# Save the encoded message to a file
+with open('encoded.sbe', 'wb') as f:
+    f.write(encoded)
 
-# Create an instance of the Decoder
-decoder = Decoder(schema_xml)
+# Read the encoded message from the file
+with open('encoded.sbe', 'rb') as f:
+    encoded_data = f.read()
 
 # Decode the encoded message
-decoded_message = decoder.decode_message("NewOrderSingle", encoded_message)
+decoded = schema.decode(encoded_data)
+
+# Access the decoded fields
+name = decoded.name
+value = decoded.value
+
+# Print the original input message
+print("Input Message:")
+print(input_message)
+
+# Print the encoded message
+print("Encoded Message:")
+print(encoded)
 
 # Print the decoded message
-print("\nDecoded message:")
-print(decoded_message)
+print("Decoded Message:")
+print(name)
+print(value)
