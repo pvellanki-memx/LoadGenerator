@@ -27,3 +27,17 @@ decoded = schema.decode(encoded)
 # Print the decoded message
 print("Decoded message:")
 print(decoded)
+
+
+input_message = {
+    'name': 'NewOrderSingle',
+    'fields': {
+        'SendingTime': 1623157199000000000,
+        'ClOrdID': 'ORDER001',
+        'OptionsSecurityID': 'OPT123',
+        'Side': 'Buy',
+        'OrderQty': 100,
+        'OrdType': 'Limit',
+        'Price': 123.45,
+        'TimeInForce': 'Day'
+    }
