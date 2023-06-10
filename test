@@ -20,7 +20,7 @@ input_message = {
 }
 
 # Encode the input message
-encoded = schema.encode(input_message)
+encoded = schema.encode(input_message['name'], input_message['fields'])
 
 # Save the encoded message to a file
 with open('encoded.sbe', 'wb') as f:
@@ -33,10 +33,6 @@ with open('encoded.sbe', 'rb') as f:
 # Decode the encoded message
 decoded = schema.decode(encoded_data)
 
-# Access the decoded fields
-name = decoded.name
-value = decoded.value
-
 # Print the original input message
 print("Input Message:")
 print(input_message)
@@ -47,14 +43,5 @@ print(encoded)
 
 # Print the decoded message
 print("Decoded Message:")
-print(name)
-print(value)
-
-
-
-
-
-Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/sbe/LG.py", line 23, in <module>
-    encoded = schema.encode(input_message)
-TypeError: Schema.encode() missing 1 required positional argument: 'obj'
+print(decoded.name)
+print(decoded.value)
