@@ -17,28 +17,30 @@ obj = {
     'OrdType': 'Market',
     'Price': 5678.0,
     'TimeInForce': 'Day',
+    'OpenOrClose': 'Open',
     'ExecInst': 'DoNotIncrease',
     'TradingCapacity': 'Principal',
+    'RepriceFrequency': 'Daily',
+    'RepriceBehavior': 'CancelOldest',
+    'MtpGroupID': 1,
+    'MatchTradePrevention': 'PreventSelfMatch',
+    'CancelGroupID': 2,
+    'RiskGroupID': 3,
     'Parties': [
         {'PartyID': 'PARTY1', 'PartyIDSource': 'D', 'PartyRole': 1},
         {'PartyID': 'PARTY2', 'PartyIDSource': 'D', 'PartyRole': 2}
     ]
 }
 
-# Step 4: Remove optional fields from the message object
+# Step 4: Encoding
 message = schema.messages[message_id]
-fields_to_remove = [f.name for f in message.fields if f.presence == 'optional']
-for field_name in fields_to_remove:
-    obj.pop(field_name, None)
-
-# Step 5: Encoding
 encoded = schema.encode(message, obj)
 
 # Print the encoded bytes
 print("Encoded message:")
 print(encoded)
 
-# Step 6: Decoding
+# Step 5: Decoding
 decoded = schema.decode(encoded)
 
 # Print the decoded message
