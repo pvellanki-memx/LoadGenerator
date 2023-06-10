@@ -7,8 +7,14 @@ with open('sbe-schema.xml', 'r') as f:
 # Step 2: Define the message ID and input message for encoding
 message_id = 1
 
-# Step 3: Set field values in the message object
-obj = schema.messages[message_id].get_struct()
+# Step 3: Create a class based on the message structure
+message_struct = schema.messages[message_id].structure
+
+class MessageClass(sbe.Struct):
+    _fields = message_struct
+
+# Step 4: Create an instance of the message class and set field values
+obj = MessageClass()
 obj.SendingTime = 1623155790000000000
 obj.ClOrdID = 'ABC123'
 obj.OptionsSecurityID = 'XYZ456'
@@ -27,14 +33,14 @@ obj.MatchTradePrevention = 'PreventSelfMatch'
 obj.CancelGroupID = 2
 obj.RiskGroupID = 3
 
-# Step 4: Encoding
+# Step 5: Encoding
 encoded = schema.encode(schema.messages[message_id], obj)
 
 # Print the encoded bytes
 print("Encoded message:")
 print(encoded)
 
-# Step 5: Decoding
+# Step 6: Decoding
 decoded = schema.decode(encoded)
 
 # Print the decoded message
