@@ -30,6 +30,7 @@ def decode_short_price(buffer, offset):
     value = mantissa * 10 ** exponent
     return value, offset + 3
 
+
 # Decode UTC timestamp in nanoseconds
 def decode_utc_timestamp_nanos(buffer, offset):
     unit = struct.unpack_from('>B', buffer, offset)[0]
