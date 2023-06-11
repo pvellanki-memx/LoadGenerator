@@ -5,12 +5,20 @@ def decode_boolean(buffer, offset):
     value = struct.unpack_from('>B', buffer, offset)[0]
     return value != 0, offset + 1
 
-# Decode price value
 def decode_price(buffer, offset):
+    presence = struct.unpack_from('>B', buffer, offset)[0]
+    offset += 1
+
+    if presence == 0:
+        return None, offset
+
     exponent = struct.unpack_from('>b', buffer, offset)[0]
-    mantissa = struct.unpack_from('>Q', buffer, offset + 1)[0]
-    value = mantissa * 10 ** exponent
-    return value, offset + 9
+    mantissa = struct.unpack_from('>Q', buffer, offset + 1 + struct.calcsize('>b'))[0]
+    price_value = mantissa * pow(10, exponent)
+    offset += 9
+
+    return price_value, offset
+
 
 # Decode short price value
 def decode_short_price(buffer, offset):
