@@ -13,11 +13,16 @@ def decode_price(buffer, offset):
         return None, offset
 
     exponent = struct.unpack_from('>b', buffer, offset)[0]
-    mantissa = struct.unpack_from('>Q', buffer, offset + 1 + struct.calcsize('>b'))[0]
+    offset += 1
+
+    mantissa_bytes = buffer[offset:offset+8]
+    mantissa = struct.unpack('>Q', mantissa_bytes)[0]
+
     price_value = mantissa * pow(10, exponent)
-    offset += 9
+    offset += 8
 
     return price_value, offset
+
 
 
 # Decode short price value
