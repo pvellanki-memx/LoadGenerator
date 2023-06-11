@@ -176,3 +176,14 @@ field_values = {
 encoded_message = encode_message(schema, 'NewOrderSingle', field_values)
 
 print(f"Encoded Message: {encoded_message.hex()}")
+
+
+
+
+(myenv) pvellanki@qa2434:~/loadgenerator/sbe$ python3 sbe_encoder.py
+Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/sbe/sbe_encoder.py", line 129, in <module>
+    encoded_message = encode_message(schema, 'NewOrderSingle', field_values)
+  File "/home/pvellanki/loadgenerator/sbe/sbe_encoder.py", line 55, in encode_message
+    raise ValueError(f"Message '{message_name}' not found in the schema.")
+ValueError: Message 'NewOrderSingle' not found in the schema.
