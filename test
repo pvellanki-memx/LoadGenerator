@@ -78,3 +78,15 @@ print('Number in group:', num_in_group)
 
 enum_value, offset = decode_enum(buffer, offset, 'uint8')
 print('Enum value:', enum_value)
+
+
+
+(myenv) pvellanki@qa2434:~/loadgenerator/sbe$ python3 sbe_decoder.py 
+Boolean value: False
+Price value: 0
+Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/sbe/sbe_decoder.py", line 69, in <module>
+    short_price_value, offset = decode_short_price(buffer, offset)
+  File "/home/pvellanki/loadgenerator/sbe/sbe_decoder.py", line 28, in decode_short_price
+    exponent = struct.unpack_from('>b', buffer, offset)[0]
+struct.error: unpack_from requires a buffer of at least 12 bytes for unpacking 1 bytes at offset 11 (actual buffer size is 4)
