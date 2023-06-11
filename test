@@ -86,11 +86,11 @@ print('Enum value:', enum_value)
 (myenv) pvellanki@qa2434:~/loadgenerator/sbe$ python3 sbe_decoder.py 
 Boolean value: False
 Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/sbe/sbe_decoder.py", line 62, in <module>
+  File "/home/pvellanki/loadgenerator/sbe/sbe_decoder.py", line 66, in <module>
     price_value, offset = decode_price(buffer, offset)
-  File "/home/pvellanki/loadgenerator/sbe/sbe_decoder.py", line 16, in decode_price
-    mantissa = struct.unpack_from('>Q', buffer, offset + 1 + struct.calcsize('>b'))[0]
-struct.error: unpack_from requires a buffer of at least 12 bytes for unpacking 8 bytes at offset 4 (actual buffer size is 4)
+  File "/home/pvellanki/loadgenerator/sbe/sbe_decoder.py", line 19, in decode_price
+    mantissa = struct.unpack('>Q', mantissa_bytes)[0]
+struct.error: unpack requires a buffer of 8 bytes
 
 
 
