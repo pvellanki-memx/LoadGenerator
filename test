@@ -1,35 +1,178 @@
-from sbe import Codec
+import struct
+import xml.etree.ElementTree as ET
 
-# Step 1: Parse the schema
-with open('sbe-schema.xml', 'r') as f:
-    schema_xml = f.read()
 
-# Step 2: Create a codec instance
-codec = Codec(schema_xml)
+def read_schema(schema_file):
+    tree = ET.parse(schema_file)
+    root = tree.getroot()
+    return root
 
-# Step 3: Define the message ID and input message for encoding
-message_id = 1
 
-# Step 4: Set field values in the message object
-message = codec.get_message_template(message_id)
-message.set_field('userId', 11)
-message.set_field('timestamp', 1598784004840)
-message.set_field('orderSize', 0)
-message.set_field('price', 5678.0)
-# Add other field assignments based on your schema
+def build_field_format(field_type):
+    field_type = field_type.lower()
+    if field_type == 'utctimestampnanos':
+        return 'Q'
+    elif field_type == 'newordersingleclordid':
+        return '8s'
+    elif field_type == 'newordersingleoptionssecurityid':
+        return '4s'
+    elif field_type == 'sidetype':
+        return 'B'
+    elif field_type == 'uint32':
+        return 'I'
+    elif field_type == 'ordtype':
+        return 'B'
+    elif field_type == 'pricetype':
+        return 'd'
+    elif field_type == 'timeinforcetype':
+        return 'B'
+    elif field_type == 'openorclosetype':
+        return 'B'
+    elif field_type == 'execinsttype':
+        return 'B'
+    elif field_type == 'tradingcapacitytype':
+        return 'B'
+    elif field_type == 'repricefrequencytype':
+        return 'B'
+    elif field_type == 'repricebehaviortype':
+        return 'B'
+    elif field_type == 'uint16':
+        return 'H'
+    elif field_type == 'matchtradepreventiontype':
+        return 'B'
+    elif field_type == 'newordersinglepartyid':
+        return '8s'
+    elif field_type == 'char':
+        return 'c'
+    else:
+        raise ValueError(f"Unsupported field type: {field_type}")
 
-# Step 5: Encoding
-encoded = codec.encode(message)
 
-# Print the encoded bytes
-print("Encoded message:")
-print(encoded)
+def encode_message(schema, message_name, field_values):
+    # Find the message in the schema
+    message = schema.find(f".//message[@name='{message_name}']")
+    if message is None:
+        raise ValueError(f"Message '{message_name}' not found in the schema.")
 
-# Step 6: Decoding
-decoded_message = codec.decode(encoded)
+    # Get the message fields
+    fields = message.findall('field')
 
-# Print the decoded message fields
-print("Decoded message:")
-for field_name in decoded_message.fields:
-    field_value = decoded_message.get_field(field_name)
-    print(f"{field_name}: {field_value}")
+    # Define the encoding format for the header fields
+    header_length_fmt = 'H'  # Unsigned short (2 bytes)
+    template_id_fmt = 'H'  # Unsigned short (2 bytes)
+    schema_id_fmt = 'H'  # Unsigned short (2 bytes)
+    version_fmt = 'H'  # Unsigned short (2 bytes)
+
+    # Calculate the total length of the encoded message
+    header_length = struct.calcsize(header_length_fmt + template_id_fmt + schema_id_fmt + version_fmt)
+    message_length = sum([struct.calcsize(build_field_format(field.attrib['type'])) for field in fields])
+    total_length = header_length + message_length
+
+    # Pack the header fields
+    header_data = struct.pack(header_length_fmt + template_id_fmt + schema_id_fmt + version_fmt,
+                              total_length, template_id, schema_id, version)
+
+    # Pack the message fields
+    message_data = b''
+    for field in fields:
+        field_id = int(field.attrib['id'])
+        field_type = field.attrib['type']
+        field_value = field_values.get(field_id)
+        field_format = build_field_format(field_type)
+
+        if field_value is None:
+            if 'presence' in field.attrib and field.attrib['presence'] == 'optional':
+                continue  # Skip optional fields with no value
+            else:
+                raise ValueError(f"Missing value for required field ID={field_id}")
+
+        field_data = struct.pack(field_format, field_value)
+        message_data += field_data
+
+    # Concatenate the header and message data
+    encoded_message = header_data + message_data
+
+    return encoded_message
+
+
+# Sample usage
+schema_file = 'schema.xml'
+template_id = 1  # Replace with the actual template ID
+schema_id = 123  # Replace with the actual schema ID
+version = 1  # Replace with the actual schema version
+
+# Read the schema from XML file
+schema = read_schema(schema_file)
+
+# Define field values for NewOrderSingle
+field_values = {
+    52: 1623365123456789000,  # SendingTime
+    11: b'CLORD001',  # ClOrdID
+    21035: b'OPTID001',  # OptionsSecurityID
+    54: 1,  # Side
+    38: 100,  # OrderQty
+    40: 1,  # OrdType
+    44: 123.45,  # Price
+    59: 0,  # TimeInForce
+    77: 1,  # OpenOrClose
+    18: 1,  # ExecInst
+    1815: 2,  # TradingCapacity
+    21020: 3,  # RepriceFrequency
+    21021: 4,  # RepriceBehavior
+    2362: 5,  # MtpGroupID
+    21001: 6,  # MatchTradePrevention
+    21000: 7,  # CancelGroupID
+    21005: 8,  # RiskGroupID
+}
+
+# Encode the NewOrderSingle message
+encoded_message = encode_message(schema, 'NewOrderSingle', field_values)
+
+print(f"Encoded Message: {encoded_message.hex()}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Sample usage
+schema_file = 'schema.xml'
+template_id = 1  # Replace with the actual template ID
+schema_id = 123  # Replace with the actual schema ID
+version = 1  # Replace with the actual schema version
+
+# Read the schema from XML file
+schema = read_schema(schema_file)
+
+# Define field values for NewOrderSingle
+field_values = {
+    52: 1623365123456789000,  # SendingTime
+    11: b'CLORD001',  # ClOrdID
+    21035: b'OPTID001',  # OptionsSecurityID
+    54: 1,  # Side
+    38: 100,  # OrderQty
+    40: 1,  # OrdType
+    44: 123.45,  # Price
+    59: 0,  # TimeInForce
+    77: 1,  # OpenOrClose
+    18: 1,  # ExecInst
+    1815: 2,  # TradingCapacity
+    21020: 3,  # RepriceFrequency
+    21021: 4,  # RepriceBehavior
+    2362: 5,  # MtpGroupID
+    21001: 6,  # MatchTradePrevention
+    21000: 7,  # CancelGroupID
+    21005: 8,  # RiskGroupID
+}
+
+# Encode the NewOrderSingle message
+encoded_message = encode_message(schema, 'NewOrderSingle', field_values)
+
+print(f"Encoded Message: {encoded_message.hex()}")
