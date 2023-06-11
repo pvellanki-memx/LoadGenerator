@@ -1,13 +1,11 @@
 import xml.etree.ElementTree as ET
 import struct
 
-
 def load_schema(schema_file):
     tree = ET.parse(schema_file)
     root = tree.getroot()
     messages = {}
 
-    # Define the XML namespace
     namespace = {'sbe': 'http://www.fixprotocol.org/ns/simple/2.0'}
 
     for message_elem in root.findall('sbe:message', namespace):
@@ -15,7 +13,7 @@ def load_schema(schema_file):
         message_name = message_elem.get('name')
         fields = {}
 
-        for field_elem in message_elem.findall('.//sbe:field', namespace):
+        for field_elem in message_elem.findall('.//field'):
             field_id = int(field_elem.get('id'))
             field_type = field_elem.get('type')
             fields[field_id] = field_type
