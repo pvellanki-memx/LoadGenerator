@@ -15,13 +15,14 @@ def decode_price(buffer, offset):
     exponent = struct.unpack_from('>b', buffer, offset)[0]
     offset += 1
 
-    mantissa_bytes = buffer[offset:offset+8]
-    mantissa = struct.unpack('>Q', mantissa_bytes + b'\x00\x00\x00\x00\x00\x00')[0]
+    mantissa_bytes = buffer[offset:offset + 8]
+    mantissa = int.from_bytes(mantissa_bytes, byteorder='big', signed=False)
 
     price_value = mantissa * pow(10, exponent)
     offset += 8
 
     return price_value, offset
+
 
 
 
