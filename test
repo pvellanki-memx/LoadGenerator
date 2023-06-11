@@ -7,12 +7,15 @@ def load_schema(schema_file):
     root = tree.getroot()
     messages = {}
 
-    for message_elem in root.findall('message'):
+    # Define the XML namespace
+    namespace = {'sbe': 'http://www.fixprotocol.org/ns/simple/2.0'}
+
+    for message_elem in root.findall('sbe:message', namespace):
         message_id = int(message_elem.get('id'))
         message_name = message_elem.get('name')
         fields = {}
 
-        for field_elem in message_elem.findall('.//field'):
+        for field_elem in message_elem.findall('.//sbe:field', namespace):
             field_id = int(field_elem.get('id'))
             field_type = field_elem.get('type')
             fields[field_id] = field_type
@@ -20,6 +23,7 @@ def load_schema(schema_file):
         messages[message_name] = {'id': message_id, 'fields': fields}
 
     return messages
+
 
 
 
