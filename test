@@ -1,5 +1,5 @@
-import xml.etree.ElementTree as ET
 import struct
+import xml.etree.ElementTree as ET
 
 
 def load_schema(schema_file):
@@ -51,11 +51,8 @@ def encode_field(field_type, value):
         return struct.pack('>d', value)
     elif field_type == 'string':
         return value.encode('ascii')
-    elif field_type == 'timestamp':
-        return struct.pack('>Q', int(value))
     else:
         raise ValueError(f"Unknown field type: {field_type}")
-
 
 
 def encode_message(schema, message_name, field_values):
@@ -213,11 +210,4 @@ if __name__ == '__main__':
 
     decoded_fields, _ = decode_message(encoded_message, 0, schema)
     print(f"Decoded fields: {decoded_fields}")
-    
-    
-    Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/sbe/sbe-tool.py", line 208, in <module>
-    encoded_message = encode_message(schema, message_name, field_values)
-  File "/home/pvellanki/loadgenerator/sbe/sbe-tool.py", line 75, in encode_message
-    raise ValueError(f"Field '{field_name}' not found in the schema for message '{message_name}'.")
-ValueError: Field 'SendingTime' not found in the schema for message 'NewOrderSingle'.
+Note: The above script assumes that the `sbe-schema.xml` file is in the same directory as the script file. If it's located in a different directory, you should provide the correct file path when assigning the `schema_file` variable.
