@@ -215,7 +215,6 @@ print(schema)
 
 import xml.etree.ElementTree as ET
 
-
 def load_schema(schema_file):
     schema = {}
 
@@ -236,12 +235,9 @@ def load_schema(schema_file):
         field_elements = message.findall('sbe:field', namespace)
         for field in field_elements:
             field_name = field.attrib.get('name')
-            field_id = field.attrib.get('id')
+            field_id = int(field.attrib.get('id'))
             field_type = field.attrib.get('type')
-
-            # Handle missing or empty attributes
-            if field_name and field_id and field_type:
-                fields[field_name] = {'id': int(field_id), 'type': field_type}
+            fields[field_name] = {'id': field_id, 'type': field_type}
 
         schema[message_name] = {'id': message_id, 'fields': fields}
 
@@ -252,7 +248,3 @@ def load_schema(schema_file):
 schema = load_schema('sbe-schema.xml')
 
 print(schema)
-
-
-{'NewOrderSingle': {'id': 1, 'fields': {}}, 'ShortTwoSidedBulkQuote': {'id': 2, 'fields': {}}, 'LongTwoSidedBulkQuote': {'id': 3, 'fields': {}}, 'ShortOneSidedBulkQuote': {'id': 4, 'fields': {}}, 'LongOneSidedBulkQuote': {'id': 5, 'fields': {}}, 'OrderCancelReplaceRequest': {'id': 6, 'fields': {}}, 'OrderCancelRequest': {'id': 7, 'fields': {}}, 'MassCancelRequest': {'id': 8, 'fields': {}}, 'MassCancelClearLockoutRequest': {'id': 9, 'fields': {}}, 'AllocationInstruction': {'id': 10, 'fields': {}}, 'ExecutionReport_New': {'id': 11, 'fields': {}}, 'ExecutionReport_BulkQuote_PendingNew': {'id': 12, 'fields': {}}, 'ExecutionReport_BulkQuote_ComponentNew': {'id': 13, 'fields': {}}, 'ExecutionReport_Rejected': {'id': 14, 'fields': {}}, 'ExecutionReport_Trade': {'id': 15, 'fields': {}}, 'ExecutionReport_PendingCancel': {'id': 16, 'fields': {}}, 'ExecutionReport_Canceled': {'id': 17, 'fields': {}}, 'ExecutionReport_PendingReplace': {'id': 18, 'fields': {}}, 'ExecutionReport_Replaced': {'id': 19, 'fields': {}}, 'ExecutionReport_TradeCorrection': {'id': 20, 'fields': {}}, 'ExecutionReport_TradeBreak': {'id': 21, 'fields': {}}, 'ExecutionReport_Restatement': {'id': 22, 'fields': {}}, 'PendingMassCancel': {'id': 23, 'fields': {}}, 'MassCancelReject': {'id': 24, 'fields': {}}, 'MassCancelDone': {'id': 25, 'fields': {}}, 'OrderCancelReject': {'id': 26, 'fields': {}}, 'AllocationInstructionAck': {'id': 27, 'fields': {}}, 'AllocationReport': {'id': 28, 'fields': {}}, 'UserNotification': {'id': 29, 'fields': {}}}
-
