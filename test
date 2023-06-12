@@ -184,6 +184,64 @@ print(f"Decoded message name: {decoded_message_name}")
 print(f"Decoded field values: {decoded_field_values}")
 
 
-
-field_type in ['string', 'NewOrderSingleClOrdID', 'NewOrderSingleOptionsSecurityID', 'NewOrderSinglePartyID']:
+def encode_field(value, field_type):
+    if field_type == 'char':
+        return struct.pack('>c', value.encode('ascii'))
+    elif field_type == 'UTCTimestampNanos':
+        return struct.pack('>Q', value)
+    elif field_type in ['string', 'NewOrderSingleClOrdID', 'NewOrderSingleOptionsSecurityID', 'NewOrderSinglePartyID']:
         encoded_value = value.encode('ascii')
+        length = len(encoded_value)
+        return struct.pack(f'>{length}s', encoded_value)
+    elif field_type == 'int8':
+        return struct.pack('>b', value)
+    elif field_type == 'int16':
+        return struct.pack('>h', value)
+    elif field_type == 'int32':
+        return struct.pack('>i', value)
+    elif field_type == 'int64':
+        return struct.pack('>q', value)
+    elif field_type == 'uint8':
+        return struct.pack('>B', value)
+    elif field_type == 'uint16':
+        return struct.pack('>H', value)
+    elif field_type == 'uint32':
+        return struct.pack('>I', value)
+    elif field_type == 'uint64':
+        return struct.pack('>Q', value)
+    elif field_type == 'float':
+        return struct.pack('>f', value)
+    elif field_type == 'double':
+        return struct.pack('>d', value)
+    elif field_type == 'SideType':
+        if value == 'Buy':
+            return struct.pack('>c', '1'.encode('ascii'))
+        elif value == 'Sell':
+            return struct.pack('>c', '2'.encode('ascii'))
+        else:
+            raise ValueError(f"Unknown enum value for field type {field_type}")
+    else:
+        raise ValueError(f"Unknown field type: {field_type}")
+
+
+
+def decode_field(buffer, offset, field_type):
+    if field_type == 'char':
+        value = struct.unpack_from('>c', buffer, offset)[0].decode('ascii')
+        return value, offset + 1
+    elif field_type == 'UTCTimestampNanos':
+        value = struct.unpack_from('>Q', buffer, offset)[0]
+        return value, offset + 8
+    elif field_type in ['string', 'NewOrderSingleClOrdID', 'NewOrderSingleOptionsSecurityID', 'NewOrderSinglePartyID']:
+        value = struct.unpack_from(f'>{field_type}ss', buffer, offset)[0].decode('ascii')
+        return value, offset + len(value.encode('ascii'))
+    elif field_type == 'SideType':
+        value = struct.unpack_from('>c', buffer, offset)[0].decode('ascii')
+        if value == '1':
+            return 'Buy', offset + 1
+        elif value == '2':
+            return 'Sell', offset + 1
+        else:
+            raise ValueError(f"Unknown enum value for field type {field_type}")
+    else:
+        raise ValueError(f"Unknown field type: {field_type}")
