@@ -1,23 +1,7 @@
-import json
-import time
-import socket
-import random
-import threading
-from datetime import datetime
 import xml.etree.ElementTree as ET
 import struct
 
-# Configuration
-config_file = 'session_config.json'
-schema_file = 'sbe-schema.xml'
-message_rate = 10  # Messages per second
 
-# Global variables
-schema = None
-session_config = None
-stop_event = threading.Event()
-
-# Load schema
 def load_schema(schema_file):
     tree = ET.parse(schema_file)
     root = tree.getroot()
@@ -41,108 +25,188 @@ def load_schema(schema_file):
 
     return messages
 
-# Load session configuration from file
-def load_session_config(config_file):
-    with open(config_file, 'r') as file:
-        config_data = json.load(file)
-    return config_data
 
-# Encode field
 def encode_field(field_type, value):
-    # Same as before (using your encode_field function)
+    if field_type == 'char':
+        return struct.pack('>c', value.encode('ascii'))
+    elif field_type == 'int8':
+        return struct.pack('>b', value)
+    elif field_type == 'int16':
+        return struct.pack('>h', value)
+    elif field_type == 'int32':
+        return struct.pack('>i', value)
+    elif field_type == 'int64':
+        return struct.pack('>q', value)
+    elif field_type == 'uint8':
+        return struct.pack('>B', value)
+    elif field_type == 'uint16':
+        return struct.pack('>H', value)
+    elif field_type == 'uint32':
+        return struct.pack('>I', value)
+    elif field_type == 'uint64':
+        return struct.pack('>Q', value)
+    elif field_type == 'float':
+        return struct.pack('>f', value)
+    elif field_type == 'double':
+        return struct.pack('>d', value)
+    elif field_type == 'string':
+        return value.encode('ascii')
+    else:
+        raise ValueError(f"Unknown field type: {field_type}")
 
-# Encode message
+
 def encode_message(schema, message_name, field_values):
-    # Same as before (using your encode_message function)
+    if message_name not in schema:
+        raise ValueError(f"Message '{message_name}' not found in the schema.")
 
-# Connect to the server
-def connect():
-    global session_config
+    message = schema[message_name]
+    message_id = message['id']
+    fields = message['fields']
 
-    try:
-        # Create a TCP/IP socket
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server_address = (session_config['ip'], session_config['port'])
+    encoded_fields = []
+    for field_name, field_value in field_values.items():
+        if field_name in fields:
+            field = fields[field_name]
+            field_id = field['id']
+            field_type = field['type']
+            encoded_field = encode_field(field_type, field_value)
+            encoded_fields.append((field_id, encoded_field))
+        else:
+            raise ValueError(f"Field '{field_name}' not found in the schema for message '{message_name}'.")
 
-        # Connect the socket to the server address
-        sock.connect(server_address)
-        print('Connected to {}:{}'.format(*server_address))
-        return sock
-    except Exception as e:
-        print('Error connecting to the server:', str(e))
-        return None
+    encoded_message = struct.pack('>H', message_id)
+    encoded_message += struct.pack('>H', len(encoded_fields))
 
-# Perform login
-def login(sock):
-    global schema, session_config
+    for field_id, encoded_field in encoded_fields:
+        encoded_message += struct.pack('>H', field_id)
+        encoded_message += struct.pack('>H', len(encoded_field))
+        encoded_message += encoded_field
 
-    try:
-        # Construct and send LoginRequest message
-        login_request = {
-            'Username': session_config['username'],
-            'Password': session_config['password']
-        }
-        encoded_login_request = encode_message(schema, 'LoginRequest', login_request)
-        sock.sendall(encoded_login_request)
-        print('Sent LoginRequest')
+    return encoded_message
 
-        # Wait for and decode the response
-        response = sock.recv(1024)
-        decoded_response, _ = decode_message(response, 0, schema)
-        print('Received LoginResponse:', decoded_response)
-    except Exception as e:
-        print('Error performing login:', str(e))
 
-# Generate NewOrderSingle messages at a specified rate
-def generate_messages(sock):
-    global schema
+def decode_field(buffer, offset, field_type):
+    if field_type == 'char':
+        value = struct.unpack_from('>c', buffer, offset)[0].decode('ascii')
+        return value, offset + 1
+    elif field_type == 'int8':
+        value = struct.unpack_from('>b', buffer, offset)[0]
+        return value, offset + 1
+    elif field_type == 'int16':
+        value = struct.unpack_from('>h', buffer, offset)[0]
+        return value, offset + 2
+    elif field_type == 'int32':
+        value = struct.unpack_from('>i', buffer, offset)[0]
+        return value, offset + 4
+    elif field_type == 'int64':
+        value = struct.unpack_from('>q', buffer, offset)[0]
+        return value, offset + 8
+    elif field_type == 'uint8':
+        value = struct.unpack_from('>B', buffer, offset)[0]
+        return value, offset + 1
+    elif field_type == 'uint16':
+        value = struct.unpack_from('>H', buffer, offset)[0]
+        return value, offset + 2
+    elif field_type == 'uint32':
+        value = struct.unpack_from('>I', buffer, offset)[0]
+        return value, offset + 4
+    elif field_type == 'uint64':
+        value = struct.unpack_from('>Q', buffer, offset)[0]
+        return value, offset + 8
+    elif field_type == 'float':
+        value = struct.unpack_from('>f', buffer, offset)[0]
+        return value, offset + 4
+    elif field_type == 'double':
+        value = struct.unpack_from('>d', buffer, offset)[0]
+        return value, offset + 8
+    elif field_type == 'string':
+        str_length = struct.unpack_from('>H', buffer, offset)[0]
+        str_value = struct.unpack_from(f'>{str_length}s', buffer, offset + 2)[0].decode('ascii')
+        return str_value, offset + 2 + str_length
+    else:
+        raise ValueError(f"Unknown field type: {field_type}")
 
-    try:
-        while not stop_event.is_set():
-            # Construct a random NewOrderSingle message
-            new_order_single = {
-                'SendingTime': int(datetime.now().timestamp() * 1000000000),
-                'ClOrdID': 'CLORD' + str(random.randint(1, 100000)),
-                'Symbol': 'AAPL',
-                'Side': random.choice(['Buy', 'Sell']),
-                'OrderQty': random.randint(1, 100),
-                'Price': round(random.uniform(100.0, 200.0), 2)
-            }
-            encoded_new_order_single = encode_message(schema, 'NewOrderSingle', new_order_single)
-            sock.sendall(encoded_new_order_single)
-            print('Sent NewOrderSingle:', new_order_single)
 
-            # Sleep for the specified message rate
-            time.sleep(1 / message_rate)
-    except Exception as e:
-        print('Error generating messages:', str(e))
+def decode_message(buffer, offset, schema):
+    message_id = struct.unpack_from('>H', buffer, offset)[0]
+    offset += 2
 
-# Main execution
+    # Find the message name based on the message ID
+    message_name = None
+    for name, message in schema.items():
+        if message['id'] == message_id:
+            message_name = name
+            break
+
+    if not message_name:
+        raise ValueError(f"Message ID {message_id} not found in the schema.")
+
+    fields = schema[message_name]['fields']
+
+    decoded_fields = {}
+    field_count = struct.unpack_from('>H', buffer, offset)[0]
+    offset += 2
+
+    for _ in range(field_count):
+        field_id = struct.unpack_from('>H', buffer, offset)[0]
+        offset += 2
+
+        if field_id in fields.values():
+            field_name = None
+            for name, field in fields.items():
+                if field['id'] == field_id:
+                    field_name = name
+                    break
+
+            if field_name:
+                field_type = fields[field_name]['type']
+                value, offset = decode_field(buffer, offset, field_type)
+                decoded_fields[field_name] = value
+        else:
+            raise ValueError(f"Field ID {field_id} not found in the schema for message '{message_name}'.")
+
+    return decoded_fields, offset
+
+
 if __name__ == '__main__':
-    # Load schema and session configuration
+    schema_file = 'sbe-schema.xml'
     schema = load_schema(schema_file)
-    session_config = load_session_config(config_file)
 
-    # Connect to the server
-    sock = connect()
-    if not sock:
-        exit(1)
+    message_name = 'NewOrderSingle'
+    field_values = {
+        'SendingTime': 1623322435000000000,
+        'ClOrdID': "CLORD12345",
+        'SecurityID': "SECURITY123",
+        'Side': "BUY",
+        'OrderQty': 100,
+        'OrdType': "LIMIT",
+        'Price': 99.99,
+        'TimeInForce': "DAY",
+        'ExecInst': "OPEN",
+        'HandlInst': "ADD",
+        'PartyRole': "MEDIUM",
+        'PartyID': 1,
+        'PartyIDSource': 2,
+        'PartyIDValue': 123,
+        'PreventParticipantMatch': "PREVENT",
+        'Group1Field1': 456,
+        'Group1Field2': 789,
+        'Parties': [
+            {
+                'PartyID': "PARTY1",
+                'PartyIDSource': "SRC1",
+                'PartyRole': 1
+            },
+            {
+                'PartyID': "PARTY2",
+                'PartyIDSource': "SRC2",
+                'PartyRole': 2
+            }
+        ]
+    }
 
-    # Perform login
-    login(sock)
+    encoded_message = encode_message(schema, message_name, field_values)
+    print(f"Encoded message: {encoded_message}")
 
-    # Start generating messages
-    generator_thread = threading.Thread(target=generate_messages, args=(sock,))
-    generator_thread.start()
-
-    # Wait for user interruption
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        print('Stopping...')
-        stop_event.set()
-        generator_thread.join()
-
-    # Close the socket
-    sock.close()
+    decoded_fields, _ = decode_message(encoded_message, 0, schema)
+    print(f"Decoded fields: {decoded_fields}")
