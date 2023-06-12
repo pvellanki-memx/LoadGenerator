@@ -204,3 +204,12 @@ schema = load_schema('sbe-schema.xml')
 
 # Rest of the code for encoding and decoding messages...
 
+
+
+Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/sbe/test.py", line 36, in <module>
+    schema = load_schema('sbe-schema.xml')
+  File "/home/pvellanki/loadgenerator/sbe/test.py", line 13, in load_schema
+    root = tree.getroot()
+AttributeError: 'lxml.etree._Element' object has no attribute 'getroot'
+
