@@ -1,5 +1,5 @@
-import struct
 import xml.etree.ElementTree as ET
+import struct
 
 
 def load_schema(schema_file):
@@ -175,39 +175,32 @@ if __name__ == '__main__':
     message_name = 'NewOrderSingle'
     field_values = {
         'SendingTime': 1623322435000000000,
-        'ClOrdID': "CLORD12345",
-        'SecurityID': "SECURITY123",
-        'Side': "BUY",
+        'ClOrdID': "ORDER-1234",
+        'OptionsSecurityID': "OPTION-5678",
+        'Side': 1,
         'OrderQty': 100,
-        'OrdType': "LIMIT",
-        'Price': 99.99,
-        'TimeInForce': "DAY",
-        'ExecInst': "OPEN",
-        'HandlInst': "ADD",
-        'PartyRole': "MEDIUM",
-        'PartyID': 1,
-        'PartyIDSource': 2,
-        'PartyIDValue': 123,
-        'PreventParticipantMatch': "PREVENT",
-        'Group1Field1': 456,
-        'Group1Field2': 789,
+        'OrdType': 2,
+        'Price': 10.5,
+        'TimeInForce': 0,
+        'OpenOrClose': 1,
+        'ExecInst': 3,
+        'TradingCapacity': 2,
+        'RepriceFrequency': 3,
+        'RepriceBehavior': 1,
+        'MtpGroupID': 123,
+        'MatchTradePrevention': 0,
+        'CancelGroupID': 456,
+        'RiskGroupID': 789,
         'Parties': [
-            {
-                'PartyID': "PARTY1",
-                'PartyIDSource': "SRC1",
-                'PartyRole': 1
-            },
-            {
-                'PartyID': "PARTY2",
-                'PartyIDSource': "SRC2",
-                'PartyRole': 2
-            }
+            {'PartyID': 'PARTY-1', 'PartyIDSource': 'D', 'PartyRole': 2},
+            {'PartyID': 'PARTY-2', 'PartyIDSource': 'D', 'PartyRole': 3}
         ]
     }
 
     encoded_message = encode_message(schema, message_name, field_values)
-    print(f"Encoded message: {encoded_message}")
+    print(f"Encoded Message: {encoded_message.hex()}")
 
     decoded_fields, _ = decode_message(encoded_message, 0, schema)
-    print(f"Decoded fields: {decoded_fields}")
-Note: The above script assumes that the `sbe-schema.xml` file is in the same directory as the script file. If it's located in a different directory, you should provide the correct file path when assigning the `schema_file` variable.
+    print("Decoded Fields:")
+    for field_name, field_value in decoded_fields.items():
+        print(f"{field_name}: {field_value}")
