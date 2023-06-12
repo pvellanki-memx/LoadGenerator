@@ -168,25 +168,24 @@ print(f"Decoded field values: {decoded_field_values}")
 
 
 import struct
-from lxml import etree
+from lxml import etree as ET
 
 
 def load_schema(schema_file):
-    schema = {}
-
-    with open(schema_file, 'rb') as f:
-        xml_content = f.read()
-        print(xml_content)  # Print XML content for debugging purposes
-        tree = etree.fromstring(xml_content)
-
+    tree = ET.parse(schema_file)
     root = tree.getroot()
 
-    for message in root.findall('.//message'):
+    # Define the namespace used in the XML file
+    namespace = {'sbe': 'https://github.com/FIXTradingCommunity/fix-simple-binary-encoding'}
+
+    schema = {}
+
+    for message in root.findall('.//sbe:message', namespace):
         message_name = message.get('name')
         message_id = int(message.get('id'))
         fields = {}
 
-        for field in message.findall('field'):
+        for field in message.findall('sbe:field', namespace):
             field_name = field.get('name')
             field_id = int(field.get('id'))
             field_type = field.get('type')
@@ -197,19 +196,9 @@ def load_schema(schema_file):
     return schema
 
 
-# Rest of the code for encoding and decoding messages...
-
 # Load the schema from the XML file
 schema = load_schema('sbe-schema.xml')
 
-# Rest of the code for encoding and decoding messages...
+print(schema)
 
-
-
-Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/sbe/test.py", line 36, in <module>
-    schema = load_schema('sbe-schema.xml')
-  File "/home/pvellanki/loadgenerator/sbe/test.py", line 13, in load_schema
-    root = tree.getroot()
-AttributeError: 'lxml.etree._Element' object has no attribute 'getroot'
 
