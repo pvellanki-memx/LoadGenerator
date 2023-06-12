@@ -1,5 +1,6 @@
 import xml.etree.ElementTree as ET
 import struct
+import socket
 
 
 def load_schema(schema_file):
@@ -80,67 +81,86 @@ def encode_message(schema, message_name, field_values):
     return encoded_message
 
 
-def decode_field(field_type, encoded_value):
+def decode_field(field_type, encoded_field):
     if field_type == 'char':
-        return encoded_value.decode('ascii')
+        return encoded_field.decode('ascii')
     elif field_type == 'int8':
-        return struct.unpack('>b', encoded_value)[0]
+        return struct.unpack('>b', encoded_field)[0]
     elif field_type == 'int16':
-        return struct.unpack('>h', encoded_value)[0]
+        return struct.unpack('>h', encoded_field)[0]
     elif field_type == 'int32':
-        return struct.unpack('>i', encoded_value)[0]
+        return struct.unpack('>i', encoded_field)[0]
     elif field_type == 'int64':
-        return struct.unpack('>q', encoded_value)[0]
+        return struct.unpack('>q', encoded_field)[0]
     elif field_type == 'uint8':
-        return struct.unpack('>B', encoded_value)[0]
+        return struct.unpack('>B', encoded_field)[0]
     elif field_type == 'uint16':
-        return struct.unpack('>H', encoded_value)[0]
+        return struct.unpack('>H', encoded_field)[0]
     elif field_type == 'uint32':
-        return struct.unpack('>I', encoded_value)[0]
+        return struct.unpack('>I', encoded_field)[0]
     elif field_type == 'uint64':
-        return struct.unpack('>Q', encoded_value)[0]
+        return struct.unpack('>Q', encoded_field)[0]
     elif field_type == 'float':
-        return struct.unpack('>f', encoded_value)[0]
+        return struct.unpack('>f', encoded_field)[0]
     elif field_type == 'double':
-        return struct.unpack('>d', encoded_value)[0]
+        return struct.unpack('>d', encoded_field)[0]
     elif field_type == 'string':
-        return encoded_value.decode('ascii')
+        return encoded_field.decode('ascii')
     else:
         raise ValueError(f"Unknown field type: {field_type}")
 
 
 def decode_message(schema, encoded_message):
     message_id = struct.unpack('>H', encoded_message[:2])[0]
-    for message_name, message_info in schema.items():
-        if message_info['id'] == message_id:
-            fields = message_info['fields']
+    encoded_fields_count = struct.unpack('>H', encoded_message[2:4])[0]
+    encoded_fields = encoded_message[4:]
+
+    message_name = None
+    fields = {}
+
+    for field_id, field_type in schema.items():
+        if field_type['id'] == message_id:
+            message_name = field_id
+            fields = field_type['fields']
             break
-    else:
-        raise ValueError(f"Message with ID {message_id} not found in the schema.")
+
+    if message_name is None:
+        raise ValueError(f"Message ID '{message_id}' not found in the schema.")
 
     decoded_fields = {}
-    encoded_fields_count = struct.unpack('>H', encoded_message[2:4])[0]
-    offset = 4
+    offset = 0
+
     for _ in range(encoded_fields_count):
-        field_id = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
-        field_length = struct.unpack('>H', encoded_message[offset + 2:offset + 4])[0]
-        encoded_field = encoded_message[offset + 4:offset + 4 + field_length]
-        if field_id in fields:
-            field_type = fields[field_id]
-            decoded_value = decode_field(field_type, encoded_field)
-            decoded_fields[field_id] = decoded_value
+        field_id = struct.unpack('>H', encoded_fields[offset:offset + 2])[0]
+        field_length = struct.unpack('>H', encoded_fields[offset + 2:offset + 4])[0]
+        encoded_field = encoded_fields[offset + 4:offset + 4 + field_length]
         offset += 4 + field_length
 
-    return message_name, decoded_fields
+        if field_id in fields:
+            field_type = fields[field_id]
+            decoded_field = decode_field(field_type, encoded_field)
+            decoded_fields[field_id] = decoded_field
+
+    return {'message_name': message_name, 'fields': decoded_fields}
 
 
 if __name__ == '__main__':
-    schema_file = 'sbe-schema.xml'
-    schema = load_schema(schema_file)
+    # Load the schemas
+    tcp_schema_file = 'TCP.xml'
+    sbe_schema_file = 'sbe-schema.xml'
+    tcp_schema = load_schema(tcp_schema_file)
+    sbe_schema = load_schema(sbe_schema_file)
 
-    # Example encoding
-    message_name = 'NewOrderSingle'
-    field_values = {
+    # TCP connection parameters
+    host = '127.0.0.1'
+    port = 12345
+
+    # Field values for LoginRequest and NewOrderSingle messages
+    login_request_fields = {
+        1: 'USERNAME',
+        2: 'PASSWORD'
+    }
+    new_order_single_fields = {
         52: 1623322435000000000,
         11: "CLORD12345",
         21035: "SECURITY123",
@@ -172,10 +192,22 @@ if __name__ == '__main__':
         ]
     }
 
-    encoded_message = encode_message(schema, message_name, field_values)
-    print(f"Encoded message: {encoded_message}")
+    # Establish TCP connection
+    tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    tcp_socket.connect((host, port))
 
-    # Example decoding
-    decoded_message_name, decoded_fields = decode_message(schema, encoded_message)
-    print(f"Decoded message name: {decoded_message_name}")
-    print(f"Decoded fields: {decoded_fields}")
+    # Send LoginRequest message
+    login_request_encoded = encode_message(tcp_schema, 'LoginRequest', login_request_fields)
+    tcp_socket.sendall(login_request_encoded)
+
+    # Receive and decode response
+    response_data = tcp_socket.recv(1024)
+    decoded_response = decode_message(tcp_schema, response_data)
+    print(f"Response: {decoded_response}")
+
+    # Send NewOrderSingle message
+    new_order_single_encoded = encode_message(sbe_schema, 'NewOrderSingle', new_order_single_fields)
+    tcp_socket.sendall(new_order_single_encoded)
+
+    # Close TCP connection
+    tcp_socket.close()
