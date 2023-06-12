@@ -165,9 +165,46 @@ print(f"Decoded field values: {decoded_field_values}")
 
 
 
-(myenv) pvellanki@qa2434:~/loadgenerator/sbe$ python3 test.py 
-{'NewOrderSingle': {'id': 1, 'fields': {}}, 'ShortTwoSidedBulkQuote': {'id': 2, 'fields': {}}, 'LongTwoSidedBulkQuote': {'id': 3, 'fields': {}}, 'ShortOneSidedBulkQuote': {'id': 4, 'fields': {}}, 'LongOneSidedBulkQuote': {'id': 5, 'fields': {}}, 'OrderCancelReplaceRequest': {'id': 6, 'fields': {}}, 'OrderCancelRequest': {'id': 7, 'fields': {}}, 'MassCancelRequest': {'id': 8, 'fields': {}}, 'MassCancelClearLockoutRequest': {'id': 9, 'fields': {}}, 'AllocationInstruction': {'id': 10, 'fields': {}}, 'ExecutionReport_New': {'id': 11, 'fields': {}}, 'ExecutionReport_BulkQuote_PendingNew': {'id': 12, 'fields': {}}, 'ExecutionReport_BulkQuote_ComponentNew': {'id': 13, 'fields': {}}, 'ExecutionReport_Rejected': {'id': 14, 'fields': {}}, 'ExecutionReport_Trade': {'id': 15, 'fields': {}}, 'ExecutionReport_PendingCancel': {'id': 16, 'fields': {}}, 'ExecutionReport_Canceled': {'id': 17, 'fields': {}}, 'ExecutionReport_PendingReplace': {'id': 18, 'fields': {}}, 'ExecutionReport_Replaced': {'id': 19, 'fields': {}}, 'ExecutionReport_TradeCorrection': {'id': 20, 'fields': {}}, 'ExecutionReport_TradeBreak': {'id': 21, 'fields': {}}, 'ExecutionReport_Restatement': {'id': 22, 'fields': {}}, 'PendingMassCancel': {'id': 23, 'fields': {}}, 'MassCancelReject': {'id': 24, 'fields': {}}, 'MassCancelDone': {'id': 25, 'fields': {}}, 'OrderCancelReject': {'id': 26, 'fields': {}}, 'AllocationInstructionAck': {'id': 27, 'fields': {}}, 'AllocationReport': {'id': 28, 'fields': {}}, 'UserNotification': {'id': 29, 'fields': {}}}
-(myenv) pvellanki@qa2434:~/loadgenerator/sbe$ 
+import struct
+import xml.etree.ElementTree as ET
+
+
+def load_schema(schema_file):
+    schema = {}
+
+    # Load the XML file
+    tree = ET.parse(schema_file)
+    root = tree.getroot()
+
+    # Define the XML namespace used in the file
+    namespace = {'sbe': 'http://fixprotocol.io/2016/sbe'}
+
+    # Find all message elements within the schema
+    for message in root.findall('.//sbe:message', namespace):
+        message_name = message.attrib.get('name')
+        message_id = int(message.attrib.get('id'))
+        fields = {}
+
+        # Find the field elements within the message
+        field_groups = message.findall('.//sbe:group', namespace)
+        for field_group in field_groups:
+            field_elements = field_group.findall('.//sbe:field', namespace)
+            for field in field_elements:
+                field_name = field.attrib.get('name')
+                field_id = int(field.attrib.get('id'))
+                field_type = field.attrib.get('type')
+                fields[field_name] = {'id': field_id, 'type': field_type}
+
+        schema[message_name] = {'id': message_id, 'fields': fields}
+
+    return schema
+
+
+# Load the schema from the XML file
+schema = load_schema('sbe-schema.xml')
+
+print(schema)
+
 
 
 
