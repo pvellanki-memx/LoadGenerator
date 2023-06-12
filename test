@@ -1,6 +1,5 @@
 import struct
 import xml.etree.ElementTree as ET
-from urllib.request import urlopen
 
 def load_schema(schema_file):
     tree = ET.parse(schema_file)
@@ -126,17 +125,8 @@ def decode_message(buffer, offset, schema):
 
     return message_name, decoded_fields
 
-# Fetch the XML schema file
-schema_url = 'https://raw.githubusercontent.com/pvell/LoadGenerator/main/SBE.xml'
-xml_data = urlopen(schema_url).read()
-
-# Save the XML schema file locally
-xml_file = 'schema.xml'
-with open(xml_file, 'wb') as f:
-    f.write(xml_data)
-
 # Load the schema from the XML file
-schema = load_schema(xml_file)
+schema = load_schema('sbe-schema.xml')
 
 # Sample field values for encoding
 field_values = {
