@@ -10,11 +10,12 @@ def encode_field(field_name, field_value):
     elif field_name == "RepeatingGroupDimensions":
         return struct.pack('>BB', field_value['blockLength'], field_value['numInGroup'])
     elif field_name == "ExecInstType" or field_name == "MassCancelInstType" or field_name == "SideType" or field_name == "OrdType" or field_name == "TimeInForceType" or field_name == "OpenOrCloseType" or field_name == "TradingCapacityType" or field_name == "RepriceFrequencyType" or field_name == "RepriceBehaviorType" or field_name == "OrdStatusType" or field_name == "CxlRejResponseToType" or field_name == "LastLiquidityIndType" or field_name == "MatchTradePreventionType" or field_name == "CancelReasonCode" or field_name == "OrderRejectReasonCode" or field_name == "CxlRejReasonCode":
-        return ord(field_value)
+        return str(field_value)
     elif field_name == "NewOrderSingleClOrdID" or field_name == "NewOrderSingleOptionsSecurityID" or field_name == "NewOrderSinglePartyID" or field_name == "char":
         return field_value.encode('utf-8')
     else:
         raise ValueError("Invalid field name: " + field_name)
+
 
 
 def decode_field(field_name, field_value):
