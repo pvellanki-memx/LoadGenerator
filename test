@@ -189,4 +189,13 @@ decoded_fields, offset = decode_message(buffer, offset, schema, message_name)
 print("Decoded fields:")
 for field_id, value in decoded_fields.items():
     print(f"Field ID: {field_id}, Value: {value}")
+    
+    
+    
+    Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/sbe/sbe_decoder.py", line 95, in <module>
+    decoded_fields, offset = decode_message(buffer, offset, schema, message_name)
+  File "/home/pvellanki/loadgenerator/sbe/sbe_decoder.py", line 82, in decode_message
+    raise ValueError(f"Field ID {field_id} not found in the schema for message '{message_name}'.")
+ValueError: Field ID 1 not found in the schema for message 'NewOrderSingle'.
 
