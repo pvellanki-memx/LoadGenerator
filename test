@@ -1,34 +1,38 @@
-import xml.etree.ElementTree as ET
 import struct
+import xml.etree.ElementTree as ET
 
 
 def load_schema(schema_file):
     tree = ET.parse(schema_file)
     root = tree.getroot()
-    messages = {}
 
-    # Find the XML namespace
-    namespace = root.tag.split('}')[0] + '}'
+    schema = {}
 
-    for message_elem in root.findall(f'{namespace}message'):
-        message_id = int(message_elem.get('id'))
-        message_name = message_elem.get('name')
+    for message in root.findall('message'):
+        message_name = message.get('name')
+        message_id = int(message.get('id'))
         fields = {}
 
-        for field_elem in message_elem.findall(f'.//{namespace}field'):
-            field_id = int(field_elem.get('id'))
-            field_name = field_elem.get('name')
-            field_type = field_elem.get('type')
+        for field in message.findall('field'):
+            field_name = field.get('name')
+            field_id = int(field.get('id'))
+            field_type = field.get('type')
             fields[field_name] = {'id': field_id, 'type': field_type}
 
-        messages[message_name] = {'id': message_id, 'fields': fields}
+        schema[message_name] = {'id': message_id, 'fields': fields}
 
-    return messages
+    return schema
 
 
-def encode_field(field_type, value):
+def encode_field(value, field_type):
     if field_type == 'char':
         return struct.pack('>c', value.encode('ascii'))
+    elif field_type == 'UTCTimestampNanos':
+        return struct.pack('>Q', value)
+    elif field_type == 'string':
+        encoded_value = value.encode('ascii')
+        length = len(encoded_value)
+        return struct.pack(f'>H{length}s', length, encoded_value)
     elif field_type == 'int8':
         return struct.pack('>b', value)
     elif field_type == 'int16':
@@ -49,38 +53,24 @@ def encode_field(field_type, value):
         return struct.pack('>f', value)
     elif field_type == 'double':
         return struct.pack('>d', value)
-    elif field_type == 'string':
-        return value.encode('ascii')
     else:
         raise ValueError(f"Unknown field type: {field_type}")
 
 
 def encode_message(schema, message_name, field_values):
-    if message_name not in schema:
-        raise ValueError(f"Message '{message_name}' not found in the schema.")
-
-    message = schema[message_name]
-    message_id = message['id']
-    fields = message['fields']
+    message_id = schema[message_name]['id']
+    fields = schema[message_name]['fields']
 
     encoded_fields = []
     for field_name, field_value in field_values.items():
         if field_name in fields:
-            field = fields[field_name]
-            field_id = field['id']
-            field_type = field['type']
-            encoded_field = encode_field(field_type, field_value)
-            encoded_fields.append((field_id, encoded_field))
-        else:
-            raise ValueError(f"Field '{field_name}' not found in the schema for message '{message_name}'.")
+            field_id = fields[field_name]['id']
+            field_type = fields[field_name]['type']
+            encoded_field = encode_field(field_value, field_type)
+            encoded_fields.append(struct.pack('>H', field_id) + encoded_field)
 
-    encoded_message = struct.pack('>H', message_id)
-    encoded_message += struct.pack('>H', len(encoded_fields))
-
-    for field_id, encoded_field in encoded_fields:
-        encoded_message += struct.pack('>H', field_id)
-        encoded_message += struct.pack('>H', len(encoded_field))
-        encoded_message += encoded_field
+    field_count = len(encoded_fields)
+    encoded_message = struct.pack('>H', message_id) + struct.pack('>H', field_count) + b''.join(encoded_fields)
 
     return encoded_message
 
@@ -89,42 +79,9 @@ def decode_field(buffer, offset, field_type):
     if field_type == 'char':
         value = struct.unpack_from('>c', buffer, offset)[0].decode('ascii')
         return value, offset + 1
-    elif field_type == 'int8':
-        value = struct.unpack_from('>b', buffer, offset)[0]
-        return value, offset + 1
-    elif field_type == 'int16':
-        value = struct.unpack_from('>h', buffer, offset)[0]
-        return value, offset + 2
-    elif field_type == 'int32':
-        value = struct.unpack_from('>i', buffer, offset)[0]
-        return value, offset + 4
-    elif field_type == 'int64':
-        value = struct.unpack_from('>q', buffer, offset)[0]
-        return value, offset + 8
-    elif field_type == 'uint8':
-        value = struct.unpack_from('>B', buffer, offset)[0]
-        return value, offset + 1
-    elif field_type == 'uint16':
-        value = struct.unpack_from('>H', buffer, offset)[0]
-        return value, offset + 2
-    elif field_type == 'uint32':
-        value = struct.unpack_from('>I', buffer, offset)[0]
-        return value, offset + 4
-    elif field_type == 'uint64':
+    elif field_type == 'UTCTimestampNanos':
         value = struct.unpack_from('>Q', buffer, offset)[0]
         return value, offset + 8
-    elif field_type == 'float':
-        value = struct.unpack_from('>f', buffer, offset)[0]
-        return value, offset + 4
-    elif field_type == 'double':
-        value = struct.unpack_from('>d', buffer, offset)[0]
-        return value, offset + 8
-    elif field_type == 'string':
-        str_length = struct.unpack_from('>H', buffer, offset)[0]
-        str_value = struct.unpack_from(f'>{str_length}s', buffer, offset + 2)[0].decode('ascii')
-        return str_value, offset + 2 + str_length
-    else:
-        raise ValueError(f"Unknown field type: {field_type}")
 
 
 def decode_message(buffer, offset, schema):
@@ -139,68 +96,67 @@ def decode_message(buffer, offset, schema):
             break
 
     if not message_name:
-        raise ValueError(f"Message ID {message_id} not found in the schema.")
+        raise ValueError(f"Unknown message ID: {message_id}")
 
-    fields = schema[message_name]['fields']
-
-    decoded_fields = {}
     field_count = struct.unpack_from('>H', buffer, offset)[0]
     offset += 2
 
+    decoded_fields = {}
     for _ in range(field_count):
         field_id = struct.unpack_from('>H', buffer, offset)[0]
         offset += 2
 
-        if field_id in fields.values():
-            field_name = None
-            for name, field in fields.items():
-                if field['id'] == field_id:
-                    field_name = name
-                    break
+        # Find the field name and type based on the field ID and message name
+        field_name = None
+        field_type = None
+        for name, field in schema[message_name]['fields'].items():
+            if field['id'] == field_id:
+                field_name = name
+                field_type = field['type']
+                break
 
-            if field_name:
-                field_type = fields[field_name]['type']
-                value, offset = decode_field(buffer, offset, field_type)
-                decoded_fields[field_name] = value
-        else:
-            raise ValueError(f"Field ID {field_id} not found in the schema for message '{message_name}'.")
+        if not field_name:
+            raise ValueError(f"Unknown field ID: {field_id} for message {message_name}")
 
-    return decoded_fields, offset
+        field_value, offset = decode_field(buffer, offset, field_type)
+        decoded_fields[field_name] = field_value
+
+    return message_name, decoded_fields
 
 
-if __name__ == '__main__':
-    schema_file = 'sbe-schema.xml'
-    schema = load_schema(schema_file)
+# Load the schema from the XML file
+schema = load_schema('schema.xml')
 
-    message_name = 'NewOrderSingle'
-    field_values = {
-        'SendingTime': 1623322435000000000,
-        'ClOrdID': "ORDER-1234",
-        'OptionsSecurityID': "OPTION-5678",
-        'Side': 1,
-        'OrderQty': 100,
-        'OrdType': 2,
-        'Price': 10.5,
-        'TimeInForce': 0,
-        'OpenOrClose': 1,
-        'ExecInst': 3,
-        'TradingCapacity': 2,
-        'RepriceFrequency': 3,
-        'RepriceBehavior': 1,
-        'MtpGroupID': 123,
-        'MatchTradePrevention': 0,
-        'CancelGroupID': 456,
-        'RiskGroupID': 789,
-        'Parties': [
-            {'PartyID': 'PARTY-1', 'PartyIDSource': 'D', 'PartyRole': 2},
-            {'PartyID': 'PARTY-2', 'PartyIDSource': 'D', 'PartyRole': 3}
-        ]
-    }
+# Sample field values for encoding
+field_values = {
+    'SendingTime': 1623341234000000000,
+    'ClOrdID': 'ORD123',
+    'OptionsSecurityID': 'OPT456',
+    'Side': 1,
+    'OrderQty': 100,
+    'OrdType': 2,
+    'Price': 10.5,
+    'TimeInForce': 1,
+    'OpenOrClose': 2,
+    'ExecInst': 'XYZ',
+    'TradingCapacity': 3,
+    'RepriceFrequency': 4,
+    'RepriceBehavior': 5,
+    'MtpGroupID': 6,
+    'MatchTradePrevention': 7,
+    'CancelGroupID': 8,
+    'RiskGroupID': 9,
+    'Parties': [
+        {'PartyID': 'P1', 'PartyIDSource': 'S1', 'PartyRole': 10},
+        {'PartyID': 'P2', 'PartyIDSource': 'S2', 'PartyRole': 11}
+    ]
+}
 
-    encoded_message = encode_message(schema, message_name, field_values)
-    print(f"Encoded Message: {encoded_message.hex()}")
+# Encode the message
+encoded_message = encode_message(schema, 'NewOrderSingle', field_values)
+print(f"Encoded message: {encoded_message.hex()}")
 
-    decoded_fields, _ = decode_message(encoded_message, 0, schema)
-    print("Decoded Fields:")
-    for field_name, field_value in decoded_fields.items():
-        print(f"{field_name}: {field_value}")
+# Decode the message
+decoded_message_name, decoded_field_values = decode_message(encoded_message, 0, schema)
+print(f"Decoded message name: {decoded_message_name}")
+print(f"Decoded field values: {decoded_field_values}")
