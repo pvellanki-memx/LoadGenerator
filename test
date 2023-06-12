@@ -176,20 +176,20 @@ def load_schema(schema_file):
     tree = ET.parse(schema_file)
     root = tree.getroot()
 
-    # Extract the target namespace from the root element
-    target_namespace = root.attrib.get('targetNamespace')
-
-    # Find the schema element within the root
-    schema_element = root.find('.//{http://www.w3.org/2001/XMLSchema}schema')
+    # Define the XML namespaces used in the file
+    namespaces = {
+        'sbe': 'http://www.fixprotocol.org/2009/sbe',
+        'xs': 'http://www.w3.org/2001/XMLSchema'
+    }
 
     # Find all message elements within the schema
-    for message in schema_element.findall('.//{http://www.fixprotocol.org/2009/sbe}message'):
+    for message in root.findall('.//sbe:message', namespaces):
         message_name = message.attrib.get('name')
         message_id = int(message.attrib.get('id'))
         fields = {}
 
         # Find all field elements within the message
-        for field in message.findall('.//{http://www.fixprotocol.org/2009/sbe}field'):
+        for field in message.findall('.//sbe:field', namespaces):
             field_name = field.attrib.get('name')
             field_id = int(field.attrib.get('id'))
             field_type = field.attrib.get('type')
@@ -204,6 +204,7 @@ def load_schema(schema_file):
 schema = load_schema('sbe-schema.xml')
 
 print(schema)
+
 
 
 
