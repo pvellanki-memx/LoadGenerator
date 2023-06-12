@@ -233,7 +233,8 @@ def load_schema(schema_file):
         fields = {}
 
         # Find the field elements within the message
-        field_elements = message.findall('sbe:field', namespace)
+        field_elements = message.findall('field', namespace)
+        print(field_elements)
         for field in field_elements:
             field_name = field.attrib.get('name')
             field_id = int(field.attrib.get('id'))
@@ -252,4 +253,3 @@ def load_schema(schema_file):
 schema = load_schema('sbe-schema.xml')
 
 print(schema)
-
