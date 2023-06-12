@@ -1,247 +1,41 @@
-import struct
-from lxml import etree
-
-
-import xml.etree.ElementTree as ET
-
-
-def load_schema(schema_file):
-    schema = {}
-
-    # Load the XML file
-    tree = ET.parse(schema_file)
-    root = tree.getroot()
-
-    # Define the XML namespace used in the file
-    namespace = {'sbe': 'http://fixprotocol.io/2016/sbe'}
-
-    # Find all message elements within the schema
-    for message in root.findall('.//sbe:message', namespace):
-        message_name = message.attrib.get('name')
-        message_id = int(message.attrib.get('id'))
-        fields = {}
-
-        # Find the field elements within the message
-        field_elements = message.findall('field', namespace)
-        print(field_elements)
-        for field in field_elements:
-            field_name = field.attrib.get('name')
-            field_id = int(field.attrib.get('id'))
-            field_type = field.attrib.get('type')
-
-            # Handle missing or empty attributes
-            if field_name and field_id and field_type:
-                fields[field_name] = {'id': field_id, 'type': field_type}
-
-        schema[message_name] = {'id': message_id, 'fields': fields}
-
-    return schema
-
-
-# Load the schema from the XML file
-schema = load_schema('sbe-schema.xml')
-
-
-def encode_field(value, field_type):
-    if field_type == 'char':
-        return struct.pack('>c', value.encode('ascii'))
-    elif field_type == 'UTCTimestampNanos':
-        return struct.pack('>Q', value)
-    elif field_type == 'string':
-        encoded_value = value.encode('ascii')
-        length = len(encoded_value)
-        return struct.pack(f'>H{length}s', length, encoded_value)
-    elif field_type == 'int8':
-        return struct.pack('>b', value)
-    elif field_type == 'int16':
-        return struct.pack('>h', value)
-    elif field_type == 'int32':
-        return struct.pack('>i', value)
-    elif field_type == 'int64':
-        return struct.pack('>q', value)
-    elif field_type == 'uint8':
-        return struct.pack('>B', value)
-    elif field_type == 'uint16':
-        return struct.pack('>H', value)
-    elif field_type == 'uint32':
-        return struct.pack('>I', value)
-    elif field_type == 'uint64':
-        return struct.pack('>Q', value)
-    elif field_type == 'float':
-        return struct.pack('>f', value)
-    elif field_type == 'double':
-        return struct.pack('>d', value)
+def encode_field(field_name, field_value):
+    if field_name == "BooleanType":
+        return int(field_value)
+    elif field_name == "PriceType":
+        return struct.pack('>q', int(field_value['Mantissa'] * 10 ** field_value['Exponent']))
+    elif field_name == "ShortPriceType":
+        return struct.pack('>H', int(field_value['Mantissa'] * 10 ** field_value['Exponent']))
+    elif field_name == "UTCTimestampNanos":
+        return struct.pack('>Q', field_value['Time'])
+    elif field_name == "RepeatingGroupDimensions":
+        return struct.pack('>BB', field_value['blockLength'], field_value['numInGroup'])
+    elif field_name == "ExecInstType" or field_name == "MassCancelInstType" or field_name == "SideType" or field_name == "OrdType" or field_name == "TimeInForceType" or field_name == "OpenOrCloseType" or field_name == "TradingCapacityType" or field_name == "RepriceFrequencyType" or field_name == "RepriceBehaviorType" or field_name == "OrdStatusType" or field_name == "CxlRejResponseToType" or field_name == "LastLiquidityIndType" or field_name == "MatchTradePreventionType" or field_name == "CancelReasonCode" or field_name == "OrderRejectReasonCode" or field_name == "CxlRejReasonCode":
+        return ord(field_value)
+    elif field_name == "NewOrderSingleClOrdID" or field_name == "NewOrderSingleOptionsSecurityID" or field_name == "NewOrderSinglePartyID" or field_name == "char":
+        return field_value.encode('utf-8')
     else:
-        raise ValueError(f"Unknown field type: {field_type}")
+        raise ValueError("Invalid field name: " + field_name)
 
-def encode_message(schema, message_name, field_values):
-    message_id = schema[message_name]['id']
-    fields = schema[message_name]['fields']
 
-    encoded_fields = []
-    for field_name, field_value in field_values.items():
-        if field_name in fields:
-            field_id = fields[field_name]['id']
-            field_type = fields[field_name]['type']
-            encoded_field = encode_field(field_value, field_type)
-            encoded_fields.append(struct.pack('>H', field_id) + encoded_field)
-
-    field_count = len(encoded_fields)
-    encoded_message = struct.pack('>H', message_id) + struct.pack('>H', field_count) + b''.join(encoded_fields)
-
-    return encoded_message
-
-def decode_field(buffer, offset, field_type):
-    if field_type == 'char':
-        value = struct.unpack_from('>c', buffer, offset)[0].decode('ascii')
-        return value, offset + 1
-    elif field_type == 'UTCTimestampNanos':
-        value = struct.unpack_from('>Q', buffer, offset)[0]
-        return value, offset + 8
-    elif field_type == 'string':
-        length = struct.unpack_from('>H', buffer, offset)[0]
-        offset += 2
-        value = struct.unpack_from(f'>{length}s', buffer, offset)[0].decode('ascii')
-        return value, offset + length
+def decode_field(field_name, field_value):
+    if field_name == "BooleanType":
+        return bool(field_value)
+    elif field_name == "PriceType":
+        mantissa = struct.unpack('>q', field_value)[0]
+        exponent = -8
+        return {'Mantissa': mantissa / 10 ** exponent, 'Exponent': exponent}
+    elif field_name == "ShortPriceType":
+        mantissa = struct.unpack('>H', field_value)[0]
+        exponent = -2
+        return {'Mantissa': mantissa / 10 ** exponent, 'Exponent': exponent}
+    elif field_name == "UTCTimestampNanos":
+        return {'Time': struct.unpack('>Q', field_value)[0]}
+    elif field_name == "RepeatingGroupDimensions":
+        block_length, num_in_group = struct.unpack('>BB', field_value)
+        return {'blockLength': block_length, 'numInGroup': num_in_group}
+    elif field_name == "ExecInstType" or field_name == "MassCancelInstType" or field_name == "SideType" or field_name == "OrdType" or field_name == "TimeInForceType" or field_name == "OpenOrCloseType" or field_name == "TradingCapacityType" or field_name == "RepriceFrequencyType" or field_name == "RepriceBehaviorType" or field_name == "OrdStatusType" or field_name == "CxlRejResponseToType" or field_name == "LastLiquidityIndType" or field_name == "MatchTradePreventionType" or field_name == "CancelReasonCode" or field_name == "OrderRejectReasonCode" or field_name == "CxlRejReasonCode":
+        return chr(field_value)
+    elif field_name == "NewOrderSingleClOrdID" or field_name == "NewOrderSingleOptionsSecurityID" or field_name == "NewOrderSinglePartyID" or field_name == "char":
+        return field_value.decode('utf-8')
     else:
-        raise ValueError(f"Unknown field type: {field_type}")
-
-def decode_message(buffer, offset, schema):
-    message_id = struct.unpack_from('>H', buffer, offset)[0]
-    offset += 2
-
-    # Find the message name based on the message ID
-    message_name = None
-    for name, message in schema.items():
-        if message['id'] == message_id:
-            message_name = name
-            break
-
-    if not message_name:
-        raise ValueError(f"Unknown message ID: {message_id}")
-
-    field_count = struct.unpack_from('>H', buffer, offset)[0]
-    offset += 2
-
-    decoded_fields = {}
-    for _ in range(field_count):
-        field_id = struct.unpack_from('>H', buffer, offset)[0]
-        offset += 2
-
-        # Find the field name and type based on the field ID and message name
-        field_name = None
-        field_type = None
-        for name, field in schema[message_name]['fields'].items():
-            if field['id'] == field_id:
-                field_name = name
-                field_type = field['type']
-                break
-
-        if not field_name:
-            raise ValueError(f"Unknown field ID: {field_id} for message {message_name}")
-
-        field_value, offset = decode_field(buffer, offset, field_type)
-        decoded_fields[field_name] = field_value
-
-    return message_name, decoded_fields
-
-# Load the schema from the XML file
-schema = load_schema('sbe-schema.xml')
-print(schema.keys())
-
-# Sample field values for encoding
-field_values = {
-    'SendingTime': 1623341234000000000,
-    'ClOrdID': 'ORD123',
-    'OptionsSecurityID': 'OPT456',
-    'Side': 1,
-    'OrderQty': 100,
-    'OrdType': 2,
-    'Price': 10.5,
-    'TimeInForce': 1,
-    'OpenOrClose': 2,
-    'ExecInst': 'XYZ',
-    'TradingCapacity': 3,
-    'RepriceFrequency': 4,
-    'RepriceBehavior': 5,
-    'MtpGroupID': 6,
-    'MatchTradePrevention': 7,
-    'CancelGroupID': 8,
-    'RiskGroupID': 9,
-    'Parties': [
-        {'PartyID': 'P1', 'PartyIDSource': 'S1', 'PartyRole': 10},
-        {'PartyID': 'P2', 'PartyIDSource': 'S2', 'PartyRole': 11}
-    ]
-}
-
-# Encode the message
-encoded_message = encode_message(schema, 'NewOrderSingle', field_values)
-print(f"Encoded message: {encoded_message.hex()}")
-
-# Decode the message
-decoded_message_name, decoded_field_values = decode_message(encoded_message, 0, schema)
-print(f"Decoded message name: {decoded_message_name}")
-print(f"Decoded field values: {decoded_field_values}")
-
-
-def encode_field(value, field_type):
-    if field_type == 'char':
-        return struct.pack('>c', value.encode('ascii'))
-    elif field_type == 'UTCTimestampNanos':
-        return struct.pack('>Q', value)
-    elif field_type in ['string', 'NewOrderSingleClOrdID', 'NewOrderSingleOptionsSecurityID', 'NewOrderSinglePartyID']:
-        encoded_value = value.encode('ascii')
-        length = len(encoded_value)
-        return struct.pack(f'>{length}s', encoded_value)
-    elif field_type == 'int8':
-        return struct.pack('>b', value)
-    elif field_type == 'int16':
-        return struct.pack('>h', value)
-    elif field_type == 'int32':
-        return struct.pack('>i', value)
-    elif field_type == 'int64':
-        return struct.pack('>q', value)
-    elif field_type == 'uint8':
-        return struct.pack('>B', value)
-    elif field_type == 'uint16':
-        return struct.pack('>H', value)
-    elif field_type == 'uint32':
-        return struct.pack('>I', value)
-    elif field_type == 'uint64':
-        return struct.pack('>Q', value)
-    elif field_type == 'float':
-        return struct.pack('>f', value)
-    elif field_type == 'double':
-        return struct.pack('>d', value)
-    elif field_type == 'SideType':
-        if value == 'Buy':
-            return struct.pack('>c', '1'.encode('ascii'))
-        elif value == 'Sell':
-            return struct.pack('>c', '2'.encode('ascii'))
-        else:
-            raise ValueError(f"Unknown enum value for field type {field_type}")
-    else:
-        raise ValueError(f"Unknown field type: {field_type}")
-
-
-
-def decode_field(buffer, offset, field_type):
-    if field_type == 'char':
-        value = struct.unpack_from('>c', buffer, offset)[0].decode('ascii')
-        return value, offset + 1
-    elif field_type == 'UTCTimestampNanos':
-        value = struct.unpack_from('>Q', buffer, offset)[0]
-        return value, offset + 8
-    elif field_type in ['string', 'NewOrderSingleClOrdID', 'NewOrderSingleOptionsSecurityID', 'NewOrderSinglePartyID']:
-        value = struct.unpack_from(f'>{field_type}ss', buffer, offset)[0].decode('ascii')
-        return value, offset + len(value.encode('ascii'))
-    elif field_type == 'SideType':
-        value = struct.unpack_from('>c', buffer, offset)[0].decode('ascii')
-        if value == '1':
-            return 'Buy', offset + 1
-        elif value == '2':
-            return 'Sell', offset + 1
-        else:
-            raise ValueError(f"Unknown enum value for field type {field_type}")
-    else:
-        raise ValueError(f"Unknown field type: {field_type}")
+        raise ValueError("Invalid field name: " + field_name)
