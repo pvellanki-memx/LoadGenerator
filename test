@@ -1,99 +1,23 @@
-import struct
-
-# Decode boolean value
-def decode_boolean(buffer, offset):
-    value = struct.unpack_from('>B', buffer, offset)[0]
-    return value != 0, offset + 1
-
-def decode_price(buffer, offset):
-    presence = struct.unpack_from('>B', buffer, offset)[0]
-    offset += 1
-
-    if presence == 0:
-        return None, offset
-
-    exponent = struct.unpack_from('>b', buffer, offset)[0]
-    offset += 1
-
-    mantissa_bytes = buffer[offset:offset + 8]
-    mantissa = int.from_bytes(mantissa_bytes, byteorder='big', signed=False)
-
-    price_value = mantissa * pow(10, exponent)
-    offset += 8
-
-    return price_value, offset
-
-# Decode short price value
-def decode_short_price(buffer, offset):
-    exponent = struct.unpack_from('>b', buffer, offset)[0]
-    mantissa = struct.unpack_from('>H', buffer, offset + 1)[0]
-    value = mantissa * 10 ** exponent
-    return value, offset + 3
-
-
-# Decode UTC timestamp in nanoseconds
-def decode_utc_timestamp_nanos(buffer, offset):
-    unit = struct.unpack_from('>B', buffer, offset)[0]
-    time = struct.unpack_from('>Q', buffer, offset + 1)[0]
-    return time, offset + 9
-
-# Decode repeating group dimensions
-def decode_repeating_group_dimensions(buffer, offset):
-    block_length = struct.unpack_from('>H', buffer, offset)[0]
-    num_in_group = struct.unpack_from('>H', buffer, offset + 2)[0]
-    return block_length, num_in_group, offset + 4
-
-# Decode enumeration value
-def decode_enum(buffer, offset, encoding_type):
-    if encoding_type == 'uint8':
-        value = struct.unpack_from('>B', buffer, offset)[0]
-        return value, offset + 1
-    elif encoding_type == 'char':
-        value = struct.unpack_from('>c', buffer, offset)[0]
-        return value.decode('utf-8'), offset + 1
-    elif encoding_type == 'uint16':
-        value = struct.unpack_from('>H', buffer, offset)[0]
-        return value, offset + 2
-    else:
-        raise ValueError('Unsupported encoding type: ' + encoding_type)
-
-# Example usage
-buffer = b'\x01\x00\x00\x00\x00\x00\x00\x00\x00'
-offset = 0
-
-boolean_value, offset = decode_boolean(buffer, offset)
-print('Boolean value:', boolean_value)
-
-price_value, offset = decode_price(buffer, offset)
-print('Price value:', price_value)
-
-short_price_value, offset = decode_short_price(buffer, offset)
-print('Short price value:', short_price_value)
-
-utc_timestamp, offset = decode_utc_timestamp_nanos(buffer, offset)
-print('UTC timestamp (nanoseconds):', utc_timestamp)
-
-block_length, num_in_group, offset = decode_repeating_group_dimensions(buffer, offset)
-print('Block length:', block_length)
-print('Number in group:', num_in_group)
-
-enum_value, offset = decode_enum(buffer, offset, 'uint8')
-print('Enum value:', enum_value)
-
-
-
-
-
-
-(myenv) pvellanki@qa2434:~/loadgenerator/sbe$ python3 sbe_encoder.py 
-Encoded message: b'\x00\x01\x00\x00'
-
-
-
-import struct
+import json
+import time
+import socket
+import random
+import threading
+from datetime import datetime
 import xml.etree.ElementTree as ET
+import struct
 
+# Configuration
+config_file = 'session_config.json'
+schema_file = 'sbe-schema.xml'
+message_rate = 10  # Messages per second
 
+# Global variables
+schema = None
+session_config = None
+stop_event = threading.Event()
+
+# Load schema
 def load_schema(schema_file):
     tree = ET.parse(schema_file)
     root = tree.getroot()
@@ -103,99 +27,122 @@ def load_schema(schema_file):
     namespace = root.tag.split('}')[0] + '}'
 
     for message_elem in root.findall(f'{namespace}message'):
+        message_id = int(message_elem.get('id'))
         message_name = message_elem.get('name')
         fields = {}
 
         for field_elem in message_elem.findall(f'.//{namespace}field'):
             field_id = int(field_elem.get('id'))
+            field_name = field_elem.get('name')
             field_type = field_elem.get('type')
-            fields[field_id] = field_type
+            fields[field_name] = {'id': field_id, 'type': field_type}
 
-        messages[message_name] = fields
+        messages[message_name] = {'id': message_id, 'fields': fields}
 
     return messages
 
+# Load session configuration from file
+def load_session_config(config_file):
+    with open(config_file, 'r') as file:
+        config_data = json.load(file)
+    return config_data
 
-def decode_field(buffer, offset, field_type):
-    if field_type == 'int8':
-        value = struct.unpack_from('>b', buffer, offset)[0]
-        return value, offset + 1
-    elif field_type == 'int16':
-        value = struct.unpack_from('>h', buffer, offset)[0]
-        return value, offset + 2
-    elif field_type == 'int32':
-        value = struct.unpack_from('>i', buffer, offset)[0]
-        return value, offset + 4
-    elif field_type == 'int64':
-        value = struct.unpack_from('>q', buffer, offset)[0]
-        return value, offset + 8
-    elif field_type == 'uint8':
-        value = struct.unpack_from('>B', buffer, offset)[0]
-        return value, offset + 1
-    elif field_type == 'uint16':
-        value = struct.unpack_from('>H', buffer, offset)[0]
-        return value, offset + 2
-    elif field_type == 'uint32':
-        value = struct.unpack_from('>I', buffer, offset)[0]
-        return value, offset + 4
-    elif field_type == 'uint64':
-        value = struct.unpack_from('>Q', buffer, offset)[0]
-        return value, offset + 8
-    elif field_type == 'float':
-        value = struct.unpack_from('>f', buffer, offset)[0]
-        return value, offset + 4
-    elif field_type == 'double':
-        value = struct.unpack_from('>d', buffer, offset)[0]
-        return value, offset + 8
-    elif field_type == 'string':
-        str_length = struct.unpack_from('>H', buffer, offset)[0]
-        str_value = struct.unpack_from(f'>{str_length}s', buffer, offset + 2)[0].decode('ascii')
-        return str_value, offset + 2 + str_length
-    else:
-        raise ValueError(f"Unknown field type: {field_type}")
+# Encode field
+def encode_field(field_type, value):
+    # Same as before (using your encode_field function)
 
+# Encode message
+def encode_message(schema, message_name, field_values):
+    # Same as before (using your encode_message function)
 
-def decode_message(buffer, offset, schema, message_name):
-    if message_name not in schema:
-        raise ValueError(f"Message '{message_name}' not found in the schema.")
+# Connect to the server
+def connect():
+    global session_config
 
-    fields = schema[message_name]
+    try:
+        # Create a TCP/IP socket
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_address = (session_config['ip'], session_config['port'])
 
-    decoded_fields = {}
-    while offset < len(buffer):
-        field_id = struct.unpack_from('>H', buffer, offset)[0]
-        offset += 2
+        # Connect the socket to the server address
+        sock.connect(server_address)
+        print('Connected to {}:{}'.format(*server_address))
+        return sock
+    except Exception as e:
+        print('Error connecting to the server:', str(e))
+        return None
 
-        if field_id in fields:
-            field_type = fields[field_id]
-            value, offset = decode_field(buffer, offset, field_type)
-            decoded_fields[field_id] = value
-        else:
-            raise ValueError(f"Field ID {field_id} not found in the schema for message '{message_name}'.")
+# Perform login
+def login(sock):
+    global schema, session_config
 
-    return decoded_fields, offset
+    try:
+        # Construct and send LoginRequest message
+        login_request = {
+            'Username': session_config['username'],
+            'Password': session_config['password']
+        }
+        encoded_login_request = encode_message(schema, 'LoginRequest', login_request)
+        sock.sendall(encoded_login_request)
+        print('Sent LoginRequest')
 
+        # Wait for and decode the response
+        response = sock.recv(1024)
+        decoded_response, _ = decode_message(response, 0, schema)
+        print('Received LoginResponse:', decoded_response)
+    except Exception as e:
+        print('Error performing login:', str(e))
 
-# Example usage
-schema_file = 'schema.xml'
-buffer = b'\x00\x01\x00\x00'
-offset = 0
-message_name = 'NewOrderSingle'
+# Generate NewOrderSingle messages at a specified rate
+def generate_messages(sock):
+    global schema
 
-schema = load_schema(schema_file)
+    try:
+        while not stop_event.is_set():
+            # Construct a random NewOrderSingle message
+            new_order_single = {
+                'SendingTime': int(datetime.now().timestamp() * 1000000000),
+                'ClOrdID': 'CLORD' + str(random.randint(1, 100000)),
+                'Symbol': 'AAPL',
+                'Side': random.choice(['Buy', 'Sell']),
+                'OrderQty': random.randint(1, 100),
+                'Price': round(random.uniform(100.0, 200.0), 2)
+            }
+            encoded_new_order_single = encode_message(schema, 'NewOrderSingle', new_order_single)
+            sock.sendall(encoded_new_order_single)
+            print('Sent NewOrderSingle:', new_order_single)
 
-decoded_fields, offset = decode_message(buffer, offset, schema, message_name)
+            # Sleep for the specified message rate
+            time.sleep(1 / message_rate)
+    except Exception as e:
+        print('Error generating messages:', str(e))
 
-print("Decoded fields:")
-for field_id, value in decoded_fields.items():
-    print(f"Field ID: {field_id}, Value: {value}")
-    
-    
-    
-    Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/sbe/sbe_decoder.py", line 95, in <module>
-    decoded_fields, offset = decode_message(buffer, offset, schema, message_name)
-  File "/home/pvellanki/loadgenerator/sbe/sbe_decoder.py", line 82, in decode_message
-    raise ValueError(f"Field ID {field_id} not found in the schema for message '{message_name}'.")
-ValueError: Field ID 1 not found in the schema for message 'NewOrderSingle'.
+# Main execution
+if __name__ == '__main__':
+    # Load schema and session configuration
+    schema = load_schema(schema_file)
+    session_config = load_session_config(config_file)
 
+    # Connect to the server
+    sock = connect()
+    if not sock:
+        exit(1)
+
+    # Perform login
+    login(sock)
+
+    # Start generating messages
+    generator_thread = threading.Thread(target=generate_messages, args=(sock,))
+    generator_thread.start()
+
+    # Wait for user interruption
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print('Stopping...')
+        stop_event.set()
+        generator_thread.join()
+
+    # Close the socket
+    sock.close()
