@@ -1,6 +1,6 @@
 import struct
 import xml.etree.ElementTree as ET
-
+from urllib.request import urlopen
 
 def load_schema(schema_file):
     tree = ET.parse(schema_file)
@@ -22,7 +22,6 @@ def load_schema(schema_file):
         schema[message_name] = {'id': message_id, 'fields': fields}
 
     return schema
-
 
 def encode_field(value, field_type):
     if field_type == 'char':
@@ -56,7 +55,6 @@ def encode_field(value, field_type):
     else:
         raise ValueError(f"Unknown field type: {field_type}")
 
-
 def encode_message(schema, message_name, field_values):
     message_id = schema[message_name]['id']
     fields = schema[message_name]['fields']
@@ -74,7 +72,6 @@ def encode_message(schema, message_name, field_values):
 
     return encoded_message
 
-
 def decode_field(buffer, offset, field_type):
     if field_type == 'char':
         value = struct.unpack_from('>c', buffer, offset)[0].decode('ascii')
@@ -82,7 +79,13 @@ def decode_field(buffer, offset, field_type):
     elif field_type == 'UTCTimestampNanos':
         value = struct.unpack_from('>Q', buffer, offset)[0]
         return value, offset + 8
-
+    elif field_type == 'string':
+        length = struct.unpack_from('>H', buffer, offset)[0]
+        offset += 2
+        value = struct.unpack_from(f'>{length}s', buffer, offset)[0].decode('ascii')
+        return value, offset + length
+    else:
+        raise ValueError(f"Unknown field type: {field_type}")
 
 def decode_message(buffer, offset, schema):
     message_id = struct.unpack_from('>H', buffer, offset)[0]
@@ -123,9 +126,17 @@ def decode_message(buffer, offset, schema):
 
     return message_name, decoded_fields
 
+# Fetch the XML schema file
+schema_url = 'https://raw.githubusercontent.com/pvell/LoadGenerator/main/SBE.xml'
+xml_data = urlopen(schema_url).read()
+
+# Save the XML schema file locally
+xml_file = 'schema.xml'
+with open(xml_file, 'wb') as f:
+    f.write(xml_data)
 
 # Load the schema from the XML file
-schema = load_schema('schema.xml')
+schema = load_schema(xml_file)
 
 # Sample field values for encoding
 field_values = {
