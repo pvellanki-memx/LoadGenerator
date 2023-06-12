@@ -210,3 +210,11 @@ if __name__ == '__main__':
 
     decoded_fields, _ = decode_message(encoded_message, 0, schema)
     print(f"Decoded fields: {decoded_fields}")
+    
+    
+    Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/sbe/sbe-tool.py", line 208, in <module>
+    encoded_message = encode_message(schema, message_name, field_values)
+  File "/home/pvellanki/loadgenerator/sbe/sbe-tool.py", line 75, in encode_message
+    raise ValueError(f"Field '{field_name}' not found in the schema for message '{message_name}'.")
+ValueError: Field 'SendingTime' not found in the schema for message 'NewOrderSingle'.
