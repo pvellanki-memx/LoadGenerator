@@ -211,3 +211,46 @@ print(schema)
 
 
 
+
+
+import xmlschema
+
+
+def load_schema(schema_file):
+    schema = {}
+
+    # Load the XML schema
+    xs = xmlschema.XMLSchema(schema_file)
+
+    # Get the root element of the schema
+    root = xs.root
+
+    # Iterate over the message elements in the schema
+    for message in root.findall('.//message'):
+        message_name = message.attrib.get('name')
+        message_id = int(message.attrib.get('id'))
+        fields = {}
+
+        # Iterate over the field elements within the message
+        for field in message.findall('.//field'):
+            field_name = field.attrib.get('name')
+            field_id = int(field.attrib.get('id'))
+            field_type = field.attrib.get('type')
+            fields[field_name] = {'id': field_id, 'type': field_type}
+
+        schema[message_name] = {'id': message_id, 'fields': fields}
+
+    return schema
+
+
+# Load the schema from the XML file
+schema = load_schema('sbe-schema.xml')
+
+print(schema)
+
+
+
+
+
+
+
