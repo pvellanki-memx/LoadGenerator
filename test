@@ -51,8 +51,11 @@ def encode_field(field_type, value):
         return struct.pack('>d', value)
     elif field_type == 'string':
         return value.encode('ascii')
+    elif field_type == 'timestamp':
+        return struct.pack('>Q', int(value))
     else:
         raise ValueError(f"Unknown field type: {field_type}")
+
 
 
 def encode_message(schema, message_name, field_values):
