@@ -1,26 +1,46 @@
 import struct
+from lxml import etree
+
+
 import xml.etree.ElementTree as ET
 
+
 def load_schema(schema_file):
+    schema = {}
+
+    # Load the XML file
     tree = ET.parse(schema_file)
     root = tree.getroot()
 
-    schema = {}
+    # Define the XML namespace used in the file
+    namespace = {'sbe': 'http://fixprotocol.io/2016/sbe'}
 
-    for message in root.findall('message'):
-        message_name = message.get('name')
-        message_id = int(message.get('id'))
+    # Find all message elements within the schema
+    for message in root.findall('.//sbe:message', namespace):
+        message_name = message.attrib.get('name')
+        message_id = int(message.attrib.get('id'))
         fields = {}
 
-        for field in message.findall('field'):
-            field_name = field.get('name')
-            field_id = int(field.get('id'))
-            field_type = field.get('type')
-            fields[field_name] = {'id': field_id, 'type': field_type}
+        # Find the field elements within the message
+        field_elements = message.findall('field', namespace)
+        print(field_elements)
+        for field in field_elements:
+            field_name = field.attrib.get('name')
+            field_id = int(field.attrib.get('id'))
+            field_type = field.attrib.get('type')
+
+            # Handle missing or empty attributes
+            if field_name and field_id and field_type:
+                fields[field_name] = {'id': field_id, 'type': field_type}
 
         schema[message_name] = {'id': message_id, 'fields': fields}
 
     return schema
+
+
+# Load the schema from the XML file
+schema = load_schema('sbe-schema.xml')
+
 
 def encode_field(value, field_type):
     if field_type == 'char':
@@ -127,6 +147,7 @@ def decode_message(buffer, offset, schema):
 
 # Load the schema from the XML file
 schema = load_schema('sbe-schema.xml')
+print(schema.keys())
 
 # Sample field values for encoding
 field_values = {
@@ -161,95 +182,3 @@ print(f"Encoded message: {encoded_message.hex()}")
 decoded_message_name, decoded_field_values = decode_message(encoded_message, 0, schema)
 print(f"Decoded message name: {decoded_message_name}")
 print(f"Decoded field values: {decoded_field_values}")
-
-
-
-
-import struct
-import xml.etree.ElementTree as ET
-
-
-def load_schema(schema_file):
-    schema = {}
-
-    # Load the XML file
-    tree = ET.parse(schema_file)
-    root = tree.getroot()
-
-    # Define the XML namespace used in the file
-    namespace = {'sbe': 'http://fixprotocol.io/2016/sbe'}
-
-    # Find all message elements within the schema
-    for message in root.findall('.//sbe:message', namespace):
-        message_name = message.attrib.get('name')
-        message_id = int(message.attrib.get('id'))
-        fields = {}
-
-        # Find the field elements within the message
-        field_elements = message.findall('.//sbe:field', namespace)
-        for field in field_elements:
-            field_name = field.attrib.get('name')
-            field_id = int(field.attrib.get('id'))
-            field_type = field.attrib.get('type')
-            fields[field_name] = {'id': field_id, 'type': field_type}
-
-        schema[message_name] = {'id': message_id, 'fields': fields}
-
-    return schema
-
-
-# Load the schema from the XML file
-schema = load_schema('sbe-schema.xml')
-
-print(schema)
-
-
-
-
-
-
-
-
-
-
-
-import xml.etree.ElementTree as ET
-
-
-def load_schema(schema_file):
-    schema = {}
-
-    # Load the XML file
-    tree = ET.parse(schema_file)
-    root = tree.getroot()
-
-    # Define the XML namespace used in the file
-    namespace = {'sbe': 'http://fixprotocol.io/2016/sbe'}
-
-    # Find all message elements within the schema
-    for message in root.findall('.//sbe:message', namespace):
-        message_name = message.attrib.get('name')
-        message_id = int(message.attrib.get('id'))
-        fields = {}
-
-        # Find the field elements within the message
-        field_elements = message.findall('field', namespace)
-        print(field_elements)
-        for field in field_elements:
-            field_name = field.attrib.get('name')
-            field_id = int(field.attrib.get('id'))
-            field_type = field.attrib.get('type')
-
-            # Handle missing or empty attributes
-            if field_name and field_id and field_type:
-                fields[field_name] = {'id': field_id, 'type': field_type}
-
-        schema[message_name] = {'id': message_id, 'fields': fields}
-
-    return schema
-
-
-# Load the schema from the XML file
-schema = load_schema('sbe-schema.xml')
-
-print(schema)
