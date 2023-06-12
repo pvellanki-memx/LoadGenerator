@@ -182,3 +182,8 @@ print(f"Encoded message: {encoded_message.hex()}")
 decoded_message_name, decoded_field_values = decode_message(encoded_message, 0, schema)
 print(f"Decoded message name: {decoded_message_name}")
 print(f"Decoded field values: {decoded_field_values}")
+
+
+
+field_type in ['string', 'NewOrderSingleClOrdID', 'NewOrderSingleOptionsSecurityID', 'NewOrderSinglePartyID']:
+        encoded_value = value.encode('ascii')
