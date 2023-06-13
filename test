@@ -60,3 +60,14 @@ while True:
 
 # Close the socket
 client_socket.close()
+
+
+
+(myenv) pvellanki@qa2434:~/loadgenerator/sbe$ python3 test3.py
+b'\x00\x00\x00d\x00\x14Pexpro_01:expro_01pwd'
+b'\x00\x00\x00d\x00\x14Pexpro_01:expro_01pwd'
+sent login request)
+Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/sbe/test3.py", line 34, in <module>
+    response_header = client_socket.recv(6)
+ConnectionResetError: [Errno 104] Connection reset by peer
