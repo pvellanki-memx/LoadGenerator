@@ -1,4 +1,5 @@
 import socket
+import struct
 
 # TCP/IP connection details
 host = '127.0.0.1'
@@ -10,70 +11,25 @@ password = 'your_password'
 token = f'{user}:{password}'
 
 # Login request
-message_type = b'\x64'  # Message Type = 100 (decimal)
-token_type = b'P'  # Token Type = 'P'
-token_length = len(token).to_bytes(2, byteorder='big')
-header = message_type + token_type + token_length
+message_type = 100
+token_type = 'P'  # Assuming token type is always 'P'
+token_length = len(token)
+header = struct.pack('!BHB', message_type, token_length + 1, token_type.encode('utf-8')[0])
 message = header + token.encode('utf-8')
 
 # Create a socket and establish the connection
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect((host, port))
 
+# Set socket to binary mode
+client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+
 # Send the login request
 client_socket.sendall(message)
 
 # Receive and handle the response
-response = client_socket.recv(1024)  # Adjust buffer size as per your requirement
-
-if response:
-    print("Response:", response.decode('utf-8'))
-else:
-    print("No response received.")
-
-# Close the socket
-client_socket.close()
-
-
-Login Request from SF to Port:
-
-
-
-
-import socket
-import struct
-
-# TCP/IP connection details
-host = '127.0.0.1'
-port = 8080
-
-# Token and header details
-user = 'expro01'
-password = 'expro_01pwd'
-token = f'{user}:{password}'
-
-# Login request
-message_type = 100
-token_type = 'P'
-token_length = len(token)
-
-# Calculate message length (header + token)
-message_length = 3 + token_length
-
-# Construct the login request
-header = struct.pack('!HB', message_length, message_type)
-login_request = header + token_type.encode('utf-8') + token.encode('utf-8')
-
-# Create a socket and establish the connection
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client_socket.connect((host, port))
-
-# Send the login request
-client_socket.sendall(login_request)
-
-# Receive and handle the response
 response_header = client_socket.recv(6)
-response_type, response_length = struct.unpack('!IH', response_header)
+response_type, response_length = struct.unpack('!BH', response_header)
 
 if response_type == 1:  # Login Accepted
     response_message = client_socket.recv(response_length)
@@ -91,7 +47,7 @@ else:
 # Continue with the session
 while True:
     response_header = client_socket.recv(6)
-    response_type, response_length = struct.unpack('!IH', response_header)
+    response_type, response_length = struct.unpack('!BH', response_header)
 
     if response_type == 3:  # Start of Session
         response_message = client_socket.recv(response_length)
@@ -104,4 +60,3 @@ while True:
 
 # Close the socket
 client_socket.close()
-
