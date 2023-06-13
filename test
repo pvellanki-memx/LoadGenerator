@@ -116,3 +116,14 @@ def encode_message(schema, message_name, field_values):
         encoded_message += encoded_field
 
     return encoded_message
+    
+    
+    
+    (myenv) pvellanki@qa2434:~/loadgenerator/sbe$ python3 test4.py
+Encoded message: bytearray(b'\x00\x05\x01\x01\x01\x02\x00\x01')
+Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/sbe/test4.py", line 185, in <module>
+    decoded_message_name, decoded_fields = decode_message(schema, encoded_message)
+  File "/home/pvellanki/loadgenerator/sbe/test4.py", line 131, in decode_message
+    field_id = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+struct.error: unpack requires a buffer of 2 bytes
