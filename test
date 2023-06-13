@@ -70,3 +70,20 @@ client_socket.send(encoded_mass_cancel_message)
 
 # Close the client socket
 client_socket.close()
+
+
+
+MessageHeader={
+    blockLength=47;
+    templateId=4;
+    schemaId=1;
+    version=266
+};
+ClOrdID=1686623958131;
+Symbol=UBER;
+UnsequencedMessage={
+    TCPHeader={
+        MessageLength=53;
+        MessageType=104
+    }    
+}
