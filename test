@@ -4,7 +4,7 @@ import time
 import sbe
 
 # Load the SBE schema
-schema_file = 'sbe-schema-equities.xml'
+schema_file = 'sbe-schema.xml'
 schema = sbe.load_schema(schema_file)
 
 # TCP/IP connection details
@@ -37,6 +37,7 @@ client_socket.sendall(message)
 mass_cancel_fields = {
     52: int(time.time() * 10**9),  # SendingTime: Current timestamp in nanoseconds
     11: "CLORD12345",  # ClOrdID
+    55: "IBM",  # Side
 }
 
 # Wait for the Login Accepted message
@@ -63,11 +64,7 @@ else:
 # Send the MassCancelRequest message
 mass_cancel_message_name = 'MassCancelRequest'
 encoded_mass_cancel_message = sbe.encode_message(schema, mass_cancel_message_name, mass_cancel_fields)
-print(encoded_mass_cancel_message)
-#decoded_message_name, decoded_fields = sbe.decode_message(schema,encoded_mass_cancel_message)
-#print(decoded_message_name)
 client_socket.send(encoded_mass_cancel_message)
-print("sent")
 
 # Handle the response for the MassCancelRequest message (you need to implement this part)
 
