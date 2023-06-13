@@ -1,213 +1,62 @@
-import xml.etree.ElementTree as ET
-import struct
 import socket
+import struct
 
+# TCP/IP connection details
+host = '127.0.0.1'
+port = 8080
 
-def load_schema(schema_file):
-    tree = ET.parse(schema_file)
-    root = tree.getroot()
-    messages = {}
+# Token and header details
+user = 'your_username'
+password = 'your_password'
+token = f'{user}:{password}'
 
-    # Find the XML namespace
-    namespace = root.tag.split('}')[0] + '}'
+# Login request
+message_type = 100
+token_type = 'P'  # Assuming token type is always 'P'
+token_length = len(token)
+header = struct.pack('!IHc', message_type, token_length, token_type.encode('utf-8'))
+message = header + token.encode('utf-8')
 
-    for message_elem in root.findall(f'{namespace}message'):
-        message_id = int(message_elem.get('id'))
-        message_name = message_elem.get('name')
-        fields = {}
+# Create a socket and establish the connection
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client_socket.connect((host, port))
 
-        for field_elem in message_elem.findall(f'.//{namespace}field'):
-            field_id = int(field_elem.get('id'))
-            field_type = field_elem.get('type')
-            fields[field_id] = field_type
+# Set socket to binary mode
+client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
-        messages[message_name] = {'id': message_id, 'fields': fields}
+# Send the login request
+client_socket.sendall(message)
 
-    return messages
+# Receive and handle the response
+response_header = client_socket.recv(6)
+response_type, response_length = struct.unpack('!IH', response_header)
 
+if response_type == 1:  # Login Accepted
+    response_message = client_socket.recv(response_length)
+    print("Login Accepted:", response_message.decode('utf-8'))
+elif response_type == 2:  # Login Rejected
+    response_message = client_socket.recv(response_length)
+    print("Login Rejected:", response_message.decode('utf-8'))
+    client_socket.close()
+    exit()  # Exit the script gracefully after login rejection
+else:
+    print("Invalid response received.")
+    client_socket.close()
+    exit()  # Exit the script if an invalid response is received
 
-def encode_field(field_type, value):
-    if field_type == 'char':
-        return struct.pack('>c', value.encode('ascii'))
-    elif field_type == 'int8':
-        return struct.pack('>b', value)
-    elif field_type == 'int16':
-        return struct.pack('>h', value)
-    elif field_type == 'int32':
-        return struct.pack('>i', value)
-    elif field_type == 'int64':
-        return struct.pack('>q', value)
-    elif field_type == 'uint8':
-        return struct.pack('>B', value)
-    elif field_type == 'uint16':
-        return struct.pack('>H', value)
-    elif field_type == 'uint32':
-        return struct.pack('>I', value)
-    elif field_type == 'uint64':
-        return struct.pack('>Q', value)
-    elif field_type == 'float':
-        return struct.pack('>f', value)
-    elif field_type == 'double':
-        return struct.pack('>d', value)
-    elif field_type == 'string':
-        return value.encode('ascii')
+# Continue with the session
+while True:
+    response_header = client_socket.recv(6)
+    response_type, response_length = struct.unpack('!IH', response_header)
+
+    if response_type == 3:  # Start of Session
+        response_message = client_socket.recv(response_length)
+        print("Start of Session:", response_message.decode('utf-8'))
+        break
     else:
-        raise ValueError(f"Unknown field type: {field_type}")
+        print("Invalid response received.")
+        client_socket.close()
+        exit()  # Exit the script if an invalid response is received
 
-
-def encode_message(schema, message_name, field_values):
-    if message_name not in schema:
-        raise ValueError(f"Message '{message_name}' not found in the schema.")
-
-    message = schema[message_name]
-    message_id = message['id']
-    fields = message['fields']
-
-    encoded_fields = []
-    for field_id, field_type in fields.items():
-        if field_id in field_values:
-            value = field_values[field_id]
-            encoded_field = encode_field(field_type, value)
-            encoded_fields.append((field_id, encoded_field))
-
-    encoded_message = struct.pack('>H', message_id)
-    encoded_message += struct.pack('>H', len(encoded_fields))
-
-    for field_id, encoded_field in encoded_fields:
-        encoded_message += struct.pack('>H', field_id)
-        encoded_message += struct.pack('>H', len(encoded_field))
-        encoded_message += encoded_field
-
-    return encoded_message
-
-
-def decode_field(field_type, encoded_field):
-    if field_type == 'char':
-        return encoded_field.decode('ascii')
-    elif field_type == 'int8':
-        return struct.unpack('>b', encoded_field)[0]
-    elif field_type == 'int16':
-        return struct.unpack('>h', encoded_field)[0]
-    elif field_type == 'int32':
-        return struct.unpack('>i', encoded_field)[0]
-    elif field_type == 'int64':
-        return struct.unpack('>q', encoded_field)[0]
-    elif field_type == 'uint8':
-        return struct.unpack('>B', encoded_field)[0]
-    elif field_type == 'uint16':
-        return struct.unpack('>H', encoded_field)[0]
-    elif field_type == 'uint32':
-        return struct.unpack('>I', encoded_field)[0]
-    elif field_type == 'uint64':
-        return struct.unpack('>Q', encoded_field)[0]
-    elif field_type == 'float':
-        return struct.unpack('>f', encoded_field)[0]
-    elif field_type == 'double':
-        return struct.unpack('>d', encoded_field)[0]
-    elif field_type == 'string':
-        return encoded_field.decode('ascii')
-    else:
-        raise ValueError(f"Unknown field type: {field_type}")
-
-
-def decode_message(schema, encoded_message):
-    message_id = struct.unpack('>H', encoded_message[:2])[0]
-    encoded_fields_count = struct.unpack('>H', encoded_message[2:4])[0]
-    encoded_fields = encoded_message[4:]
-
-    message_name = None
-    fields = {}
-
-    for field_id, field_type in schema.items():
-        if field_type['id'] == message_id:
-            message_name = field_id
-            fields = field_type['fields']
-            break
-
-    if message_name is None:
-        raise ValueError(f"Message ID '{message_id}' not found in the schema.")
-
-    decoded_fields = {}
-    offset = 0
-
-    for _ in range(encoded_fields_count):
-        field_id = struct.unpack('>H', encoded_fields[offset:offset + 2])[0]
-        field_length = struct.unpack('>H', encoded_fields[offset + 2:offset + 4])[0]
-        encoded_field = encoded_fields[offset + 4:offset + 4 + field_length]
-        offset += 4 + field_length
-
-        if field_id in fields:
-            field_type = fields[field_id]
-            decoded_field = decode_field(field_type, encoded_field)
-            decoded_fields[field_id] = decoded_field
-
-    return {'message_name': message_name, 'fields': decoded_fields}
-
-
-if __name__ == '__main__':
-    # Load the schemas
-    tcp_schema_file = 'TCP.xml'
-    sbe_schema_file = 'sbe-schema.xml'
-    tcp_schema = load_schema(tcp_schema_file)
-    sbe_schema = load_schema(sbe_schema_file)
-
-    # TCP connection parameters
-    host = '127.0.0.1'
-    port = 12345
-
-    # Field values for LoginRequest and NewOrderSingle messages
-    login_request_fields = {
-        1: 'USERNAME',
-        2: 'PASSWORD'
-    }
-    new_order_single_fields = {
-        52: 1623322435000000000,
-        11: "CLORD12345",
-        21035: "SECURITY123",
-        54: "BUY",
-        38: 100,
-        40: "LIMIT",
-        44: 99.99,
-        59: "DAY",
-        77: "OPEN",
-        18: "ADD",
-        1815: "MEDIUM",
-        21020: 1,
-        21021: 2,
-        2362: 123,
-        21001: "PREVENT",
-        21000: 456,
-        21005: 789,
-        453: [
-            {
-                448: "PARTY1",
-                447: "SRC1",
-                452: 1
-            },
-            {
-                448: "PARTY2",
-                447: "SRC2",
-                452: 2
-            }
-        ]
-    }
-
-    # Establish TCP connection
-    tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    tcp_socket.connect((host, port))
-
-    # Send LoginRequest message
-    login_request_encoded = encode_message(tcp_schema, 'LoginRequest', login_request_fields)
-    tcp_socket.sendall(login_request_encoded)
-
-    # Receive and decode response
-    response_data = tcp_socket.recv(1024)
-    decoded_response = decode_message(tcp_schema, response_data)
-    print(f"Response: {decoded_response}")
-
-    # Send NewOrderSingle message
-    new_order_single_encoded = encode_message(sbe_schema, 'NewOrderSingle', new_order_single_fields)
-    tcp_socket.sendall(new_order_single_encoded)
-
-    # Close TCP connection
-    tcp_socket.close()
+# Close the socket
+client_socket.close()
