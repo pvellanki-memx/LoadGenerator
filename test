@@ -40,17 +40,68 @@ Login Request from SF to Port:
 
 
 
+import socket
+import struct
 
-12:58
-0000   00 04 00 01 00 06 00 0f 53 88 9b d0 00 00 08 00   ........S.......
-0010   45 00 00 40 33 b0 40 00 40 06 ba 23 c0 a8 02 27   E..@3.@.@..#...'
-0020   0a 02 80 13 a8 90 76 f2 7e c1 65 88 e6 bf 50 31   ......v.~.e...P1
-0030   50 18 00 08 4d 17 00 00 64 00 15 50 65 78 70 72   P...M...d..Pexpr
-0040   6f 5f 30 31 3a 65 78 70 72 6f 5f 30 31 70 77 64   o_01:expro_01pwd
-12:58
-Login Accepted from Port to SF:
-12:59
-0000   00 00 00 01 00 06 98 5d 82 c4 ce 7b 00 00 08 00   .......]...{....
-0010   45 00 00 2c 00 00 40 00 3d 06 f0 e7 0a 02 80 13   E..,..@.=.......
-0020   c0 a8 02 27 76 f2 a8 90 e6 bf 50 31 7e c1 65 a0   ...'v.....P1~.e.
-0030   50 18 ff fd 25 bd 00 00 01 00 01 53 00 00         P...%......S..
+# TCP/IP connection details
+host = '127.0.0.1'
+port = 8080
+
+# Token and header details
+user = 'expro01'
+password = 'expro_01pwd'
+token = f'{user}:{password}'
+
+# Login request
+message_type = 100
+token_type = 'P'
+token_length = len(token)
+
+# Calculate message length (header + token)
+message_length = 3 + token_length
+
+# Construct the login request
+header = struct.pack('!HB', message_length, message_type)
+login_request = header + token_type.encode('utf-8') + token.encode('utf-8')
+
+# Create a socket and establish the connection
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client_socket.connect((host, port))
+
+# Send the login request
+client_socket.sendall(login_request)
+
+# Receive and handle the response
+response_header = client_socket.recv(6)
+response_type, response_length = struct.unpack('!IH', response_header)
+
+if response_type == 1:  # Login Accepted
+    response_message = client_socket.recv(response_length)
+    print("Login Accepted:", response_message.decode('utf-8'))
+elif response_type == 2:  # Login Rejected
+    response_message = client_socket.recv(response_length)
+    print("Login Rejected:", response_message.decode('utf-8'))
+    client_socket.close()
+    exit()  # Exit the script gracefully after login rejection
+else:
+    print("Invalid response received.")
+    client_socket.close()
+    exit()  # Exit the script if an invalid response is received
+
+# Continue with the session
+while True:
+    response_header = client_socket.recv(6)
+    response_type, response_length = struct.unpack('!IH', response_header)
+
+    if response_type == 3:  # Start of Session
+        response_message = client_socket.recv(response_length)
+        print("Start of Session:", response_message.decode('utf-8'))
+        break
+    else:
+        print("Invalid response received.")
+        client_socket.close()
+        exit()  # Exit the script if an invalid response is received
+
+# Close the socket
+client_socket.close()
+
