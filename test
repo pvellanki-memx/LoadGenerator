@@ -119,11 +119,48 @@ def encode_message(schema, message_name, field_values):
     
     
     
-    (myenv) pvellanki@qa2434:~/loadgenerator/sbe$ python3 test4.py
-Encoded message: bytearray(b'\x00\x05\x01\x01\x01\x02\x00\x01')
-Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/sbe/test4.py", line 185, in <module>
-    decoded_message_name, decoded_fields = decode_message(schema, encoded_message)
-  File "/home/pvellanki/loadgenerator/sbe/test4.py", line 131, in decode_message
-    field_id = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
-struct.error: unpack requires a buffer of 2 bytes
+def decode_message(schema, encoded_message):
+    offset = 0
+
+    # Decode MEMO SBE header
+    block_length = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+    offset += 2
+
+    template_id = struct.unpack('B', encoded_message[offset:offset + 1])[0]
+    offset += 1
+
+    schema_id = struct.unpack('B', encoded_message[offset:offset + 1])[0]
+    offset += 1
+
+    version = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+    offset += 2
+
+    # Extract message ID from the encoded message
+    message_id = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+    offset += 2
+
+    if message_id not in schema:
+        raise ValueError(f"Message ID '{message_id}' not found in the schema.")
+
+    message_name = schema[message_id]['name']
+    fields = schema[message_id]['fields']
+    decoded_fields = {}
+
+    # Decode the fields of the message
+    while offset < len(encoded_message):
+        field_id = struct.unpack('B', encoded_message[offset:offset + 1])[0]
+        offset += 1
+
+        field_length = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+        offset += 2
+
+        field_value = encoded_message[offset:offset + field_length]
+        offset += field_length
+
+        field_type = fields[field_id]
+        decoded_value = decode_field(field_type, field_value)
+
+        decoded_fields[field_id] = decoded_value
+
+    return message_name, decoded_fields
+
