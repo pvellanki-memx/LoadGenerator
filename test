@@ -33,23 +33,18 @@ client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 # Send the login request
 client_socket.sendall(message)
 
-# Define the field values for the NewOrderSingle message
-new_order_fields = {
+# Define the field values for the MassCancelRequest message
+mass_cancel_fields = {
     52: int(time.time() * 10**9),  # SendingTime: Current timestamp in nanoseconds
-    11: "CLORD12345",  # ClOrdID
-    21031: "2",  # OptionsSecurityID
-    
+    # Add the necessary fields for the MassCancelRequest message
+    # Example:
+    # 21032: <field_value>  # MassCancelInstType
 }
 
 # Define the message rate in messages per second
 message_rate = 10
 
-
 # Wait for the Login Accepted message
-response_header = client_socket.recv(2)
-response_type, response_length = struct.unpack('!BB', response_header)
-
-# Receive and handle the response
 response_header = client_socket.recv(2)
 response_type, response_length = struct.unpack('!BB', response_header)
 
@@ -72,14 +67,14 @@ else:
 
 # Start the message sending loop
 start_time = time.time()
-message_count = 10
+message_count = 0
 
 while True:
-    # Encode and send the NewOrderSingle message
-    new_order_message_name = 'MassCancelRequest'
-    encoded_new_order_message = sbe.encode_message(schema, new_order_message_name, new_order_fields)
-    print(encoded_new_order_message)
-    client_socket.send(encoded_new_order_message)
+    # Encode and send the MassCancelRequest message
+    mass_cancel_message_name = 'MassCancelRequest'
+    encoded_mass_cancel_message = sbe.encode_message(schema, mass_cancel_message_name, mass_cancel_fields)
+    print(encoded_mass_cancel_message)
+    client_socket.send(encoded_mass_cancel_message)
 
     message_count += 1
 
@@ -91,10 +86,10 @@ while True:
         # Wait for the remaining time to achieve the desired rate
         time.sleep(target_time - elapsed_time)
 
+    if message_count >= message_rate:  # Adjust the condition based on your requirements
+        break
+
 # ... Handle the response for each sent message ...
 
 # Close the client socket
 client_socket.close()
-
-
-
