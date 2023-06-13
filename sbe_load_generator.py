@@ -38,8 +38,8 @@ for session_name in config.sections():
    # Login process
 login_request_fields = {}
 login_request_fields[3] = 100  # Message Type
-login_request_fields[4] = len(connection_config['username'])  # Token Type
-login_request_fields[5] = connection_config['username']  # Token
+login_request_fields[4] = len(session_config['token'])  # Token Type
+login_request_fields[5] = connection_config['token']  # Token
 login_request_message = encode_message(schema, 'LoginRequest', login_request_fields)
 client_socket.sendall(login_request_message)
 
