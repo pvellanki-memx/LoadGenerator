@@ -70,7 +70,15 @@ mass_cancel_message_name = 'MassCancelRequest'
 encoded_mass_cancel_message = sbe.encode_message(schema, mass_cancel_message_name, mass_cancel_fields)
 client_socket.send(encoded_mass_cancel_message)
 
-# Handle the response for the MassCancelRequest message (you need to implement this part)
+# Receive and handle the response
+response_header = client_socket.recv(2)
+response_type, response_length = struct.unpack('!BB', response_header)
+
+if response_type == <ResponseTypeValue>:  # Replace <ResponseTypeValue> with the actual response type value
+    response_message = client_socket.recv(response_length)
+    # Handle the response according to your requirements
+else:
+    print("Invalid response received for MassCancelRequest.")
 
 # Close the client socket
 client_socket.close()
