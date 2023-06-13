@@ -69,8 +69,13 @@ def encode_message(schema, message_name, field_values):
             encoded_field = encode_field(field_type, value)
             encoded_fields.append((field_id, encoded_field))
 
-    encoded_message = struct.pack('>H', message_id)
-    encoded_message += struct.pack('>H', len(encoded_fields))
+    encoded_message = bytearray()
+    encoded_message += struct.pack('>H', len(encoded_fields) + 5)  # MEMO SBE header: BlockLength
+    encoded_message += struct.pack('B', 1)  # MEMO SBE header: TemplateID
+    encoded_message += struct.pack('B', 1)  # MEMO SBE header: SchemaID
+    encoded_message += struct.pack('>H', 258)  # MEMO SBE header: Version
+
+    encoded_message += struct.pack('>H', message_id)  # Message ID
 
     for field_id, encoded_field in encoded_fields:
         encoded_message += struct.pack('>H', field_id)
@@ -110,30 +115,51 @@ def decode_field(field_type, encoded_value):
 
 
 def decode_message(schema, encoded_message):
-    message_id = struct.unpack('>H', encoded_message[:2])[0]
-    for message_name, message_info in schema.items():
-        if message_info['id'] == message_id:
-            fields = message_info['fields']
-            break
-    else:
-        raise ValueError(f"Message with ID {message_id} not found in the schema.")
+    offset = 0
 
+    # Decode MEMO SBE header
+    block_length = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+    offset += 2
+
+    template_id = struct.unpack('B', encoded_message[offset:offset + 1])[0]
+    offset += 1
+
+    schema_id = struct.unpack('B', encoded_message[offset:offset + 1])[0]
+    offset += 1
+
+    version = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+    offset += 2
+
+    # Extract message ID from the encoded message
+    message_id = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+    offset += 2
+
+    if message_id not in schema:
+        raise ValueError(f"Message ID '{message_id}' not found in the schema.")
+
+    message_name = schema[message_id]['name']
+    fields = schema[message_id]['fields']
     decoded_fields = {}
-    encoded_fields_count = struct.unpack('>H', encoded_message[2:4])[0]
-    offset = 4
-    for _ in range(encoded_fields_count):
-        field_id = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
-        field_length = struct.unpack('>H', encoded_message[offset + 2:offset + 4])[0]
-        encoded_field = encoded_message[offset + 4:offset + 4 + field_length]
-        if field_id in fields:
-            field_type = fields[field_id]
-            decoded_value = decode_field(field_type, encoded_field)
-            decoded_fields[field_id] = decoded_value
-        offset += 4 + field_length
+
+    # Decode the fields of the message
+    while offset < len(encoded_message):
+        field_id = struct.unpack('B', encoded_message[offset:offset + 1])[0]
+        offset += 1
+
+        field_length = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+        offset += 2
+
+        field_value = encoded_message[offset:offset + field_length]
+        offset += field_length
+
+        field_type = fields[field_id]
+        decoded_value = decode_field(field_type, field_value)
+
+        decoded_fields[field_id] = decoded_value
 
     return message_name, decoded_fields
 
-
+"""
 if __name__ == '__main__':
     schema_file = 'sbe-schema.xml'
     schema = load_schema(schema_file)
@@ -175,7 +201,4 @@ if __name__ == '__main__':
     encoded_message = encode_message(schema, message_name, field_values)
     print(f"Encoded message: {encoded_message}")
 
-    # Example decoding
-    decoded_message_name, decoded_fields = decode_message(schema, encoded_message)
-    print(f"Decoded message name: {decoded_message_name}")
-    print(f"Decoded fields: {decoded_fields}")
+   """
