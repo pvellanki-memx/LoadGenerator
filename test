@@ -73,5 +73,18 @@ Traceback (most recent call last):
 ConnectionResetError: [Errno 104] Connection reset by peer
 
 
+Offset	Length	Type	Name	Description
+0	1	Byte	Message Type	(see below)
+1	2	Numeric (Unsigned)	Message Length	Total bytes following the head (does not include this header)
 
+
+Login Request (Message Type = 100)				
+Offset	Length	Type	Name	Description
+3	1	Byte	Token Type	Token type
+4	n (max:255)	Bytes	Token	Login token
+				
+Token Types:				
+				
+Token Type	Description			
+P	Static Password			
 
