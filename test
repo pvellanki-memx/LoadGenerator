@@ -12,9 +12,9 @@ token = f'{user}:{password}'
 
 # Login request
 message_type = 100
-token_type = 'P'  # Assuming token type is always 'P'
+token_type = ord('P')  # Assuming token type is always 'P'
 token_length = len(token)
-header = struct.pack('!IHc', message_type, token_length, token_type.encode('utf-8'))
+header = struct.pack('!BHB', message_type, token_length + 2, token_type)
 message = header + token.encode('utf-8')
 
 # Create a socket and establish the connection
@@ -29,13 +29,13 @@ client_socket.sendall(message)
 
 # Receive and handle the response
 response_header = client_socket.recv(6)
-response_type, response_length = struct.unpack('!IH', response_header)
+response_type, response_length = struct.unpack('!BHB', response_header)
 
 if response_type == 1:  # Login Accepted
-    response_message = client_socket.recv(response_length)
+    response_message = client_socket.recv(response_length - 2)
     print("Login Accepted:", response_message.decode('utf-8'))
 elif response_type == 2:  # Login Rejected
-    response_message = client_socket.recv(response_length)
+    response_message = client_socket.recv(response_length - 2)
     print("Login Rejected:", response_message.decode('utf-8'))
     client_socket.close()
     exit()  # Exit the script gracefully after login rejection
@@ -47,10 +47,10 @@ else:
 # Continue with the session
 while True:
     response_header = client_socket.recv(6)
-    response_type, response_length = struct.unpack('!IH', response_header)
+    response_type, response_length = struct.unpack('!BHB', response_header)
 
     if response_type == 3:  # Start of Session
-        response_message = client_socket.recv(response_length)
+        response_message = client_socket.recv(response_length - 2)
         print("Start of Session:", response_message.decode('utf-8'))
         break
     else:
@@ -60,31 +60,3 @@ while True:
 
 # Close the socket
 client_socket.close()
-
-
-
-(myenv) pvellanki@qa2434:~/loadgenerator/sbe$ python3 test3.py
-b'\x00\x00\x00d\x00\x14Pexpro_01:expro_01pwd'
-b'\x00\x00\x00d\x00\x14Pexpro_01:expro_01pwd'
-sent login request)
-Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/sbe/test3.py", line 34, in <module>
-    response_header = client_socket.recv(6)
-ConnectionResetError: [Errno 104] Connection reset by peer
-
-
-Offset	Length	Type	Name	Description
-0	1	Byte	Message Type	(see below)
-1	2	Numeric (Unsigned)	Message Length	Total bytes following the head (does not include this header)
-
-
-Login Request (Message Type = 100)				
-Offset	Length	Type	Name	Description
-3	1	Byte	Token Type	Token type
-4	n (max:255)	Bytes	Token	Login token
-				
-Token Types:				
-				
-Token Type	Description			
-P	Static Password			
-
