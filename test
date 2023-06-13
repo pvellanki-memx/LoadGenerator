@@ -84,3 +84,62 @@ while True:
 
 # Close the client socket
 client_socket.close()
+
+
+
+
+2023-06-13T14:18:28-04:00 gc22075.equities.ewr2.memx.tech sh[60131]: 2023/06/13 18:18:28.111478963 UTC gc22075 [ERROR] MIDS - MEMO_EP6SBE02 - SERVER:CUSTOMER - CHANNEL:CUSTOMER-TCP - 10.2.44.1:39700 - Read timed out for client 10.2.44.1:39700 -- PendingReadBuffer: [00 01 00 ...] +197 more bytes, MessageType=0 (Heartbeat), MessageLength=256
+2023-06-13T14:18:28-04:00 gc22075.equities.ewr2.memx.tech sh[60131]: 2023/06/13 18:18:28.111875947 UTC gc22075 [INFO ] MIDS - MEMO_EP6SBE02 - Client logged out: { Local=10.2.128.10:30076, Remote=10.2.44.1:39700, State=Closed }
+2023-06-13T14:20:43-04:00 gc22075.equities.ewr2.memx.tech sh[60131]: 2023/06/13 18:20:43.351103465 UTC gc22075 [INFO ] MIDS - MEMO_EP6SBE02 - SERVER:CUSTOMER - CHANNEL:CUSTOMER-TCP - 10.2.44.1:52514 - Accepting new ServerClient
+2023-06-13T14:20:43-04:00 gc22075.equities.ewr2.memx.tech sh[60131]: 2023/06/13 18:20:43.351202169 UTC gc22075 [INFO ] MIDS - MEMO_EP6SBE02 - Client logged in: { Local=10.2.128.10:30076, Remote=10.2.44.1:52514, State=Login }
+2023-06-13T14:20:48-04:00 gc22075.equities.ewr2.memx.tech sh[60131]: 2023/06/13 18:20:48.351027492 UTC gc22075 [ERROR] MIDS - MEMO_EP6SBE02 - SERVER:CUSTOMER - CHANNEL:CUSTOMER-TCP - 10.2.44.1:52514 - Read timed out for client 10.2.44.1:52514 -- PendingReadBuffer: [00 01 00 ...] +157 more bytes, MessageType=0 (Heartbeat), MessageLength=256
+2023-06-13T14:20:48-04:00 gc22075.equities.ewr2.memx.tech sh[60131]: 2023/06/13 18:20:48.351061064 UTC gc22075 [INFO ] MIDS - MEMO_EP6SBE02 - Client logged out: { Local=10.2.128.10:30076, Remote=10.2.44.1:52514, State=Closed }
+
+
+
+Login Accepted:
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+b'\x00\x01\x00\x00'
+Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/sbe/test4.py", line 99, in <module>
+    client_socket.send(encoded_new_order_message)
+ConnectionResetError: [Errno 104] Connection reset by peer
