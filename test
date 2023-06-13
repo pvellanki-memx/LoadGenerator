@@ -82,3 +82,14 @@ else:
 
 # Close the client socket
 client_socket.close()
+
+
+
+MessageHeader={blockLength=47; templateId=4; schemaId=1; version=266}; ClOrdID=1686623958131; Symbol=UBER; UnsequencedMessage={TCPHeader={MessageLength=53; MessageType=104}}
+
+00000000: 6800 3500 2f04 0101 0a31 3638 3636 3233 h5/
+1686623 
+00000010: 3935 3831 3331 0000 0055 4245 5200 0000 958131UBER 
+00000020: 0000 0000 0000 8000 0000 0000 0000 8000  
+00000030: 0000 0000 0000 ffff                     ÿÿ 
+
