@@ -93,3 +93,26 @@ while True:
 
 # Close the client socket
 client_socket.close()
+
+
+
+
+MassCancelRequest						
+						
+The mass cancel request message requests the cancellation all remaining size on a set of existing orders that match the given criteria.						
+						
+Note: this message can be used to cancel orders from different accounts. Orders affected by this request may have been entered via either MEMO or MEMO FIX supported protocols. 						
+						
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header	0	7	SBE Header	N/A	Y	SBE Header with templateID = 8
+SendingTime	7	8	UTCTimestampNanos	52	Y	Time of message transmission always expressed in UTC (Universal Time Coordinated, also known as GMT)
+ClOrdID	15	16	CHAR	11	Y	A unique identifier for the mass cancel request.
+SendCancels	31	1	BOOLEAN	21031	N	If set to true, the exchange will send an ExecutionReport_Canceled message for each order/quote canceled.
+						If set to false the exchange will NOT send an ExecutionReport_Canceled resulting from this request.
+						The default if this field is not supplied is true.
+EFID	32	4	CHAR	21007	N	Cancel all orders on this EFID.
+UnderlyingOrSeries	36	1	UnderlyingOrSeriesType	21029	Y	If UnderlyingOrSeries is set to CancelAllOnSeries then OptionsSecurityID must be provided to denote the specific option series (root, put/call, expirtation, and strike price) to cancel orders on. If UnderlyingOrSeries is set to CancelAllOnUnderlying then Symbol (OSI Root) must be provided to denote the OSI Root on which to cancel all orders (across all series)
+Symbol (OSIRoot)	37	6	CHAR	55	N	The OSI Root.
+OptionsSecurityID	43	8	CHAR	21035	N	The OptionsSecurityID identifying the tradable options product. In this case it is used to identify the entire series the OptionsSecurityID is part of.
+CancelGroupID	51	2	UINT16	21000	N	Identifier of custom cancel group.
