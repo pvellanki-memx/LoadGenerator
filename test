@@ -61,10 +61,26 @@ while True:
 # Close the socket
 client_socket.close()
 
-Start of Session (Message Type = 3)				
-Offset	Length	Type	Name	Description
-3	8	Numeric	Session ID	A session identifier for the current session on this connection.
-				
-A start of session message will be received when a session becomes available on the connection. In the case where the client is connected before the session has been opened on the server, the start of session message may be received some time after the login process has been completed. In the event where the session is already in progress before the client connects, the start of session message will be received immediately following the Login Accepted message.				
-				
-Start of session messages do not increment the sequence number of the stream.				
+
+
+
+
+
+
+if response_type == 1:  # Login Accepted
+    response_message = client_socket.recv(response_length)
+    print("Login Accepted:", response_message.decode('utf-8'))
+elif response_type == 2:  # Login Rejected
+    response_message = client_socket.recv(response_length)
+    print("Login Rejected:", response_message.decode('utf-8'))
+    client_socket.close()
+    exit()  # Exit the script gracefully after login rejection
+elif response_type == 3:  # Start of Session
+    response_message = client_socket.recv(response_length)
+    session_id = struct.unpack('!Q', response_message)[0]
+    print("Start of Session. Session ID:", session_id)
+else:
+    print("Invalid response received.")
+    client_socket.close()
+    exit()  # Exit the script if an invalid response is received
+
