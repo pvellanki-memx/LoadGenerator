@@ -36,13 +36,13 @@ client_socket.sendall(message)
 # Define the field values for the MassCancelRequest message
 mass_cancel_fields = {
     52: int(time.time() * 10**9),  # SendingTime: Current timestamp in nanoseconds
-    # Add the necessary fields for the MassCancelRequest message
+    11: "CLORD12345",  # ClOrdID
+    21031: True,  # SendCancels
+    # Add other required fields based on the specification
     # Example:
-    # 21032: <field_value>  # MassCancelInstType
+    # 21029: <UnderlyingOrSeriesTypeValue>,  # UnderlyingOrSeries
+    # 21035: "OptionsSecurityIDValue",  # OptionsSecurityID
 }
-
-# Define the message rate in messages per second
-message_rate = 10
 
 # Wait for the Login Accepted message
 response_header = client_socket.recv(2)
@@ -65,54 +65,12 @@ else:
     client_socket.close()
     exit()  # Exit the script if an invalid response is received
 
-# Start the message sending loop
-start_time = time.time()
-message_count = 0
+# Send the MassCancelRequest message
+mass_cancel_message_name = 'MassCancelRequest'
+encoded_mass_cancel_message = sbe.encode_message(schema, mass_cancel_message_name, mass_cancel_fields)
+client_socket.send(encoded_mass_cancel_message)
 
-while True:
-    # Encode and send the MassCancelRequest message
-    mass_cancel_message_name = 'MassCancelRequest'
-    encoded_mass_cancel_message = sbe.encode_message(schema, mass_cancel_message_name, mass_cancel_fields)
-    print(encoded_mass_cancel_message)
-    client_socket.send(encoded_mass_cancel_message)
-
-    message_count += 1
-
-    # Calculate the elapsed time and check if the desired rate is reached
-    elapsed_time = time.time() - start_time
-    target_time = message_count / message_rate
-
-    if elapsed_time < target_time:
-        # Wait for the remaining time to achieve the desired rate
-        time.sleep(target_time - elapsed_time)
-
-    if message_count >= message_rate:  # Adjust the condition based on your requirements
-        break
-
-# ... Handle the response for each sent message ...
+# Handle the response for the MassCancelRequest message (you need to implement this part)
 
 # Close the client socket
 client_socket.close()
-
-
-
-
-MassCancelRequest						
-						
-The mass cancel request message requests the cancellation all remaining size on a set of existing orders that match the given criteria.						
-						
-Note: this message can be used to cancel orders from different accounts. Orders affected by this request may have been entered via either MEMO or MEMO FIX supported protocols. 						
-						
-Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
-Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
-SBE Header	0	7	SBE Header	N/A	Y	SBE Header with templateID = 8
-SendingTime	7	8	UTCTimestampNanos	52	Y	Time of message transmission always expressed in UTC (Universal Time Coordinated, also known as GMT)
-ClOrdID	15	16	CHAR	11	Y	A unique identifier for the mass cancel request.
-SendCancels	31	1	BOOLEAN	21031	N	If set to true, the exchange will send an ExecutionReport_Canceled message for each order/quote canceled.
-						If set to false the exchange will NOT send an ExecutionReport_Canceled resulting from this request.
-						The default if this field is not supplied is true.
-EFID	32	4	CHAR	21007	N	Cancel all orders on this EFID.
-UnderlyingOrSeries	36	1	UnderlyingOrSeriesType	21029	Y	If UnderlyingOrSeries is set to CancelAllOnSeries then OptionsSecurityID must be provided to denote the specific option series (root, put/call, expirtation, and strike price) to cancel orders on. If UnderlyingOrSeries is set to CancelAllOnUnderlying then Symbol (OSI Root) must be provided to denote the OSI Root on which to cancel all orders (across all series)
-Symbol (OSIRoot)	37	6	CHAR	55	N	The OSI Root.
-OptionsSecurityID	43	8	CHAR	21035	N	The OptionsSecurityID identifying the tradable options product. In this case it is used to identify the entire series the OptionsSecurityID is part of.
-CancelGroupID	51	2	UINT16	21000	N	Identifier of custom cancel group.
