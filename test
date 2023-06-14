@@ -35,3 +35,11 @@ def decode_message(schema, encoded_message):
         offset += field_length
 
     return message_name, decoded_fields
+    
+    The MEMO SBE header appears on the wire as:				
+				
+Field	Offset	Length	Type	Description
+BlockLength	0	2	UINT16	The number of bytes in the message body (does not include the header bytes). Note that MEMO messages do not use repeating groups or variable-length fields.
+TemplateID	2	1	UINT8	Identifier of the message template (ie. the message type)
+SchemaID	3	1	UINT8	The identifier of a message schema. SchemaID=1 for MEMO version 1
+Version	4	2	UINT16	The version number of the message schema that was used to encode a message. MEMX packs two pieces of information into the UNIT16 version field, a major version and a minor update version. So for example a version of 258 = 0x0102 indicates major version 1, minor update 2.
