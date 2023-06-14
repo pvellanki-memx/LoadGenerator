@@ -103,3 +103,40 @@ else:
 
 # Close the client socket
 client_socket.close()
+
+
+
+essageHeader={
+    blockLength=96;
+    templateId=1;
+    schemaId=1;
+    version=266
+};
+ClOrdID=1686623958147;
+Symbol=UBER;
+Side=Sell(2);
+OrderQty=300;
+OrdType=Limit(2);
+Price=15;
+TimeInForce=Day(0);
+OrderCapacity=Agency(A);
+CustOrderCapacity=MemberTradingOnTheirOwnAccount(1);
+ExecInst=4;
+RepriceFrequency=SingleReprice(0);
+RepriceBehavior=RepriceLockRepriceCross(2);
+UnsequencedMessage={
+    TCPHeader={
+        MessageLength=102;
+        MessageType=104
+    }    
+}
+
+00000000: 6800 6600 6001 0101 0a31 3638 3636 3233 hf`
+1686623 
+00000010: 3935 3831 3437 0000 0000 0000 0055 4245 958147UBE 
+00000020: 5200 0000 0000 0000 0032 0000 012c 3200 R2,2 
+00000030: 0000 0000 e4e1 c030 4101 0004 8000 0000 äáÀ0A 
+00000040: 0000 0000 ffff ffff ffff ffff ffff ffff ÿÿÿÿÿÿÿÿÿÿÿÿ 
+00000050: ffff ffff ff00 ffff ffff ff00 0002 ffff ÿÿÿÿÿÿÿÿÿÿÿÿ 
+00000060: ffff ffff ff00 0000 00                  ÿÿÿÿÿ 
+
