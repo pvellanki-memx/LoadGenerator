@@ -4,7 +4,7 @@ import time
 import sbe
 
 # Load the SBE schema
-schema_file = 'sbe-schema.xml'
+schema_file = 'sbe-schema-equities.xml'
 schema = sbe.load_schema(schema_file)
 
 # TCP/IP connection details
@@ -35,9 +35,9 @@ client_socket.sendall(message)
 
 # Define a helper function to decode and print SBE messages
 def decode_and_print_message(encoded_message):
-    message_header = encoded_message[:2]
-    message_type, message_length = struct.unpack('!BB', message_header)
-    message_body = encoded_message[2:]
+    #message_header = encoded_message[:2]
+    message_type  = struct.unpack('!B', encoded_message[:1])[0]
+    message_body = encoded_message[1:]
     message_name = schema.get_message_name(message_type)
     decoded_message = sbe.decode_message(schema, message_name, message_body)
     print(f"{message_name} Response:")
@@ -69,13 +69,8 @@ else:
 
 # Send the MassCancelRequest message
 mass_cancel_fields = {
-    52: int(time.time() * 10**9),  # SendingTime: Current timestamp in nanoseconds
     11: "CLORD12345",  # ClOrdID
-    54: "BUY",  # Side
-    38: 100,  # OrderQty
-    44: 99.99,  # Price
-    40: "LIMIT",  # OrdType
-    59: "DAY",  # TimeInForce
+    55: "AAPL",  # Side
 }
 mass_cancel_message_name = 'MassCancelRequest'
 encoded_mass_cancel_message = sbe.encode_message(schema, mass_cancel_message_name, mass_cancel_fields)
@@ -83,9 +78,9 @@ client_socket.send(encoded_mass_cancel_message)
 
 # Handle the response for the MassCancelRequest message
 response_header = client_socket.recv(2)
-response_type, response_length = struct.unpack('!BB', response_header)
+response_length = struct.unpack('!H', response_header)[0]
 
-if response_type == 4:  # ExecutionReport
+if response_type > 0:  # ExecutionReport
     response_message = client_socket.recv(response_length)
     decode_and_print_message(response_message)
 else:
@@ -95,6 +90,7 @@ else:
 new_order_fields = {
     52: int(time.time() * 10**9),  # SendingTime: Current timestamp in nanoseconds
     11: "CLORD67890",  # ClOrdID
+    55: "AAPL",
     54: "SELL",  # Side
     38: 50,  # OrderQty
     44: 101.5,  # Price
@@ -107,9 +103,9 @@ client_socket.send(encoded_new_order_message)
 
 # Handle the response for the NewOrderMessage
 response_header = client_socket.recv(2)
-response_type, response_length = struct.unpack('!BB', response_header)
+response_length = struct.unpack('!H', response_header)[0]
 
-if response_type == 4:  # ExecutionReport
+if response_length > 0:  # ExecutionReport
     response_message = client_socket.recv(response_length)
     decode_and_print_message(response_message)
 else:
