@@ -93,3 +93,8 @@ client_socket.send(encoded_new_order_message)
 
 # Close the client socket
 client_socket.close()
+
+(myenv) pvellanki@qa2434:~/loadgenerator/sbe/equities$ python3 sbe-load-generator.py 
+Login Accepted:
+bytearray(b'\x00\x05\x01\x01\x01\n\x00\x04')
+bytearray(b'\x00\x05\x01\x01\x01\n\x00\x01')
