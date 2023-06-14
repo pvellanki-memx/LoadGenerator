@@ -21,11 +21,3 @@ def decode_message(schema, encoded_message):
         offset += 4 + field_length
 
     return message_name, decoded_fields
-    
-    
-    Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/sbe/equities/test2.py", line 253, in <module>
-    decoded_message = decode_message(schema, encoded_message)
-  File "/home/pvellanki/loadgenerator/sbe/equities/test2.py", line 221, in decode_message
-    field_id = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
-struct.error: unpack requires a buffer of 2 bytes
