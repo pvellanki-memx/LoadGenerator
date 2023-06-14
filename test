@@ -37,7 +37,11 @@ client_socket.sendall(message)
 mass_cancel_fields = {
     52: int(time.time() * 10**9),  # SendingTime: Current timestamp in nanoseconds
     11: "CLORD12345",  # ClOrdID
-    55: "IBM",  # Side
+    54: "BUY",  # Side
+    38: 100,  # OrderQty
+    44: 99.99,  # Price
+    40: "LIMIT",  # OrdType
+    59: "DAY",  # TimeInForce
 }
 
 # Wait for the Login Accepted message
@@ -68,24 +72,24 @@ client_socket.send(encoded_mass_cancel_message)
 
 # Handle the response for the MassCancelRequest message (you need to implement this part)
 
-# Close the client socket
-client_socket.close()
-
-
-
-MessageHeader={
-    blockLength=47;
-    templateId=4;
-    schemaId=1;
-    version=266
-};
-ClOrdID=1686623958131;
-Symbol=UBER;
-UnsequencedMessage={
-    TCPHeader={
-        MessageLength=53;
-        MessageType=104
-    }    
+# Define the field values for the NewOrderMessage
+new_order_fields = {
+    52: int(time.time() * 10**9),  # SendingTime: Current timestamp in nanoseconds
+    11: "CLORD12346",  # ClOrdID
+    55: "AAPL",  # Symbol
+    54: "BUY",  # Side
+    38: 100,  # OrderQty
+    44: 99.99,  # Price
+    40: "LIMIT",  # OrdType
+    59: "DAY",  # TimeInForce
 }
 
-bytearray(b'\x00\x05\x01\x01\x01\n\x00\x04')
+# Send the NewOrderMessage
+new_order_message_name = 'NewOrderSingle'
+encoded_new_order_message = sbe.encode_message(schema, new_order_message_name, new_order_fields)
+client_socket.send(encoded_new_order_message)
+
+# Handle the response for the NewOrderMessage (you need to implement this part)
+
+# Close the client socket
+client_socket.close()
