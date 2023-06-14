@@ -143,3 +143,35 @@ UnsequencedMessage={
 
 bytearray(b'\x00\x05\x01\x01\x01\n\x00\x01')
 
+
+    <sbe:message blockLength="96" id="1" name="NewOrderSingle">
+        <field id="1" name="ClOrdID" type="NewOrderSingleClOrdID"/>
+        <field id="2" name="MPID" presence="optional" type="NewOrderSingleMPID"/>
+        <field id="3" name="Symbol" type="NewOrderSingleSymbol"/>
+        <field id="4" name="SymbolSfx" presence="optional" type="NewOrderSingleSymbolSfx"/>
+        <field id="5" name="Side" type="SideType"/>
+        <field id="6" name="OrderQty" type="uint32"/>
+        <field id="7" name="OrdType" type="OrdType"/>
+        <field id="8" name="Price" presence="optional" type="PriceType"/>
+        <field id="9" name="TimeInForce" type="TimeInForceType"/>
+        <field id="10" name="OrderCapacity" type="OrderCapacityType"/>
+        <field id="11" name="CustOrderCapacity" type="CustOrderCapacityType"/>
+        <field id="12" name="ExecInst" type="ExecInstType"/>
+        <field id="13" name="PegOffsetValue" presence="optional" type="PriceType"/>
+        <field id="14" name="PegPriceType" presence="optional" type="PegType"/>
+        <field id="15" name="ExpireTime" presence="optional" type="UTCTimestampNanos"/>
+        <field id="16" name="MinQty" presence="optional" type="uint32"/>
+        <field id="17" name="DisplayQty" presence="optional" type="uint32"/>
+        <field id="18" name="DisplayMethod" presence="optional" type="DispMethodType"/>
+        <field id="19" name="ReserveReplenishTiming" presence="optional" type="ReserveReplenishTimingType"/>
+        <field id="20" name="DisplayMinIncr" presence="optional" type="uint32"/>
+        <field id="21" name="LocateReqd" presence="optional" type="char"/>
+        <field id="22" name="RepriceFrequency" presence="optional" type="RepriceFrequencyType"/>
+        <field id="23" name="RepriceBehavior" presence="optional" type="RepriceBehaviorType"/>
+        <field id="24" name="CancelGroupId" presence="optional" type="uint16"/>
+        <field id="25" name="StpGroupId" presence="optional" type="uint16"/>
+        <field id="26" name="SelfTradePrevention" presence="optional" type="SelfTradePreventionType"/>
+        <field id="27" name="RiskGroupId" presence="optional" type="uint16"/>
+        <field id="28" name="LnkId" presence="optional" type="NewOrderSingleLnkId"/>
+    </sbe:message>
+
