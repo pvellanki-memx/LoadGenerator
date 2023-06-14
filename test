@@ -21,3 +21,19 @@ def decode_message(schema, encoded_message):
         offset += 4 + field_length
 
     return message_name, decoded_fields
+    
+    
+    def decode_message(schema, encoded_message):
+    if len(encoded_message) < 4:
+        raise ValueError("Encoded message is too short.")
+
+    message_id = struct.unpack('>H', encoded_message[:2])[0]
+    for key, id in schema.items():
+        if message_id == id:
+            fields = schema[message_id]['fields']
+            decoded_fields = {}
+        else:
+            raise ValueError(f"Message ID '{message_id}' not found in the schema.")
+    
+    # Rest of the code
+
