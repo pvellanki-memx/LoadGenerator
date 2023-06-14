@@ -45,32 +45,60 @@ def load_schema(schema_file):
 
 
 def encode_field(field_type, value):
-    if field_type == 'char':
-        return struct.pack('>c', value.encode('ascii'))
-    elif field_type == 'int8':
-        return struct.pack('>b', value)
-    elif field_type == 'int16':
-        return struct.pack('>h', value)
-    elif field_type == 'int32':
-        return struct.pack('>i', value)
-    elif field_type == 'int64':
-        return struct.pack('>q', value)
-    elif field_type == 'uint8':
-        return struct.pack('>B', value)
-    elif field_type == 'uint16':
-        return struct.pack('>H', value)
+    if field_type == 'NewOrderSingleClOrdID':
+        return value.encode('utf-8')
+    elif field_type == 'NewOrderSingleMPID':
+        return value.encode('utf-8')
+    elif field_type == 'NewOrderSingleSymbol':
+        return value.encode('utf-8')
+    elif field_type == 'NewOrderSingleSymbolSfx':
+        return value.encode('utf-8')
+    elif field_type == 'SideType':
+        return struct.pack('b', value)
     elif field_type == 'uint32':
-        return struct.pack('>I', value)
-    elif field_type == 'uint64':
-        return struct.pack('>Q', value)
-    elif field_type == 'float':
-        return struct.pack('>f', value)
-    elif field_type == 'double':
-        return struct.pack('>d', value)
-    elif field_type == 'string':
-        return value.encode('ascii')
+        return struct.pack('I', value)
+    elif field_type == 'OrdType':
+        return struct.pack('b', value)
+    elif field_type == 'PriceType':
+        return struct.pack('d', value)
+    elif field_type == 'TimeInForceType':
+        return struct.pack('b', value)
+    elif field_type == 'OrderCapacityType':
+        return struct.pack('b', value)
+    elif field_type == 'CustOrderCapacityType':
+        if value == 'MemberTradingOnTheirOwnAccount':
+            return struct.pack('B', 1)
+        elif value == 'RetailCustomer':
+            return struct.pack('B', 5)
+        elif value == 'NullValue':
+            return struct.pack('B', 255)
+        else:
+            raise ValueError(f"Invalid value for CustOrderCapacityType: {value}")
+    elif field_type == 'ExecInstType':
+        return struct.pack('b', value)
+    elif field_type == 'PegType':
+        return struct.pack('b', value)
+    elif field_type == 'UTCTimestampNanos':
+        return struct.pack('Q', value)
+    elif field_type == 'DispMethodType':
+        return struct.pack('b', value)
+    elif field_type == 'ReserveReplenishTimingType':
+        return struct.pack('b', value)
+    elif field_type == 'char':
+        return struct.pack('c', value)
+    elif field_type == 'RepriceFrequencyType':
+        return struct.pack('b', value)
+    elif field_type == 'RepriceBehaviorType':
+        return struct.pack('b', value)
+    elif field_type == 'uint16':
+        return struct.pack('H', value)
+    elif field_type == 'SelfTradePreventionType':
+        return struct.pack('b', value)
+    elif field_type == 'NewOrderSingleLnkId':
+        return value.encode('utf-8')
     else:
         raise ValueError(f"Unknown field type: {field_type}")
+
 
 
 def encode_message(schema, message_name, field_values):
@@ -105,32 +133,61 @@ def encode_message(schema, message_name, field_values):
 
 
 def decode_field(field_type, encoded_value):
-    if field_type == 'char':
-        return encoded_value.decode('ascii')
-    elif field_type == 'int8':
-        return struct.unpack('>b', encoded_value)[0]
-    elif field_type == 'int16':
-        return struct.unpack('>h', encoded_value)[0]
-    elif field_type == 'int32':
-        return struct.unpack('>i', encoded_value)[0]
-    elif field_type == 'int64':
-        return struct.unpack('>q', encoded_value)[0]
-    elif field_type == 'uint8':
-        return struct.unpack('>B', encoded_value)[0]
-    elif field_type == 'uint16':
-        return struct.unpack('>H', encoded_value)[0]
+    if field_type == 'NewOrderSingleClOrdID':
+        return encoded_value.decode('utf-8')
+    elif field_type == 'NewOrderSingleMPID':
+        return encoded_value.decode('utf-8')
+    elif field_type == 'NewOrderSingleSymbol':
+        return encoded_value.decode('utf-8')
+    elif field_type == 'NewOrderSingleSymbolSfx':
+        return encoded_value.decode('utf-8')
+    elif field_type == 'SideType':
+        return struct.unpack('b', encoded_value)[0]
     elif field_type == 'uint32':
-        return struct.unpack('>I', encoded_value)[0]
-    elif field_type == 'uint64':
-        return struct.unpack('>Q', encoded_value)[0]
-    elif field_type == 'float':
-        return struct.unpack('>f', encoded_value)[0]
-    elif field_type == 'double':
-        return struct.unpack('>d', encoded_value)[0]
-    elif field_type == 'string':
-        return encoded_value.decode('ascii')
+        return struct.unpack('I', encoded_value)[0]
+    elif field_type == 'OrdType':
+        return struct.unpack('b', encoded_value)[0]
+    elif field_type == 'PriceType':
+        return struct.unpack('d', encoded_value)[0]
+    elif field_type == 'TimeInForceType':
+        return struct.unpack('b', encoded_value)[0]
+    elif field_type == 'OrderCapacityType':
+        return struct.unpack('b', encoded_value)[0]
+    elif field_type == 'CustOrderCapacityType':
+        decoded_value = struct.unpack('B', encoded_value)[0]
+        if decoded_value == 1:
+            return 'MemberTradingOnTheirOwnAccount'
+        elif decoded_value == 5:
+            return 'RetailCustomer'
+        elif decoded_value == 255:
+            return 'NullValue'
+        else:
+            raise ValueError(f"Invalid encoded value for CustOrderCapacityType: {encoded_value}")
+    elif field_type == 'ExecInstType':
+        return struct.unpack('b', encoded_value)[0]
+    elif field_type == 'PegType':
+        return struct.unpack('b', encoded_value)[0]
+    elif field_type == 'UTCTimestampNanos':
+        return struct.unpack('Q', encoded_value)[0]
+    elif field_type == 'DispMethodType':
+        return struct.unpack('b', encoded_value)[0]
+    elif field_type == 'ReserveReplenishTimingType':
+        return struct.unpack('b', encoded_value)[0]
+    elif field_type == 'char':
+        return struct.unpack('c', encoded_value)[0]
+    elif field_type == 'RepriceFrequencyType':
+        return struct.unpack('b', encoded_value)[0]
+    elif field_type == 'RepriceBehaviorType':
+        return struct.unpack('b', encoded_value)[0]
+    elif field_type == 'uint16':
+        return struct.unpack('H', encoded_value)[0]
+    elif field_type == 'SelfTradePreventionType':
+        return struct.unpack('b', encoded_value)[0]
+    elif field_type == 'NewOrderSingleLnkId':
+        return encoded_value.decode('utf-8')
     else:
         raise ValueError(f"Unknown field type: {field_type}")
+
 
 
 def decode_message(schema, encoded_message):
