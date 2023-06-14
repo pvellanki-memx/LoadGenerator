@@ -36,10 +36,45 @@ def decode_message(schema, encoded_message):
 
     return message_name, decoded_fields
     
-    The MEMO SBE header appears on the wire as:				
-				
-Field	Offset	Length	Type	Description
-BlockLength	0	2	UINT16	The number of bytes in the message body (does not include the header bytes). Note that MEMO messages do not use repeating groups or variable-length fields.
-TemplateID	2	1	UINT8	Identifier of the message template (ie. the message type)
-SchemaID	3	1	UINT8	The identifier of a message schema. SchemaID=1 for MEMO version 1
-Version	4	2	UINT16	The version number of the message schema that was used to encode a message. MEMX packs two pieces of information into the UNIT16 version field, a major version and a minor update version. So for example a version of 258 = 0x0102 indicates major version 1, minor update 2.
+def decode_message(schema, encoded_message):
+    offset = 0
+
+    # Decode MEMO SBE header
+    block_length = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+    offset += 2
+
+    template_id = struct.unpack('B', encoded_message[offset:offset + 1])[0]
+    offset += 1
+
+    schema_id = struct.unpack('B', encoded_message[offset:offset + 1])[0]
+    offset += 1
+
+    version = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+    offset += 2
+
+    # Extract message ID from the encoded message
+    message_id = struct.unpack('B', encoded_message[offset:offset + 1])[0]
+    offset += 1
+
+    for message_name, message_info in schema.items():
+        if message_info['id'] == message_id:
+            fields = message_info['fields']
+            break
+    else:
+        raise ValueError(f"Message with ID {message_id} not found in the schema.")
+
+    decoded_fields = {}
+    encoded_fields_count = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+    offset += 2
+
+    for _ in range(encoded_fields_count):
+        field_id = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+        field_length = struct.unpack('>H', encoded_message[offset + 2:offset + 4])[0]
+        encoded_field = encoded_message[offset + 4:offset + 4 + field_length]
+        if field_id in fields:
+            field_type = fields[field_id]
+            decoded_value = decode_field(field_type, encoded_field)
+            decoded_fields[field_id] = decoded_value
+        offset += 4 + field_length
+
+    return message_name, decoded_fields
