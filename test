@@ -174,4 +174,25 @@ bytearray(b'\x00\x05\x01\x01\x01\n\x00\x01')
         <field id="27" name="RiskGroupId" presence="optional" type="uint16"/>
         <field id="28" name="LnkId" presence="optional" type="NewOrderSingleLnkId"/>
     </sbe:message>
+    
+    
+    
+    import sbe
+
+# Load the SBE schema
+schema_file = 'sbe-schema-equities.xml'
+schema = sbe.load_schema(schema_file)
+
+# Encoded message bytes
+encoded_message = bytearray(b'\x00\x05\x01\x01\x01\n\x00\x01')
+
+# Decode the message using the schema
+message_name = 'NewOrderSingle'
+decoded_message = sbe.decode_message(schema, message_name, encoded_message)
+
+# Print the decoded fields
+print(f"{message_name} Decoded Message:")
+for field_id, field_value in decoded_message.items():
+    print(f"Field ID: {field_id}, Field Value: {field_value}")
+
 
