@@ -156,53 +156,111 @@ def encode_message(schema, message_name, field_values):
 
 
 
-def decode_field(field_type, encoded_value):
-    if field_type in ['NewOrderSingleClOrdID', 'NewOrderSingleMPID', 'NewOrderSingleSymbol', 'NewOrderSingleSymbolSfx', 'NewOrderSingleLnkId']:
-        return encoded_value.decode('utf-8')
-    elif field_type == 'SideType':
-        return struct.unpack('c', encoded_value)[0].decode('utf-8')
-    elif field_type == 'uint32':
-        return struct.unpack('I', encoded_value)[0]
-    elif field_type == 'OrdType':
-        return struct.unpack('b', encoded_value)[0]
-    elif field_type == 'PriceType':
-        return struct.unpack('d', encoded_value)[0]
-    elif field_type == 'TimeInForceType':
-        return struct.unpack('b', encoded_value)[0]
-    elif field_type == 'OrderCapacityType':
-        return struct.unpack('b', encoded_value)[0]
-    elif field_type == 'CustOrderCapacityType':
-        decoded_value = struct.unpack('B', encoded_value)[0]
-        if decoded_value == 1:
-            return 'MemberTradingOnTheirOwnAccount'
-        elif decoded_value == 5:
-            return 'RetailCustomer'
-        elif decoded_value == 255:
-            return 'NullValue'
+def decode_message(schema, encoded_message):
+    offset = 0
+
+    # Decode MEMO SBE header
+    block_length = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+    offset += 2
+
+    template_id = struct.unpack('B', encoded_message[offset:offset + 1])[0]
+    offset += 1
+
+    schema_id = struct.unpack('B', encoded_message[offset:offset + 1])[0]
+    offset += 1
+
+    version = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+    offset += 2
+
+    # Extract message ID from the encoded message
+    message_id = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+    offset += 2
+
+    if message_id not in schema:
+        raise ValueError(f"Message ID '{message_id}' not found in the schema.")
+
+    fields = schema[message_id]['fields']
+    decoded_fields = {}
+
+    # Decode message fields
+    for field_id, field_name in fields.items():
+        # Decode each field based on its type
+        if field_name == 'NewOrderSingleClOrdID':
+            field_value = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+            offset += 2
+        elif field_name == 'NewOrderSingleMPID':
+            field_value = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+            offset += 2
+        elif field_name == 'NewOrderSingleSymbol':
+            field_value = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+            offset += 2
+        elif field_name == 'NewOrderSingleSymbolSfx':
+            field_value = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+            offset += 2
+        elif field_name == 'SideType':
+            field_value = struct.unpack('B', encoded_message[offset:offset + 1])[0]
+            offset += 1
+        elif field_name == 'uint32':
+            field_value = struct.unpack('>I', encoded_message[offset:offset + 4])[0]
+            offset += 4
+        elif field_name == 'OrdType':
+            field_value = struct.unpack('B', encoded_message[offset:offset + 1])[0]
+            offset += 1
+        elif field_name == 'PriceType':
+            field_value = struct.unpack('>d', encoded_message[offset:offset + 8])[0]
+            offset += 8
+        elif field_name == 'TimeInForceType':
+            field_value = struct.unpack('B', encoded_message[offset:offset + 1])[0]
+            offset += 1
+        elif field_name == 'OrderCapacityType':
+            field_value = struct.unpack('B', encoded_message[offset:offset + 1])[0]
+            offset += 1
+        elif field_name == 'CustOrderCapacityType':
+            field_value = struct.unpack('B', encoded_message[offset:offset + 1])[0]
+            offset += 1
+        elif field_name == 'ExecInstType':
+            field_value = struct.unpack('B', encoded_message[offset:offset + 1])[0]
+            offset += 1
+        elif field_name == 'PegType':
+            field_value = struct.unpack('B', encoded_message[offset:offset + 1])[0]
+            offset += 1
+        elif field_name == 'UTCTimestampNanos':
+            field_value = struct.unpack('>Q', encoded_message[offset:offset + 8])[0]
+            offset += 8
+        elif field_name == 'DispMethodType':
+            field_value = struct.unpack('B', encoded_message[offset:offset + 1])[0]
+            offset += 1
+        elif field_name == 'ReserveReplenishTimingType':
+            field_value = struct.unpack('B', encoded_message[offset:offset + 1])[0]
+            offset += 1
+        elif field_name == 'char':
+            field_value = struct.unpack('c', encoded_message[offset:offset + 1])[0]
+            offset += 1
+        elif field_name == 'RepriceFrequencyType':
+            field_value = struct.unpack('B', encoded_message[offset:offset + 1])[0]
+            offset += 1
+        elif field_name == 'RepriceBehaviorType':
+            field_value = struct.unpack('B', encoded_message[offset:offset + 1])[0]
+            offset += 1
+        elif field_name == 'uint16':
+            field_value = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+            offset += 2
+        elif field_name == 'SelfTradePreventionType':
+            field_value = struct.unpack('B', encoded_message[offset:offset + 1])[0]
+            offset += 1
+        elif field_name == 'RiskGroupId':
+            field_value = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+            offset += 2
+        elif field_name == 'NewOrderSingleLnkId':
+            field_value = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+            offset += 2
         else:
-            raise ValueError(f"Invalid encoded value for CustOrderCapacityType: {encoded_value}")
-    elif field_type == 'ExecInstType':
-        return struct.unpack('b', encoded_value)[0]
-    elif field_type == 'PegType':
-        return struct.unpack('b', encoded_value)[0]
-    elif field_type == 'UTCTimestampNanos':
-        return struct.unpack('Q', encoded_value)[0]
-    elif field_type == 'DispMethodType':
-        return struct.unpack('b', encoded_value)[0]
-    elif field_type == 'ReserveReplenishTimingType':
-        return struct.unpack('b', encoded_value)[0]
-    elif field_type == 'char':
-        return struct.unpack('c', encoded_value)[0].decode('utf-8')
-    elif field_type == 'RepriceFrequencyType':
-        return struct.unpack('b', encoded_value)[0]
-    elif field_type == 'RepriceBehaviorType':
-        return struct.unpack('b', encoded_value)[0]
-    elif field_type == 'uint16':
-        return struct.unpack('H', encoded_value)[0]
-    elif field_type == 'SelfTradePreventionType':
-        return struct.unpack('b', encoded_value)[0]
-    else:
-        raise ValueError(f"Unknown field type: {field_type}")
+            raise ValueError(f"Unknown field name '{field_name}' in schema.")
+
+        decoded_fields[field_name] = field_value
+
+    return decoded_fields
+
 
 
 def decode_message(schema, encoded_message):
