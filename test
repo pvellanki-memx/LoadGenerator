@@ -1,6 +1,7 @@
 import struct
 import xml.etree.ElementTree as ET
 
+
 def generate_encoded_message(xml_file, message_name, field_values):
     try:
         # Parse the XML file
@@ -41,7 +42,7 @@ def generate_encoded_message(xml_file, message_name, field_values):
         elif field_type == 'char':
             encoded_fields += struct.pack('c', field_value.encode())
         elif field_type == 'int':
-            encoded_fields += struct.pack('>I', field_value)
+            encoded_fields += struct.pack('>i', field_value)
         elif field_type == 'float':
             encoded_fields += struct.pack('>f', field_value)
         elif field_type == 'double':
@@ -50,28 +51,86 @@ def generate_encoded_message(xml_file, message_name, field_values):
 
     # Update the SBE header with the actual values
     encoded_message = struct.pack('>H', len(encoded_fields) + 5) + encoded_message[2:]
-    encoded_message = encoded_message[:2] + struct.pack('B', message_id) + encoded_message[3:]
+    encoded_message = encoded_message[:2] + struct.pack('B', message.attrib.get('id')) + encoded_message[3:]
     encoded_message = encoded_message[:3] + struct.pack('B', 1) + encoded_message[4:]
-    encoded_message = encoded_message[:4] + struct.pack('>H', 266) + encoded_message[6:]
+    encoded_message = encoded_message[:4] + struct.pack('>H', int(message.attrib.get('version'))) + encoded_message[6:]
 
     # Add the encoded fields to the final message
     encoded_message += encoded_fields
 
     return encoded_message
 
-# Provide the path to your XML file
-xml_file_path = 'sbe-schema-equities.xml'
+
+def decode_encoded_message(xml_file, encoded_message):
+    try:
+        # Parse the XML file
+        tree = ET.parse(xml_file)
+        root = tree.getroot()
+    except ET.ParseError as e:
+        print(f"Error: Failed to parse XML file: {e}")
+        return None
+
+    # Read the SBE header values
+    block_length = struct.unpack_from('>H', encoded_message)[0]
+    template_id = struct.unpack_from('B', encoded_message, 2)[0]
+    schema_id = struct.unpack_from('B', encoded_message, 3)[0]
+    version = struct.unpack_from('>H', encoded_message, 4)[0]
+
+    message_name = None
+    for msg in root.findall('message'):
+        if msg.attrib.get('id') == str(template_id) and msg.attrib.get('version') == str(version):
+            message_name = msg.attrib.get('name')
+            break
+
+    if message_name is None:
+        raise ValueError(f"Message with TemplateID={template_id} and Version={version} not found in the XML definition.")
+
+    decoded_fields = {}
+    offset = 5  # Skip the SBE header
+    for field in root.iter('field'):
+        field_name = field.attrib.get('name')
+        field_type = field.attrib.get('type')
+
+        if field_type == 'string':
+            field_length = struct.unpack_from('>H', encoded_message, offset)[0]
+            offset += 2
+            field_value = encoded_message[offset:offset + field_length].decode()
+            offset += field_length
+        elif field_type == 'char':
+            field_value = struct.unpack_from('c', encoded_message, offset)[0].decode()
+            offset += 1
+        elif field_type == 'int':
+            field_value = struct.unpack_from('>i', encoded_message, offset)[0]
+            offset += 4
+        elif field_type == 'float':
+            field_value = struct.unpack_from('>f', encoded_message, offset)[0]
+            offset += 4
+        elif field_type == 'double':
+            field_value = struct.unpack_from('>d', encoded_message, offset)[0]
+            offset += 8
+        # Add more conditionals for other field types as needed
+
+        decoded_fields[field_name] = field_value
+
+    return message_name, decoded_fields
+
 
 # Example usage
-message_name = 'newOrderSingle'
+xml_file = 'sbe-schema-equities.xml'
+message_name = 'NewOrderSingle'
 field_values = {
-    'ClOrdID': 'ORD123',
+    'ClOrdID': '12345',
     'Symbol': 'AAPL',
-    'Side': 'Buy',
+    'Side': '1',
     'OrderQty': 100,
-    'Price': 150.5
+    'Price': 150.0
 }
 
-encoded_message = generate_encoded_message(xml_file_path, message_name, field_values)
-if encoded_message is not None:
-    print("Encoded Message:", encoded_message)
+encoded_message = generate_encoded_message(xml_file, message_name, field_values)
+print(f"Encoded Message: {encoded_message}")
+
+decoded_message_name, decoded_field_values = decode_encoded_message(xml_file, encoded_message)
+print(f"Decoded Message Name: {decoded_message_name}")
+print("Decoded Field Values:")
+for field_name, field_value in decoded_field_values.items():
+    print(f"{field_name}: {field_value}")
