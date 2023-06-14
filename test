@@ -1,6 +1,11 @@
 import socket
 import struct
 import time
+import sbe
+
+# Load the SBE schema
+schema_file = 'sbe-schema-equities.xml'
+schema = sbe.load_schema(schema_file)
 
 # TCP/IP connection details
 host = '10.2.128.10'
@@ -28,6 +33,7 @@ client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 # Send the login request
 client_socket.sendall(message)
 
+
 # Wait for the Login Accepted message
 response_header = client_socket.recv(2)
 response_type, response_length = struct.unpack('!BB', response_header)
@@ -35,11 +41,9 @@ response_type, response_length = struct.unpack('!BB', response_header)
 if response_type == 1:  # Login Accepted
     response_message = client_socket.recv(response_length)
     print("Login Accepted:")
-    print(response_message)
 elif response_type == 2:  # Login Rejected
     response_message = client_socket.recv(response_length)
     print("Login Rejected:")
-    print(response_message)
     client_socket.close()
     exit()  # Exit the script gracefully after login rejection
 elif response_type == 3:  # Start of Session
@@ -56,24 +60,25 @@ mass_cancel_fields = {
     11: "CLORD12345",  # ClOrdID
     55: "AAPL",  # Side
 }
-mass_cancel_message = struct.pack('!HH', 4, len(mass_cancel_fields))
-encoded_mass_cancel_message = mass_cancel_message + struct.pack('!' + 'HH', *mass_cancel_fields.keys()) + struct.pack('!' + 's' * len(mass_cancel_fields), *mass_cancel_fields.values())
+mass_cancel_message_name = 'MassCancelRequest'
+encoded_mass_cancel_message = sbe.encode_message(schema, mass_cancel_message_name, mass_cancel_fields)
 client_socket.send(encoded_mass_cancel_message)
 
 # Handle the response for the MassCancelRequest message
 response_header = client_socket.recv(2)
 response_length = struct.unpack('!H', response_header)[0]
 
-if response_length > 0:
+if response_type > 0:  # ExecutionReport
     response_message = client_socket.recv(response_length)
-    print("MassCancelRequest Response:")
     print(response_message)
 else:
     print("Invalid response received for MassCancelRequest.")
 
 # Send the NewOrderMessage
 new_order_fields = {
-    52: int(time.time() * 10**9),  # SendingTime: Current timestamp in nanoseconds
+    528: "A",
+    582: 1,
+    18: 4,
     11: "CLORD67890",  # ClOrdID
     55: "AAPL",
     54: "SELL",  # Side
@@ -82,17 +87,16 @@ new_order_fields = {
     40: "LIMIT",  # OrdType
     59: "DAY",  # TimeInForce
 }
-new_order_message = struct.pack('!HH', 2, len(new_order_fields))
-encoded_new_order_message = new_order_message + struct.pack('!' + 'HH', *new_order_fields.keys()) + struct.pack('!' + 's' * len(new_order_fields), *new_order_fields.values())
+new_order_message_name = 'NewOrderSingle'
+encoded_new_order_message = sbe.encode_message(schema, new_order_message_name, new_order_fields)
 client_socket.send(encoded_new_order_message)
 
 # Handle the response for the NewOrderMessage
 response_header = client_socket.recv(2)
 response_length = struct.unpack('!H', response_header)[0]
 
-if response_length > 0:
+if response_length > 0:  # ExecutionReport
     response_message = client_socket.recv(response_length)
-    print("NewOrderMessage Response:")
     print(response_message)
 else:
     print("Invalid response received for NewOrderMessage.")
