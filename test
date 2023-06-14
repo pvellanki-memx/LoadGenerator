@@ -26,3 +26,12 @@ def decode_message(schema, encoded_message):
         offset += 4 + field_length
 
     return message_name, decoded_fields
+    
+    
+    
+    
+    git clone https://github.com/real-logic/simple-binary-encoding.git
+
+
+path/to/sbe-tool -d schema_directory -o output_directory --package python my_schema.xml
+
