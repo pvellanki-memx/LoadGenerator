@@ -1,204 +1,120 @@
-import socket
+import xml.etree.ElementTree as ET
 import struct
-import time
-import sbe
-
-# Load the SBE schema
-schema_file = 'sbe-schema-equities.xml'
-schema = sbe.load_schema(schema_file)
-
-# TCP/IP connection details
-host = '10.2.128.10'
-port = 30076
-
-# Token and header details
-user = 'exactpro6'
-password = 'expro6pwd'
-token = f'{user}:{password}'
-
-# Login request
-message_type = 100
-token_type = 'P'  # Assuming token type is always 'P'
-token_length = len(token)
-header = struct.pack('!BHB', message_type, token_length + 1, token_type.encode('utf-8')[0])
-message = header + token.encode('utf-8')
-
-# Create a socket and establish the connection
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client_socket.connect((host, port))
-
-# Set socket to binary mode
-client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-
-# Send the login request
-client_socket.sendall(message)
 
 
-# Wait for the Login Accepted message
-response_header = client_socket.recv(2)
-response_type, response_length = struct.unpack('!BB', response_header)
+def load_schema(schema_file):
+    tree = ET.parse(schema_file)
+    root = tree.getroot()
+    messages = {}
 
-if response_type == 1:  # Login Accepted
-    response_message = client_socket.recv(response_length)
-    print("Login Accepted:")
-elif response_type == 2:  # Login Rejected
-    response_message = client_socket.recv(response_length)
-    print("Login Rejected:")
-    client_socket.close()
-    exit()  # Exit the script gracefully after login rejection
-elif response_type == 3:  # Start of Session
-    response_message = client_socket.recv(response_length)
-    session_id = struct.unpack('!Q', response_message[:8])[0]
-    print("Start of Session. Session ID:", session_id)
-else:
-    print("Invalid response received.")
-    client_socket.close()
-    exit()  # Exit the script if an invalid response is received
+    # Find the XML namespace
+    namespace = root.tag.split('}')[0] + '}'
 
-# Send the MassCancelRequest message
-mass_cancel_fields = {
-    11: "CLORD12345",  # ClOrdID
-    55: "AAPL",  # Side
-}
-mass_cancel_message_name = 'MassCancelRequest'
-encoded_mass_cancel_message = sbe.encode_message(schema, mass_cancel_message_name, mass_cancel_fields)
-client_socket.send(encoded_mass_cancel_message)
+    for message_elem in root.findall(f'{namespace}message'):
+        message_id = int(message_elem.get('id'))
+        message_name = message_elem.get('name')
+        fields = {}
 
-# Handle the response for the MassCancelRequest message
-response_header = client_socket.recv(2)
-response_length = struct.unpack('!H', response_header)[0]
+        for field_elem in message_elem.findall(f'.//{namespace}field'):
+            field_id = int(field_elem.get('id'))
+            field_type = field_elem.get('type')
+            fields[field_id] = field_type
 
-if response_type > 0:  # ExecutionReport
-    response_message = client_socket.recv(response_length)
-    print(response_message)
-else:
-    print("Invalid response received for MassCancelRequest.")
+        messages[message_name] = {'id': message_id, 'fields': fields}
 
-# Send the NewOrderMessage
-new_order_fields = {
-    528: "A",
-    582: 1,
-    18: 4,
-    11: "CLORD67890",  # ClOrdID
-    55: "AAPL",
-    54: "SELL",  # Side
-    38: 50,  # OrderQty
-    44: 101.5,  # Price
-    40: "LIMIT",  # OrdType
-    59: "DAY",  # TimeInForce
-}
-new_order_message_name = 'NewOrderSingle'
-encoded_new_order_message = sbe.encode_message(schema, new_order_message_name, new_order_fields)
-client_socket.send(encoded_new_order_message)
-
-# Handle the response for the NewOrderMessage
-response_header = client_socket.recv(2)
-response_length = struct.unpack('!H', response_header)[0]
-
-if response_length > 0:  # ExecutionReport
-    response_message = client_socket.recv(response_length)
-    print(response_message)
-else:
-    print("Invalid response received for NewOrderMessage.")
-
-# Close the client socket
-client_socket.close()
+    return messages
 
 
-
-essageHeader={
-    blockLength=96;
-    templateId=1;
-    schemaId=1;
-    version=266
-};
-ClOrdID=1686623958147;
-Symbol=UBER;
-Side=Sell(2);
-OrderQty=300;
-OrdType=Limit(2);
-Price=15;
-TimeInForce=Day(0);
-OrderCapacity=Agency(A);
-CustOrderCapacity=MemberTradingOnTheirOwnAccount(1);
-ExecInst=4;
-RepriceFrequency=SingleReprice(0);
-RepriceBehavior=RepriceLockRepriceCross(2);
-UnsequencedMessage={
-    TCPHeader={
-        MessageLength=102;
-        MessageType=104
-    }    
-}
-
-00000000: 6800 6600 6001 0101 0a31 3638 3636 3233 hf`
-1686623 
-00000010: 3935 3831 3437 0000 0000 0000 0055 4245 958147UBE 
-00000020: 5200 0000 0000 0000 0032 0000 012c 3200 R2,2 
-00000030: 0000 0000 e4e1 c030 4101 0004 8000 0000 äáÀ0A 
-00000040: 0000 0000 ffff ffff ffff ffff ffff ffff ÿÿÿÿÿÿÿÿÿÿÿÿ 
-00000050: ffff ffff ff00 ffff ffff ff00 0002 ffff ÿÿÿÿÿÿÿÿÿÿÿÿ 
-00000060: ffff ffff ff00 0000 00                  ÿÿÿÿÿ 
+def encode_field(field_type, value):
+    if field_type == 'char':
+        return struct.pack('>c', value.encode('ascii'))
+    elif field_type == 'int8':
+        return struct.pack('>b', value)
+    elif field_type == 'int16':
+        return struct.pack('>h', value)
+    elif field_type == 'int32':
+        return struct.pack('>i', value)
+    elif field_type == 'int64':
+        return struct.pack('>q', value)
+    elif field_type == 'uint8':
+        return struct.pack('>B', value)
+    elif field_type == 'uint16':
+        return struct.pack('>H', value)
+    elif field_type == 'uint32':
+        return struct.pack('>I', value)
+    elif field_type == 'uint64':
+        return struct.pack('>Q', value)
+    elif field_type == 'float':
+        return struct.pack('>f', value)
+    elif field_type == 'double':
+        return struct.pack('>d', value)
+    elif field_type == 'string':
+        return value.encode('ascii')
+    else:
+        raise ValueError(f"Unknown field type: {field_type}")
 
 
-bytearray(b'\x00\x05\x01\x01\x01\n\x00\x01')
+def encode_message(schema, message_name, field_values):
+    if message_name not in schema:
+        raise ValueError(f"Message '{message_name}' not found in the schema.")
+
+    message = schema[message_name]
+    message_id = message['id']
+    fields = message['fields']
+
+    encoded_fields = []
+    for field_id, field_type in fields.items():
+        if field_id in field_values:
+            value = field_values[field_id]
+            encoded_field = encode_field(field_type, value)
+            encoded_fields.append((field_id, encoded_field))
+
+    encoded_message = bytearray()
+    encoded_message += struct.pack('>H', len(encoded_fields) + 5)  # MEMO SBE header: BlockLength
+    encoded_message += struct.pack('B', 1)  # MEMO SBE header: TemplateID
+    encoded_message += struct.pack('B', 1)  # MEMO SBE header: SchemaID
+    encoded_message += struct.pack('>H', 258)  # MEMO SBE header: Version
+
+    encoded_message += struct.pack('>H', message_id)  # Message ID
+
+    for field_id, encoded_field in encoded_fields:
+        encoded_message += struct.pack('>H', field_id)
+        encoded_message += struct.pack('>H', len(encoded_field))
+        encoded_message += encoded_field
+
+    return encoded_message
 
 
-    <sbe:message blockLength="96" id="1" name="NewOrderSingle">
-        <field id="1" name="ClOrdID" type="NewOrderSingleClOrdID"/>
-        <field id="2" name="MPID" presence="optional" type="NewOrderSingleMPID"/>
-        <field id="3" name="Symbol" type="NewOrderSingleSymbol"/>
-        <field id="4" name="SymbolSfx" presence="optional" type="NewOrderSingleSymbolSfx"/>
-        <field id="5" name="Side" type="SideType"/>
-        <field id="6" name="OrderQty" type="uint32"/>
-        <field id="7" name="OrdType" type="OrdType"/>
-        <field id="8" name="Price" presence="optional" type="PriceType"/>
-        <field id="9" name="TimeInForce" type="TimeInForceType"/>
-        <field id="10" name="OrderCapacity" type="OrderCapacityType"/>
-        <field id="11" name="CustOrderCapacity" type="CustOrderCapacityType"/>
-        <field id="12" name="ExecInst" type="ExecInstType"/>
-        <field id="13" name="PegOffsetValue" presence="optional" type="PriceType"/>
-        <field id="14" name="PegPriceType" presence="optional" type="PegType"/>
-        <field id="15" name="ExpireTime" presence="optional" type="UTCTimestampNanos"/>
-        <field id="16" name="MinQty" presence="optional" type="uint32"/>
-        <field id="17" name="DisplayQty" presence="optional" type="uint32"/>
-        <field id="18" name="DisplayMethod" presence="optional" type="DispMethodType"/>
-        <field id="19" name="ReserveReplenishTiming" presence="optional" type="ReserveReplenishTimingType"/>
-        <field id="20" name="DisplayMinIncr" presence="optional" type="uint32"/>
-        <field id="21" name="LocateReqd" presence="optional" type="char"/>
-        <field id="22" name="RepriceFrequency" presence="optional" type="RepriceFrequencyType"/>
-        <field id="23" name="RepriceBehavior" presence="optional" type="RepriceBehaviorType"/>
-        <field id="24" name="CancelGroupId" presence="optional" type="uint16"/>
-        <field id="25" name="StpGroupId" presence="optional" type="uint16"/>
-        <field id="26" name="SelfTradePrevention" presence="optional" type="SelfTradePreventionType"/>
-        <field id="27" name="RiskGroupId" presence="optional" type="uint16"/>
-        <field id="28" name="LnkId" presence="optional" type="NewOrderSingleLnkId"/>
-    </sbe:message>
-    
-    
-    
-    import sbe
+def decode_field(field_type, encoded_value):
+    if field_type == 'char':
+        return encoded_value.decode('ascii')
+    elif field_type == 'int8':
+        return struct.unpack('>b', encoded_value)[0]
+    elif field_type == 'int16':
+        return struct.unpack('>h', encoded_value)[0]
+    elif field_type == 'int32':
+        return struct.unpack('>i', encoded_value)[0]
+    elif field_type == 'int64':
+        return struct.unpack('>q', encoded_value)[0]
+    elif field_type == 'uint8':
+        return struct.unpack('>B', encoded_value)[0]
+    elif field_type == 'uint16':
+        return struct.unpack('>H', encoded_value)[0]
+    elif field_type == 'uint32':
+        return struct.unpack('>I', encoded_value)[0]
+    elif field_type == 'uint64':
+        return struct.unpack('>Q', encoded_value)[0]
+    elif field_type == 'float':
+        return struct.unpack('>f', encoded_value)[0]
+    elif field_type == 'double':
+        return struct.unpack('>d', encoded_value)[0]
+    elif field_type == 'string':
+        return encoded_value.decode('ascii')
+    else:
+        raise ValueError(f"Unknown field type: {field_type}")
 
-# Load the SBE schema
-schema_file = 'sbe-schema-equities.xml'
-schema = sbe.load_schema(schema_file)
 
-# Encoded message bytes
-encoded_message = bytearray(b'\x00\x05\x01\x01\x01\n\x00\x01')
-
-# Decode the message using the schema
-message_name = 'NewOrderSingle'
-decoded_message = sbe.decode_message(schema, message_name, encoded_message)
-
-# Print the decoded fields
-print(f"{message_name} Decoded Message:")
-for field_id, field_value in decoded_message.items():
-    print(f"Field ID: {field_id}, Field Value: {field_value}")
-    
-    
-    
-    
-    def decode_message(schema, encoded_message):
+def decode_message(schema, encoded_message):
     offset = 0
 
     # Decode MEMO SBE header
@@ -243,4 +159,46 @@ for field_id, field_value in decoded_message.items():
 
     return message_name, decoded_fields
 
+"""
+if __name__ == '__main__':
+    schema_file = 'sbe-schema.xml'
+    schema = load_schema(schema_file)
 
+    # Example encoding
+    message_name = 'NewOrderSingle'
+    field_values = {
+        52: 1623322435000000000,
+        11: "CLORD12345",
+        21035: "SECURITY123",
+        54: "BUY",
+        38: 100,
+        40: "LIMIT",
+        44: 99.99,
+        59: "DAY",
+        77: "OPEN",
+        18: "ADD",
+        1815: "MEDIUM",
+        21020: 1,
+        21021: 2,
+        2362: 123,
+        21001: "PREVENT",
+        21000: 456,
+        21005: 789,
+        453: [
+            {
+                448: "PARTY1",
+                447: "SRC1",
+                452: 1
+            },
+            {
+                448: "PARTY2",
+                447: "SRC2",
+                452: 2
+            }
+        ]
+    }
+
+    encoded_message = encode_message(schema, message_name, field_values)
+    print(f"Encoded message: {encoded_message}")
+
+   """
