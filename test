@@ -44,17 +44,13 @@ def load_schema(schema_file):
 
 
 
-def encode_field(field_type, value):
-    if field_type == 'NewOrderSingleClOrdID':
-        return value.encode('utf-8')
-    elif field_type == 'NewOrderSingleMPID':
-        return value.encode('utf-8')
-    elif field_type == 'NewOrderSingleSymbol':
-        return value.encode('utf-8')
-    elif field_type == 'NewOrderSingleSymbolSfx':
+import struct
+
+def encode_fields(field_type, value):
+    if field_type in ['NewOrderSingleClOrdID', 'NewOrderSingleMPID', 'NewOrderSingleSymbol', 'NewOrderSingleSymbolSfx', 'NewOrderSingleLnkId']:
         return value.encode('utf-8')
     elif field_type == 'SideType':
-        return struct.pack('b', value)
+        return struct.pack('c', value.encode('utf-8'))
     elif field_type == 'uint32':
         return struct.pack('I', value)
     elif field_type == 'OrdType':
@@ -85,7 +81,7 @@ def encode_field(field_type, value):
     elif field_type == 'ReserveReplenishTimingType':
         return struct.pack('b', value)
     elif field_type == 'char':
-        return struct.pack('c', value)
+        return struct.pack('c', value.encode('utf-8'))
     elif field_type == 'RepriceFrequencyType':
         return struct.pack('b', value)
     elif field_type == 'RepriceBehaviorType':
@@ -94,10 +90,9 @@ def encode_field(field_type, value):
         return struct.pack('H', value)
     elif field_type == 'SelfTradePreventionType':
         return struct.pack('b', value)
-    elif field_type == 'NewOrderSingleLnkId':
-        return value.encode('utf-8')
     else:
         raise ValueError(f"Unknown field type: {field_type}")
+
 
 
 
@@ -132,17 +127,13 @@ def encode_message(schema, message_name, field_values):
     return encoded_message
 
 
+import struct
+
 def decode_field(field_type, encoded_value):
-    if field_type == 'NewOrderSingleClOrdID':
-        return encoded_value.decode('utf-8')
-    elif field_type == 'NewOrderSingleMPID':
-        return encoded_value.decode('utf-8')
-    elif field_type == 'NewOrderSingleSymbol':
-        return encoded_value.decode('utf-8')
-    elif field_type == 'NewOrderSingleSymbolSfx':
+    if field_type in ['NewOrderSingleClOrdID', 'NewOrderSingleMPID', 'NewOrderSingleSymbol', 'NewOrderSingleSymbolSfx', 'NewOrderSingleLnkId']:
         return encoded_value.decode('utf-8')
     elif field_type == 'SideType':
-        return struct.unpack('b', encoded_value)[0]
+        return struct.unpack('c', encoded_value)[0].decode('utf-8')
     elif field_type == 'uint32':
         return struct.unpack('I', encoded_value)[0]
     elif field_type == 'OrdType':
@@ -174,7 +165,7 @@ def decode_field(field_type, encoded_value):
     elif field_type == 'ReserveReplenishTimingType':
         return struct.unpack('b', encoded_value)[0]
     elif field_type == 'char':
-        return struct.unpack('c', encoded_value)[0]
+        return struct.unpack('c', encoded_value)[0].decode('utf-8')
     elif field_type == 'RepriceFrequencyType':
         return struct.unpack('b', encoded_value)[0]
     elif field_type == 'RepriceBehaviorType':
@@ -183,10 +174,9 @@ def decode_field(field_type, encoded_value):
         return struct.unpack('H', encoded_value)[0]
     elif field_type == 'SelfTradePreventionType':
         return struct.unpack('b', encoded_value)[0]
-    elif field_type == 'NewOrderSingleLnkId':
-        return encoded_value.decode('utf-8')
     else:
         raise ValueError(f"Unknown field type: {field_type}")
+
 
 
 
