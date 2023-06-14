@@ -202,3 +202,6 @@ if __name__ == '__main__':
     print(f"Encoded message: {encoded_message}")
 
    """
+   
+   
+   {'NewOrderSingle': {'id': 1, 'fields': {}}, 'OrderCancelReplaceRequest': {'id': 2, 'fields': {}}, 'OrderCancelRequest': {'id': 3, 'fields': {}}, 'MassCancelRequest': {'id': 4, 'fields': {}}, 'ExecutionReport_PendingNew': {'id': 5, 'fields': {}}, 'ExecutionReport_New': {'id': 6, 'fields': {}}, 'ExecutionReport_Rejected': {'id': 7, 'fields': {}}, 'ExecutionReport_Trade': {'id': 8, 'fields': {}}, 'ExecutionReport_PendingCancel': {'id': 9, 'fields': {}}, 'PendingMassCancel': {'id': 10, 'fields': {}}, 'ExecutionReport_Canceled': {'id': 11, 'fields': {}}, 'MassCancelDone': {'id': 12, 'fields': {}}, 'ExecutionReport_PendingReplace': {'id': 13, 'fields': {}}, 'ExecutionReport_Replaced': {'id': 14, 'fields': {}}, 'ExecutionReport_TradeCorrection': {'id': 15, 'fields': {}}, 'ExecutionReport_TradeBreak': {'id': 16, 'fields': {}}, 'ExecutionReport_Restatement': {'id': 17, 'fields': {}}, 'OrderCancelReject': {'id': 18, 'fields': {}}, 'MassCancelReject': {'id': 20, 'fields': {}}}
