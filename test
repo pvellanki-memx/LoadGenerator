@@ -1,39 +1,37 @@
 def decode_message(schema, encoded_message):
+    if len(encoded_message) < 2:
+        raise ValueError("Encoded message is too short.")
+
     message_id = struct.unpack('>H', encoded_message[:2])[0]
-    for message_name, message_info in schema.items():
+    message_name = None
+    decoded_fields = {}
+
+    for message_info in schema.values():
         if message_info['id'] == message_id:
+            message_name = list(schema.keys())[list(schema.values()).index(message_info)]
             fields = message_info['fields']
             break
     else:
         raise ValueError(f"Message with ID {message_id} not found in the schema.")
 
-    decoded_fields = {}
-    encoded_fields_count = struct.unpack('>H', encoded_message[2:4])[0]
-    offset = 4
-    for _ in range(encoded_fields_count):
+    offset = 2
+    while offset < len(encoded_message):
+        if len(encoded_message) - offset < 4:
+            raise ValueError("Encoded message is too short for field decoding.")
+
         field_id = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
         field_length = struct.unpack('>H', encoded_message[offset + 2:offset + 4])[0]
-        encoded_field = encoded_message[offset + 4:offset + 4 + field_length]
+        offset += 4
+
+        if len(encoded_message) - offset < field_length:
+            raise ValueError("Encoded message is too short for field value decoding.")
+
+        encoded_field = encoded_message[offset:offset + field_length]
         if field_id in fields:
             field_type = fields[field_id]
             decoded_value = decode_field(field_type, encoded_field)
             decoded_fields[field_id] = decoded_value
-        offset += 4 + field_length
+
+        offset += field_length
 
     return message_name, decoded_fields
-    
-    
-    def decode_message(schema, encoded_message):
-    if len(encoded_message) < 4:
-        raise ValueError("Encoded message is too short.")
-
-    message_id = struct.unpack('>H', encoded_message[:2])[0]
-    for key, id in schema.items():
-        if message_id == id:
-            fields = schema[message_id]['fields']
-            decoded_fields = {}
-        else:
-            raise ValueError(f"Message ID '{message_id}' not found in the schema.")
-    
-    # Rest of the code
-
