@@ -286,3 +286,9 @@ Traceback (most recent call last):
   File "/home/pvellanki/loadgenerator/sbe/equities/sbe.py", line 79, in encode_field
     return struct.pack('c', value.encode('utf-8'))
 struct.error: char format requires a bytes object of length 1
+
+
+ encoded_message += struct.pack('>H', len(encoded_fields) + 5)  # MEMO SBE header: BlockLength
+    encoded_message += struct.pack('B', 1)  # MEMO SBE header: TemplateID
+    encoded_message += struct.pack('B', 1)  # MEMO SBE header: SchemaID
+    encoded_message += struct.pack('>H', 266)  # MEMO SBE header: Version
