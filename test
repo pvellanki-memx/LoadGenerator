@@ -1,60 +1,9 @@
 def decode_message(schema, encoded_message):
-    if len(encoded_message) < 2:
-        raise ValueError("Encoded message is too short.")
-
-    message_id = struct.unpack('>H', encoded_message[:2])[0]
-    message_name = None
-    decoded_fields = {}
-
-    for message_info in schema.values():
-        if message_info['id'] == message_id:
-            message_name = list(schema.keys())[list(schema.values()).index(message_info)]
-            fields = message_info['fields']
-            break
-    else:
-        raise ValueError(f"Message with ID {message_id} not found in the schema.")
-
-    offset = 2
-    while offset < len(encoded_message):
-        if len(encoded_message) - offset < 4:
-            raise ValueError("Encoded message is too short for field decoding.")
-
-        field_id = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
-        field_length = struct.unpack('>H', encoded_message[offset + 2:offset + 4])[0]
-        offset += 4
-
-        if len(encoded_message) - offset < field_length:
-            raise ValueError("Encoded message is too short for field value decoding.")
-
-        encoded_field = encoded_message[offset:offset + field_length]
-        if field_id in fields:
-            field_type = fields[field_id]
-            decoded_value = decode_field(field_type, encoded_field)
-            decoded_fields[field_id] = decoded_value
-
-        offset += field_length
-
-    return message_name, decoded_fields
-    
-def decode_message(schema, encoded_message):
-    offset = 0
-
-    # Decode MEMO SBE header
-    block_length = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
-    offset += 2
-
-    template_id = struct.unpack('B', encoded_message[offset:offset + 1])[0]
-    offset += 1
-
-    schema_id = struct.unpack('B', encoded_message[offset:offset + 1])[0]
-    offset += 1
-
-    version = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
-    offset += 2
-
-    # Extract message ID from the encoded message
-    message_id = struct.unpack('B', encoded_message[offset:offset + 1])[0]
-    offset += 1
+    block_length = struct.unpack('>H', encoded_message[0:2])[0]
+    template_id = struct.unpack('B', encoded_message[2:3])[0]
+    schema_id = struct.unpack('B', encoded_message[3:4])[0]
+    version = struct.unpack('>H', encoded_message[4:6])[0]
+    message_id = struct.unpack('>H', encoded_message[6:8])[0]
 
     for message_name, message_info in schema.items():
         if message_info['id'] == message_id:
@@ -64,9 +13,8 @@ def decode_message(schema, encoded_message):
         raise ValueError(f"Message with ID {message_id} not found in the schema.")
 
     decoded_fields = {}
-    encoded_fields_count = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
-    offset += 2
-
+    encoded_fields_count = struct.unpack('>H', encoded_message[8:10])[0]
+    offset = 10
     for _ in range(encoded_fields_count):
         field_id = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
         field_length = struct.unpack('>H', encoded_message[offset + 2:offset + 4])[0]
