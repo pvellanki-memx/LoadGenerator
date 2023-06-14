@@ -35,3 +35,24 @@ def decode_message(schema, encoded_message):
 
 path/to/sbe-tool -d schema_directory -o output_directory --package python my_schema.xml
 
+
+(myenv) pvellanki@qa2434:~/loadgenerator/sbe/equities/sbe-tool$ java -jar sbe-all-1.28.3.jar sbe-schema-equities.xml 
+ERROR: at <types><enum name="LastLiquidityIndType"> validValue NullValue uses nullValue: 255
+ERROR: at <types><enum name="PegType"> validValue NullValue uses nullValue: 255
+ERROR: at <types><enum name="ReserveReplenishTimingType"> validValue NullValue uses nullValue: 255
+ERROR: at <types><enum name="CustOrderCapacityType"> validValue NullValue uses nullValue: 255
+ERROR: at <types><enum name="RepriceFrequencyType"> validValue NullValue uses nullValue: 255
+ERROR: at <types><enum name="RepriceBehaviorType"> validValue NullValue uses nullValue: 255
+ERROR: at <types><enum name="SelfTradePreventionType"> validValue NullValue uses nullValue: 255
+ERROR: at <types><enum name="CancelReasonCode"> validValue NullValue uses nullValue: 255
+ERROR: at <types><enum name="OrderRejectReasonCode"> validValue NullValue uses nullValue: 255
+ERROR: at <types><enum name="CancelRejectReasonCode"> validValue NullValue uses nullValue: 255
+ERROR: at <types><enum name="MassCancelRejectReasonCode"> validValue NullValue uses nullValue: 255
+ERROR: at <types><enum name="ExecRestatementType"> validValue NullValue uses nullValue: 255
+ERROR: at <types><enum name="ExtendedRestatementReasonType"> validValue NullValue uses nullValue: 255
+Exception in thread "main" java.lang.IllegalStateException: had 13 errors
+	at uk.co.real_logic.sbe.xml.ErrorHandler.checkIfShouldExit(ErrorHandler.java:107)
+	at uk.co.real_logic.sbe.xml.XmlSchemaParser.parse(XmlSchemaParser.java:138)
+	at uk.co.real_logic.sbe.SbeTool.parseSchema(SbeTool.java:331)
+	at uk.co.real_logic.sbe.SbeTool.main(SbeTool.java:232)
+
