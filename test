@@ -194,5 +194,53 @@ decoded_message = sbe.decode_message(schema, message_name, encoded_message)
 print(f"{message_name} Decoded Message:")
 for field_id, field_value in decoded_message.items():
     print(f"Field ID: {field_id}, Field Value: {field_value}")
+    
+    
+    
+    
+    def decode_message(schema, encoded_message):
+    offset = 0
+
+    # Decode MEMO SBE header
+    block_length = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+    offset += 2
+
+    template_id = struct.unpack('B', encoded_message[offset:offset + 1])[0]
+    offset += 1
+
+    schema_id = struct.unpack('B', encoded_message[offset:offset + 1])[0]
+    offset += 1
+
+    version = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+    offset += 2
+
+    # Extract message ID from the encoded message
+    message_id = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+    offset += 2
+
+    if message_id not in schema:
+        raise ValueError(f"Message ID '{message_id}' not found in the schema.")
+
+    message_name = schema[message_id]['name']
+    fields = schema[message_id]['fields']
+    decoded_fields = {}
+
+    # Decode the fields of the message
+    while offset < len(encoded_message):
+        field_id = struct.unpack('B', encoded_message[offset:offset + 1])[0]
+        offset += 1
+
+        field_length = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+        offset += 2
+
+        field_value = encoded_message[offset:offset + field_length]
+        offset += field_length
+
+        field_type = fields[field_id]
+        decoded_value = decode_field(field_type, field_value)
+
+        decoded_fields[field_id] = decoded_value
+
+    return message_name, decoded_fields
 
 
