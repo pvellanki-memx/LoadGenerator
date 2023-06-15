@@ -179,9 +179,39 @@ print(f"Decoded Message: {decoded_message}")
 
 
 
-Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/sbe/equities/test2.py", line 161, in <module>
-    decoded_message = decode_message(schema, encoded_message)
-  File "/home/pvellanki/loadgenerator/sbe/equities/test2.py", line 98, in decode_message
-    template_id = struct.unpack('B', encoded_message[2])[0]
-TypeError: a bytes-like object is required, not 'int'
+def decode_message(schema, encoded_message):
+    template_id = struct.unpack('B', encoded_message[2:3])[0]
+    template = schema.templates[template_id]
+
+    fields = {}
+    offset = schema.header_size + schema.block_length
+
+    for field in template.fields:
+        field_value = None
+        if field.is_set:
+            field_offset = field.offset
+            field_length = field.field_length
+            field_type = field.field_type
+
+            if field_length > 0:
+                if field_type == 'string':
+                    field_value = encoded_message[offset : offset + field_length].decode('utf-8')
+                elif field_type == 'int32':
+                    field_value = struct.unpack('i', encoded_message[offset : offset + field_length])[0]
+                elif field_type == 'uint32':
+                    field_value = struct.unpack('I', encoded_message[offset : offset + field_length])[0]
+                elif field_type == 'int64':
+                    field_value = struct.unpack('q', encoded_message[offset : offset + field_length])[0]
+                elif field_type == 'uint64':
+                    field_value = struct.unpack('Q', encoded_message[offset : offset + field_length])[0]
+                elif field_type == 'float':
+                    field_value = struct.unpack('f', encoded_message[offset : offset + field_length])[0]
+                elif field_type == 'double':
+                    field_value = struct.unpack('d', encoded_message[offset : offset + field_length])[0]
+
+            offset += field_length
+
+        fields[field.name] = field_value
+
+    return fields
+
