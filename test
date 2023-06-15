@@ -1,60 +1,52 @@
-/* Generated SBE (Simple Binary Encoding) message codec. */
-package com.memx.us_equities.memo.sbe.v1_10;
-
+root@qa2434:/home/pvellanki/loadgenerator/sbe/equities/sbe-tool/com/memx/us_equities/memo/sbe/v1_10# javac *.java
+ExecInstTypeDecoder.java:4: error: package org.agrona does not exist
+import org.agrona.DirectBuffer;
+                 ^
+ExecInstTypeDecoder.java:16: error: cannot find symbol
+    private DirectBuffer buffer;
+            ^
+  symbol:   class DirectBuffer
+  location: class ExecInstTypeDecoder
+ExecInstTypeDecoder.java:18: error: cannot find symbol
+    public ExecInstTypeDecoder wrap(final DirectBuffer buffer, final int offset)
+                                          ^
+  symbol:   class DirectBuffer
+  location: class ExecInstTypeDecoder
+ExecInstTypeDecoder.java:29: error: cannot find symbol
+    public DirectBuffer buffer()
+           ^
+  symbol:   class DirectBuffer
+  location: class ExecInstTypeDecoder
+ExecInstTypeEncoder.java:4: error: package org.agrona does not exist
 import org.agrona.MutableDirectBuffer;
-
-@SuppressWarnings("all")
-public final class ExecutionReport_RestatementEncoder
-{
-    public static final int BLOCK_LENGTH = 75;
-    public static final short TEMPLATE_ID = (short)17;
-    public static final short SCHEMA_ID = (short)1;
-    public static final int SCHEMA_VERSION = 266;
-    public static final String SEMANTIC_VERSION = "1.10";
-    public static final java.nio.ByteOrder BYTE_ORDER = java.nio.ByteOrder.BIG_ENDIAN;
-
-    private final ExecutionReport_RestatementEncoder parentMessage = this;
+                 ^
+ExecInstTypeEncoder.java:16: error: cannot find symbol
     private MutableDirectBuffer buffer;
-    private int initialOffset;
-    private int offset;
-    private int limit;
-
-    public int sbeBlockLength()
-    {
-        return BLOCK_LENGTH;
-    }
-
-    public short sbeTemplateId()
-    {
-        return TEMPLATE_ID;
-    }
-
-    public short sbeSchemaId()
-    {
-        return SCHEMA_ID;
-    }
-
-    public int sbeSchemaVersion()
-    {
-        return SCHEMA_VERSION;
-    }
-
-    public String sbeSemanticType()
-    {
-        return "";
-    }
-
+            ^
+  symbol:   class MutableDirectBuffer
+  location: class ExecInstTypeEncoder
+ExecInstTypeEncoder.java:18: error: cannot find symbol
+    public ExecInstTypeEncoder wrap(final MutableDirectBuffer buffer, final int offset)
+                                          ^
+  symbol:   class MutableDirectBuffer
+  location: class ExecInstTypeEncoder
+ExecInstTypeEncoder.java:29: error: cannot find symbol
     public MutableDirectBuffer buffer()
-    {
-        return buffer;
-    }
-
-    public int initialOffset()
-    {
-        return initialOffset;
-    }
-
-    public int offset()
-    {
-        return offset;
-    }
+           ^
+  symbol:   class MutableDirectBuffer
+  location: class ExecInstTypeEncoder
+ExecutionReport_CanceledDecoder.java:4: error: package org.agrona does not exist
+import org.agrona.DirectBuffer;
+                 ^
+ExecutionReport_CanceledDecoder.java:17: error: cannot find symbol
+    private DirectBuffer buffer;
+            ^
+  symbol:   class DirectBuffer
+  location: class ExecutionReport_CanceledDecoder
+ExecutionReport_CanceledDecoder.java:49: error: cannot find symbol
+    public DirectBuffer buffer()
+           ^
+  symbol:   class DirectBuffer
+  location: class ExecutionReport_CanceledDecoder
+ExecutionReport_CanceledDecoder.java:65: error: cannot find symbol
+        final DirectBuffer buffer,
