@@ -215,3 +215,34 @@ def decode_message(schema, encoded_message):
 
     return fields
 
+
+
+
+
+
+def decode_message(schema, encoded_message):
+    template_id = struct.unpack('B', encoded_message[2:3])[0]
+    template_name = schema[template_id]['id']
+    fields = {}
+
+    for field_id, field_name in schema[template_id]['fields'].items():
+        if field_name.endswith('Type'):
+            field_value = struct.unpack('B', encoded_message[:1])[0]
+            encoded_message = encoded_message[1:]
+        elif field_name.startswith('uint'):
+            field_value = struct.unpack('I', encoded_message[:4])[0]
+            encoded_message = encoded_message[4:]
+        elif field_name.startswith('char'):
+            field_value = struct.unpack('s', encoded_message[:1])[0]
+            encoded_message = encoded_message[1:]
+        elif field_name == 'NewOrderSingleLnkId':
+            field_value = struct.unpack('H', encoded_message[:2])[0]
+            encoded_message = encoded_message[2:]
+        else:
+            raise ValueError(f"Unknown field type for field: {field_name}")
+
+        fields[field_name] = field_value
+
+    return template_name, fields
+
+
