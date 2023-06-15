@@ -12,7 +12,19 @@ def decode_message(schema, encoded_message):
     encoded_message = encoded_message[3:]
 
     for field_id, field_name in schema[template_name]['fields'].items():
-        if field_name.endswith('Type'):
+        if field_name == 'NewOrderSingleClOrdID':
+            field_value = struct.unpack('s', encoded_message[:20])[0].decode('utf-8')
+            encoded_message = encoded_message[20:]
+        elif field_name == 'NewOrderSingleMPID':
+            field_value = struct.unpack('s', encoded_message[:4])[0].decode('utf-8')
+            encoded_message = encoded_message[4:]
+        elif field_name == 'NewOrderSingleSymbol':
+            field_value = struct.unpack('s', encoded_message[:6])[0].decode('utf-8')
+            encoded_message = encoded_message[6:]
+        elif field_name == 'NewOrderSingleSymbolSfx':
+            field_value = struct.unpack('s', encoded_message[:3])[0].decode('utf-8')
+            encoded_message = encoded_message[3:]
+        elif field_name.endswith('Type'):
             field_value = struct.unpack('B', encoded_message[:1])[0]
             encoded_message = encoded_message[1:]
         elif field_name.startswith('uint'):
@@ -49,42 +61,3 @@ schema = {
             10: 'OrderCapacityType',
             11: 'CustOrderCapacityType',
             12: 'ExecInstType',
-            13: 'PriceType',
-            14: 'PegType',
-            15: 'UTCTimestampNanos',
-            16: 'uint32',
-            17: 'uint32',
-            18: 'DispMethodType',
-            19: 'ReserveReplenishTimingType',
-            20: 'uint32',
-            21: 'char',
-            22: 'RepriceFrequencyType',
-            23: 'RepriceBehaviorType',
-            24: 'uint16',
-            25: 'uint16',
-            26: 'SelfTradePreventionType',
-            27: 'uint16',
-            28: 'NewOrderSingleLnkId'
-        }
-    },
-    'OrderCancelReplaceRequest': {
-        'id': 2,
-        'fields': {
-            1: 'OrderCancelReplaceRequestOrigClOrdID',
-            2: 'OrderCancelReplaceRequestClOrdID',
-            3: 'OrderCancelReplaceRequestSymbol',
-        }
-    },
-    'OrderCancelRequest': {
-        'id': 3,
-        'fields': {
-            1: 'OrderCancelRequestOrigClOrdID',
-            2: 'uint64',
-            3: 'OrderCancelRequestClOrdID',
-            4: 'OrderCancelRequestSymbol',
-            5: 'OrderCancelRequestSymbolSfx',
-        }
-    },
-    'MassCancelRequest': {
-        'id': 4,
-        '
