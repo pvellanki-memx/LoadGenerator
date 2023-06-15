@@ -1,231 +1,17 @@
-import xml.etree.ElementTree as ET
 import struct
 
 
-def load_schema(schema_file):
-    tree = ET.parse(schema_file)
-    root = tree.getroot()
-    messages = {}
-
-    # Find the XML namespace
-    namespace = root.tag.split('}')[0] + '}'
-
-    for message_elem in root.findall(f'{namespace}message'):
-        message_id = int(message_elem.get('id'))
-        message_name = message_elem.get('name')
-        fields = {}
-
-        for field_elem in message_elem.findall(f'{namespace}field'):
-            field_id = int(field_elem.get('id'))
-            field_type = field_elem.get('type')
-            fields[field_id] = field_type
-
-        messages[message_name] = {'id': message_id, 'fields': fields}
-
-    return messages
-
-
-def encode_field(field_type, value):
-    if field_type in ['string', 'char', 'PriceType', 'int32', 'UTCTimestampNanos', 'SideType', 'OrderCapacityType',
-                      'CustOrderCapacityType', 'ExecInstType', 'uint16', 'OrdType', 'TimeInForceType',
-                      'PegType', 'uint32', 'DispMethodType', 'ReserveReplenishTimingType', 'SelfTradePreventionType']:
-        return value.encode('utf-8')
-    elif field_type == 'int64':
-        return struct.pack('>q', value)
-    elif field_type == 'uint64':
-        return struct.pack('>Q', value)
-    elif field_type == 'float':
-        return struct.pack('>f', value)
-    elif field_type == 'double':
-        return struct.pack('>d', value)
-    else:
-        raise ValueError(f"Unknown field type: {field_type}")
-
-
-def encode_message(schema, message_name, field_values):
-    if message_name not in schema:
-        raise ValueError(f"Message '{message_name}' not found in the schema.")
-
-    message = schema[message_name]
-    message_id = message['id']
-    fields = message['fields']
-
-    encoded_fields = []
-    for field_id, field_type in fields.items():
-        if field_id in field_values:
-            value = field_values[field_id]
-            encoded_field = encode_field(field_type, value)
-            encoded_fields.append((field_id, encoded_field))
-
-    encoded_message = bytearray()
-    encoded_message += struct.pack('>H', len(encoded_fields) + 5)  # MEMO SBE header: BlockLength
-    encoded_message += struct.pack('B', 1)  # MEMO SBE header: TemplateID
-    encoded_message += struct.pack('B', 1)  # MEMO SBE header: SchemaID
-    encoded_message += struct.pack('>H', 266)  # MEMO SBE header: Version
-
-    encoded_message += struct.pack('>H', message_id)  # Message ID
-
-    for field_id, encoded_field in encoded_fields:
-        encoded_message += struct.pack('>H', field_id)
-        encoded_message += struct.pack('>H', len(encoded_field))
-        encoded_message += encoded_field
-
-    return encoded_message
-
-
-def decode_field(field_type, encoded_value):
-    if field_type in ['string', 'char', 'PriceType', 'int32', 'UTCTimestampNanos', 'SideType', 'OrderCapacityType',
-                      'CustOrderCapacityType', 'ExecInstType', 'uint16', 'OrdType', 'TimeInForceType',
-                      'PegType', 'uint32', 'DispMethodType', 'ReserveReplenishTimingType', 'SelfTradePreventionType']:
-        return encoded_value.decode('utf-8')
-   .
-    elif field_type == 'int64':
-        return struct.unpack('>q', encoded_value)[0]
-    elif field_type == 'uint64':
-        return struct.unpack('>Q', encoded_value)[0]
-    elif field_type == 'float':
-        return struct.unpack('>f', encoded_value)[0]
-    elif field_type == 'double':
-        return struct.unpack('>d', encoded_value)[0]
-    else:
-        raise ValueError(f"Unknown field type: {field_type}")
-
-
-def decode_message(schema, encoded_message):
-    decoded_message = {}
-
-    # Read MEMO SBE header
-    block_length = struct.unpack('>H', encoded_message[:2])[0]
-    template_id = struct.unpack('B', encoded_message[2])[0]
-    schema_id = struct.unpack('B', encoded_message[3])[0]
-    version = struct.unpack('>H', encoded_message[4:6])[0]
-    decoded_message['BlockLength'] = block_length
-    decoded_message['TemplateID'] = template_id
-    decoded_message['SchemaID'] = schema_id
-    decoded_message['Version'] = version
-
-    # Find the message name using the template_id
-    message_name = None
-    for name, message in schema.items():
-        if message['id'] == template_id:
-            message_name = name
-            break
-
-    if message_name is None:
-        raise ValueError(f"Message with template ID {template_id} not found in the schema.")
-
-    decoded_message['MessageName'] = message_name
-
-    # Decode the fields
-    fields = schema[message_name]['fields']
-    offset = 6
-
-    while offset < len(encoded_message):
-        field_id = struct.unpack('>H', encoded_message[offset:offset+2])[0]
-        field_length = struct.unpack('>H', encoded_message[offset+2:offset+4])[0]
-        field_value = encoded_message[offset+4:offset+4+field_length]
-
-        if field_id in fields:
-            field_type = fields[field_id]
-            decoded_value = decode_field(field_type, field_value)
-            decoded_message[field_id] = decoded_value
-
-        offset += 4 + field_length
-
-    return decoded_message
-
-
-# Example usage
-schema = load_schema('schema.xml')
-
-# Encode a message
-message_name = 'NewOrder'
-field_values = {
-    1: 'ABC',
-    2: 'XYZ',
-    3: 100,
-    4: 1.5
-}
-encoded_message = encode_message(schema, message_name, field_values)
-
-# Decode a message
-decoded_message = decode_message(schema, encoded_message)
-
-print(f"Encoded Message: {encoded_message}")
-print(f"Decoded Message: {decoded_message}")
-
-
-
-
-
-
-schema = load_schema('schema.xml')
-
-# Encode a message
-message_name = 'NewOrderSingle'
-field_values = {
-    'ClOrdID': 'ORDER123',
-    'Symbol': 'AAPL',
-    'OrderQty': 100,
-    'Price': 1.5
-}
-encoded_message = encode_message(schema, message_name, field_values)
-
-# Decode a message
-decoded_message = decode_message(schema, encoded_message)
-
-print(f"Encoded Message: {encoded_message}")
-print(f"Decoded Message: {decoded_message}")
-
-
-
 def decode_message(schema, encoded_message):
     template_id = struct.unpack('B', encoded_message[2:3])[0]
-    template = schema.templates[template_id]
-
-    fields = {}
-    offset = schema.header_size + schema.block_length
-
-    for field in template.fields:
-        field_value = None
-        if field.is_set:
-            field_offset = field.offset
-            field_length = field.field_length
-            field_type = field.field_type
-
-            if field_length > 0:
-                if field_type == 'string':
-                    field_value = encoded_message[offset : offset + field_length].decode('utf-8')
-                elif field_type == 'int32':
-                    field_value = struct.unpack('i', encoded_message[offset : offset + field_length])[0]
-                elif field_type == 'uint32':
-                    field_value = struct.unpack('I', encoded_message[offset : offset + field_length])[0]
-                elif field_type == 'int64':
-                    field_value = struct.unpack('q', encoded_message[offset : offset + field_length])[0]
-                elif field_type == 'uint64':
-                    field_value = struct.unpack('Q', encoded_message[offset : offset + field_length])[0]
-                elif field_type == 'float':
-                    field_value = struct.unpack('f', encoded_message[offset : offset + field_length])[0]
-                elif field_type == 'double':
-                    field_value = struct.unpack('d', encoded_message[offset : offset + field_length])[0]
-
-            offset += field_length
-
-        fields[field.name] = field_value
-
-    return fields
-
-
-
-
-
-
-def decode_message(schema, encoded_message):
-    template_id = struct.unpack('B', encoded_message[2:3])[0]
-    template_name = schema[template_id]['id']
+    template_name = next((key for key, value in schema.items() if value['id'] == template_id), None)
     fields = {}
 
-    for field_id, field_name in schema[template_id]['fields'].items():
+    if template_name is None:
+        raise ValueError(f"Unknown template ID: {template_id}")
+
+    encoded_message = encoded_message[3:]
+
+    for field_id, field_name in schema[template_name]['fields'].items():
         if field_name.endswith('Type'):
             field_value = struct.unpack('B', encoded_message[:1])[0]
             encoded_message = encoded_message[1:]
@@ -246,3 +32,44 @@ def decode_message(schema, encoded_message):
     return template_name, fields
 
 
+# Sample schema
+schema = {
+    'NewOrderSingle': {
+        'id': 1,
+        'fields': {
+            1: 'NewOrderSingleClOrdID',
+            2: 'NewOrderSingleMPID',
+            3: 'NewOrderSingleSymbol',
+            4: 'NewOrderSingleSymbolSfx',
+            5: 'SideType',
+            6: 'uint32',
+            7: 'OrdType',
+            8: 'PriceType',
+            9: 'TimeInForceType',
+            10: 'OrderCapacityType',
+            11: 'CustOrderCapacityType',
+            12: 'ExecInstType',
+            13: 'PriceType',
+            14: 'PegType',
+            15: 'UTCTimestampNanos',
+            16: 'uint32',
+            17: 'uint32',
+            18: 'DispMethodType',
+            19: 'ReserveReplenishTimingType',
+            20: 'uint32',
+            21: 'char',
+            22: 'RepriceFrequencyType',
+            23: 'RepriceBehaviorType',
+            24: 'uint16',
+            25: 'uint16',
+            26: 'SelfTradePreventionType',
+            27: 'uint16',
+            28: 'NewOrderSingleLnkId'
+        }
+    },
+    'OrderCancelReplaceRequest': {
+        'id': 2,
+        'fields': {
+            1: 'OrderCancelReplaceRequestOrigClOrdID',
+            2: 'OrderCancelReplaceRequestClOrdID',
+            3: 'OrderCancelReplaceRequestSymbol
