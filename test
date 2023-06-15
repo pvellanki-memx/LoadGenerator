@@ -1,52 +1,156 @@
-root@qa2434:/home/pvellanki/loadgenerator/sbe/equities/sbe-tool/com/memx/us_equities/memo/sbe/v1_10# javac *.java
-ExecInstTypeDecoder.java:4: error: package org.agrona does not exist
-import org.agrona.DirectBuffer;
-                 ^
-ExecInstTypeDecoder.java:16: error: cannot find symbol
-    private DirectBuffer buffer;
-            ^
-  symbol:   class DirectBuffer
-  location: class ExecInstTypeDecoder
-ExecInstTypeDecoder.java:18: error: cannot find symbol
-    public ExecInstTypeDecoder wrap(final DirectBuffer buffer, final int offset)
-                                          ^
-  symbol:   class DirectBuffer
-  location: class ExecInstTypeDecoder
-ExecInstTypeDecoder.java:29: error: cannot find symbol
-    public DirectBuffer buffer()
-           ^
-  symbol:   class DirectBuffer
-  location: class ExecInstTypeDecoder
-ExecInstTypeEncoder.java:4: error: package org.agrona does not exist
-import org.agrona.MutableDirectBuffer;
-                 ^
-ExecInstTypeEncoder.java:16: error: cannot find symbol
-    private MutableDirectBuffer buffer;
-            ^
-  symbol:   class MutableDirectBuffer
-  location: class ExecInstTypeEncoder
-ExecInstTypeEncoder.java:18: error: cannot find symbol
-    public ExecInstTypeEncoder wrap(final MutableDirectBuffer buffer, final int offset)
-                                          ^
-  symbol:   class MutableDirectBuffer
-  location: class ExecInstTypeEncoder
-ExecInstTypeEncoder.java:29: error: cannot find symbol
-    public MutableDirectBuffer buffer()
-           ^
-  symbol:   class MutableDirectBuffer
-  location: class ExecInstTypeEncoder
-ExecutionReport_CanceledDecoder.java:4: error: package org.agrona does not exist
-import org.agrona.DirectBuffer;
-                 ^
-ExecutionReport_CanceledDecoder.java:17: error: cannot find symbol
-    private DirectBuffer buffer;
-            ^
-  symbol:   class DirectBuffer
-  location: class ExecutionReport_CanceledDecoder
-ExecutionReport_CanceledDecoder.java:49: error: cannot find symbol
-    public DirectBuffer buffer()
-           ^
-  symbol:   class DirectBuffer
-  location: class ExecutionReport_CanceledDecoder
-ExecutionReport_CanceledDecoder.java:65: error: cannot find symbol
-        final DirectBuffer buffer,
+decoder.py:
+import struct
+
+# Import field definitions from sbe-encoder-decoder.py
+from sbe_encoder_decoder import (BooleanType, PriceType, UTCTimestampNanos, ExecInstType, SideType, OrdType,
+                                 TimeInForceType, OrderCapacityType, OrdStatusType, CxlRejResponseToType)
+
+
+class MyDecoder:
+    def __init__(self, schema, buffer):
+        self.schema = schema
+        self.buffer = buffer
+        self.position = 0
+
+    def decode_boolean_type(self):
+        value, = struct.unpack_from('<B', self.buffer, self.position)
+        self.position += struct.calcsize('<B')
+        return value
+
+    def decode_price_type(self):
+        value = PriceType()
+        value.decode(self.buffer[self.position:])
+        self.position += struct.calcsize('<qB')
+        return value
+
+    def decode_utc_timestamp_nanos(self):
+        value = UTCTimestampNanos()
+        value.decode(self.buffer[self.position:])
+        self.position += struct.calcsize('<qB')
+        return value
+
+    def decode_exec_inst_type(self):
+        value, = struct.unpack_from('<H', self.buffer, self.position)
+        self.position += struct.calcsize('<H')
+        return value
+
+    def decode_side_type(self):
+        value, = struct.unpack_from('<c', self.buffer, self.position)
+        self.position += struct.calcsize('<c')
+        return value.decode()
+
+    def decode_ord_type(self):
+        value, = struct.unpack_from('<c', self.buffer, self.position)
+        self.position += struct.calcsize('<c')
+        return value.decode()
+
+    def decode_time_in_force_type(self):
+        value, = struct.unpack_from('<c', self.buffer, self.position)
+        self.position += struct.calcsize('<c')
+        return value.decode()
+
+    def decode_order_capacity_type(self):
+        value, = struct.unpack_from('<c', self.buffer, self.position)
+        self.position += struct.calcsize('<c')
+        return value.decode()
+
+    def decode_ord_status_type(self):
+        value, = struct.unpack_from('<c', self.buffer, self.position)
+        self.position += struct.calcsize('<c')
+        return value.decode()
+
+    def decode_cxl_rej_response_to_type(self):
+        value, = struct.unpack_from('<c', self.buffer, self.position)
+        self.position += struct.calcsize('<c')
+        return value.decode()
+
+
+encoder.py:
+import struct
+
+# Import field definitions from sbe-encoder-decoder.py
+from sbe_encoder_decoder import (BooleanType, PriceType, UTCTimestampNanos, ExecInstType, SideType, OrdType,
+                                 TimeInForceType, OrderCapacityType, OrdStatusType, CxlRejResponseToType)
+
+
+class MyEncoder:
+    def __init__(self, schema):
+        self.schema = schema
+        self.buffer = bytearray()
+
+    def encode_boolean_type(self, value):
+        self.buffer.extend(struct.pack('<B', value))
+
+    def encode_price_type(self, value):
+        self.buffer.extend(value.encode())
+
+    def encode_utc_timestamp_nanos(self, value):
+        self.buffer.extend(value.encode())
+
+    def encode_exec_inst_type(self, value):
+        self.buffer.extend(struct.pack('<H', value))
+
+    def encode_side_type(self, value):
+        self.buffer.extend(struct.pack('<c', value.encode()))
+
+    def encode_ord_type(self, value):
+        self.buffer.extend(struct.pack('<c', value.encode()))
+
+    def encode_time_in_force_type(self, value):
+        self.buffer.extend(struct.pack('<c', value.encode()))
+
+    def encode_order_capacity_type(self, value):
+        self.buffer.extend(struct.pack('<c', value.encode()))
+
+    def encode_ord_status_type(self, value):
+        self.buffer.extend(struct.pack('<c', value.encode()))
+
+    def encode_cxl_rej_response_to_type(self, value):
+        self.buffer.extend(struct.pack('<c', value.encode()))
+
+    def get_encoded_data(self):
+        return bytes(self.buffer)
+
+
+
+Main.py
+
+from encoder import MyEncoder
+from decoder import MyDecoder
+from sbe import NewOrderSingle, SideType, Price
+
+# Construct a NewOrderSingle message
+new_order_single = NewOrderSingle()
+new_order_single.ClOrdID = 12345
+new_order_single.Account = "A123"
+new_order_single.Symbol = "AAPL"
+new_order_single.Side = SideType.Buy
+new_order_single.Price = Price(123456, -2)
+
+# Create an instance of the encoder
+encoder = MyEncoder(schema=None)  # Pass the schema if required
+
+# Encode the NewOrderSingle message
+encoder.encode_int32_type(new_order_single.ClOrdID)
+encoder.encode_string_type(new_order_single.Account)
+encoder.encode_string_type(new_order_single.Symbol)
+encoder.encode_side_type(new_order_single.Side)
+encoder.encode_price_type(new_order_single.Price)
+encoded_data = encoder.get_encoded_data()
+
+# Create an instance of the decoder
+decoder = MyDecoder(schema=None, buffer=encoded_data)  # Pass the schema if required
+
+# Decode the received data
+cl_ord_id = decoder.decode_int32_type()
+account = decoder.decode_string_type()
+symbol = decoder.decode_string_type()
+side = decoder.decode_side_type()
+price = decoder.decode_price_type()
+
+# Print the decoded fields
+print(f"ClOrdID: {cl_ord_id}")
+print(f"Account: {account}")
+print(f"Symbol: {symbol}")
+print(f"Side: {side}")
+print(f"Price: {price.mantissa} x 10^{price.exponent}")
