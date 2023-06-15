@@ -1,58 +1,100 @@
-def decode_message(schema, encoded_message):
-    block_length = struct.unpack('>H', encoded_message[0:2])[0]
-    template_id = struct.unpack('B', encoded_message[2:3])[0]
-    schema_id = struct.unpack('B', encoded_message[3:4])[0]
-    version = struct.unpack('>H', encoded_message[4:6])[0]
-    message_id = struct.unpack('>H', encoded_message[6:8])[0]
+import configparser
+import socket
+import time
+from com.example import NewOrderSingleencoder, NewOrderSingledecoder
+from your_generated_encoder import encode_new_order_single
+from your_generated_decoder import decode_new_order_single
+import jpype
 
-    for message_name, message_info in schema.items():
-        if message_info['id'] == message_id:
-            fields = message_info['fields']
-            break
-    else:
-        raise ValueError(f"Message with ID {message_id} not found in the schema.")
+config = configparser.ConfigParser()
+config.read('config.ini')
 
-    decoded_fields = {}
-    encoded_fields_count = struct.unpack('>H', encoded_message[8:10])[0]
-    offset = 10
-    for _ in range(encoded_fields_count):
-        field_id = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
-        field_length = struct.unpack('>H', encoded_message[offset + 2:offset + 4])[0]
-        encoded_field = encoded_message[offset + 4:offset + 4 + field_length]
-        if field_id in fields:
-            field_type = fields[field_id]
-            decoded_value = decode_field(field_type, encoded_field)
-            decoded_fields[field_id] = decoded_value
-        offset += 4 + field_length
+# Load the schema for decoding messages
+schema_file = 'sbe-schema.xml'
+schema = load_schema(schema_file)
 
-    return message_name, decoded_fields
-    
-    
-    
-    
-    git clone https://github.com/real-logic/simple-binary-encoding.git
+# Get the default configuration for message rate and duration
+default_config = config['default']
+default_message_rate = int(default_config['message_rate'])
+default_duration = int(default_config['duration'])
 
+# Start the JVM
+jpype.startJVM(jpype.getDefaultJVMPath())
 
-path/to/sbe-tool -d schema_directory -o output_directory --package python my_schema.xml
+try:
+    # Create an instance of the encoder and decoder
+    encoder = NewOrderSingleencoder()
+    decoder = NewOrderSingledecoder()
 
+    # Loop through all the session configurations
+    for session_name in config.sections():
+        if session_name == 'default':
+            continue
 
-(myenv) pvellanki@qa2434:~/loadgenerator/sbe/equities/sbe-tool$ java -jar sbe-all-1.28.3.jar sbe-schema-equities.xml 
-ERROR: at <types><enum name="LastLiquidityIndType"> validValue NullValue uses nullValue: 255
-ERROR: at <types><enum name="PegType"> validValue NullValue uses nullValue: 255
-ERROR: at <types><enum name="ReserveReplenishTimingType"> validValue NullValue uses nullValue: 255
-ERROR: at <types><enum name="CustOrderCapacityType"> validValue NullValue uses nullValue: 255
-ERROR: at <types><enum name="RepriceFrequencyType"> validValue NullValue uses nullValue: 255
-ERROR: at <types><enum name="RepriceBehaviorType"> validValue NullValue uses nullValue: 255
-ERROR: at <types><enum name="SelfTradePreventionType"> validValue NullValue uses nullValue: 255
-ERROR: at <types><enum name="CancelReasonCode"> validValue NullValue uses nullValue: 255
-ERROR: at <types><enum name="OrderRejectReasonCode"> validValue NullValue uses nullValue: 255
-ERROR: at <types><enum name="CancelRejectReasonCode"> validValue NullValue uses nullValue: 255
-ERROR: at <types><enum name="MassCancelRejectReasonCode"> validValue NullValue uses nullValue: 255
-ERROR: at <types><enum name="ExecRestatementType"> validValue NullValue uses nullValue: 255
-ERROR: at <types><enum name="ExtendedRestatementReasonType"> validValue NullValue uses nullValue: 255
-Exception in thread "main" java.lang.IllegalStateException: had 13 errors
-	at uk.co.real_logic.sbe.xml.ErrorHandler.checkIfShouldExit(ErrorHandler.java:107)
-	at uk.co.real_logic.sbe.xml.XmlSchemaParser.parse(XmlSchemaParser.java:138)
-	at uk.co.real_logic.sbe.SbeTool.parseSchema(SbeTool.java:331)
-	at uk.co.real_logic.sbe.SbeTool.main(SbeTool.java:232)
+        # Get the session configuration
+        session_config = config[session_name]
 
+        # Extract the connection details
+        server_ip = session_config['ip']
+        server_port = int(session_config['port'])
+
+        # Establish the TCP connection
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_socket.connect((server_ip, server_port))
+
+        # Set the TCP connection to binary mode
+        client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+
+        # Login process
+        login_request_fields = {}
+        login_request_fields[3] = 100  # Message Type
+        login_request_fields[4] = len(session_config['token'])  # Token Type
+        login_request_fields[5] = session_config['token']  # Token
+        login_request_message = encode_message(schema, 'LoginRequest', login_request_fields)
+        client_socket.sendall(login_request_message)
+
+        # Receive the login response
+        login_response_message = client_socket.recv(4096)
+        _, login_response_fields = decode_message(schema, login_response_message)
+
+        # Check if the login was accepted
+        if login_response_fields.get(3) == 1:  # Login Accepted
+            print("Login accepted.")
+        else:
+            print("Login rejected. Exiting.")
+            client_socket.close()
+            exit(1)
+
+        # Calculate message rate per session
+        message_rate = int(session_config.get('message_rate', default_message_rate))
+        duration = int(session_config.get('duration', default_duration))
+        message_interval = 1 / message_rate
+
+        # Send NewOrderSingle messages
+        start_time = time.time()
+        end_time = start_time + duration
+
+        while time.time() < end_time:
+            # Generate and send NewOrderSingle message
+            cl_ord_id = "ORD123"
+            symbol = "AAPL"
+            side = "BUY"
+            order_qty = 100
+            price = 150.25
+
+            encoded_message = encode_new_order_single(encoder, cl_ord_id, symbol, side, order_qty, price)
+            client_socket.sendall(encoded_message)
+
+            # Wait for the next message interval
+            time.sleep(message_interval)
+
+        # Close the TCP connection
+        client_socket.close()
+
+finally:
+    # Cleanup resources
+    encoder.close()
+    decoder.close()
+
+    # Shutdown the JVM
+    jpype.shutdownJVM()
