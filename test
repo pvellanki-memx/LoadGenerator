@@ -134,5 +134,29 @@ NewOrderSingleEncoder.java:62: error: cannot find symbol
     public NewOrderSingleEncoder wrap(final MutableDirectBuffer buffer, final int offset)
                                             ^
   symbol:   class MutableDirectBuffer
+  
+  
+  
+  
+  
+  
+  root@qa2434:/home/pvellanki/loadgenerator/sbe/equities/sbe-tool/com/memx/us_equities/memo/sbe/v1_10# javac -cp .:agrona-1.18.2.jar NewOrderSingleEncoder.java 
+NewOrderSingleEncoder.java:76: error: cannot find symbol
+        final MutableDirectBuffer buffer, final int offset, final MessageHeaderEncoder headerEncoder)
+                                                                  ^
+  symbol:   class MessageHeaderEncoder
+  location: class NewOrderSingleEncoder
+NewOrderSingleEncoder.java:123: error: cannot find symbol
+    public static String clOrdIDMetaAttribute(final MetaAttribute metaAttribute)
+                                                    ^
+  symbol:   class MetaAttribute
+  location: class NewOrderSingleEncoder
+NewOrderSingleEncoder.java:243: error: cannot find symbol
+    public static String mPIDMetaAttribute(final MetaAttribute metaAttribute)
+                                                 ^
+  symbol:   class MetaAttribute
+  location: class NewOrderSingleEncoder
+NewOrderSingleEncoder.java:372: error: cannot find symbol
+    public static String symbolMetaAttribute(final MetaAttribute metaAttribute)
 
 
