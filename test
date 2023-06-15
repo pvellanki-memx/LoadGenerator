@@ -1,2 +1,90 @@
-Encoded Message: bytearray(b'\x00\x05\x01\x01\x01\n\x00\x01')
-Decoded Message: ('NewOrderSingle', {})
+import struct
+
+
+def decode_message(schema, encoded_message):
+    template_id = struct.unpack('B', encoded_message[2:3])[0]
+    template_name = next((key for key, value in schema.items() if value['id'] == template_id), None)
+    fields = {}
+
+    if template_name is None:
+        raise ValueError(f"Unknown template ID: {template_id}")
+
+    encoded_message = encoded_message[3:]
+
+    for field_id, field_name in schema[template_name]['fields'].items():
+        if field_name.endswith('Type'):
+            field_value = struct.unpack('B', encoded_message[:1])[0]
+            encoded_message = encoded_message[1:]
+        elif field_name.startswith('uint'):
+            field_value = struct.unpack('I', encoded_message[:4])[0]
+            encoded_message = encoded_message[4:]
+        elif field_name.startswith('char'):
+            field_value = struct.unpack('s', encoded_message[:1])[0].decode('utf-8')
+            encoded_message = encoded_message[1:]
+        elif field_name == 'NewOrderSingleLnkId':
+            field_value = struct.unpack('H', encoded_message[:2])[0]
+            encoded_message = encoded_message[2:]
+        else:
+            raise ValueError(f"Unknown field type for field: {field_name}")
+
+        fields[field_name] = field_value
+
+    return template_name, fields
+
+
+# Sample schema
+schema = {
+    'NewOrderSingle': {
+        'id': 1,
+        'fields': {
+            1: 'NewOrderSingleClOrdID',
+            2: 'NewOrderSingleMPID',
+            3: 'NewOrderSingleSymbol',
+            4: 'NewOrderSingleSymbolSfx',
+            5: 'SideType',
+            6: 'uint32',
+            7: 'OrdType',
+            8: 'PriceType',
+            9: 'TimeInForceType',
+            10: 'OrderCapacityType',
+            11: 'CustOrderCapacityType',
+            12: 'ExecInstType',
+            13: 'PriceType',
+            14: 'PegType',
+            15: 'UTCTimestampNanos',
+            16: 'uint32',
+            17: 'uint32',
+            18: 'DispMethodType',
+            19: 'ReserveReplenishTimingType',
+            20: 'uint32',
+            21: 'char',
+            22: 'RepriceFrequencyType',
+            23: 'RepriceBehaviorType',
+            24: 'uint16',
+            25: 'uint16',
+            26: 'SelfTradePreventionType',
+            27: 'uint16',
+            28: 'NewOrderSingleLnkId'
+        }
+    },
+    'OrderCancelReplaceRequest': {
+        'id': 2,
+        'fields': {
+            1: 'OrderCancelReplaceRequestOrigClOrdID',
+            2: 'OrderCancelReplaceRequestClOrdID',
+            3: 'OrderCancelReplaceRequestSymbol',
+        }
+    },
+    'OrderCancelRequest': {
+        'id': 3,
+        'fields': {
+            1: 'OrderCancelRequestOrigClOrdID',
+            2: 'uint64',
+            3: 'OrderCancelRequestClOrdID',
+            4: 'OrderCancelRequestSymbol',
+            5: 'OrderCancelRequestSymbolSfx',
+        }
+    },
+    'MassCancelRequest': {
+        'id': 4,
+        '
