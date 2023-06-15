@@ -1,123 +1,6 @@
-decoder.py:
-import struct
-
-# Import field definitions from sbe-encoder-decoder.py
-from sbe_encoder_decoder import (BooleanType, PriceType, UTCTimestampNanos, ExecInstType, SideType, OrdType,
-                                 TimeInForceType, OrderCapacityType, OrdStatusType, CxlRejResponseToType)
-
-
-class MyDecoder:
-    def __init__(self, schema, buffer):
-        self.schema = schema
-        self.buffer = buffer
-        self.position = 0
-
-    def decode_boolean_type(self):
-        value, = struct.unpack_from('<B', self.buffer, self.position)
-        self.position += struct.calcsize('<B')
-        return value
-
-    def decode_price_type(self):
-        value = PriceType()
-        value.decode(self.buffer[self.position:])
-        self.position += struct.calcsize('<qB')
-        return value
-
-    def decode_utc_timestamp_nanos(self):
-        value = UTCTimestampNanos()
-        value.decode(self.buffer[self.position:])
-        self.position += struct.calcsize('<qB')
-        return value
-
-    def decode_exec_inst_type(self):
-        value, = struct.unpack_from('<H', self.buffer, self.position)
-        self.position += struct.calcsize('<H')
-        return value
-
-    def decode_side_type(self):
-        value, = struct.unpack_from('<c', self.buffer, self.position)
-        self.position += struct.calcsize('<c')
-        return value.decode()
-
-    def decode_ord_type(self):
-        value, = struct.unpack_from('<c', self.buffer, self.position)
-        self.position += struct.calcsize('<c')
-        return value.decode()
-
-    def decode_time_in_force_type(self):
-        value, = struct.unpack_from('<c', self.buffer, self.position)
-        self.position += struct.calcsize('<c')
-        return value.decode()
-
-    def decode_order_capacity_type(self):
-        value, = struct.unpack_from('<c', self.buffer, self.position)
-        self.position += struct.calcsize('<c')
-        return value.decode()
-
-    def decode_ord_status_type(self):
-        value, = struct.unpack_from('<c', self.buffer, self.position)
-        self.position += struct.calcsize('<c')
-        return value.decode()
-
-    def decode_cxl_rej_response_to_type(self):
-        value, = struct.unpack_from('<c', self.buffer, self.position)
-        self.position += struct.calcsize('<c')
-        return value.decode()
-
-
-encoder.py:
-import struct
-
-# Import field definitions from sbe-encoder-decoder.py
-from sbe_encoder_decoder import (BooleanType, PriceType, UTCTimestampNanos, ExecInstType, SideType, OrdType,
-                                 TimeInForceType, OrderCapacityType, OrdStatusType, CxlRejResponseToType)
-
-
-class MyEncoder:
-    def __init__(self, schema):
-        self.schema = schema
-        self.buffer = bytearray()
-
-    def encode_boolean_type(self, value):
-        self.buffer.extend(struct.pack('<B', value))
-
-    def encode_price_type(self, value):
-        self.buffer.extend(value.encode())
-
-    def encode_utc_timestamp_nanos(self, value):
-        self.buffer.extend(value.encode())
-
-    def encode_exec_inst_type(self, value):
-        self.buffer.extend(struct.pack('<H', value))
-
-    def encode_side_type(self, value):
-        self.buffer.extend(struct.pack('<c', value.encode()))
-
-    def encode_ord_type(self, value):
-        self.buffer.extend(struct.pack('<c', value.encode()))
-
-    def encode_time_in_force_type(self, value):
-        self.buffer.extend(struct.pack('<c', value.encode()))
-
-    def encode_order_capacity_type(self, value):
-        self.buffer.extend(struct.pack('<c', value.encode()))
-
-    def encode_ord_status_type(self, value):
-        self.buffer.extend(struct.pack('<c', value.encode()))
-
-    def encode_cxl_rej_response_to_type(self, value):
-        self.buffer.extend(struct.pack('<c', value.encode()))
-
-    def get_encoded_data(self):
-        return bytes(self.buffer)
-
-
-
-Main.py
-
 from encoder import MyEncoder
 from decoder import MyDecoder
-from sbe import NewOrderSingle, SideType, Price
+from sbe import NewOrderSingle, SideType, Price, TimeInForceType, OrderCapacityType, ExecInstType, OrdType
 
 # Construct a NewOrderSingle message
 new_order_single = NewOrderSingle()
@@ -126,6 +9,11 @@ new_order_single.Account = "A123"
 new_order_single.Symbol = "AAPL"
 new_order_single.Side = SideType.Buy
 new_order_single.Price = Price(123456, -2)
+new_order_single.TimeInForce = TimeInForceType.Day
+new_order_single.OrderCapacity = OrderCapacityType.Agency
+new_order_single.CustOrderCapacity = "C"
+new_order_single.ExecInst = ExecInstType.ParticipateDoNotInitiate
+new_order_single.OrdType = OrdType.Limit
 
 # Create an instance of the encoder
 encoder = MyEncoder(schema=None)  # Pass the schema if required
@@ -136,6 +24,11 @@ encoder.encode_string_type(new_order_single.Account)
 encoder.encode_string_type(new_order_single.Symbol)
 encoder.encode_side_type(new_order_single.Side)
 encoder.encode_price_type(new_order_single.Price)
+encoder.encode_time_in_force_type(new_order_single.TimeInForce)
+encoder.encode_order_capacity_type(new_order_single.OrderCapacity)
+encoder.encode_string_type(new_order_single.CustOrderCapacity)
+encoder.encode_exec_inst_type(new_order_single.ExecInst)
+encoder.encode_ord_type(new_order_single.OrdType)
 encoded_data = encoder.get_encoded_data()
 
 # Create an instance of the decoder
@@ -147,6 +40,11 @@ account = decoder.decode_string_type()
 symbol = decoder.decode_string_type()
 side = decoder.decode_side_type()
 price = decoder.decode_price_type()
+time_in_force = decoder.decode_time_in_force_type()
+order_capacity = decoder.decode_order_capacity_type()
+cust_order_capacity = decoder.decode_string_type()
+exec_inst = decoder.decode_exec_inst_type()
+ord_type = decoder.decode_ord_type()
 
 # Print the decoded fields
 print(f"ClOrdID: {cl_ord_id}")
@@ -154,3 +52,8 @@ print(f"Account: {account}")
 print(f"Symbol: {symbol}")
 print(f"Side: {side}")
 print(f"Price: {price.mantissa} x 10^{price.exponent}")
+print(f"TimeInForce: {time_in_force}")
+print(f"OrderCapacity: {order_capacity}")
+print(f"CustOrderCapacity: {cust_order_capacity}")
+print(f"ExecInst: {exec_inst}")
+print(f"OrdType: {ord_type}")
