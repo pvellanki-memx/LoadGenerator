@@ -114,3 +114,25 @@ ip = 192.168.0.1
 port = 8888
 token = ANOTHER_TOKEN_HERE
 
+
+
+root@qa2434:/home/pvellanki/loadgenerator/sbe/equities/sbe-tool/com/memx/us_equities/memo/sbe/v1_10# javac NewOrderSingleEncoder.java 
+NewOrderSingleEncoder.java:4: error: package org.agrona does not exist
+import org.agrona.MutableDirectBuffer;
+                 ^
+NewOrderSingleEncoder.java:17: error: cannot find symbol
+    private MutableDirectBuffer buffer;
+            ^
+  symbol:   class MutableDirectBuffer
+  location: class NewOrderSingleEncoder
+NewOrderSingleEncoder.java:47: error: cannot find symbol
+    public MutableDirectBuffer buffer()
+           ^
+  symbol:   class MutableDirectBuffer
+  location: class NewOrderSingleEncoder
+NewOrderSingleEncoder.java:62: error: cannot find symbol
+    public NewOrderSingleEncoder wrap(final MutableDirectBuffer buffer, final int offset)
+                                            ^
+  symbol:   class MutableDirectBuffer
+
+
