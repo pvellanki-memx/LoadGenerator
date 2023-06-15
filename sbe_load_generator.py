@@ -79,3 +79,19 @@ else:
     # Close the TCP connection
     client_socket.close()
 
+
+[default]
+message_rate = 10
+duration = 60
+
+[session1]
+ip = 127.0.0.1
+port = 8080
+token = YOUR_TOKEN_HERE
+
+[session2]
+ip = 192.168.0.1
+port = 8888
+token = ANOTHER_TOKEN_HERE
+
+
