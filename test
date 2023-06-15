@@ -1,59 +1,263 @@
-from encoder import MyEncoder
-from decoder import MyDecoder
-from sbe import NewOrderSingle, SideType, Price, TimeInForceType, OrderCapacityType, ExecInstType, OrdType
+import xml.etree.ElementTree as ET
+import struct
 
-# Construct a NewOrderSingle message
-new_order_single = NewOrderSingle()
-new_order_single.ClOrdID = 12345
-new_order_single.Account = "A123"
-new_order_single.Symbol = "AAPL"
-new_order_single.Side = SideType.Buy
-new_order_single.Price = Price(123456, -2)
-new_order_single.TimeInForce = TimeInForceType.Day
-new_order_single.OrderCapacity = OrderCapacityType.Agency
-new_order_single.CustOrderCapacity = "C"
-new_order_single.ExecInst = ExecInstType.ParticipateDoNotInitiate
-new_order_single.OrdType = OrdType.Limit
 
-# Create an instance of the encoder
-encoder = MyEncoder(schema=None)  # Pass the schema if required
+def load_schema(schema_file):
+    tree = ET.parse(schema_file)
+    root = tree.getroot()
+    messages = {}
 
-# Encode the NewOrderSingle message
-encoder.encode_int32_type(new_order_single.ClOrdID)
-encoder.encode_string_type(new_order_single.Account)
-encoder.encode_string_type(new_order_single.Symbol)
-encoder.encode_side_type(new_order_single.Side)
-encoder.encode_price_type(new_order_single.Price)
-encoder.encode_time_in_force_type(new_order_single.TimeInForce)
-encoder.encode_order_capacity_type(new_order_single.OrderCapacity)
-encoder.encode_string_type(new_order_single.CustOrderCapacity)
-encoder.encode_exec_inst_type(new_order_single.ExecInst)
-encoder.encode_ord_type(new_order_single.OrdType)
-encoded_data = encoder.get_encoded_data()
+    # Find the XML namespace
+    namespace = root.tag.split('}')[0] + '}'
 
-# Create an instance of the decoder
-decoder = MyDecoder(schema=None, buffer=encoded_data)  # Pass the schema if required
+    for message_elem in root.findall(f'{namespace}message'):
+        message_id = int(message_elem.get('id'))
+        message_name = message_elem.get('name')
+        fields = {}
 
-# Decode the received data
-cl_ord_id = decoder.decode_int32_type()
-account = decoder.decode_string_type()
-symbol = decoder.decode_string_type()
-side = decoder.decode_side_type()
-price = decoder.decode_price_type()
-time_in_force = decoder.decode_time_in_force_type()
-order_capacity = decoder.decode_order_capacity_type()
-cust_order_capacity = decoder.decode_string_type()
-exec_inst = decoder.decode_exec_inst_type()
-ord_type = decoder.decode_ord_type()
+        for field_elem in message_elem.findall(f'.//field'):
+            field_id = int(field_elem.get('id'))
+            field_type = field_elem.get('type')
+            #print(f"Field ID: {field_id}, Field Type: {field_type}")
+            fields[field_id] = field_type
 
-# Print the decoded fields
-print(f"ClOrdID: {cl_ord_id}")
-print(f"Account: {account}")
-print(f"Symbol: {symbol}")
-print(f"Side: {side}")
-print(f"Price: {price.mantissa} x 10^{price.exponent}")
-print(f"TimeInForce: {time_in_force}")
-print(f"OrderCapacity: {order_capacity}")
-print(f"CustOrderCapacity: {cust_order_capacity}")
-print(f"ExecInst: {exec_inst}")
-print(f"OrdType: {ord_type}")
+        messages[message_name] = {'id': message_id, 'fields': fields}
+
+    print(messages)
+    return messages
+
+
+"""
+def load_schema(schema_file):
+    tree = ET.parse(schema_file)
+    root = tree.getroot()
+    messages = {}
+
+    # Find the XML namespace
+    namespace = root.tag.split('}')[0] + '}'
+
+    for message_elem in root.findall(f'{namespace}message'):
+        message_id = int(message_elem.get('id'))
+        message_name = message_elem.get('name')
+        fields = []
+
+        for field_elem in message_elem.findall(f'.//{namespace}field'):
+            field_id = int(field_elem.get('id'))
+            field_name = field_elem.get('name')
+            field_type = field_elem.get('type')
+            field_description = field_elem.find(f'{namespace}description').text.strip()
+            field_required = field_elem.get('presence') == 'required'
+            field_encoding = field_elem.get('encoding')
+            field_byte_order = field_elem.get('byteOrder')
+            field_offset = int(field_elem.get('offset'))
+            field_description = field_elem.find(f'{namespace}description').text.strip()
+
+            field = {
+                'id': field_id,
+                'name': field_name,
+                'type': field_type,
+                'description': field_description,
+                'required': field_required,
+                'encoding': field_encoding,
+                'byte_order': field_byte_order,
+                'offset': field_offset
+            }
+
+            fields.append(field)
+
+        messages[message_name] = {'id': message_id, 'fields': fields}
+    
+    print(messages)
+    return messages
+"""
+
+
+def encode_field(field_type, value):
+    if field_type in ['NewOrderSingleClOrdID', 'NewOrderSingleMPID', 'NewOrderSingleSymbol', 'NewOrderSingleSymbolSfx', 'NewOrderSingleLnkId']:
+        return value.encode('utf-8')
+    elif field_type == 'SideType':
+        return struct.pack('c', value.encode('utf-8'))
+    elif field_type == 'uint32':
+        return struct.pack('I', value)
+    elif field_type == 'OrdType':
+        return struct.pack('b', value)
+    elif field_type == 'PriceType':
+        return struct.pack('d', value)
+    elif field_type == 'TimeInForceType':
+        return struct.pack('b', value)
+    elif field_type == 'OrderCapacityType':
+        return struct.pack('b', value)
+    elif field_type == 'CustOrderCapacityType':
+        if value == 'MemberTradingOnTheirOwnAccount':
+            return struct.pack('B', 1)
+        elif value == 'RetailCustomer':
+            return struct.pack('B', 5)
+        elif value == 'NullValue':
+            return struct.pack('B', 255)
+        else:
+            raise ValueError(f"Invalid value for CustOrderCapacityType: {value}")
+    elif field_type == 'ExecInstType':
+        return struct.pack('b', value)
+    elif field_type == 'PegType':
+        return struct.pack('b', value)
+    elif field_type == 'UTCTimestampNanos':
+        return struct.pack('Q', value)
+    elif field_type == 'DispMethodType':
+        return struct.pack('b', value)
+    elif field_type == 'ReserveReplenishTimingType':
+        return struct.pack('b', value)
+    elif field_type == 'char':
+        return struct.pack('c', value.encode('utf-8'))
+    elif field_type == 'RepriceFrequencyType':
+        return struct.pack('b', value)
+    elif field_type == 'RepriceBehaviorType':
+        return struct.pack('b', value)
+    elif field_type == 'uint16':
+        return struct.pack('H', value)
+    elif field_type == 'SelfTradePreventionType':
+        return struct.pack('b', value)
+    else:
+        raise ValueError(f"Unknown field type: {field_type}")
+
+
+
+
+
+def encode_message(schema, message_name, field_values):
+    if message_name not in schema:
+        raise ValueError(f"Message '{message_name}' not found in the schema.")
+
+    message = schema[message_name]
+    message_id = message['id']
+    fields = message['fields']
+
+    encoded_fields = []
+    for field_id, field_type in fields.items():
+        if field_id in field_values:
+            value = field_values[field_id]
+            encoded_field = encode_field(field_type, value)
+            encoded_fields.append((field_id, encoded_field))
+
+    encoded_message = bytearray()
+    encoded_message += struct.pack('>H', len(encoded_fields) + 5)  # MEMO SBE header: BlockLength
+    encoded_message += struct.pack('B', 1)  # MEMO SBE header: TemplateID
+    encoded_message += struct.pack('B', 1)  # MEMO SBE header: SchemaID
+    encoded_message += struct.pack('>H', 266)  # MEMO SBE header: Version
+
+    encoded_message += struct.pack('>H', message_id)  # Message ID
+
+    for field_id, encoded_field in encoded_fields:
+        encoded_message += struct.pack('>H', field_id)
+        encoded_message += struct.pack('>H', len(encoded_field))
+        encoded_message += encoded_field
+
+    return encoded_message
+
+
+
+
+def decode_field(field_type, encoded_value):
+    if field_type in ['NewOrderSingleClOrdID', 'NewOrderSingleMPID', 'NewOrderSingleSymbol', 'NewOrderSingleSymbolSfx', 'NewOrderSingleLnkId']:
+        return encoded_value.decode('utf-8')
+    elif field_type == 'SideType':
+        return struct.unpack('c', encoded_value)[0].decode('utf-8')
+    elif field_type == 'uint32':
+        return struct.unpack('I', encoded_value)[0]
+    elif field_type == 'OrdType':
+        return struct.unpack('b', encoded_value)[0]
+    elif field_type == 'PriceType':
+        return struct.unpack('d', encoded_value)[0]
+    elif field_type == 'TimeInForceType':
+        return struct.unpack('b', encoded_value)[0]
+    elif field_type == 'OrderCapacityType':
+        return struct.unpack('b', encoded_value)[0]
+    elif field_type == 'CustOrderCapacityType':
+        decoded_value = struct.unpack('B', encoded_value)[0]
+        if decoded_value == 1:
+            return 'MemberTradingOnTheirOwnAccount'
+        elif decoded_value == 5:
+            return 'RetailCustomer'
+        elif decoded_value == 255:
+            return 'NullValue'
+        else:
+            raise ValueError(f"Invalid encoded value for CustOrderCapacityType: {encoded_value}")
+    elif field_type == 'ExecInstType':
+        return struct.unpack('b', encoded_value)[0]
+    elif field_type == 'PegType':
+        return struct.unpack('b', encoded_value)[0]
+    elif field_type == 'UTCTimestampNanos':
+        return struct.unpack('Q', encoded_value)[0]
+    elif field_type == 'DispMethodType':
+        return struct.unpack('b', encoded_value)[0]
+    elif field_type == 'ReserveReplenishTimingType':
+        return struct.unpack('b', encoded_value)[0]
+    elif field_type == 'char':
+        return struct.unpack('c', encoded_value)[0].decode('utf-8')
+    elif field_type == 'RepriceFrequencyType':
+        return struct.unpack('b', encoded_value)[0]
+    elif field_type == 'RepriceBehaviorType':
+        return struct.unpack('b', encoded_value)[0]
+    elif field_type == 'uint16':
+        return struct.unpack('H', encoded_value)[0]
+    elif field_type == 'SelfTradePreventionType':
+        return struct.unpack('b', encoded_value)[0]
+    else:
+        raise ValueError(f"Unknown field type: {field_type}")
+
+
+
+def decode_message(schema, encoded_message):
+    block_length = struct.unpack('>H', encoded_message[0:2])[0]
+    template_id = struct.unpack('B', encoded_message[2:3])[0]
+    schema_id = struct.unpack('B', encoded_message[3:4])[0]
+    version = struct.unpack('>H', encoded_message[4:6])[0]
+    print(block_length,template_id,schema_id,version)
+    message_id = struct.unpack('>H', encoded_message[6:8])[0]
+
+    for message_name, message_info in schema.items():
+        if message_info['id'] == message_id:
+            fields = message_info['fields']
+            break
+    else:
+        raise ValueError(f"Message with ID {message_id} not found in the schema.")
+
+    decoded_fields = {}
+    encoded_fields_count = struct.unpack('>H', encoded_message[8:10])[0]
+    offset = 10
+    for _ in range(encoded_fields_count):
+        field_id = struct.unpack('>H', encoded_message[offset:offset + 2])[0]
+        field_length = struct.unpack('>H', encoded_message[offset + 2:offset + 4])[0]
+        encoded_field = encoded_message[offset + 4:offset + 4 + field_length]
+        if field_id in fields:
+            field_type = fields[field_id]
+            decoded_value = decode_field(field_type, encoded_field)
+            decoded_fields[field_id] = decoded_value
+        offset += 4 + field_length
+
+    return message_name, decoded_fields
+
+
+if __name__ == '__main__':
+    schema_file = 'sbe-schema-equities.xml'
+    schema = load_schema(schema_file)
+
+    # Example encoding
+    message_name = 'NewOrderSingle'
+    field_values = {
+        'ClOrdID': '12345',
+        'Symbol': 'AAPL',
+        'Side': '1',
+        'OrderQty': 100,
+        'Price': 150.0,
+        'OrdType': 2,
+        'TimeInForce': 0,
+        'OrderCapacity': 'A',
+        'CustOrderCapacity': 1,
+        'ExecInst': 2
+    }
+
+    encoded_message = encode_message(schema, message_name, field_values)
+    decoded_message = decode_message(schema, encoded_message)
+    print(schema)
+    print(f"Encoded message: {encoded_message}")
+    #print(decoded_message)
