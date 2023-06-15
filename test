@@ -160,3 +160,19 @@ NewOrderSingleEncoder.java:372: error: cannot find symbol
     public static String symbolMetaAttribute(final MetaAttribute metaAttribute)
 
 
+
+3     public static String sendingTimeMetaAttribute(final MetaAttribute metaAttribute)
+    124     {
+    125         if (MetaAttribute.PRESENCE == metaAttribute)
+    126         {
+    127             return "required";
+    128         }
+    129 
+    130         return "";
+    
+    
+     symbol:   class MessageHeaderEncoder
+  location: class ExecutionReport_RestatementEncoder
+ExecutionReport_RestatementEncoder.java:123: error: cannot find symbol
+    public static String sendingTimeMetaAttribute(final MetaAttribute metaAttribute)
+
