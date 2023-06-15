@@ -1,3 +1,4 @@
+import struct
 
 
 def decode_message(schema, encoded_message):
@@ -15,17 +16,29 @@ def decode_message(schema, encoded_message):
             break
 
         if field_name == 'NewOrderSingleClOrdID':
-            field_value = struct.unpack('s', encoded_message[:20])[0].decode('utf-8')
-            encoded_message = encoded_message[20:]
+            if len(encoded_message) >= 20:
+                field_value = struct.unpack('20s', encoded_message[:20])[0].decode('utf-8')
+                encoded_message = encoded_message[20:]
+            else:
+                field_value = None
         elif field_name == 'NewOrderSingleMPID':
-            field_value = struct.unpack('s', encoded_message[:4])[0].decode('utf-8')
-            encoded_message = encoded_message[4:]
+            if len(encoded_message) >= 4:
+                field_value = struct.unpack('4s', encoded_message[:4])[0].decode('utf-8')
+                encoded_message = encoded_message[4:]
+            else:
+                field_value = None
         elif field_name == 'NewOrderSingleSymbol':
-            field_value = struct.unpack('s', encoded_message[:6])[0].decode('utf-8')
-            encoded_message = encoded_message[6:]
+            if len(encoded_message) >= 6:
+                field_value = struct.unpack('6s', encoded_message[:6])[0].decode('utf-8')
+                encoded_message = encoded_message[6:]
+            else:
+                field_value = None
         elif field_name == 'NewOrderSingleSymbolSfx':
-            field_value = struct.unpack('s', encoded_message[:3])[0].decode('utf-8')
-            encoded_message = encoded_message[3:]
+            if len(encoded_message) >= 3:
+                field_value = struct.unpack('3s', encoded_message[:3])[0].decode('utf-8')
+                encoded_message = encoded_message[3:]
+            else:
+                field_value = None
         elif field_name.endswith('Type'):
             field_value = struct.unpack('B', encoded_message[:1])[0]
             encoded_message = encoded_message[1:]
@@ -45,4 +58,4 @@ def decode_message(schema, encoded_message):
 
     return template_name, fields
 
-         
+
