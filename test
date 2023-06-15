@@ -1,178 +1,60 @@
-import configparser
-import socket
-import time
-from com.example import NewOrderSingleencoder, NewOrderSingledecoder
-from your_generated_encoder import encode_new_order_single
-from your_generated_decoder import decode_new_order_single
-import jpype
+/* Generated SBE (Simple Binary Encoding) message codec. */
+package com.memx.us_equities.memo.sbe.v1_10;
 
-config = configparser.ConfigParser()
-config.read('config.ini')
-
-# Load the schema for decoding messages
-schema_file = 'sbe-schema.xml'
-schema = load_schema(schema_file)
-
-# Get the default configuration for message rate and duration
-default_config = config['default']
-default_message_rate = int(default_config['message_rate'])
-default_duration = int(default_config['duration'])
-
-# Start the JVM
-jpype.startJVM(jpype.getDefaultJVMPath())
-
-try:
-    # Create an instance of the encoder and decoder
-    encoder = NewOrderSingleencoder()
-    decoder = NewOrderSingledecoder()
-
-    # Loop through all the session configurations
-    for session_name in config.sections():
-        if session_name == 'default':
-            continue
-
-        # Get the session configuration
-        session_config = config[session_name]
-
-        # Extract the connection details
-        server_ip = session_config['ip']
-        server_port = int(session_config['port'])
-
-        # Establish the TCP connection
-        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_socket.connect((server_ip, server_port))
-
-        # Set the TCP connection to binary mode
-        client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-
-        # Login process
-        login_request_fields = {}
-        login_request_fields[3] = 100  # Message Type
-        login_request_fields[4] = len(session_config['token'])  # Token Type
-        login_request_fields[5] = session_config['token']  # Token
-        login_request_message = encode_message(schema, 'LoginRequest', login_request_fields)
-        client_socket.sendall(login_request_message)
-
-        # Receive the login response
-        login_response_message = client_socket.recv(4096)
-        _, login_response_fields = decode_message(schema, login_response_message)
-
-        # Check if the login was accepted
-        if login_response_fields.get(3) == 1:  # Login Accepted
-            print("Login accepted.")
-        else:
-            print("Login rejected. Exiting.")
-            client_socket.close()
-            exit(1)
-
-        # Calculate message rate per session
-        message_rate = int(session_config.get('message_rate', default_message_rate))
-        duration = int(session_config.get('duration', default_duration))
-        message_interval = 1 / message_rate
-
-        # Send NewOrderSingle messages
-        start_time = time.time()
-        end_time = start_time + duration
-
-        while time.time() < end_time:
-            # Generate and send NewOrderSingle message
-            cl_ord_id = "ORD123"
-            symbol = "AAPL"
-            side = "BUY"
-            order_qty = 100
-            price = 150.25
-
-            encoded_message = encode_new_order_single(encoder, cl_ord_id, symbol, side, order_qty, price)
-            client_socket.sendall(encoded_message)
-
-            # Wait for the next message interval
-            time.sleep(message_interval)
-
-        # Close the TCP connection
-        client_socket.close()
-
-finally:
-    # Cleanup resources
-    encoder.close()
-    decoder.close()
-
-    # Shutdown the JVM
-    jpype.shutdownJVM()
-
-
-[default]
-message_rate = 10
-duration = 60
-
-[session1]
-ip = 127.0.0.1
-port = 8080
-token = YOUR_TOKEN_HERE
-
-[session2]
-ip = 192.168.0.1
-port = 8888
-token = ANOTHER_TOKEN_HERE
-
-
-
-root@qa2434:/home/pvellanki/loadgenerator/sbe/equities/sbe-tool/com/memx/us_equities/memo/sbe/v1_10# javac NewOrderSingleEncoder.java 
-NewOrderSingleEncoder.java:4: error: package org.agrona does not exist
 import org.agrona.MutableDirectBuffer;
-                 ^
-NewOrderSingleEncoder.java:17: error: cannot find symbol
+
+@SuppressWarnings("all")
+public final class ExecutionReport_RestatementEncoder
+{
+    public static final int BLOCK_LENGTH = 75;
+    public static final short TEMPLATE_ID = (short)17;
+    public static final short SCHEMA_ID = (short)1;
+    public static final int SCHEMA_VERSION = 266;
+    public static final String SEMANTIC_VERSION = "1.10";
+    public static final java.nio.ByteOrder BYTE_ORDER = java.nio.ByteOrder.BIG_ENDIAN;
+
+    private final ExecutionReport_RestatementEncoder parentMessage = this;
     private MutableDirectBuffer buffer;
-            ^
-  symbol:   class MutableDirectBuffer
-  location: class NewOrderSingleEncoder
-NewOrderSingleEncoder.java:47: error: cannot find symbol
+    private int initialOffset;
+    private int offset;
+    private int limit;
+
+    public int sbeBlockLength()
+    {
+        return BLOCK_LENGTH;
+    }
+
+    public short sbeTemplateId()
+    {
+        return TEMPLATE_ID;
+    }
+
+    public short sbeSchemaId()
+    {
+        return SCHEMA_ID;
+    }
+
+    public int sbeSchemaVersion()
+    {
+        return SCHEMA_VERSION;
+    }
+
+    public String sbeSemanticType()
+    {
+        return "";
+    }
+
     public MutableDirectBuffer buffer()
-           ^
-  symbol:   class MutableDirectBuffer
-  location: class NewOrderSingleEncoder
-NewOrderSingleEncoder.java:62: error: cannot find symbol
-    public NewOrderSingleEncoder wrap(final MutableDirectBuffer buffer, final int offset)
-                                            ^
-  symbol:   class MutableDirectBuffer
-  
-  
-  
-  
-  
-  
-  root@qa2434:/home/pvellanki/loadgenerator/sbe/equities/sbe-tool/com/memx/us_equities/memo/sbe/v1_10# javac -cp .:agrona-1.18.2.jar NewOrderSingleEncoder.java 
-NewOrderSingleEncoder.java:76: error: cannot find symbol
-        final MutableDirectBuffer buffer, final int offset, final MessageHeaderEncoder headerEncoder)
-                                                                  ^
-  symbol:   class MessageHeaderEncoder
-  location: class NewOrderSingleEncoder
-NewOrderSingleEncoder.java:123: error: cannot find symbol
-    public static String clOrdIDMetaAttribute(final MetaAttribute metaAttribute)
-                                                    ^
-  symbol:   class MetaAttribute
-  location: class NewOrderSingleEncoder
-NewOrderSingleEncoder.java:243: error: cannot find symbol
-    public static String mPIDMetaAttribute(final MetaAttribute metaAttribute)
-                                                 ^
-  symbol:   class MetaAttribute
-  location: class NewOrderSingleEncoder
-NewOrderSingleEncoder.java:372: error: cannot find symbol
-    public static String symbolMetaAttribute(final MetaAttribute metaAttribute)
+    {
+        return buffer;
+    }
 
+    public int initialOffset()
+    {
+        return initialOffset;
+    }
 
-
-3     public static String sendingTimeMetaAttribute(final MetaAttribute metaAttribute)
-    124     {
-    125         if (MetaAttribute.PRESENCE == metaAttribute)
-    126         {
-    127             return "required";
-    128         }
-    129 
-    130         return "";
-    
-    
-     symbol:   class MessageHeaderEncoder
-  location: class ExecutionReport_RestatementEncoder
-ExecutionReport_RestatementEncoder.java:123: error: cannot find symbol
-    public static String sendingTimeMetaAttribute(final MetaAttribute metaAttribute)
-
+    public int offset()
+    {
+        return offset;
+    }
