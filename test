@@ -1,6 +1,5 @@
 import struct
 
-
 def encode_message(
     cl_ord_id,
     mpid,
@@ -57,7 +56,7 @@ def encode_message(
     )
     message += symbol_sfx_bytes + b"\x00"
     message += struct.pack(
-        ">iihdiBBBdidiBBHHBHH",
+        ">iQHHdBBBdidiBBHHBHH",
         side,
         order_qty,
         ord_type,
@@ -86,24 +85,23 @@ def encode_message(
 
     return message
 
+def decode_message(message):
+    cl_ord_id_len = struct.unpack(">H", message[:2])[0]
+    cl_ord_id = message[2:2 + cl_ord_id_len - 1].decode("ascii")
+    message = message[2 + cl_ord_id_len:]
 
-def decode_message(message: bytes):
-    # Decode the header
-    block_length, template_id, schema_id, version = struct.unpack(">HBBB", message[:5])
+    mpid_len = struct.unpack(">H", message[:2])[0]
+    mpid = message[2:2 + mpid_len - 1].decode("ascii")
+    message = message[2 + mpid_len:]
 
-    # Decode the body
-    cl_ord_id_length = struct.unpack(">H", message[5:7])[0]
-    cl_ord_id_bytes = message[7:7 + cl_ord_id_length - 1]
-    cl_ord_id = cl_ord_id_bytes.decode("ascii")
-    mpid_length = struct.unpack(">H", message[7 + cl_ord_id_length : 9 + cl_ord_id_length])[0]
-    mpid_bytes = message[9 + cl_ord_id_length : 9 + cl_ord_id_length + mpid_length - 1]
-    mpid = mpid_bytes.decode("ascii")
-    symbol_length = struct.unpack(">H", message[9 + cl_ord_id_length + mpid_length : 11 + cl_ord_id_length + mpid_length])[0]
-    symbol_bytes = message[11 + cl_ord_id_length + mpid_length : 11 + cl_ord_id_length + mpid_length + symbol_length - 1]
-    symbol = symbol_bytes.decode("ascii")
-    symbol_sfx_length = struct.unpack(">H", message[11 + cl_ord_id_length + mpid_length + symbol_length : 13 + cl_ord_id_length + mpid_length + symbol_length])[0]
-    symbol_sfx_bytes = message[13 + cl_ord_id_length + mpid_length + symbol_length : 13 + cl_ord_id_length + mpid_length + symbol_length + symbol_sfx_length - 1]
-    symbol_sfx = symbol_sfx_bytes.decode("ascii")
+    symbol_len = struct.unpack(">H", message[:2])[0]
+    symbol = message[2:2 + symbol_len - 1].decode("ascii")
+    message = message[2 + symbol_len:]
+
+    symbol_sfx_len = struct.unpack(">H", message[:2])[0]
+    symbol_sfx = message[2:2 + symbol_sfx_len - 1].decode("ascii")
+    message = message[2 + symbol_sfx_len:]
+
     (
         side,
         order_qty,
@@ -129,21 +127,7 @@ def decode_message(message: bytes):
         self_trade_prevention,
         risk_group_id,
         lnk_id,
-    ) = struct.unpack(
-        ">iihdiBBBdidiBBHHBHH",
-        message[
-            13
-            + cl_ord_id_length
-            + mpid_length
-            + symbol_length
-            + symbol_sfx_length : 13
-            + cl_ord_id_length
-            + mpid_length
-            + symbol_length
-            + symbol_sfx_length
-            + 59,
-        ],
-    )
+    ) = struct.unpack(">iQHHdBBBdidiBBHHBHH", message)
 
     return (
         cl_ord_id,
@@ -175,72 +159,3 @@ def decode_message(message: bytes):
         risk_group_id,
         lnk_id,
     )
-
-
-# Example usage
-cl_ord_id = "CLORD1"
-mpid = "MPID1"
-symbol = "AAPL"
-symbol_sfx = "SFX1"
-side = 1
-order_qty = 100
-ord_type = 2
-price = 100.5
-time_in_force = 1
-order_capacity = 1
-cust_order_capacity = 1
-exec_inst = 3
-peg_offset_value = 0.5
-peg_price_type = 1
-expire_time = 1000
-min_qty = 10
-display_qty = 50
-display_method = 2
-reserve_replenish_timing = 1
-display_min_incr = 5
-locate_reqd = 0
-reprice_frequency = 1
-reprice_behavior = 2
-cancel_group_id = 10
-stp_group_id = 20
-self_trade_prevention = 1
-risk_group_id = 5
-lnk_id = 0
-
-try:
-    encoded_message = encode_message(
-        cl_ord_id,
-        mpid,
-        symbol,
-        symbol_sfx,
-        side,
-        order_qty,
-        ord_type,
-        price,
-        time_in_force,
-        order_capacity,
-        cust_order_capacity,
-        exec_inst,
-        peg_offset_value,
-        peg_price_type,
-        expire_time,
-        min_qty,
-        display_qty,
-        display_method,
-        reserve_replenish_timing,
-        display_min_incr,
-        locate_reqd,
-        reprice_frequency,
-        reprice_behavior,
-        cancel_group_id,
-        stp_group_id,
-        self_trade_prevention,
-        risk_group_id,
-        lnk_id,
-    )
-    print("Encoded Message:", encoded_message.hex())
-
-    decoded_message = decode_message(encoded_message)
-    print("Decoded Message:", decoded_message)
-except ValueError as e:
-    print("Error:", str(e))
