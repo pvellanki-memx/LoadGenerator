@@ -89,3 +89,6 @@ decoded_message = decode_message(encoded_message)
 # Print the encoded and decoded messages
 print("Encoded Message:", encoded_message)
 print("Decoded Message:", decoded_message)
+
+
+from sbe-encoder-decoder import encode_message,decode_message
