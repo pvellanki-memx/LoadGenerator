@@ -274,3 +274,15 @@ def decode_message(encoded_message):
     }
 
     return decoded_message
+
+
+
+
+# Decode the message header
+block_length, template_id, schema_id = struct.unpack(">HB", encoded_message[:4])
+
+# Decode the fields
+version = struct.unpack(">H", encoded_message[4:6])[0]
+
+# Rest of the code...
+
