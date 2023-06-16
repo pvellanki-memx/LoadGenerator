@@ -1,140 +1,238 @@
 import struct
 
-def encode_message(
-    block_length, template_id, schema_id, version,
-    cl_ord_id, mpid, symbol, symbol_sfx, side, order_qty, ord_type, price,
-    time_in_force, order_capacity, cust_order_capacity, exec_inst,
-    peg_offset_value, peg_price_type, expire_time, min_qty, display_qty,
-    display_method, reserve_replenish_timing, display_min_incr, locate_reqd,
-    reprice_frequency, reprice_behavior, cancel_group_id, stp_group_id,
-    self_trade_prevention, risk_group_id, lnk_id
-):
-    # Check input field types
-    if not isinstance(block_length, int) or not isinstance(template_id, int) or not isinstance(schema_id, int) or not isinstance(version, int):
-        raise ValueError("Invalid field type. Expected integer for block_length, template_id, schema_id, and version.")
-    if not isinstance(cl_ord_id, str) or not isinstance(mpid, str) or not isinstance(symbol, str) or not isinstance(symbol_sfx, str):
-        raise ValueError("Invalid field type. Expected string for cl_ord_id, mpid, symbol, and symbol_sfx.")
-    if not isinstance(side, int) or not isinstance(order_qty, int) or not isinstance(ord_type, int):
-        raise ValueError("Invalid field type. Expected integer for side, order_qty, and ord_type.")
-    if not isinstance(price, float) or not isinstance(time_in_force, int) or not isinstance(order_capacity, int) or not isinstance(cust_order_capacity, int):
-        raise ValueError("Invalid field type. Expected float for price. Expected integer for time_in_force, order_capacity, and cust_order_capacity.")
-    if not isinstance(exec_inst, int) or not isinstance(peg_offset_value, float) or not isinstance(peg_price_type, int):
-        raise ValueError("Invalid field type. Expected integer for exec_inst and peg_price_type. Expected float for peg_offset_value.")
-    if not isinstance(expire_time, float) or not isinstance(min_qty, int) or not isinstance(display_qty, int):
-        raise ValueError("Invalid field type. Expected float for expire_time. Expected integer for min_qty and display_qty.")
-    if not isinstance(display_method, int) or not isinstance(reserve_replenish_timing, int) or not isinstance(display_min_incr, int):
-        raise ValueError("Invalid field type. Expected integer for display_method, reserve_replenish_timing, and display_min_incr.")
-    if not isinstance(locate_reqd, int) or not isinstance(reprice_frequency, int) or not isinstance(reprice_behavior, int):
-        raise ValueError("Invalid field type. Expected integer for locate_reqd, reprice_frequency, and reprice_behavior.")
-    if not isinstance(cancel_group_id, int) or not isinstance(stp_group_id, int) or not isinstance(self_trade_prevention, int):
-        raise ValueError("Invalid field type. Expected integer for cancel_group_id, stp_group_id, and self_trade_prevention.")
-    if not isinstance(risk_group_id, int) or not isinstance(lnk_id, int):
-        raise ValueError("Invalid field type. Expected integer for risk_group_id and lnk_id.")
 
-    # Encode the fields
-    header = struct.pack(">HBBB", 0, block_length, template_id, schema_id, version)
+def encode_message(
+    cl_ord_id: str,
+    mpid: str,
+    symbol: str,
+    symbol_sfx: str,
+    side: int,
+    order_qty: int,
+    ord_type: int,
+    price: float,
+    time_in_force: int,
+    order_capacity: int,
+    cust_order_capacity: int,
+    exec_inst: int,
+    peg_offset_value: float,
+    peg_price_type: int,
+    expire_time: int,
+    min_qty: int,
+    display_qty: int,
+    display_method: int,
+    reserve_replenish_timing: int,
+    display_min_incr: int,
+    locate_reqd: int,
+    reprice_frequency: int,
+    reprice_behavior: int,
+    cancel_group_id: int,
+    stp_group_id: int,
+    self_trade_prevention: int,
+    risk_group_id: int,
+    lnk_id: int,
+) -> bytes:
+    # Encode the header
+    template_id = 1
+    schema_id = 2
+    version = 0
+    header = struct.pack(">HBBB", 0, template_id, schema_id, version)
+
+    # Encode the body
     cl_ord_id_bytes = cl_ord_id.encode("ascii") + b"\x00"
     mpid_bytes = mpid.encode("ascii") + b"\x00"
     symbol_bytes = symbol.encode("ascii") + b"\x00"
     symbol_sfx_bytes = symbol_sfx.encode("ascii") + b"\x00"
-    body = struct.pack(">H8s8s4s4siihdiBBBdidiBBHHBHH",
-                       len(cl_ord_id_bytes),
-                       cl_ord_id_bytes,
-                       mpid_bytes,
-                       symbol_bytes,
-                       symbol_sfx_bytes,
-                       side, order_qty, ord_type, price,
-                       time_in_force, order_capacity, cust_order_capacity, exec_inst,
-                       peg_offset_value, peg_price_type, expire_time, min_qty, display_qty,
-                       display_method, reserve_replenish_timing, display_min_incr, locate_reqd,
-                       reprice_frequency, reprice_behavior, cancel_group_id, stp_group_id,
-                       self_trade_prevention, risk_group_id, lnk_id)
+    body = struct.pack(
+        ">H8s8s4s4siihdiBBBdidiBBHHBHH",
+        len(cl_ord_id_bytes),
+        cl_ord_id_bytes,
+        mpid_bytes,
+        symbol_bytes,
+        symbol_sfx_bytes,
+        side,
+        order_qty,
+        ord_type,
+        price,
+        time_in_force,
+        order_capacity,
+        cust_order_capacity,
+        exec_inst,
+        peg_offset_value,
+        peg_price_type,
+        expire_time,
+        min_qty,
+        display_qty,
+        display_method,
+        reserve_replenish_timing,
+        display_min_incr,
+        locate_reqd,
+        reprice_frequency,
+        reprice_behavior,
+        cancel_group_id,
+        stp_group_id,
+        self_trade_prevention,
+        risk_group_id,
+        lnk_id,
+    )
 
     message = header + body
     return message
 
 
-def decode_message(message):
+def decode_message(message: bytes):
     # Decode the header
     block_length, template_id, schema_id, version = struct.unpack(">HBBB", message[:5])
 
     # Decode the body
     cl_ord_id_length = struct.unpack(">H", message[5:7])[0]
-    cl_ord_id_bytes = message[7:7+cl_ord_id_length-1]
+    cl_ord_id_bytes = message[7:7 + cl_ord_id_length - 1]
     cl_ord_id = cl_ord_id_bytes.decode("ascii")
-    mpid_length = struct.unpack(">H", message[7+cl_ord_id_length:9+cl_ord_id_length])[0]
-    mpid_bytes = message[9+cl_ord_id_length:9+cl_ord_id_length+mpid_length-1]
+    mpid_length = struct.unpack(">H", message[7 + cl_ord_id_length : 9 + cl_ord_id_length])[0]
+    mpid_bytes = message[9 + cl_ord_id_length : 9 + cl_ord_id_length + mpid_length - 1]
     mpid = mpid_bytes.decode("ascii")
-    symbol_length = struct.unpack(">H", message[9+cl_ord_id_length+mpid_length:11+cl_ord_id_length+mpid_length])[0]
-    symbol_bytes = message[11+cl_ord_id_length+mpid_length:11+cl_ord_id_length+mpid_length+symbol_length-1]
+    symbol_length = struct.unpack(">H", message[9 + cl_ord_id_length + mpid_length : 11 + cl_ord_id_length + mpid_length])[0]
+    symbol_bytes = message[11 + cl_ord_id_length + mpid_length : 11 + cl_ord_id_length + mpid_length + symbol_length - 1]
     symbol = symbol_bytes.decode("ascii")
-    symbol_sfx_length = struct.unpack(">H", message[11+cl_ord_id_length+mpid_length+symbol_length:13+cl_ord_id_length+mpid_length+symbol_length])[0]
-    symbol_sfx_bytes = message[13+cl_ord_id_length+mpid_length+symbol_length:13+cl_ord_id_length+mpid_length+symbol_length+symbol_sfx_length-1]
+    symbol_sfx_length = struct.unpack(">H", message[11 + cl_ord_id_length + mpid_length + symbol_length : 13 + cl_ord_id_length + mpid_length + symbol_length])[0]
+    symbol_sfx_bytes = message[13 + cl_ord_id_length + mpid_length + symbol_length : 13 + cl_ord_id_length + mpid_length + symbol_length + symbol_sfx_length - 1]
     symbol_sfx = symbol_sfx_bytes.decode("ascii")
-
     (
-        side, order_qty, ord_type, price,
-        time_in_force, order_capacity, cust_order_capacity, exec_inst,
-        peg_offset_value, peg_price_type, expire_time, min_qty, display_qty,
-        display_method, reserve_replenish_timing, display_min_incr, locate_reqd,
-        reprice_frequency, reprice_behavior, cancel_group_id, stp_group_id,
-        self_trade_prevention, risk_group_id, lnk_id
-    ) = struct.unpack(">iihdiBBBdidiBBHHBHH", message[13+cl_ord_id_length+mpid_length+symbol_length+symbol_sfx_length:])
+        side,
+        order_qty,
+        ord_type,
+        price,
+        time_in_force,
+        order_capacity,
+        cust_order_capacity,
+        exec_inst,
+        peg_offset_value,
+        peg_price_type,
+        expire_time,
+        min_qty,
+        display_qty,
+        display_method,
+        reserve_replenish_timing,
+        display_min_incr,
+        locate_reqd,
+        reprice_frequency,
+        reprice_behavior,
+        cancel_group_id,
+        stp_group_id,
+        self_trade_prevention,
+        risk_group_id,
+        lnk_id,
+    ) = struct.unpack(
+        ">iihdiBBBdidiBBHHBHH",
+        message[
+            13
+            + cl_ord_id_length
+            + mpid_length
+            + symbol_length
+            + symbol_sfx_length : 13
+            + cl_ord_id_length
+            + mpid_length
+            + symbol_length
+            + symbol_sfx_length
+            + 59,
+        ],
+    )
 
     return (
-        block_length, template_id, schema_id, version,
-        cl_ord_id, mpid, symbol, symbol_sfx, side, order_qty, ord_type, price,
-        time_in_force, order_capacity, cust_order_capacity, exec_inst,
-        peg_offset_value, peg_price_type, expire_time, min_qty, display_qty,
-        display_method, reserve_replenish_timing, display_min_incr, locate_reqd,
-        reprice_frequency, reprice_behavior, cancel_group_id, stp_group_id,
-        self_trade_prevention, risk_group_id, lnk_id
+        cl_ord_id,
+        mpid,
+        symbol,
+        symbol_sfx,
+        side,
+        order_qty,
+        ord_type,
+        price,
+        time_in_force,
+        order_capacity,
+        cust_order_capacity,
+        exec_inst,
+        peg_offset_value,
+        peg_price_type,
+        expire_time,
+        min_qty,
+        display_qty,
+        display_method,
+        reserve_replenish_timing,
+        display_min_incr,
+        locate_reqd,
+        reprice_frequency,
+        reprice_behavior,
+        cancel_group_id,
+        stp_group_id,
+        self_trade_prevention,
+        risk_group_id,
+        lnk_id,
     )
 
 
-
-
-
-
-
-
-Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/sbe/sbe-load-generator.py", line 88, in <module>
-    encoded_message = encode_message(
-  File "/home/pvellanki/loadgenerator/sbe/sbe_encoder_decoder.py", line 22, in encode_message
-    raise ValueError("Invalid field type. Expected integer for exec_inst and peg_price_type. Expected float for peg_offset_value.")
-ValueError: Invalid field type. Expected integer for exec_inst and peg_price_type. Expected float for peg_offset_value.
-
-
-
-
-
-# NewOrderSingle fields (example values)
-cl_ord_id = "ORDER001"
-mpid = "MEMX"
+# Example usage
+cl_ord_id = "CLORD1"
+mpid = "MPID1"
 symbol = "AAPL"
-symbol_sfx = ""
+symbol_sfx = "SFX1"
 side = 1
 order_qty = 100
 ord_type = 2
-price = 150.0
-time_in_force = 0
+price = 100.5
+time_in_force = 1
 order_capacity = 1
-cust_order_capacity = 2
-exec_inst = "A "
-peg_offset_value = 0.0
-peg_price_type = 0
-expire_time = 0
-min_qty = 0
-display_qty = 0
-display_method = 0
-reserve_replenish_timing = 0
-display_min_incr = 0
-locate_reqd = "N"
-reprice_frequency = 0
-reprice_behavior = 0
-cancel_group_id = 0
-stp_group_id = 0
-self_trade_prevention = 0
-risk_group_id = 0
-lnk_id = "LINK"
+cust_order_capacity = 1
+exec_inst = 3
+peg_offset_value = 0.5
+peg_price_type = 1
+expire_time = 1000
+min_qty = 10
+display_qty = 50
+display_method = 2
+reserve_replenish_timing = 1
+display_min_incr = 5
+locate_reqd = 0
+reprice_frequency = 1
+reprice_behavior = 2
+cancel_group_id = 10
+stp_group_id = 20
+self_trade_prevention = 1
+risk_group_id = 5
+lnk_id = 0
+
+try:
+    encoded_message = encode_message(
+        cl_ord_id,
+        mpid,
+        symbol,
+        symbol_sfx,
+        side,
+        order_qty,
+        ord_type,
+        price,
+        time_in_force,
+        order_capacity,
+        cust_order_capacity,
+        exec_inst,
+        peg_offset_value,
+        peg_price_type,
+        expire_time,
+        min_qty,
+        display_qty,
+        display_method,
+        reserve_replenish_timing,
+        display_min_incr,
+        locate_reqd,
+        reprice_frequency,
+        reprice_behavior,
+        cancel_group_id,
+        stp_group_id,
+        self_trade_prevention,
+        risk_group_id,
+        lnk_id,
+    )
+    print("Encoded Message:", encoded_message.hex())
+
+    decoded_message = decode_message(encoded_message)
+    print("Decoded Message:", decoded_message)
+except ValueError as e:
+    print("Error:", str(e))
