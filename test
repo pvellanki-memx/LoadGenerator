@@ -111,3 +111,11 @@ encoded_message = encode_message(
 
 decoded_fields = decode_message(encoded_message)
 print(decoded_fields)
+
+
+Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/sbe/options/sbe-tool.py", line 112, in <module>
+    decoded_fields = decode_message(encoded_message)
+  File "/home/pvellanki/loadgenerator/sbe/options/sbe-tool.py", line 48, in decode_message
+    cust_order_capacity = encoded_message[76:77].decode().strip('\x00')
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xe0 in position 0: unexpected end of data
