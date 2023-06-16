@@ -36,40 +36,68 @@ def encode_message(cl_ord_id, mpid, symbol, symbol_sfx, side, order_qty, ord_typ
 
 def decode_message(encoded_message):
     cl_ord_id = encoded_message[0:20].decode().strip('\x00')
-    mpid = encoded_message[20:30].decode().strip('\x00')
-    symbol = encoded_message[30:40].decode().strip('\x00')
-    symbol_sfx = encoded_message[40:60].decode().strip('\x00')
-    side = encoded_message[60:61].decode().strip('\x00')
-    order_qty = struct.unpack('I', encoded_message[61:65])[0]
-    ord_type = encoded_message[65:66].decode().strip('\x00')
-    price = struct.unpack('d', encoded_message[66:74])[0]
-    time_in_force = encoded_message[74:75].decode().strip('\x00')
-    order_capacity = encoded_message[75:76].decode().strip('\x00')
-    cust_order_capacity = encoded_message[76:77].decode().strip('\x00')
-    exec_inst = encoded_message[77:78].decode().strip('\x00')
-    peg_offset_value = struct.unpack('d', encoded_message[78:86])[0]
-    peg_price_type = encoded_message[86:87].decode().strip('\x00')
-    expire_time = struct.unpack('Q', encoded_message[87:95])[0]
-    min_qty = struct.unpack('I', encoded_message[95:99])[0]
-    display_qty = struct.unpack('I', encoded_message[99:103])[0]
-    display_method = encoded_message[103:104].decode().strip('\x00')
-    reserve_replenish_timing = encoded_message[104:105].decode().strip('\x00')
-    display_min_incr = struct.unpack('I', encoded_message[105:109])[0]
-    locate_reqd = encoded_message[109:110].decode().strip('\x00')
-    reprice_frequency = encoded_message[110:111].decode().strip('\x00')
-    reprice_behavior = encoded_message[111:112].decode().strip('\x00')
-    cancel_group_id = struct.unpack('H', encoded_message[112:114])[0]
-    stp_group_id = struct.unpack('H', encoded_message[114:116])[0]
-    self_trade_prevention = encoded_message[116:117].decode().strip('\x00')
-    risk_group_id = struct.unpack('H', encoded_message[117:119])[0]
-    lnk_id = encoded_message[119:139].decode().strip('\x00')
-    return (
-        cl_ord_id, mpid, symbol, symbol_sfx, side, order_qty, ord_type, price, time_in_force,
-        order_capacity, cust_order_capacity, exec_inst, peg_offset_value, peg_price_type,
-        expire_time, min_qty, display_qty, display_method, reserve_replenish_timing, display_min_incr,
-        locate_reqd, reprice_frequency, reprice_behavior, cancel_group_id, stp_group_id,
-        self_trade_prevention, risk_group_id, lnk_id
-    )
+    mpid = encoded_message[20:28].decode().strip('\x00')
+    symbol = encoded_message[28:44].decode().strip('\x00')
+    symbol_sfx = encoded_message[44:52].decode().strip('\x00')
+    side = encoded_message[52:56].decode().strip('\x00')
+    order_qty = struct.unpack('!I', encoded_message[56:60])[0]
+    ord_type = encoded_message[60:64].decode().strip('\x00')
+    price = struct.unpack('!d', encoded_message[64:72])[0]
+    time_in_force = encoded_message[72:76].decode().strip('\x00')
+
+    try:
+        cust_order_capacity = encoded_message[76:77].decode().strip('\x00')
+    except UnicodeDecodeError:
+        cust_order_capacity = ""
+
+    exec_inst = encoded_message[77:81].decode().strip('\x00')
+    peg_offset_value = struct.unpack('!d', encoded_message[81:89])[0]
+    peg_price_type = encoded_message[89:93].decode().strip('\x00')
+    expire_time = struct.unpack('!Q', encoded_message[93:101])[0]
+    min_qty = struct.unpack('!I', encoded_message[101:105])[0]
+    display_qty = struct.unpack('!I', encoded_message[105:109])[0]
+    display_method = encoded_message[109:117].decode().strip('\x00')
+    reserve_replenish_timing = encoded_message[117:125].decode().strip('\x00')
+    display_min_incr = struct.unpack('!I', encoded_message[125:129])[0]
+    locate_reqd = encoded_message[129:130].decode().strip('\x00')
+    reprice_frequency = encoded_message[130:138].decode().strip('\x00')
+    reprice_behavior = encoded_message[138:146].decode().strip('\x00')
+    cancel_group_id = struct.unpack('!H', encoded_message[146:148])[0]
+    stp_group_id = struct.unpack('!H', encoded_message[148:150])[0]
+    self_trade_prevention = encoded_message[150:154].decode().strip('\x00')
+    risk_group_id = struct.unpack('!H', encoded_message[154:156])[0]
+    lnk_id = encoded_message[156:172].decode().strip('\x00')
+
+    return {
+        'cl_ord_id': cl_ord_id,
+        'mpid': mpid,
+        'symbol': symbol,
+        'symbol_sfx': symbol_sfx,
+        'side': side,
+        'order_qty': order_qty,
+        'ord_type': ord_type,
+        'price': price,
+        'time_in_force': time_in_force,
+        'cust_order_capacity': cust_order_capacity,
+        'exec_inst': exec_inst,
+        'peg_offset_value': peg_offset_value,
+        'peg_price_type': peg_price_type,
+        'expire_time': expire_time,
+        'min_qty': min_qty,
+        'display_qty': display_qty,
+        'display_method': display_method,
+        'reserve_replenish_timing': reserve_replenish_timing,
+        'display_min_incr': display_min_incr,
+        'locate_reqd': locate_reqd,
+        'reprice_frequency': reprice_frequency,
+        'reprice_behavior': reprice_behavior,
+        'cancel_group_id': cancel_group_id,
+        'stp_group_id': stp_group_id,
+        'self_trade_prevention': self_trade_prevention,
+        'risk_group_id': risk_group_id,
+        'lnk_id': lnk_id
+    }
+
 
 
 cl_ord_id = "ORDER001"
@@ -113,9 +141,5 @@ decoded_fields = decode_message(encoded_message)
 print(decoded_fields)
 
 
-Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/sbe/options/sbe-tool.py", line 112, in <module>
-    decoded_fields = decode_message(encoded_message)
-  File "/home/pvellanki/loadgenerator/sbe/options/sbe-tool.py", line 48, in decode_message
-    cust_order_capacity = encoded_message[76:77].decode().strip('\x00')
+
 UnicodeDecodeError: 'utf-8' codec can't decode byte 0xe0 in position 0: unexpected end of data
