@@ -90,3 +90,51 @@ def decode_message(message):
         reprice_frequency, reprice_behavior, cancel_group_id, stp_group_id,
         self_trade_prevention, risk_group_id, lnk_id
     )
+
+
+
+
+
+
+
+
+Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/sbe/sbe-load-generator.py", line 88, in <module>
+    encoded_message = encode_message(
+  File "/home/pvellanki/loadgenerator/sbe/sbe_encoder_decoder.py", line 22, in encode_message
+    raise ValueError("Invalid field type. Expected integer for exec_inst and peg_price_type. Expected float for peg_offset_value.")
+ValueError: Invalid field type. Expected integer for exec_inst and peg_price_type. Expected float for peg_offset_value.
+
+
+
+
+
+# NewOrderSingle fields (example values)
+cl_ord_id = "ORDER001"
+mpid = "MEMX"
+symbol = "AAPL"
+symbol_sfx = ""
+side = 1
+order_qty = 100
+ord_type = 2
+price = 150.0
+time_in_force = 0
+order_capacity = 1
+cust_order_capacity = 2
+exec_inst = "A "
+peg_offset_value = 0.0
+peg_price_type = 0
+expire_time = 0
+min_qty = 0
+display_qty = 0
+display_method = 0
+reserve_replenish_timing = 0
+display_min_incr = 0
+locate_reqd = "N"
+reprice_frequency = 0
+reprice_behavior = 0
+cancel_group_id = 0
+stp_group_id = 0
+self_trade_prevention = 0
+risk_group_id = 0
+lnk_id = "LINK"
