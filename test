@@ -78,3 +78,13 @@ def decode_message(encoded_message):
     }
 
     return decoded_message
+
+
+
+
+Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/sbe/sbe_load_generator.py", line 35, in <module>
+    encoded_message = encode_message(
+  File "/home/pvellanki/loadgenerator/sbe/sbe_encoder_decoder.py", line 17, in encode_message
+    new_order_single_packed = NEW_ORDER_SINGLE.pack(cl_ord_id.encode(), mpid.encode(), symbol.encode(),
+struct.error: pack expected 15 items for packing (got 28)
