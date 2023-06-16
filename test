@@ -1,139 +1,72 @@
-import xml.etree.ElementTree as ET
-import struct
+SBE Data Types					
+					
+All encoding and decoding for SBE is centered around a set of basic primitive types.					
+					
+For more information on primitive type encoding, see the SBE specification.					
+					
+Type	Length (bytes)	Description	Value Range	Null Value	Null Value (Hex)
+Type	Length (bytes)	Description	Value Range	Null Value	Null Value (Hex)
+CHAR	1	ASCII Character	32 to 126 (printable ASCII)	0	0x00
+INT8	1	Signed Integer	-127 to 127	-128 	0x80
+INT16	2	Signed Integer	-32767 to 32767	-32768	0x8000
+INT32	4	Signed Integer	-2^31 + 1 to 2^31 - 1	-2147483648	0x80000000
+INT64	8	Signed Integer	-2^63 + 1 to 2^63 - 1	-9.22337E+18	0x8000000000000000
+UINT8	1	Unsigned Integer	0 to 254	255	0xFF
+UINT16	2	Unsigned Integer	0 to 65534	65535	0xFFFF
+UINT32	4	Unsigned Integer	0 to 2^32-2	2^32 - 1	0xFFFFFFFF
+UINT64	8	Unsigned Integer	0 to 2^64 - 2	2^64 - 1	0xFFFFFFFFFFFFFFFF
 
 
-def load_schema(schema_file):
-    tree = ET.parse(schema_file)
-    root = tree.getroot()
-    messages = {}
-
-    # Find the XML namespace
-    namespace = root.tag.split('}')[0] + '}'
-
-    for message_elem in root.findall(f'{namespace}message'):
-        message_id = int(message_elem.get('id'))
-        message_name = message_elem.get('name')
-        fields = {}
-
-        for field_elem in message_elem.findall(f'{namespace}field'):
-            field_id = int(field_elem.get('id'))
-            field_name = field_elem.get('name')
-            field_length = int(field_elem.get('length'))
-            fields[field_id] = (field_name, field_length)
-
-        messages[message_name] = {'id': message_id, 'fields': fields}
-
-    return messages
 
 
-def encode_field(field_name, field_value, field_length):
-    if field_name in ['NewOrderSingleClOrdID', 'NewOrderSingleMPID', 'NewOrderSingleSymbol', 'NewOrderSingleSymbolSfx']:
-        return struct.pack(f'{field_length}s', field_value.encode('utf-8'))
-    elif field_name.endswith('Type'):
-        return struct.pack('B', field_value)
-    elif field_name.startswith('uint'):
-        return struct.pack('I', field_value)
-    elif field_name.startswith('char'):
-        return struct.pack('s', field_value.encode('utf-8'))
-    else:
-        raise ValueError(f"Unknown field type for field: {field_name}")
+SBE Header				
+				
+SBE includes a header for each message. The SBE header is followed by the SBE body for the message.				
+				
+The SBE message header contains the fields that allows the decoder to identify what codec should be used for a message.				
+				
+blockLength: The length of the message. Note: this does not include the header length.				
+templateID: The identifier for the template type of the message that is to follow.				
+schemaID: The identifier for the schema the message belongs to.				
+version: The version of the schema allowing for extension. MEMX packs two pieces of information into the (UINT16) version field, a major version and a minor update version. So for example a version of 258 = 0x0102 indicates major version 1, minor update 2.				
+				
+The MEMO SBE header appears on the wire as:				
+				
+Field	Offset	Length	Type	Description
+BlockLength	0	2	UINT16	The number of bytes in the message body (does not include the header bytes). Note that MEMO messages do not use repeating groups or variable-length fields.
+TemplateID	2	1	UINT8	Identifier of the message template (ie. the message type)
+SchemaID	3	1	UINT8	The identifier of a message schema. SchemaID=1 for MEMO version 1
+Version	4	2	UINT16	The version number of the message schema that was used to encode a message. MEMX packs two pieces of information into the UNIT16 version field, a major version and a minor update version. So for example a version of 258 = 0x0102 indicates major version 1, minor update 2.
 
 
-def encode_message(schema, template_name, field_values):
-    if template_name not in schema:
-        raise ValueError(f"Template '{template_name}' not found in the schema.")
 
-    template_id = schema[template_name]['id']
-    encoded_message = bytearray()
-
-    # SBE header
-    encoded_message += struct.pack('>H', 12 + 2 * len(field_values))  # BlockLength
-    encoded_message += struct.pack('B', 1)  # TemplateID
-    encoded_message += struct.pack('B', 1)  # SchemaID
-    encoded_message += struct.pack('>H', 1)  # Version
-
-    # Message ID
-    encoded_message += struct.pack('>H', template_id)
-
-    for field_id, field_value in field_values.items():
-        field_info = schema[template_name]['fields'].get(field_id)
-        if field_info is None:
-            raise ValueError(f"Unknown field ID: {field_id} for template {template_name}")
-
-        field_name, field_length = field_info
-        encoded_field = encode_field(field_name, field_value, field_length)
-
-        # Field ID
-        encoded_message += struct.pack('>H', field_id)
-        # Field Length
-        encoded_message += struct.pack('>H', field_length)
-        # Field Value
-        encoded_message += encoded_field
-
-    return encoded_message
-
-
-def decode_field(field_name, encoded_value):
-    if field_name in ['NewOrderSingleClOrdID', 'NewOrderSingleMPID', 'NewOrderSingleSymbol', 'NewOrderSingleSymbolSfx']:
-        return encoded_value.decode('utf-8')
-    elif field_name.endswith('Type'):
-        return struct.unpack('B', encoded_value)[0]
-    elif field_name.startswith('uint'):
-        return struct.unpack('I', encoded_value)[0]
-    elif field_name.startswith('char'):
-        return struct.unpack('s', encoded_value)[0].decode('utf-8')
-    else:
-        raise ValueError(f"Unknown field type for field: {field_name}")
-
-
-def decode_message(schema, encoded_message):
-    block_length = struct.unpack('>H', encoded_message[:2])[0]
-    template_id = struct.unpack('B', encoded_message[5:6])[0]
-    template_name = next((key for key, value in schema.items() if value['id'] == template_id), None)
-    fields = {}
-
-    if template_name is None:
-        raise ValueError(f"Unknown template ID: {template_id}")
-
-    encoded_message = encoded_message[12:]
-
-    while len(encoded_message) > 0:
-        field_id = struct.unpack('>H', encoded_message[:2])[0]
-        field_length = struct.unpack('>H', encoded_message[2:4])[0]
-        encoded_value = encoded_message[4:4+field_length]
-        field_info = schema[template_name]['fields'].get(field_id)
-        if field_info is None:
-            raise ValueError(f"Unknown field ID: {field_id} for template {template_name}")
-
-        field_name, _ = field_info
-        field_value = decode_field(field_name, encoded_value)
-        fields[field_id] = field_value
-
-        encoded_message = encoded_message[4+field_length:]
-
-    return template_name, fields
-
-
-schema = load_schema('sbe-schema-equities.xml')
-
-# Encode a message
-message_name = 'NewOrderSingle'
-field_values = {
-    1: 'ORDER123',
-    3: 'AAPL',
-    7: 2,  # OrdType: Limit
-    9: 0,  # TimeInForce: Day
-    10: 3,  # OrderCapacity: Agency
-    11: 2,  # CustOrderCapacity: MemberTradingOnTheirOwnAccount
-    12: 6,  # ExecInst: ParticipateDoNotInitiate
-    13: 100,  # OrderQty
-    14: 1.5,  # Price
-    5: 1  # Side: Buy
-}
-encoded_message = encode_message(schema, message_name, field_values)
-
-# Decode a message
-decoded_message = decode_message(schema, encoded_message)
-
-print(f"Encoded Message: {encoded_message}")
-print(f"Decoded Message: {decoded_message}")
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description	
+SBE Header	0	6	N/A	N/A	Y	SBE Header with blockLength = 96 (0x60), template = 1 	
+ClOrdID	6	16	CHAR	11	Y	Unique identifier of the order as assigned by the client.	
+MPID	22	4	CHAR	21007	N	The MPID associated with the new order, if it is not supplied, the MPID assigned as the default MPID for the Port/Account is associated with the new order.	
+Symbol	26	6	CHAR	55	Y	CMS symbol tradable instrument.	
+SymbolSfx	32	6	CHAR	65	N	CMS symbol suffix. Additional information about the security (e.g. preferred, warrants, etc.).	
+Side	38	1	SideType	54	Y	Side of order.	
+OrderQty	39	4	UINT32	38	Y	Quantity ordered. This represents the number of shares. Number of shares may not exceed 1MM. The notional value of an order may not exceed $30MM.	
+OrdType	43	1	OrdType	40	Y	Type of the order.	
+Price	44	8	Price	44	N	Price per unit of quantity (e.g. per share).	
+TimeInForce	52	1	TimeInForceType	59	Y	Defines the time during which an order is eligible for execution.	
+OrderCapacity	53	1	OrderCapacityType	528	Y	Designates the capacity of the firm placing the order.	
+CustOrderCapacity	54	1	CustOrderCapacityType	582	Y	Capacity of the customer placing the order.	
+ExecInst	55	2	ExecInstType	18	Y	Instructions for order handling on exchange.	
+PegOffsetValue	57	8	Price	211	N	Amount(signed) added to the peg for a pegged order.	
+PegPriceType	65	1	PegType	1094	N	Defines the type of peg.	
+ExpireTime	66	8	UTCTimestampNanos	126	N	The expiration time of a GoodForTime TimeInForce order. Expiration time must be at least a 1 millisecond in the future. If omitted, expiration time will be set to the end of the MEMX post-market trading session. Specified in UTC timestamp since unix epoch in nanoseconds.	
+MinQty	74	4	UINT32	110	N	Minimum quantity of an order to be executed.	
+DisplayQty	78	4	UINT32	1138	N	Quantity of the order to be displayed.	
+DisplayMethod	82	1	DispMethodType	1084	N	Defines the replenishment size behavior for a reserve order. This should be null for a fully displayed order.	
+ReserveReplenishTiming	83	1	ReserveReplenishTimingType	21006	N	Defines the replenishment timing behavior for a reserve order.	
+DisplayMinIncr	84	4	UINT32	1087	N	Defines the minimum increment to be used when calculating a random refresh of DisplayQty.	
+LocateReqd	88	1	CHAR	114	N	Required on Short Sell and Short Sell Exempt orders only. Only acceptable value is 'N' which indicates the member has secured the required locate.	
+RepriceFrequency	89	1	RepriceFrequencyType	21020	N	Defines the frequency of a reprice.  If this tag is not sent then the order will not be repriced.	
+RepriceBehavior	90	1	RepriceBehaviorType	21021	N	Defines the reprice behavior when market is locked or crossed.	
+CancelGroupID	91	2	UINT16	21000	N	Unique identifier of custom cancel group.	
+StpGroupID	93	2	StpGroupIDType	2362	N	Unique identifier of custom self-trade prevention group.	
+SelfTradePrevention	95	1	SelfTradePreventionType	21001	N	Defines the desired behavior in the event of a wash. The UINT8 Null (0xFF) value disables self trade prevention.	
+RiskGroupID	96	2	UINT16	21005	N	Unique identifier of a custom risk control set to be applied to this order. The UINT16 Null value (0xFFFF) disables custom risk controls.	
+LnkID	98	4	CHAR	583	N	Permits clients to assign a link identifier used for their own order tracking.	
