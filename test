@@ -4,7 +4,7 @@ import struct
 MESSAGE_HEADER = struct.Struct("<HHQ")
 
 # NewOrderSingle definition
-NEW_ORDER_SINGLE = struct.Struct("<6s6s6sii6s6s6sfiifiiii")
+NEW_ORDER_SINGLE = struct.Struct("<6s6s6s6sii6s6sfiifiiii")
 
 # Function to encode the NewOrderSingle message
 def encode_message(cl_ord_id, mpid, symbol, symbol_sfx, side, order_qty, ord_type, price,
@@ -123,11 +123,3 @@ print("Encoded message:")
 print(encoded_message.hex())
 print("\nDecoded message:")
 print(decoded_message)
-
-
-Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/sbe/ptest.py", line 113, in <module>
-    encoded_message = encode_message(cl_ord_id, mpid, symbol, symbol_sfx, side, order_qty, ord_type, price,
-  File "/home/pvellanki/loadgenerator/sbe/ptest.py", line 17, in encode_message
-    new_order_single_packed = NEW_ORDER_SINGLE.pack(cl_ord_id.encode(), mpid.encode(), symbol.encode(),
-struct.error: pack expected 16 items for packing (got 28)
