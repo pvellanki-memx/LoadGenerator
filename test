@@ -1,8 +1,8 @@
+# Import required modules
 import struct
 
-# Constants for field lengths
-BLOCK_LENGTH_LENGTH = 2
-TEMPLATE_ID_LENGTH = 1
+# Define field lengths
+BLOCK_LENGTH = 6
 CL_ORD_ID_LENGTH = 16
 MPID_LENGTH = 4
 SYMBOL_LENGTH = 6
@@ -32,133 +32,60 @@ SELF_TRADE_PREVENTION_LENGTH = 1
 RISK_GROUP_ID_LENGTH = 2
 LNK_ID_LENGTH = 4
 
-def encode_message(cl_ord_id, mpid, symbol, symbol_sfx, side, order_qty, ord_type, price, time_in_force, order_capacity,
-                   cust_order_capacity, exec_inst, peg_offset_value, peg_price_type, expire_time, min_qty, display_qty,
-                   display_method, reserve_replenish_timing, display_min_incr, locate_reqd, reprice_frequency,
-                   reprice_behavior, cancel_group_id, stp_group_id, self_trade_prevention, risk_group_id, lnk_id):
-    # Calculate the total message length
-    message_length = BLOCK_LENGTH_LENGTH + TEMPLATE_ID_LENGTH + CL_ORD_ID_LENGTH + MPID_LENGTH + SYMBOL_LENGTH + SYMBOL_SFX_LENGTH + \
-                     SIDE_LENGTH + ORDER_QTY_LENGTH + ORD_TYPE_LENGTH + PRICE_LENGTH + TIME_IN_FORCE_LENGTH + \
-                     ORDER_CAPACITY_LENGTH + CUST_ORDER_CAPACITY_LENGTH + EXEC_INST_LENGTH + PEG_OFFSET_VALUE_LENGTH + \
-                     PEG_PRICE_TYPE_LENGTH + EXPIRE_TIME_LENGTH + MIN_QTY_LENGTH + DISPLAY_QTY_LENGTH + \
-                     DISPLAY_METHOD_LENGTH + RESERVE_REPLENISH_TIMING_LENGTH + DISPLAY_MIN_INCR_LENGTH + \
-                     LOCATE_REQD_LENGTH + REPRICE_FREQUENCY_LENGTH + REPRICE_BEHAVIOR_LENGTH + \
-                     CANCEL_GROUP_ID_LENGTH + STP_GROUP_ID_LENGTH + SELF_TRADE_PREVENTION_LENGTH + \
-                     RISK_GROUP_ID_LENGTH + LNK_ID_LENGTH
+# SBE Header fields
+block_length = 96
+template_id = 1
+schema_id = 1
+major_version = 1
+minor_version = 10
 
-    # Encode the message header
-    header = struct.pack(">HBB", message_length, 1, 1)
+# Convert major and minor versions to hexadecimal
+version = (major_version << 8) | minor_version
 
-    # Encode the fields
-    cl_ord_id_bytes = cl_ord_id.encode("ascii").ljust(CL_ORD_ID_LENGTH, b'\x00')
-    mpid_bytes = mpid.encode("ascii").ljust(MPID_LENGTH, b'\x00')
-    symbol_bytes = symbol.encode("ascii").ljust(SYMBOL_LENGTH, b'\x00')
-    symbol_sfx_bytes = symbol_sfx.encode("ascii").ljust(SYMBOL_SFX_LENGTH, b'\x00')
-    side_bytes = struct.pack("B", side)
-    order_qty_bytes = struct.pack(">I", order_qty)
-    ord_type_bytes = struct.pack("B", ord_type)
-    price_bytes = struct.pack(">d", price)
-    time_in_force_bytes = struct.pack("B", time_in_force)
-    order_capacity_bytes = struct.pack("B", order_capacity)
-    cust_order_capacity_bytes = struct.pack("B", cust_order_capacity)
-    exec_inst_bytes = exec_inst.encode("ascii").ljust(EXEC_INST_LENGTH, b'\x00')
-    peg_offset_value_bytes = struct.pack(">d", peg_offset_value)
-    peg_price_type_bytes = struct.pack("B", peg_price_type)
-    expire_time_bytes = struct.pack(">Q", expire_time)
-    min_qty_bytes = struct.pack(">I", min_qty)
-    display_qty_bytes = struct.pack(">I", display_qty)
-    display_method_bytes = struct.pack("B", display_method)
-    reserve_replenish_timing_bytes = struct.pack("B", reserve_replenish_timing)
-    display_min_incr_bytes = struct.pack(">I", display_min_incr)
-    locate_reqd_bytes = locate_reqd.encode("ascii")
-    reprice_frequency_bytes = struct.pack("B", reprice_frequency)
-    reprice_behavior_bytes = struct.pack("B", reprice_behavior)
-    cancel_group_id_bytes = struct.pack(">H", cancel_group_id)
-    stp_group_id_bytes = struct.pack(">H", stp_group_id)
-    self_trade_prevention_bytes = struct.pack("B", self_trade_prevention)
-    risk_group_id_bytes = struct.pack(">H", risk_group_id)
-    lnk_id_bytes = lnk_id.encode("ascii").ljust(LNK_ID_LENGTH, b'\x00')
+# NewOrderSingle fields (example values)
+cl_ord_id = "ORDER001"
+mpid = "MEMX"
+symbol = "AAPL"
+symbol_sfx = ""
+side = 1
+order_qty = 100
+ord_type = 2
+price = 150.0
+time_in_force = 0
+order_capacity = 1
+cust_order_capacity = 2
+exec_inst = "A "
+peg_offset_value = 0.0
+peg_price_type = 0
+expire_time = 0
+min_qty = 0
+display_qty = 0
+display_method = 0
+reserve_replenish_timing = 0
+display_min_incr = 0
+locate_reqd = "N"
+reprice_frequency = 0
+reprice_behavior = 0
+cancel_group_id = 0
+stp_group_id = 0
+self_trade_prevention = 0
+risk_group_id = 0
+lnk_id = "LINK"
 
-    # Concatenate the encoded fields
-    encoded_message = header + cl_ord_id_bytes + mpid_bytes + symbol_bytes + symbol_sfx_bytes + side_bytes + \
-                      order_qty_bytes + ord_type_bytes + price_bytes + time_in_force_bytes + \
-                      order_capacity_bytes + cust_order_capacity_bytes + exec_inst_bytes + \
-                      peg_offset_value_bytes + peg_price_type_bytes + expire_time_bytes + min_qty_bytes + \
-                      display_qty_bytes + display_method_bytes + reserve_replenish_timing_bytes + \
-                      display_min_incr_bytes + locate_reqd_bytes + reprice_frequency_bytes + reprice_behavior_bytes + \
-                      cancel_group_id_bytes + stp_group_id_bytes + self_trade_prevention_bytes + \
-                      risk_group_id_bytes + lnk_id_bytes
+# Encode the message
+encoded_message = encode_message(
+    block_length, template_id, schema_id, version,
+    cl_ord_id, mpid, symbol, symbol_sfx, side, order_qty, ord_type, price,
+    time_in_force, order_capacity, cust_order_capacity, exec_inst,
+    peg_offset_value, peg_price_type, expire_time, min_qty, display_qty,
+    display_method, reserve_replenish_timing, display_min_incr, locate_reqd,
+    reprice_frequency, reprice_behavior, cancel_group_id, stp_group_id,
+    self_trade_prevention, risk_group_id, lnk_id
+)
 
-    return encoded_message
+# Decode the message
+decoded_message = decode_message(encoded_message)
 
-
-def decode_message(encoded_message):
-    # Decode the message header
-    block_length, template_id, schema_id, version = struct.unpack(">HBxHB", encoded_message[:6])
-
-    # Decode the fields
-    cl_ord_id = encoded_message[6:22].decode("ascii").rstrip('\x00')
-    mpid = encoded_message[22:26].decode("ascii").rstrip('\x00')
-    symbol = encoded_message[26:32].decode("ascii").rstrip('\x00')
-    symbol_sfx = encoded_message[32:38].decode("ascii").rstrip('\x00')
-    side = struct.unpack("B", encoded_message[38:39])[0]
-    order_qty = struct.unpack(">I", encoded_message[39:43])[0]
-    ord_type = struct.unpack("B", encoded_message[43:44])[0]
-    price = struct.unpack(">d", encoded_message[44:52])[0]
-    time_in_force = struct.unpack("B", encoded_message[52:53])[0]
-    order_capacity = struct.unpack("B", encoded_message[53:54])[0]
-    cust_order_capacity = struct.unpack("B", encoded_message[54:55])[0]
-    exec_inst = encoded_message[55:57].decode("ascii").rstrip('\x00')
-    peg_offset_value = struct.unpack(">d", encoded_message[57:65])[0]
-    peg_price_type = struct.unpack("B", encoded_message[65:66])[0]
-    expire_time = struct.unpack(">Q", encoded_message[66:74])[0]
-    min_qty = struct.unpack(">I", encoded_message[74:78])[0]
-    display_qty = struct.unpack(">I", encoded_message[78:82])[0]
-    display_method = struct.unpack("B", encoded_message[82:83])[0]
-    reserve_replenish_timing = struct.unpack("B", encoded_message[83:84])[0]
-    display_min_incr = struct.unpack(">I", encoded_message[84:88])[0]
-    locate_reqd = encoded_message[88:89].decode("ascii")
-    reprice_frequency = struct.unpack("B", encoded_message[89:90])[0]
-    reprice_behavior = struct.unpack("B", encoded_message[90:91])[0]
-    cancel_group_id = struct.unpack(">H", encoded_message[91:93])[0]
-    stp_group_id = struct.unpack(">H", encoded_message[93:95])[0]
-    self_trade_prevention = struct.unpack("B", encoded_message[95:96])[0]
-    risk_group_id = struct.unpack(">H", encoded_message[96:98])[0]
-    lnk_id = encoded_message[98:102].decode("ascii").rstrip('\x00')
-
-    decoded_message = {
-        "BlockLength": block_length,
-        "TemplateID": template_id,
-        "SchemaID": schema_id,
-        "Version": version,
-        "ClOrdID": cl_ord_id,
-        "MPID": mpid,
-        "Symbol": symbol,
-        "SymbolSfx": symbol_sfx,
-        "Side": side,
-        "OrderQty": order_qty,
-        "OrdType": ord_type,
-        "Price": price,
-        "TimeInForce": time_in_force,
-        "OrderCapacity": order_capacity,
-        "CustOrderCapacity": cust_order_capacity,
-        "ExecInst": exec_inst,
-        "PegOffsetValue": peg_offset_value,
-        "PegPriceType": peg_price_type,
-        "ExpireTime": expire_time,
-        "MinQty": min_qty,
-        "DisplayQty": display_qty,
-        "DisplayMethod": display_method,
-        "ReserveReplenishTiming": reserve_replenish_timing,
-        "DisplayMinIncr": display_min_incr,
-        "LocateReqd": locate_reqd,
-        "RepriceFrequency": reprice_frequency,
-        "RepriceBehavior": reprice_behavior,
-        "CancelGroupID": cancel_group_id,
-        "StpGroupID": stp_group_id,
-        "SelfTradePrevention": self_trade_prevention,
-        "RiskGroupID": risk_group_id,
-        "LnkID": lnk_id
-    }
-
-    return decoded_message
+# Print the encoded and decoded messages
+print("Encoded Message:", encoded_message)
+print("Decoded Message:", decoded_message)
