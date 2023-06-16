@@ -1,4 +1,108 @@
+
 import struct
+import importlib.util
+
+# Specify the filename of the module
+module_name = "sbe-encoder-decoder"
+
+# Specify the directory path to the module file
+module_path = "/home/pvellanki/loadgenerator/sbe/"  # Replace with the actual directory path
+
+# Load the module dynamically
+spec = importlib.util.spec_from_file_location(module_name, module_path + module_name + ".py")
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+
+# Define field lengths
+BLOCK_LENGTH = 6
+CL_ORD_ID_LENGTH = 16
+MPID_LENGTH = 4
+SYMBOL_LENGTH = 6
+SYMBOL_SFX_LENGTH = 6
+SIDE_LENGTH = 1
+ORDER_QTY_LENGTH = 4
+ORD_TYPE_LENGTH = 1
+PRICE_LENGTH = 8
+TIME_IN_FORCE_LENGTH = 1
+ORDER_CAPACITY_LENGTH = 1
+CUST_ORDER_CAPACITY_LENGTH = 1
+EXEC_INST_LENGTH = 2
+PEG_OFFSET_VALUE_LENGTH = 8
+PEG_PRICE_TYPE_LENGTH = 1
+EXPIRE_TIME_LENGTH = 8
+MIN_QTY_LENGTH = 4
+DISPLAY_QTY_LENGTH = 4
+DISPLAY_METHOD_LENGTH = 1
+RESERVE_REPLENISH_TIMING_LENGTH = 1
+DISPLAY_MIN_INCR_LENGTH = 4
+LOCATE_REQD_LENGTH = 1
+REPRICE_FREQUENCY_LENGTH = 1
+REPRICE_BEHAVIOR_LENGTH = 1
+CANCEL_GROUP_ID_LENGTH = 2
+STP_GROUP_ID_LENGTH = 2
+SELF_TRADE_PREVENTION_LENGTH = 1
+RISK_GROUP_ID_LENGTH = 2
+LNK_ID_LENGTH = 4
+
+# SBE Header fields
+block_length = 96
+template_id = 1
+schema_id = 1
+major_version = 1
+minor_version = 10
+
+# Convert major and minor versions to hexadecimal
+version = (major_version << 8) | minor_version
+
+# NewOrderSingle fields (example values)
+cl_ord_id = "ORDER001"
+mpid = "MEMX"
+symbol = "AAPL"
+symbol_sfx = ""
+side = 1
+order_qty = 100
+ord_type = 2
+price = 150.0
+time_in_force = 0
+order_capacity = 1
+cust_order_capacity = 2
+exec_inst = "A "
+peg_offset_value = 0.0
+peg_price_type = 0
+expire_time = 0
+min_qty = 0
+display_qty = 0
+display_method = 0
+reserve_replenish_timing = 0
+display_min_incr = 0
+locate_reqd = "N"
+reprice_frequency = 0
+reprice_behavior = 0
+cancel_group_id = 0
+stp_group_id = 0
+self_trade_prevention = 0
+risk_group_id = 0
+lnk_id = "LINK"
+
+# Encode the message
+encoded_message = encode_message(
+    block_length, template_id, schema_id, version,
+    cl_ord_id, mpid, symbol, symbol_sfx, side, order_qty, ord_type, price,
+    time_in_force, order_capacity, cust_order_capacity, exec_inst,
+    peg_offset_value, peg_price_type, expire_time, min_qty, display_qty,
+    display_method, reserve_replenish_timing, display_min_incr, locate_reqd,
+    reprice_frequency, reprice_behavior, cancel_group_id, stp_group_id,
+    self_trade_prevention, risk_group_id, lnk_id
+)
+
+# Decode the message
+decoded_message = decode_message(encoded_message)
+
+# Print the encoded and decoded messages
+print("Encoded Message:", encoded_message)
+print("Decoded Message:", decoded_message)
+
+
 
 # Constants for field lengths
 BLOCK_LENGTH_LENGTH = 2
@@ -41,7 +145,7 @@ def encode_message(block_length, template_id, schema_id, version,
                    self_trade_prevention, risk_group_id, lnk_id):
     # Calculate the total message length
     message_length = (
-        BLOCK_LENGTH_LENGTH + TEMPLATE_ID_LENGTH + CL_ORD_ID_LENGTH + MPID_LENGTH + SYMBOL_LENGTH + SYMBOL_SFX_LENGTH +
+        CL_ORD_ID_LENGTH + MPID_LENGTH + SYMBOL_LENGTH + SYMBOL_SFX_LENGTH +
         SIDE_LENGTH + ORDER_QTY_LENGTH + ORD_TYPE_LENGTH + PRICE_LENGTH + TIME_IN_FORCE_LENGTH +
         ORDER_CAPACITY_LENGTH + CUST_ORDER_CAPACITY_LENGTH + EXEC_INST_LENGTH + PEG_OFFSET_VALUE_LENGTH +
         PEG_PRICE_TYPE_LENGTH + EXPIRE_TIME_LENGTH + MIN_QTY_LENGTH + DISPLAY_QTY_LENGTH +
@@ -52,7 +156,7 @@ def encode_message(block_length, template_id, schema_id, version,
     )
 
     # Encode the message header
-    header = struct.pack(">HBxHB", message_length, block_length, template_id, schema_id, version)
+    header = struct.pack(">HBxHB",block_length, template_id, schema_id) + struct.pack(">H", version)
 
     # Encode the fields
     cl_ord_id_bytes = cl_ord_id.encode("ascii").ljust(CL_ORD_ID_LENGTH, b"\x00")
