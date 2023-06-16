@@ -75,3 +75,6 @@ print("Encoded message:", encoded_message)
 # Decode a packed message
 decoded_fields = decode_message(encoded_message)
 print("Decoded fields:", decoded_fields)
+
+
+NEW_ORDER_SINGLE = struct.Struct("!16s16s6s2sBI16sB4sBBIIfHHHBBHBBHBBHBBH")
