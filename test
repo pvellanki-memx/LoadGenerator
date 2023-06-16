@@ -99,3 +99,8 @@ def decode_message(encoded_message):
         'risk_group_id': risk_group_id,
         'lnk_id': lnk_id
     }
+
+
+Looking in indexes: http://10.0.28.1/artifactory/api/pypi/pypi-remote/simple
+ERROR: Could not find a version that satisfies the requirement pySBEGen (from versions: none)
+ERROR: No matching distribution found for pySBEGen
