@@ -172,3 +172,6 @@ Traceback (most recent call last):
   File "/home/pvellanki/loadgenerator/sbe/options/sbe-tool.py", line 70, in decode_message
     reprice_behavior = encoded_message[138:146].decode().strip('\x00')
 UnicodeDecodeError: 'utf-8' codec can't decode byte 0xc8 in position 6: invalid continuation byte
+
+
+b'ORDER001MPID001AAPLSFX001Buyd\x00\x00\x00Limit\x00\x00\x00\x00\x00 Y@DayAgencyMemberFillOrKill\x00\x00\x00\x00\x00\x00\xe0?TrailingStopPeg\x00\x00\x00\x01\x00\x00\x00\x00\n\x00\x00\x002\x00\x00\x00InitialWithOnOpen\x05\x00\x00\x00YDailyIgnore{\x00\xc8\x01CancelNewest\x15\x03LNK001'
