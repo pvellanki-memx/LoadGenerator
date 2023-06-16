@@ -159,3 +159,85 @@ def decode_message(message):
         risk_group_id,
         lnk_id,
     )
+
+
+
+
+
+
+
+
+
+
+# Import the encoder and decoder functions
+from sbe_encoder_decoder import encode_message, decode_message
+
+# Sample NewOrderSingle values
+cl_ord_id = "12345"
+mpid = "ABC"
+symbol = "AAPL"
+symbol_sfx = ""
+side = 1
+order_qty = 100
+ord_type = 2
+price = 150.5
+time_in_force = 1
+order_capacity = 1
+cust_order_capacity = 1
+exec_inst = 0  # Integer value
+peg_offset_value = 0.0  # Float value
+peg_price_type = 0  # Integer value
+expire_time = 0
+min_qty = 0
+display_qty = 0
+display_method = 0
+reserve_replenish_timing = 0
+display_min_incr = 0
+locate_reqd = 0
+reprice_frequency = 0
+reprice_behavior = 0
+cancel_group_id = 0
+stp_group_id = 0
+self_trade_prevention = 0
+risk_group_id = 0
+lnk_id = 0
+
+# Encode the NewOrderSingle message
+encoded_message = encode_message(
+    cl_ord_id,
+    mpid,
+    symbol,
+    symbol_sfx,
+    side,
+    order_qty,
+    ord_type,
+    price,
+    time_in_force,
+    order_capacity,
+    cust_order_capacity,
+    exec_inst,
+    peg_offset_value,
+    peg_price_type,
+    expire_time,
+    min_qty,
+    display_qty,
+    display_method,
+    reserve_replenish_timing,
+    display_min_incr,
+    locate_reqd,
+    reprice_frequency,
+    reprice_behavior,
+    cancel_group_id,
+    stp_group_id,
+    self_trade_prevention,
+    risk_group_id,
+    lnk_id,
+)
+
+# Decode the encoded message
+decoded_message = decode_message(encoded_message)
+
+# Print the encoded and decoded messages
+print("Encoded Message:", encoded_message)
+print("Decoded Message:", decoded_message)
+
