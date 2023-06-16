@@ -1,125 +1,130 @@
 import struct
 
-# Message header definition
-MESSAGE_HEADER = struct.Struct("<HHQ")
+# Define the NewOrderSingle message structure
+NEW_ORDER_SINGLE = struct.Struct(">8s8s6s4s1sIcIfIIBBcIfH")
 
-# NewOrderSingle definition
-NEW_ORDER_SINGLE = struct.Struct("<6s6s6s6sii6s6sfiifiiii")
+def encode_message(cl_ord_id, mpid, symbol, symbol_sfx, side, order_qty, ord_type, price, time_in_force,
+                   order_capacity, cust_order_capacity, exec_inst, peg_offset_value, peg_price_type,
+                   expire_time, min_qty, display_qty, display_method, reserve_replenish_timing,
+                   display_min_incr, locate_reqd, reprice_frequency, reprice_behavior, cancel_group_id,
+                   stp_group_id, self_trade_prevention, risk_group_id, lnk_id):
+    # Pack the field values into the binary representation
+    new_order_single_packed = NEW_ORDER_SINGLE.pack(
+        cl_ord_id.encode(),               # 8s  - ClOrdID
+        mpid.encode(),                    # 8s  - MPID
+        symbol.encode(),                  # 6s  - Symbol
+        symbol_sfx.encode(),              # 4s  - SymbolSfx
+        side.encode(),                    # 1s  - Side
+        order_qty,                        # I   - OrderQty
+        ord_type.encode(),                # c   - OrdType
+        price,                            # f   - Price
+        time_in_force,                    # I   - TimeInForce
+        order_capacity,                   # B   - OrderCapacity
+        cust_order_capacity,              # B   - CustOrderCapacity
+        exec_inst.encode(),               # c   - ExecInst
+        peg_offset_value,                 # f   - PegOffsetValue
+        peg_price_type,                   # I   - PegPriceType
+        expire_time,                      # f   - ExpireTime
+        min_qty,                          # I   - MinQty
+        display_qty,                      # I   - DisplayQty
+        display_method,                   # B   - DisplayMethod
+        reserve_replenish_timing,         # B   - ReserveReplenishTiming
+        display_min_incr,                 # I   - DisplayMinIncr
+        locate_reqd.encode(),             # c   - LocateReqd
+        reprice_frequency,                # I   - RepriceFrequency
+        reprice_behavior,                 # I   - RepriceBehavior
+        cancel_group_id,                  # H   - CancelGroupId
+        stp_group_id,                     # H   - StpGroupId
+        self_trade_prevention.encode(),    # c   - SelfTradePrevention
+        risk_group_id,                    # H   - RiskGroupId
+        lnk_id.encode()                    # 8s  - LnkId
+    )
+    
+    return new_order_single_packed
 
-# Function to encode the NewOrderSingle message
-def encode_message(cl_ord_id, mpid, symbol, symbol_sfx, side, order_qty, ord_type, price,
-                   time_in_force, order_capacity, cust_order_capacity, exec_inst, peg_offset_value,
-                   peg_price_type, expire_time, min_qty, display_qty, display_method,
-                   reserve_replenish_timing, display_min_incr, locate_reqd, reprice_frequency,
-                   reprice_behavior, cancel_group_id, stp_group_id, self_trade_prevention,
-                   risk_group_id, lnk_id):
-    # Pack the NewOrderSingle fields
-    new_order_single_packed = NEW_ORDER_SINGLE.pack(cl_ord_id.encode(), mpid.encode(), symbol.encode(),
-                                                    symbol_sfx.encode(), side, order_qty, ord_type,
-                                                    price, time_in_force, order_capacity,
-                                                    cust_order_capacity, exec_inst, peg_offset_value,
-                                                    peg_price_type, expire_time, min_qty, display_qty,
-                                                    display_method, reserve_replenish_timing,
-                                                    display_min_incr, locate_reqd, reprice_frequency,
-                                                    reprice_behavior, cancel_group_id, stp_group_id,
-                                                    self_trade_prevention, risk_group_id, lnk_id)
-    # Pack the message header
-    message_header = MESSAGE_HEADER.pack(1, 0, len(new_order_single_packed))
 
-    # Concatenate the message header and the NewOrderSingle fields
-    encoded_message = message_header + new_order_single_packed
-
-    return encoded_message
-
-# Function to decode the encoded message
 def decode_message(encoded_message):
-    # Unpack the message header
-    header_fields = MESSAGE_HEADER.unpack_from(encoded_message)
-    template_id = header_fields[0]
-    schema_id = header_fields[1]
-    message_size = header_fields[2]
+    # Unpack the binary representation into the field values
+    cl_ord_id, mpid, symbol, symbol_sfx, side, order_qty, ord_type, price, time_in_force, order_capacity, \
+        cust_order_capacity, exec_inst, peg_offset_value, peg_price_type, expire_time, min_qty, display_qty, \
+        display_method, reserve_replenish_timing, display_min_incr, locate_reqd, reprice_frequency, \
+        reprice_behavior, cancel_group_id, stp_group_id, self_trade_prevention, risk_group_id, lnk_id = \
+        NEW_ORDER_SINGLE.unpack(encoded_message)
+    
+    # Decode the field values into the appropriate data types
+    cl_ord_id = cl_ord_id.decode().strip()
+    mpid = mpid.decode().strip()
+    symbol = symbol.decode().strip()
+    symbol_sfx = symbol_sfx.decode().strip()
+    side = side.decode()
+    ord_type = ord_type.decode()
+    time_in_force = time_in_force
+    order_capacity = order_capacity
+    cust_order_capacity = cust_order_capacity
+    exec_inst = exec_inst.decode()
+    peg_offset_value = peg_offset_value
+    peg_price_type = peg_price_type
+    expire_time = expire_time
+    min_qty = min_qty
+    display_qty = display_qty
+    display_method = display_method
+    reserve_replenish_timing = reserve_replenish_timing
+    display_min_incr = display_min_incr
+    locate_reqd = locate_reqd.decode()
+    reprice_frequency = reprice_frequency
+    reprice_behavior = reprice_behavior
+    cancel_group_id = cancel_group_id
+    stp_group_id = stp_group_id
+    self_trade_prevention = self_trade_prevention.decode()
+    risk_group_id = risk_group_id
+    lnk_id = lnk_id.decode().strip()
+    
+    return (cl_ord_id, mpid, symbol, symbol_sfx, side, order_qty, ord_type, price, time_in_force,
+            order_capacity, cust_order_capacity, exec_inst, peg_offset_value, peg_price_type,
+            expire_time, min_qty, display_qty, display_method, reserve_replenish_timing,
+            display_min_incr, locate_reqd, reprice_frequency, reprice_behavior, cancel_group_id,
+            stp_group_id, self_trade_prevention, risk_group_id, lnk_id)
 
-    # Unpack the NewOrderSingle fields
-    new_order_single_fields = NEW_ORDER_SINGLE.unpack_from(encoded_message, MESSAGE_HEADER.size)
 
-    # Create a dictionary with the field names and values
-    decoded_message = {
-        "template_id": template_id,
-        "schema_id": schema_id,
-        "message_size": message_size,
-        "cl_ord_id": new_order_single_fields[0].decode().strip('\x00'),
-        "mpid": new_order_single_fields[1].decode().strip('\x00'),
-        "symbol": new_order_single_fields[2].decode().strip('\x00'),
-        "symbol_sfx": new_order_single_fields[3].decode().strip('\x00'),
-        "side": new_order_single_fields[4],
-        "order_qty": new_order_single_fields[5],
-        "ord_type": new_order_single_fields[6],
-        "price": new_order_single_fields[7],
-        "time_in_force": new_order_single_fields[8],
-        "order_capacity": new_order_single_fields[9],
-        "cust_order_capacity": new_order_single_fields[10],
-        "exec_inst": new_order_single_fields[11],
-        "peg_offset_value": new_order_single_fields[12],
-        "peg_price_type": new_order_single_fields[13],
-        "expire_time": new_order_single_fields[14],
-        "min_qty": new_order_single_fields[15],
-        "display_qty": new_order_single_fields[16],
-        "display_method": new_order_single_fields[17],
-        "reserve_replenish_timing": new_order_single_fields[18],
-        "display_min_incr": new_order_single_fields[19],
-        "locate_reqd": new_order_single_fields[20],
-        "reprice_frequency": new_order_single_fields[21],
-        "reprice_behavior": new_order_single_fields[22],
-        "cancel_group_id": new_order_single_fields[23],
-        "stp_group_id": new_order_single_fields[24],
-        "self_trade_prevention": new_order_single_fields[25],
-        "risk_group_id": new_order_single_fields[26],
-        "lnk_id": new_order_single_fields[27],
-    }
-
-    return decoded_message
-
-# Sample field values for NewOrderSingle
+# Sample input data
 cl_ord_id = "ORDER001"
-mpid = "MPID001"
+mpid = "MP001"
 symbol = "AAPL"
-symbol_sfx = "1"
-side = 1  # Buy
+symbol_sfx = "NS"
+side = "1"
 order_qty = 100
-ord_type = 1  # Limit order
-price = 150.0
-time_in_force = 0  # Day order
-order_capacity = 1  # Agency
-cust_order_capacity = 0  # Member
-exec_inst = 0  # None
+ord_type = "2"
+price = 200.5
+time_in_force = 1
+order_capacity = 1
+cust_order_capacity = 1
+exec_inst = "1"
 peg_offset_value = 0.0
-peg_price_type = 0  # None
-expire_time = 0  # GTC
+peg_price_type = 1
+expire_time = 0.0
 min_qty = 0
 display_qty = 0
-display_method = 0  # Initial display
+display_method = 0
 reserve_replenish_timing = 0
 display_min_incr = 0
-locate_reqd = 0
+locate_reqd = "N"
 reprice_frequency = 0
 reprice_behavior = 0
 cancel_group_id = 0
 stp_group_id = 0
-self_trade_prevention = 0
+self_trade_prevention = "0"
 risk_group_id = 0
-lnk_id = 0
+lnk_id = "LNKID001"
 
-# Encode and decode the message
-encoded_message = encode_message(cl_ord_id, mpid, symbol, symbol_sfx, side, order_qty, ord_type, price,
-                                 time_in_force, order_capacity, cust_order_capacity, exec_inst,
-                                 peg_offset_value, peg_price_type, expire_time, min_qty, display_qty,
-                                 display_method, reserve_replenish_timing, display_min_incr, locate_reqd,
-                                 reprice_frequency, reprice_behavior, cancel_group_id, stp_group_id,
-                                 self_trade_prevention, risk_group_id, lnk_id)
+# Encode the sample NewOrderSingle message
+encoded_message = encode_message(cl_ord_id, mpid, symbol, symbol_sfx, side, order_qty, ord_type, price, time_in_force,
+                                 order_capacity, cust_order_capacity, exec_inst, peg_offset_value, peg_price_type,
+                                 expire_time, min_qty, display_qty, display_method, reserve_replenish_timing,
+                                 display_min_incr, locate_reqd, reprice_frequency, reprice_behavior, cancel_group_id,
+                                 stp_group_id, self_trade_prevention, risk_group_id, lnk_id)
+
+print("Encoded Message:", encoded_message)
+
+# Decode the encoded message
 decoded_message = decode_message(encoded_message)
-
-# Print the encoded and decoded messages
-print("Encoded message:")
-print(encoded_message.hex())
-print("\nDecoded message:")
-print(decoded_message)
+print("Decoded Message:", decoded_message)
