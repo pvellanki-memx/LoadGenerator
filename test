@@ -165,7 +165,6 @@ def decode_message(encoded_message):
 
 
 
-
 (myenv) pvellanki@qa2434:~/loadgenerator/sbe/options$ python3 sbe-tool.py 
 Traceback (most recent call last):
   File "/home/pvellanki/loadgenerator/sbe/options/sbe-tool.py", line 145, in <module>
