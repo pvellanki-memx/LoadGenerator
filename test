@@ -90,5 +90,20 @@ decoded_message = decode_message(encoded_message)
 print("Encoded Message:", encoded_message)
 print("Decoded Message:", decoded_message)
 
+import importlib.util
 
-from sbe-encoder-decoder import encode_message,decode_message
+# Specify the filename of the module
+module_name = "sbe-encoder-decoder"
+
+# Specify the directory path to the module file
+module_path = "./path/to/module/directory/"  # Replace with the actual directory path
+
+# Load the module dynamically
+spec = importlib.util.spec_from_file_location(module_name, module_path + module_name + ".py")
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+
+# Now you can access the functions from the module
+encode_message = module.encode_message
+decode_message = module.decode_message
+
