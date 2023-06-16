@@ -2,53 +2,62 @@ import struct
 
 
 def encode_message(
-    cl_ord_id: str,
-    mpid: str,
-    symbol: str,
-    symbol_sfx: str,
-    side: int,
-    order_qty: int,
-    ord_type: int,
-    price: float,
-    time_in_force: int,
-    order_capacity: int,
-    cust_order_capacity: int,
-    exec_inst: int,
-    peg_offset_value: float,
-    peg_price_type: int,
-    expire_time: int,
-    min_qty: int,
-    display_qty: int,
-    display_method: int,
-    reserve_replenish_timing: int,
-    display_min_incr: int,
-    locate_reqd: int,
-    reprice_frequency: int,
-    reprice_behavior: int,
-    cancel_group_id: int,
-    stp_group_id: int,
-    self_trade_prevention: int,
-    risk_group_id: int,
-    lnk_id: int,
-) -> bytes:
-    # Encode the header
-    template_id = 1
-    schema_id = 2
-    version = 0
-    header = struct.pack(">HBBB", 0, template_id, schema_id, version)
+    cl_ord_id,
+    mpid,
+    symbol,
+    symbol_sfx,
+    side,
+    order_qty,
+    ord_type,
+    price,
+    time_in_force,
+    order_capacity,
+    cust_order_capacity,
+    exec_inst,
+    peg_offset_value,
+    peg_price_type,
+    expire_time,
+    min_qty,
+    display_qty,
+    display_method,
+    reserve_replenish_timing,
+    display_min_incr,
+    locate_reqd,
+    reprice_frequency,
+    reprice_behavior,
+    cancel_group_id,
+    stp_group_id,
+    self_trade_prevention,
+    risk_group_id,
+    lnk_id,
+):
+    cl_ord_id_bytes = cl_ord_id.encode("ascii")
+    mpid_bytes = mpid.encode("ascii")
+    symbol_bytes = symbol.encode("ascii")
+    symbol_sfx_bytes = symbol_sfx.encode("ascii")
 
-    # Encode the body
-    cl_ord_id_bytes = cl_ord_id.encode("ascii") + b"\x00"
-    mpid_bytes = mpid.encode("ascii") + b"\x00"
-    symbol_bytes = symbol.encode("ascii") + b"\x00"
-    symbol_sfx_bytes = symbol_sfx.encode("ascii") + b"\x00"
-    body = struct.pack(
-        ">H8s8s4s4siihdiBBBdidiBBHHBHH",
-        len(cl_ord_id_bytes),
-        cl_ord_id_bytes,
-        mpid_bytes,
-        symbol_bytes,
-        symbol_sfx_bytes,
+    message = struct.pack(
+        ">H",
+        len(cl_ord_id_bytes) + 1,
+    )
+    message += cl_ord_id_bytes + b"\x00"
+    message += struct.pack(
+        ">H",
+        len(mpid_bytes) + 1,
+    )
+    message += mpid_bytes + b"\x00"
+    message += struct.pack(
+        ">H",
+        len(symbol_bytes) + 1,
+    )
+    message += symbol_bytes + b"\x00"
+    message += struct.pack(
+        ">H",
+        len(symbol_sfx_bytes) + 1,
+    )
+    message += symbol_sfx_bytes + b"\x00"
+    message += struct.pack(
+        ">iihdiBBBdidiBBHHBHH",
         side,
         order_qty,
         ord_type,
@@ -75,7 +84,6 @@ def encode_message(
         lnk_id,
     )
 
-    message = header + body
     return message
 
 
