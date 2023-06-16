@@ -2,7 +2,7 @@ import struct
 
 # Define the SBE message structure
 
-NEW_ORDER_SINGLE = struct.Struct("!16s16s6s2sBI16sB4sBBIIfHHHBBH")
+NEW_ORDER_SINGLE = struct.Struct("!16s16s6s2sBI16sB4sBBIIfHHHBBHBBHBBHBBHBBHBBHBBHBB")
 
 # Function to encode a NewOrderSingle message
 def encode_message():
@@ -26,7 +26,7 @@ def encode_message():
     display_method = 0  # Initial
     reserve_replenish_timing = 0  # Immediate
     display_min_incr = 0
-    locate_reqd = 'N'
+    locate_reqd = 0
     reprice_frequency = 0  # Standing limit
     reprice_behavior = 0  # Aggressive
     cancel_group_id = 0
@@ -35,15 +35,36 @@ def encode_message():
     risk_group_id = 0
     lnk_id = "LINK001"
 
-    new_order_single_packed = NEW_ORDER_SINGLE.pack(cl_ord_id.encode(), mpid.encode(), symbol.encode(),
-                                                    symbol_sfx.encode(), side, order_qty, ord_type, price,
-                                                    time_in_force, order_capacity, cust_order_capacity,
-                                                    exec_inst, peg_offset_value, peg_price_type,
-                                                    expire_time, min_qty, display_qty, display_method,
-                                                    reserve_replenish_timing, display_min_incr, locate_reqd,
-                                                    reprice_frequency, reprice_behavior, cancel_group_id,
-                                                    stp_group_id, self_trade_prevention, risk_group_id,
-                                                    lnk_id.encode())
+    new_order_single_packed = NEW_ORDER_SINGLE.pack(
+        cl_ord_id.encode(),
+        mpid.encode(),
+        symbol.encode(),
+        symbol_sfx.encode(),
+        side,
+        order_qty,
+        ord_type,
+        price,
+        time_in_force,
+        order_capacity,
+        cust_order_capacity,
+        exec_inst,
+        peg_offset_value,
+        peg_price_type,
+        expire_time,
+        min_qty,
+        display_qty,
+        display_method,
+        reserve_replenish_timing,
+        display_min_incr,
+        locate_reqd,
+        reprice_frequency,
+        reprice_behavior,
+        cancel_group_id,
+        stp_group_id,
+        self_trade_prevention,
+        risk_group_id,
+        lnk_id.encode()
+    )
     return new_order_single_packed
 
 # Function to decode a NewOrderSingle message
@@ -62,11 +83,36 @@ def decode_message(packed_message):
     lnk_id = lnk_id.decode().strip()
     
     # Return the decoded field values
-    return cl_ord_id, mpid, symbol, symbol_sfx, side, order_qty, ord_type, price, time_in_force, \
-    order_capacity, cust_order_capacity, exec_inst, peg_offset_value, peg_price_type, expire_time, \
-    min_qty, display_qty, display_method, reserve_replenish_timing, display_min_incr, locate_reqd, \
-    reprice_frequency, reprice_behavior, cancel_group_id, stp_group_id, self_trade_prevention, \
-    risk_group_id, lnk_id
+    return (
+        cl_ord_id,
+        mpid,
+        symbol,
+        symbol_sfx,
+        side,
+        order_qty,
+        ord_type,
+        price,
+        time_in_force,
+        order_capacity,
+        cust_order_capacity,
+        exec_inst,
+        peg_offset_value,
+        peg_price_type,
+        expire_time,
+        min_qty,
+        display_qty,
+        display_method,
+        reserve_replenish_timing,
+        display_min_incr,
+        locate_reqd,
+        reprice_frequency,
+        reprice_behavior,
+        cancel_group_id,
+        stp_group_id,
+        self_trade_prevention,
+        risk_group_id,
+        lnk_id
+    )
 
 # Encode a NewOrderSingle message
 encoded_message = encode_message()
@@ -75,6 +121,3 @@ print("Encoded message:", encoded_message)
 # Decode a packed message
 decoded_fields = decode_message(encoded_message)
 print("Decoded fields:", decoded_fields)
-
-
-NEW_ORDER_SINGLE = struct.Struct("!16s16s6s2sBI16sB4sBBIIfHHHBBHBBHBBHBBHBBHBBH")
