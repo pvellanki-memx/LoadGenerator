@@ -39,3 +39,33 @@ UnsequencedMessage={
         MessageLength=102;
         MessageType=104
     }    
+
+
+Unsequenced Message (Message Type = 104)
+Offset
+
+Length
+
+Type
+
+Name
+
+Description
+
+3
+
+n
+
+Bytes
+
+Payload
+
+Payload of the message
+
+Unsequenced messages allow clients to send business level messages to the server while streaming data. The messages may be sent on a supported server connection after the user completes the login process and successfully negotiates a Stream session.
+
+The unsequenced message is inferred to apply to the session ID of the in-progress Stream session. If the End of Session message is received, no further unsequenced messages will be accepted on this connection.
+
+The format of the payload of the message is defined by the protocol which is wrapped by this session.
+
+If an unsequenced message is malformed or invalid, the client will be forcibly disconnected.
