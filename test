@@ -1,66 +1,41 @@
-import socket
-import struct
+Connection Procedure
+Once a TCP connection is established, clients should send a login message to authorize the session.
 
-# TCP/IP connection details
-host = '10.2.128.10'
-port = 30076
+If the client’s credentials are not accepted, a Login Rejected message will be sent to the client and the TCP connection will be closed.
 
-# Token and header details
-user = 'exactpro6'
-password = 'expro6pwd'
-token = f'{user}:{password}'
+If the login is accepted, the server will send a Login Accepted message, which will inform the client of which request mode is allowed on the session. (See above).
 
-# Login request
-message_type = 100
-token_type = 'P'  # Assuming token type is always 'P'
-token_length = len(token)
-header = struct.pack('!BHB', message_type, token_length + 1, token_type.encode('utf-8')[0])
-message = header + token.encode('utf-8')
+After a Login Accepted is received, clients should begin sending Heartbeat messages to the server on a periodic basis. If the server fails to receive client heartbeats after some interval, it may close the client’s TCP connection.
 
-# Create a socket and establish the connection
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client_socket.connect((host, port))
+At some point after the Login Accepted message has been received, clients will receive a Start Of Session message which contains the current session ID. If the client is connecting into a server operating with a session that is already in progress, they should expect to receive a Start Of Session message immediately following the Login Accepted message.
 
-# Set socket to binary mode
-client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+After receipt of a Login Accepted message, clients may send either a Replay Request, ReplayAll Request, or Stream Request message to the server to initiate data transmission.
 
-# Send the login request
-client_socket.sendall(message)
+If the data transmission request is rejected, clients will receive a Replay Rejected or Stream Rejected message with a corresponding error reason. Clients may issue a new transmission request without closing and re-opening their connection.
 
-# Receive and handle the response
-response_header = client_socket.recv(2)
-response_type, response_length = struct.unpack('!BB', response_header)
+If the data transmission request is accepted, the server will transmit a Replay Begin or Stream Begin message containing the next expected sequence number, followed by Sequenced Message events containing the requested data.
 
-if response_type == 1:  # Login Accepted
-    response_message = client_socket.recv(response_length)
-    print("Login Accepted:", response_message.decode('utf-8'))
-elif response_type == 2:  # Login Rejected
-    response_message = client_socket.recv(response_length)
-    print("Login Rejected:", response_message.decode('utf-8'))
-    client_socket.close()
-    exit()  # Exit the script gracefully after login rejection
-elif response_type == 3:  # Start of Session
-    response_message = client_socket.recv(response_length)
-    session_id = struct.unpack('!Q', response_message[:8])[0]
-    print("Start of Session. Session ID:", session_id)
-else:
-    print("Invalid response received.")
-    client_socket.close()
-    exit()  # Exit the script if an invalid response is received
 
-# Continue with the session
-while True:
-    response_header = client_socket.recv(2)
-    response_type, response_length = struct.unpack('!BB', response_header)
-
-    if response_type == 3:  # Start of Session
-        response_message = client_socket.recv(response_length)
-        print("Start of Session:", response_message.decode('utf-8'))
-        break
-    else:
-        print("Invalid response received.")
-        client_socket.close()
-        exit()  # Exit the script if an invalid response is received
-
-# Close the socket
-client_socket.close()
+MessageHeader={
+    blockLength=96;
+    templateId=1;
+    schemaId=1;
+    version=266
+};
+ClOrdID=1686883344217;
+Symbol=UBER;
+Side=Sell(2);
+OrderQty=300;
+OrdType=Limit(2);
+Price=15;
+TimeInForce=Day(0);
+OrderCapacity=Agency(A);
+CustOrderCapacity=MemberTradingOnTheirOwnAccount(1);
+ExecInst=4;
+RepriceFrequency=SingleReprice(0);
+RepriceBehavior=RepriceLockRepriceCross(2);
+UnsequencedMessage={
+    TCPHeader={
+        MessageLength=102;
+        MessageType=104
+    }    
