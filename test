@@ -69,3 +69,19 @@ The unsequenced message is inferred to apply to the session ID of the in-progres
 The format of the payload of the message is defined by the protocol which is wrapped by this session.
 
 If an unsequenced message is malformed or invalid, the client will be forcibly disconnected.
+
+
+
+Stream Request (Message Type = 103)
+Session ID (length =8) :The identifier of the session for which data is desired
+Next Sequence Number(length =8):The first requested sequence number.A value of 0 indicates the current maximum sequence number of the session.
+
+Stream requests may be sent on a supported server connection after a client completes the login process and receives a Session Started message.
+
+Clients must specify their desired session ID copied from the Session Started message as a means of removing state race conditions between the server’s session state and the client.
+
+The sequence number must be less than the current maximum sequence of the requested session.If the request is accepted, clients will receive continuous streaming messages until the end of stream event is received, starting from the requested sequence number.
+
+If any stream request is rejected due to validation or capabilities mismatches, a Stream Rejected message will be sent from the server, and the client will be able to try their request again.
+
+Stream Requests will only be accepted when the server is in Stream Mode (as indicated by the receipt of an 'S' in the Request Mode field of the Login Accepted message (see Login Accepted below).
