@@ -1,106 +1,66 @@
-def encode_message(fields):
-    cl_ord_id = fields['cl_ord_id'].encode('utf-8').ljust(8, b'\x00')
-    mpid = fields.get('mpid', '').encode('utf-8').ljust(8, b'\x00')
-    symbol = fields['symbol'].encode('utf-8').ljust(8, b'\x00')
-    symbol_sfx = fields.get('symbol_sfx', '').encode('utf-8').ljust(4, b'\x00')
-    side = fields['side'].encode('utf-8').ljust(1, b'\x00')
-    order_qty = struct.pack('>I', fields['order_qty'])
-    ord_type = fields['ord_type'].encode('utf-8').ljust(6, b'\x00')
-    price = struct.pack('>d', fields.get('price', 0.0))
-    time_in_force = fields['time_in_force'].encode('utf-8').ljust(2, b'\x00')
-    order_capacity = fields['order_capacity'].encode('utf-8').ljust(1, b'\x00')
-    cust_order_capacity = struct.pack('>H', fields['cust_order_capacity'])
-    exec_inst = fields['exec_inst'].encode('utf-8').ljust(1, b'\x00')
-    peg_offset_value = struct.pack('>d', fields.get('peg_offset_value', 0.0))
-    peg_price_type = fields.get('peg_price_type', '').encode('utf-8').ljust(3, b'\x00')
-    expire_time = struct.pack('>Q', fields.get('expire_time', 0))
-    min_qty = struct.pack('>I', fields.get('min_qty', 0))
-    display_qty = struct.pack('>I', fields.get('display_qty', 0))
-    display_method = fields.get('display_method', '').encode('utf-8').ljust(2, b'\x00')
-    reserve_replenish_timing = fields.get('reserve_replenish_timing', '').encode('utf-8').ljust(1, b'\x00')
-    display_min_incr = struct.pack('>I', fields.get('display_min_incr', 0))
-    locate_reqd = fields.get('locate_reqd', '').encode('utf-8').ljust(1, b'\x00')
-    reprice_frequency = fields.get('reprice_frequency', '').encode('utf-8').ljust(1, b'\x00')
-    reprice_behavior = struct.pack('>H', fields.get('reprice_behavior', 0))
-    cancel_group_id = struct.pack('>H', fields.get('cancel_group_id', 0))
-    stp_group_id = struct.pack('>H', fields.get('stp_group_id', 0))
-    self_trade_prevention = fields.get('self_trade_prevention', '').encode('utf-8').ljust(1, b'\x00')
-    risk_group_id = struct.pack('>H', fields.get('risk_group_id', 0))
-    lnk_id = fields.get('lnk_id', '').encode('utf-8').ljust(6, b'\x00')
+import socket
+import struct
 
-    encoded_message = (
-        cl_ord_id + mpid + symbol + symbol_sfx + side + order_qty + ord_type + price + time_in_force +
-        order_capacity + cust_order_capacity + exec_inst + peg_offset_value + peg_price_type +
-        expire_time + min_qty + display_qty + display_method + reserve_replenish_timing +
-        display_min_incr + locate_reqd + reprice_frequency + reprice_behavior + cancel_group_id +
-        stp_group_id + self_trade_prevention + risk_group_id + lnk_id
-    )
+# TCP/IP connection details
+host = '10.2.128.10'
+port = 30076
 
-    return encoded_message
+# Token and header details
+user = 'exactpro6'
+password = 'expro6pwd'
+token = f'{user}:{password}'
 
+# Login request
+message_type = 100
+token_type = 'P'  # Assuming token type is always 'P'
+token_length = len(token)
+header = struct.pack('!BHB', message_type, token_length + 1, token_type.encode('utf-8')[0])
+message = header + token.encode('utf-8')
 
-def decode_message(encoded_message):
-    cl_ord_id = encoded_message[0:8].decode().strip('\x00')
-    mpid = encoded_message[8:16].decode().strip('\x00')
-    symbol = encoded_message[16:24].decode().strip('\x00')
-    symbol_sfx = encoded_message[24:28].decode().strip('\x00')
-    side = encoded_message[28:29].decode().strip('\x00')
-    order_qty = struct.unpack('>I', encoded_message[29:33])[0]
-    ord_type = encoded_message[33:39].decode().strip('\x00')
-    price = struct.unpack('>d', encoded_message[39:47])[0]
-    time_in_force = encoded_message[47:49].decode().strip('\x00')
-    order_capacity = encoded_message[49:50].decode().strip('\x00')
-    cust_order_capacity = struct.unpack('>H', encoded_message[50:52])[0]
-    exec_inst = encoded_message[52:53].decode().strip('\x00')
-    peg_offset_value = struct.unpack('>d', encoded_message[53:61])[0]
-    peg_price_type = encoded_message[61:64].decode().strip('\x00')
-    expire_time = struct.unpack('>Q', encoded_message[64:72])[0]
-    min_qty = struct.unpack('>I', encoded_message[72:76])[0]
-    display_qty = struct.unpack('>I', encoded_message[76:80])[0]
-    display_method = encoded_message[80:82].decode().strip('\x00')
-    reserve_replenish_timing = encoded_message[82:83].decode().strip('\x00')
-    display_min_incr = struct.unpack('>I', encoded_message[83:87])[0]
-    locate_reqd = encoded_message[87:88].decode().strip('\x00')
-    reprice_frequency = encoded_message[88:89].decode().strip('\x00')
-    reprice_behavior = struct.unpack('>H', encoded_message[89:91])[0]
-    cancel_group_id = struct.unpack('>H', encoded_message[91:93])[0]
-    stp_group_id = struct.unpack('>H', encoded_message[93:95])[0]
-    self_trade_prevention = encoded_message[95:96].decode().strip('\x00')
-    risk_group_id = struct.unpack('>H', encoded_message[96:98])[0]
-    lnk_id = encoded_message[98:104].decode().strip('\x00')
+# Create a socket and establish the connection
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client_socket.connect((host, port))
 
-    return {
-        'cl_ord_id': cl_ord_id,
-        'mpid': mpid,
-        'symbol': symbol,
-        'symbol_sfx': symbol_sfx,
-        'side': side,
-        'order_qty': order_qty,
-        'ord_type': ord_type,
-        'price': price,
-        'time_in_force': time_in_force,
-        'order_capacity': order_capacity,
-        'cust_order_capacity': cust_order_capacity,
-        'exec_inst': exec_inst,
-        'peg_offset_value': peg_offset_value,
-        'peg_price_type': peg_price_type,
-        'expire_time': expire_time,
-        'min_qty': min_qty,
-        'display_qty': display_qty,
-        'display_method': display_method,
-        'reserve_replenish_timing': reserve_replenish_timing,
-        'display_min_incr': display_min_incr,
-        'locate_reqd': locate_reqd,
-        'reprice_frequency': reprice_frequency,
-        'reprice_behavior': reprice_behavior,
-        'cancel_group_id': cancel_group_id,
-        'stp_group_id': stp_group_id,
-        'self_trade_prevention': self_trade_prevention,
-        'risk_group_id': risk_group_id,
-        'lnk_id': lnk_id
-    }
+# Set socket to binary mode
+client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
+# Send the login request
+client_socket.sendall(message)
 
-Looking in indexes: http://10.0.28.1/artifactory/api/pypi/pypi-remote/simple
-ERROR: Could not find a version that satisfies the requirement pySBEGen (from versions: none)
-ERROR: No matching distribution found for pySBEGen
+# Receive and handle the response
+response_header = client_socket.recv(2)
+response_type, response_length = struct.unpack('!BB', response_header)
+
+if response_type == 1:  # Login Accepted
+    response_message = client_socket.recv(response_length)
+    print("Login Accepted:", response_message.decode('utf-8'))
+elif response_type == 2:  # Login Rejected
+    response_message = client_socket.recv(response_length)
+    print("Login Rejected:", response_message.decode('utf-8'))
+    client_socket.close()
+    exit()  # Exit the script gracefully after login rejection
+elif response_type == 3:  # Start of Session
+    response_message = client_socket.recv(response_length)
+    session_id = struct.unpack('!Q', response_message[:8])[0]
+    print("Start of Session. Session ID:", session_id)
+else:
+    print("Invalid response received.")
+    client_socket.close()
+    exit()  # Exit the script if an invalid response is received
+
+# Continue with the session
+while True:
+    response_header = client_socket.recv(2)
+    response_type, response_length = struct.unpack('!BB', response_header)
+
+    if response_type == 3:  # Start of Session
+        response_message = client_socket.recv(response_length)
+        print("Start of Session:", response_message.decode('utf-8'))
+        break
+    else:
+        print("Invalid response received.")
+        client_socket.close()
+        exit()  # Exit the script if an invalid response is received
+
+# Close the socket
+client_socket.close()
