@@ -700,3 +700,149 @@
         <field id="9" name="RejectReason" type="MassCancelRejectReasonCode"/>
     </sbe:message>
 </sbe:messageSchema>
+
+
+
+
+
+
+Overview
+MEMX-TCP is a TCP-based session-layer protocol for reliable delivery of business messages. Use-cases include filling gaps from a MEMX-UDP or similar unreliable message source, or for streaming data.
+
+All fields in MEMX-TCP are formatted on the wire in network (big endian) byte order. Any numeric fields are unsigned.
+
+Business-layer protocols that use MEMX-TCP will have their messages wrapped with MEMX-TCP headers and messages. Business layer protocols may apply additional restrictions on the MEMX-TCP connection procedure or message flows.
+
+If a malformed or unexpected session-level message is received by the server, the client will be forcibly disconnected via the server sending a TCP RST packet. Business level messages may have additional error handling semantics in addition to those applied at the session layer by MEMX-TCP.
+
+Request Modes
+Memx-TCP servers operate in one of two distinct modes: Replay or Stream. Servers identify the mode they operate in to the client with a Login Accepted message.
+
+In Replay mode, the server will accept requests for data which starts at a specific sequence number and which specifies a message count. Servers may cap the number of messages which are allowed to be replayed in a given request, session, or client. Any Stream request received by a server operating in Replay mode will be rejected. Servers may also accept a ReplayAll message as an alternative to a Replay request, which will replay all available messages from the server, starting at sequence 1, without requiring a starting sequence or count. Replay requests, including the ReplayAll request, may be subject to caps on the number of messages returned per request. These caps (if they exist) will be defined per service and as such are not listed in this document.
+
+In Stream mode, the server will accept requests for data which starts at a specific sequence number. If accepted, the server will deliver messages beginning at the requested sequence number to the client as quickly as they are able to process them. Once the client no longer wishes to receive messages, the client should initiate a TCP disconnection. Any Replay request received by a server operating in Stream mode will be rejected.
+
+Connection Procedure
+Once a TCP connection is established, clients should send a login message to authorize the session.
+
+If the client’s credentials are not accepted, a Login Rejected message will be sent to the client and the TCP connection will be closed.
+
+If the login is accepted, the server will send a Login Accepted message, which will inform the client of which request mode is allowed on the session. (See above).
+
+After a Login Accepted is received, clients should begin sending Heartbeat messages to the server on a periodic basis. If the server fails to receive client heartbeats after some interval, it may close the client’s TCP connection.
+
+At some point after the Login Accepted message has been received, clients will receive a Start Of Session message which contains the current session ID. If the client is connecting into a server operating with a session that is already in progress, they should expect to receive a Start Of Session message immediately following the Login Accepted message.
+
+After receipt of a Login Accepted message, clients may send either a Replay Request, ReplayAll Request, or Stream Request message to the server to initiate data transmission.
+
+If the data transmission request is rejected, clients will receive a Replay Rejected or Stream Rejected message with a corresponding error reason. Clients may issue a new transmission request without closing and re-opening their connection.
+
+If the data transmission request is accepted, the server will transmit a Replay Begin or Stream Begin message containing the next expected sequence number, followed by Sequenced Message events containing the requested data.
+
+State Diagram
+
+ 
+
+Message names in bold represent state transitions initiated by client-to-server messages. Message names in italics represent state transitions initiated by server-to-client messages.
+
+Note that any state can transition to Connection Closed if no heartbeats are received by the server within a time interval, or if the client sends any message not allowed by the specification.
+
+Miscellaneous Notes
+Any message serves as a heartbeat for the purposes of keeping a session alive.
+
+Both clients and servers should send heartbeats, if required.
+
+Any unsequenced messages from the client will be rejected until the login procedure has been completed.
+
+If the session which is in progress is terminated while a client is streaming or replaying data, every attempt will be made to complete the stream or replay request and deliver the complete set of messages to the client.In the event that the server is unable to completely deliver all requested messages to the client before the session must be closed, clients will be forcibly disconnected before receiving aStream CompleteorReplay Completemessage, and should attempt to reconnect to the server.
+
+Binary Message Format
+Common Header
+Message Type (Length : 1, type: Byte, offset:0)
+Message Length (Length :2, Type:Numeric, offset:1)
+
+Message Types
+Server-to-Client And Client-To-Server
+ 
+
+Heartbeat (Message Type = 0)
+Heartbeat messages do not increment the sequence number of the stream. The Message Length field for a heartbeat is set to 0.
+
+Heartbeats are sent from the client to the server, and the server to the client periodically. If no messages are received by a client or a server for some length of time, the client or server should disconnect.
+
+Client-to-Server
+ 
+
+Login Request (Message Type = 100)
+Token Type :(Offset:3, Length:1, Type: Byte)
+Login Token:(Offset:4, Length:n(max:255), Type:Bytes)
+
+
+
+Stream Request (Message Type = 103)
+Session-ID (Offset 3, Length:8, Type: Numberic)
+Next Sequence Number: (Offset:11,Length:8, TYpe:Numeric)
+
+Next Sequence Number
+
+The first requested sequence number.
+
+A value of 0 indicates the current maximum sequence number of the session.
+
+Stream requests may be sent on a supported server connection after a client completes the login process and receives a Session Started message.
+
+Clients must specify their desired session ID copied from the Session Started message as a means of removing state race conditions between the server’s session state and the client.
+
+The sequence number must be less than the current maximum sequence of the requested session.If the request is accepted, clients will receive continuous streaming messages until the end of stream event is received, starting from the requested sequence number.
+
+If any stream request is rejected due to validation or capabilities mismatches, a Stream Rejected message will be sent from the server, and the client will be able to try their request again.
+
+Stream Requests will only be accepted when the server is in Stream Mode (as indicated by the receipt of an 'S' in the Request Mode field of the Login Accepted message (see Login Accepted below).
+
+ 
+
+Unsequenced Message (Message Type = 104)
+Payload (Offset:3, Length:n, Types:Bytes)
+
+
+Unsequenced messages allow clients to send business level messages to the server while streaming data. The messages may be sent on a supported server connection after the user completes the login process and successfully negotiates a Stream session.
+
+The unsequenced message is inferred to apply to the session ID of the in-progress Stream session. If the End of Session message is received, no further unsequenced messages will be accepted on this connection.
+
+The format of the payload of the message is defined by the protocol which is wrapped by this session.
+
+If an unsequenced message is malformed or invalid, the client will be forcibly disconnected.
+
+ 
+
+Server-to-Client
+ 
+
+Login Accepted (Message Type = 1)
+Suppported Request Mode (Offset:3, Length:1, Type:Byte)
+
+Supported Request Modes:
+S - Stream Mode
+R- Replay Mode
+T - Snapshot mode
+
+
+Login Accepted messages do not increment the sequence number of the stream.
+
+ 
+
+Login Rejected (Message Type = 2)
+
+Reject Code(Offset:3, Length:1, Type:Byte)
+
+
+
+End of Session (Message Type = 4)
+No additional messages will be received on the previously active session once this message has been received.
+
+ 
+Start of Session( Message Type =3)
+
+Session ID: (Offset:3, Length:8, Type:Numeric)
+
+
