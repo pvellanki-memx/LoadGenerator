@@ -1,133 +1,132 @@
-
-
-
-
-Connection Procedure
-Once a TCP connection is established, clients should send a login message to authorize the session.
-
-If the client’s credentials are not accepted, a Login Rejected message will be sent to the client and the TCP connection will be closed.
-
-If the login is accepted, the server will send a Login Accepted message, which will inform the client of which request mode is allowed on the session. (See above).
-
-After a Login Accepted is received, clients should begin sending Heartbeat messages to the server on a periodic basis. If the server fails to receive client heartbeats after some interval, it may close the client’s TCP connection.
-
-At some point after the Login Accepted message has been received, clients will receive a Start Of Session message which contains the current session ID. If the client is connecting into a server operating with a session that is already in progress, they should expect to receive a Start Of Session message immediately following the Login Accepted message.
-
-After receipt of a Login Accepted message, clients may send either a Replay Request, ReplayAll Request, or Stream Request message to the server to initiate data transmission.
-
-If the data transmission request is rejected, clients will receive a Replay Rejected or Stream Rejected message with a corresponding error reason. Clients may issue a new transmission request without closing and re-opening their connection.
-
-If the data transmission request is accepted, the server will transmit a Replay Begin or Stream Begin message containing the next expected sequence number, followed by Sequenced Message events containing the requested data.
-
-
-MessageHeader={
-    blockLength=96;
-    templateId=1;
-    schemaId=1;
-    version=266
-};
-ClOrdID=1686883344217;
-Symbol=UBER;
-Side=Sell(2);
-OrderQty=300;
-OrdType=Limit(2);
-Price=15;
-TimeInForce=Day(0);
-OrderCapacity=Agency(A);
-CustOrderCapacity=MemberTradingOnTheirOwnAccount(1);
-ExecInst=4;
-RepriceFrequency=SingleReprice(0);
-RepriceBehavior=RepriceLockRepriceCross(2);
-UnsequencedMessage={
-    TCPHeader={
-        MessageLength=102;
-        MessageType=104
-    }    
-
-
-Unsequenced Message (Message Type = 104)
-Offset
-
-Length
-
-Type
-
-Name
-
-Description
-
-3
-
-n
-
-Bytes
-
-Payload
-
-Payload of the message
-
-Unsequenced messages allow clients to send business level messages to the server while streaming data. The messages may be sent on a supported server connection after the user completes the login process and successfully negotiates a Stream session.
-
-The unsequenced message is inferred to apply to the session ID of the in-progress Stream session. If the End of Session message is received, no further unsequenced messages will be accepted on this connection.
-
-The format of the payload of the message is defined by the protocol which is wrapped by this session.
-
-If an unsequenced message is malformed or invalid, the client will be forcibly disconnected.
-
-
-
-Stream Request (Message Type = 103)
-Session ID (length =8) :The identifier of the session for which data is desired
-Next Sequence Number(length =8):The first requested sequence number.A value of 0 indicates the current maximum sequence number of the session.
-
-Stream requests may be sent on a supported server connection after a client completes the login process and receives a Session Started message.
-
-Clients must specify their desired session ID copied from the Session Started message as a means of removing state race conditions between the server’s session state and the client.
-
-The sequence number must be less than the current maximum sequence of the requested session.If the request is accepted, clients will receive continuous streaming messages until the end of stream event is received, starting from the requested sequence number.
-
-If any stream request is rejected due to validation or capabilities mismatches, a Stream Rejected message will be sent from the server, and the client will be able to try their request again.
-
-Stream Requests will only be accepted when the server is in Stream Mode (as indicated by the receipt of an 'S' in the Request Mode field of the Login Accepted message (see Login Accepted below).
-
-
-
-
-
-
-
-
-
-
-
-Start of Session (Message Type = 3)
-
-
-Session ID (length is 8, offset is 3 and type is numeric)
-
-A session identifier for the current session on this connection.
-
-A start of session message will be received when a session becomes available on the connection. In the case where the client is connected before the session has been opened on the server, the start of session message may be received some time after the login process has been completed. In the event where the session is already in progress before the client connects, the start of session message will be received immediately following the Login Accepted message.
-
-Start of session messages do not increment the sequence number of the stream.
-
-
-
-
-
-Stream Rejected (Message Type = 9)
-
-
-Reject Code (length is 1, offset =3)
-
-The code for the rejection type (See below)
-
-
-R =Start sequence number out of range
-
-P= The last stream request received was rejected by the server.
-
-S = Stream rejected messages do not increment the sequence number of the connection.
-
-The connection will be gracefully shutdown after this message is sent for an invalid request, and the client will need to reconnect and re-login.
-
+import socket
+import struct
+
+# TCP/IP connection details
+host = '10.2.128.10'
+port = 30076
+
+# Token and header details
+user = 'exactpro6'
+password = 'expro6pwd'
+token = f'{user}:{password}'
+
+# Login request
+message_type = 100
+token_type = 'P'  # Assuming token type is always 'P'
+token_length = len(token)
+header = struct.pack('!BHB', message_type, token_length + 1, token_type.encode('utf-8')[0])
+message = header + token.encode('utf-8')
+
+# Create a socket and establish the connection
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client_socket.connect((host, port))
+
+# Set socket to binary mode
+client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+
+# Send the login request
+client_socket.sendall(message)
+
+# Receive and handle the response
+response_header = client_socket.recv(2)
+response_type, response_length = struct.unpack('!BB', response_header)
+
+if response_type == 1:  # Login Accepted
+    response_message = client_socket.recv(response_length)
+    print("Login Accepted:", response_message.decode('utf-8'))
+    session_id = None
+elif response_type == 2:  # Login Rejected
+    response_message = client_socket.recv(response_length)
+    print("Login Rejected:", response_message.decode('utf-8'))
+    client_socket.close()
+    exit()  # Exit the script gracefully after login rejection
+else:
+    print("Invalid response received.")
+    client_socket.close()
+    exit()  # Exit the script if an invalid response is received
+
+# Continue with the session
+while True:
+    response_header = client_socket.recv(2)
+    response_type, response_length = struct.unpack('!BB', response_header)
+
+    if response_type == 3:  # Start of Session
+        response_message = client_socket.recv(response_length)
+        session_id = struct.unpack('!Q', response_message[3:11])[0]
+        print("Start of Session. Session ID:", session_id)
+        break
+    elif response_type == 9:  # Stream Rejected
+        response_message = client_socket.recv(response_length)
+        reject_code = response_message.decode('utf-8')
+        print("Stream Rejected. Reject Code:", reject_code)
+        client_socket.close()
+        exit()  # Exit the script if stream is rejected
+    else:
+        print("Invalid response received.")
+        client_socket.close()
+        exit()  # Exit the script if an invalid response is received
+
+# Stream Request
+stream_request_type = 103
+stream_request_length = 16
+next_sequence_number = 0
+stream_request_header = struct.pack('!BHBQQ', stream_request_type, stream_request_length, session_id, next_sequence_number)
+stream_request = stream_request_header
+
+# Send the Stream Request
+client_socket.sendall(stream_request)
+
+# New Order Single
+cl_ord_id = 1686883344217
+symbol = 'UBER'
+side = 2  # Sell
+order_qty = 300
+ord_type = 2  # Limit
+price = 15
+time_in_force = 0  # Day
+order_capacity = 'A'  # Agency
+cust_order_capacity = 1  # MemberTradingOnTheirOwnAccount
+exec_inst = 4
+reprice_frequency = 0  # SingleReprice
+reprice_behavior = 2  # RepriceLockRepriceCross
+
+new_order_single_header = struct.pack('!BHQ4sBqBqBBB',
+                                      1,  # Template ID for New Order Single
+                                      77,  # Length of New Order Single message (excluding template ID and length fields)
+                                      cl_ord_id,
+                                      symbol.encode('utf-8'),
+                                      side,
+                                      order_qty,
+                                      ord_type,
+                                      price,
+                                      time_in_force,
+                                      order_capacity.encode('utf-8')[0],
+                                      cust_order_capacity,
+                                      exec_inst,
+                                      reprice_frequency,
+                                      reprice_behavior)
+
+# Unsequenced Message
+unsequenced_message_header = struct.pack('!BHB', 104, 6, 102)  # MessageType=104, MessageLength=6, TCP Header Length=102
+unsequenced_message_body = struct.pack('!BH', 102, 104)  # TCP Header MessageLength=102, MessageType=104
+unsequenced_message = unsequenced_message_header + unsequenced_message_body
+
+# Send the New Order Single with Unsequenced Message
+client_socket.sendall(new_order_single_header + unsequenced_message)
+
+# Receive and handle the response
+response_header = client_socket.recv(2)
+response_type, response_length = struct.unpack('!BB', response_header)
+
+if response_type == 9:  # Stream Rejected
+    response_message = client_socket.recv(response_length)
+    reject_code = response_message.decode('utf-8')
+    print("Stream Rejected. Reject Code:", reject_code)
+elif response_type == 10:  # End of Stream
+    response_message = client_socket.recv(response_length)
+    print("End of Stream")
+else:
+    print("Invalid response received.")
+
+# Close the socket
+client_socket.close()
