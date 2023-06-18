@@ -1,3 +1,7 @@
+
+
+
+
 Connection Procedure
 Once a TCP connection is established, clients should send a login message to authorize the session.
 
@@ -85,3 +89,45 @@ The sequence number must be less than the current maximum sequence of the reques
 If any stream request is rejected due to validation or capabilities mismatches, a Stream Rejected message will be sent from the server, and the client will be able to try their request again.
 
 Stream Requests will only be accepted when the server is in Stream Mode (as indicated by the receipt of an 'S' in the Request Mode field of the Login Accepted message (see Login Accepted below).
+
+
+
+
+
+
+
+
+
+
+
+Start of Session (Message Type = 3)
+
+
+Session ID (length is 8, offset is 3 and type is numeric)
+
+A session identifier for the current session on this connection.
+
+A start of session message will be received when a session becomes available on the connection. In the case where the client is connected before the session has been opened on the server, the start of session message may be received some time after the login process has been completed. In the event where the session is already in progress before the client connects, the start of session message will be received immediately following the Login Accepted message.
+
+Start of session messages do not increment the sequence number of the stream.
+
+
+
+
+
+Stream Rejected (Message Type = 9)
+
+
+Reject Code (length is 1, offset =3)
+
+The code for the rejection type (See below)
+
+
+R =Start sequence number out of range
+
+P= The last stream request received was rejected by the server.
+
+S = Stream rejected messages do not increment the sequence number of the connection.
+
+The connection will be gracefully shutdown after this message is sent for an invalid request, and the client will need to reconnect and re-login.
+
