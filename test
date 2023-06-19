@@ -1,80 +1,145 @@
 import socket
 import struct
 
-# TCP connection details
-TCP_IP = '127.0.0.1'
-TCP_PORT = 1234
+# TCP/IP connection details
+host = '10.2.128.10'
+port = 30076
 
-# Login details
-TOKEN_TYPE = b'\x01'  # Example token type
-LOGIN_TOKEN = b'MyLoginToken'  # Example login token
+# Token and header details
+user = 'exactpro6'
+password = 'expro6pwd'
+token = f'{user}:{password}'
 
-# Stream request details
-SESSION_ID = 1234567890  # Example session ID
-NEXT_SEQUENCE_NUMBER = 1  # Example next sequence number
+# Login request
+message_type = 100
+token_type = 'P'  # Assuming token type is always 'P'
+token_length = len(token)
+header = struct.pack('!BHB', message_type, token_length + 1, token_type.encode('utf-8')[0])
+message = header + token.encode('utf-8')
 
-# NewOrderSingle message details
-CL_ORD_ID = 1686883344217  # Example ClOrdID
-SYMBOL = 'UBER'  # Example symbol
-SIDE = 2  # Example side
-ORDER_QTY = 300  # Example order quantity
-ORD_TYPE = 2  # Example order type
-PRICE = 15  # Example price
-TIME_IN_FORCE = 0  # Example time in force
-ORDER_CAPACITY = 'A'  # Example order capacity
-CUST_ORDER_CAPACITY = 1  # Example customer order capacity
-EXEC_INST = 4  # Example execution instruction
+# Create a socket and establish the connection
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client_socket.connect((host, port))
 
+# Set socket to binary mode
+client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
-def send_message(message):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((TCP_IP, TCP_PORT))
-    s.sendall(message)
-    response = s.recv(1024)
-    s.close()
-    return response
+# Send the login request
+client_socket.sendall(message)
 
+# Receive and handle the response
+response_header = client_socket.recv(2)
+response_type, response_length = struct.unpack('!BB', response_header)
 
-# Login Request
-login_request_type = 100
-login_request_length = len(TOKEN_TYPE) + len(LOGIN_TOKEN) + 4  # 4 bytes for message type and length
-login_request_header = struct.pack('!BHB', login_request_type, login_request_length, len(TOKEN_TYPE))
-login_request = login_request_header + TOKEN_TYPE + LOGIN_TOKEN
-login_response = send_message(login_request)
-print(f'Login Response: {login_response}')
+if response_type == 1:  # Login Accepted
+    response_message = client_socket.recv(response_length)
+    print("Login Accepted:", response_message.decode('utf-8'))
+    session_id = None
+elif response_type == 2:  # Login Rejected
+    response_message = client_socket.recv(response_length)
+    print("Login Rejected:", response_message.decode('utf-8'))
+    client_socket.close()
+    exit()  # Exit the script gracefully after login rejection
+else:
+    print("Invalid response received.")
+    client_socket.close()
+    exit()  # Exit the script if an invalid response is received
 
-# Start Of Session
-start_of_session_type = 3
-start_of_session_length = 12  # 4 bytes for message type and length, 8 bytes for session ID
-start_of_session_header = struct.pack('!BHBQ', start_of_session_type, start_of_session_length, SESSION_ID)
-start_of_session = start_of_session_header
-start_of_session_response = send_message(start_of_session)
-print(f'Start Of Session Response: {start_of_session_response}')
+# Continue with the session
+while True:
+    response_header = client_socket.recv(2)
+    response_type, response_length = struct.unpack('!BB', response_header)
+    print(response_header, response_type, response_length)
+
+    if response_type == 3:  # Start of Session
+        response_message = client_socket.recv(response_length)
+        session_id = struct.unpack('!Q', response_message[3:11])[0]
+        print("Start of Session. Session ID:", session_id)
+        break
+    else:
+        print("Invalid response received.")
+
 
 # Stream Request
 stream_request_type = 103
 stream_request_length = 16  # 4 bytes for message type and length, 8 bytes for session ID, 8 bytes for next sequence number
-stream_request_header = struct.pack('!BHBQQ', stream_request_type, stream_request_length, SESSION_ID, NEXT_SEQUENCE_NUMBER)
+NEXT_SEQUENCE_NUMBER = 0
+stream_request_header = struct.pack('!BHBQQ', stream_request_type, stream_request_length, session_id, NEXT_SEQUENCE_NUMBER)
 stream_request = stream_request_header
-stream_request_response = send_message(stream_request)
-print(f'Stream Request Response: {stream_request_response}')
 
-# NewOrderSingle message
-new_order_single_type = 104
-new_order_single_length = 84  # 4 bytes for message type and length, 80 bytes for NewOrderSingle fields
-new_order_single_header = struct.pack('!BHB', new_order_single_type, new_order_single_length)
-new_order_single = (
-    new_order_single_header +
-    struct.pack('!Q', CL_ORD_ID) +
-    SYMBOL.encode('utf-8') + b'\x00' * (12 - len(SYMBOL)) +
-    struct.pack('!B', SIDE) +
-    struct.pack('!I', ORDER_QTY) +
-    struct.pack('!B', ORD_TYPE) +
-    struct.pack('!d', PRICE) +
-    struct.pack('!B', TIME_IN_FORCE) +
-    ORDER_CAPACITY.encode('utf-8') +
-    struct.pack('!B', CUST_ORDER_CAPACITY) +
-    struct.pack('!B', EXEC_INST)
-)
-new_order_single_response = send_message(new_order_single)
-print(f'NewOrderSingle Response: {new_order_single_response}')
+
+# Send the Stream Request
+client_socket.sendall(stream_request)
+
+
+response_header = client_socket.recv(2)
+response_type, response_length = struct.unpack('!BB', response_header)
+
+if response_type == 9:  # Stream Rejected
+    response_message = client_socket.recv(response_length)
+    reject_code = response_message.decode('utf-8')
+    print("Stream Rejected. Reject Code:", reject_code)
+    client_socket.close()
+    exit()
+elif response_type == 10:  # End of Stream
+    response_message = client_socket.recv(response_length)
+    print("End of Stream")
+    client_socket.close()
+    exit()
+else:
+    print("Invalid response received.")
+
+# New Order Single
+cl_ord_id = 1686883344217
+symbol = 'UBER'
+side = 2  # Sell
+order_qty = 300
+ord_type = 2  # Limit
+price = 1500000
+exponent = -6
+time_in_force = 0  # Day
+order_capacity = 'A'  # Agency
+cust_order_capacity = 1  # MemberTradingOnTheirOwnAccount
+exec_inst = 0
+reprice_frequency = 0  # SingleReprice
+reprice_behavior = 2  # RepriceLockRepriceCross
+price_type_bytes = struct.pack('!qB',price, exponent)
+
+#SBE Header
+BlockLength = 96
+TemplateID = 1
+SchemaID = 1
+Version =  266
+new_order_single_header = struct.pack( '!HBBH',BlockLength,TemplateID,SchemaID,Version)
+
+new_order_single_body = struct.pack('!16s6sBIBqBsBB2sBB',cl_ord_id,
+symbol.encode('utf-8'),side,order_qty,ord_type,price,exponent,time_in_force,order_capacity.encode('utf-8')[0],cust_order_capacity,exec_inst,reprice_frequency,reprice_behavior)
+new_order_single = new_order_single_header + new_order_single_body
+
+# Unsequenced Message
+unsequenced_message_header = struct.pack('!BH', 104, 102) # MessageType=104, MessageLength=6, TCP Header Length=102
+unsequenced_message_body = struct.pack('!H', 104)  # TCP Header MessageLength=102, MessageType=104
+unsequenced_message = unsequenced_message_header + unsequenced_message_body
+
+# Send the New Order Single with Unsequenced Message
+client_socket.sendall(new_order_single + unsequenced_message)
+
+# Receive and handle the response
+response_header = client_socket.recv(2)
+response_type, response_length = struct.unpack('!BB', response_header)
+
+
+
+# Close the socket
+client_socket.close()
+
+
+Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/sbe/options/sbe_tool.py", line 56, in <module>
+    session_id = struct.unpack('!Q', response_message[3:11])[0]
+struct.error: unpack requires a buffer of 8 bytes
+
+Start of Session(MessageType=3)
+SessionID (Offset:3, Length:8, Type numeric)
+
+
