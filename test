@@ -185,3 +185,10 @@ new_order_single_body = struct.pack('!16s6sBIBqBsBBHBB', cl_ord_id.encode('utf-8
                                     reprice_frequency, reprice_behavior)
 
 
+
+raceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/sbe/options/sbe_tool.py", line 120, in <module>
+    new_order_single_body = struct.pack('!16s6sBIBqBsBBHBB', cl_ord_id.encode('utf-8'),
+struct.error: ubyte format requires 0 <= number <= 255
+
+
