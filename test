@@ -167,5 +167,12 @@ while True:
     else:
         print("Invalid response received.")
 
-
+Login Accepted: 
+b'\x01S' 1 83
+Invalid response received.
+b'\x03\x00' 3 0
+Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/sbe/options/sbe_tool.py", line 63, in <module>
+    session_id = struct.unpack('!Q', response_message[3:11])[0]  # Adjusted indexing
+struct.error: unpack requires a buffer of 8 bytes
 
