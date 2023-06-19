@@ -176,3 +176,12 @@ Traceback (most recent call last):
     session_id = struct.unpack('!Q', response_message[3:11])[0]  # Adjusted indexing
 struct.error: unpack requires a buffer of 8 bytes
 
+
+
+new_order_single_body = struct.pack('!16s6sBIBqBsBBHBB', cl_ord_id.encode('utf-8'),
+                                    symbol.encode('utf-8'), side, order_qty, ord_type, price, exponent,
+                                    time_in_force.encode('utf-8')[0], order_capacity.encode('utf-8')[0],
+                                    cust_order_capacity, exec_inst,
+                                    reprice_frequency, reprice_behavior)
+
+
