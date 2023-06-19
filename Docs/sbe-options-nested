@@ -172,3 +172,35 @@ BlockLength: 26
 00000080: 61727479 49443031 32333435 36373865   |artyID012345678e|
 00000090: 48556677 551122be ef120141 42434445   |HUfwU."....ABCDE|
 000000a0: 46474849 4a4b4c4d 4e4f5061 44         |FGHIJKLMNOPaD|
+
+
+
+
+
+
+
+
+
+NewOrderSIngle:
+
+SBEHeader
+SendingTime (Offset:3, Length:8, TYpe UTCTimeStampNanos)
+ClOrdID (Offset:15, Length:20, Type:Char)
+OptionsSecurityID(Offset:35, Length:8, Type:Char)
+Side( Offset:43, Length:1, TYpe:SideType)
+OrderQty( Offset:44, Length:4, Type: UINT32)
+OrderType( Offset:48, Length:1. Type:ordType)
+Price( Offset:49, Length: 8, Type:priceType)
+TimeinForce (Offset:57, Length:1)
+OpenOrClose (Offset:58, Length :1)
+ExecInst (Offset: 59, Length:2)
+TradingCapcity (Offset: 61, Length:1)
+RepriceFrequency( Offset:62, Length:1)
+RepriceBehavior (Offset:63, Length:1)
+MtpGroupID(Offset:64, Length:2)
+MatchTradePrevention(Offset:66, Length:1)
+CancelGroupID(Offset:67, Length:2 Type:UINT16)
+RiskGroupID(Offset:69, Length:2 Type:UINT16)
+
+{NoPartyIDS, Parties]
+NoPartyIDs (Offset:
