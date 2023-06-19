@@ -143,3 +143,29 @@ Start of Session(MessageType=3)
 SessionID (Offset:3, Length:8, Type numeric)
 
 
+
+# Continue with the session
+while True:
+    response_header = client_socket.recv(2)
+    response_type, response_length = struct.unpack('!BB', response_header)
+    print(response_header, response_type, response_length)
+
+    if response_type == 3:  # Start of Session
+        response_message = b""
+        while len(response_message) < response_length:
+            chunk = client_socket.recv(response_length - len(response_message))
+            if not chunk:
+                break
+            response_message += chunk
+
+        if len(response_message) >= response_length:
+            session_id = struct.unpack('!Q', response_message[2:10])[0]  # Adjusted indexing
+            print("Start of Session. Session ID:", session_id)
+            break
+        else:
+            print("Incomplete response received. Waiting for the complete message.")
+    else:
+        print("Invalid response received.")
+
+
+
