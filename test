@@ -192,3 +192,11 @@ raceback (most recent call last):
 struct.error: ubyte format requires 0 <= number <= 255
 
 
+
+Invalid Message received
+Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/sbe/options/sbe_tool.py", line 120, in <module>
+    new_order_single_body = struct.pack('!16s6sBIBqBsBBHBB', cl_ord_id,
+struct.error: argument for 's' must be a bytes object
+
+
