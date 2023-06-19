@@ -1,254 +1,145 @@
-import configparser
-import random
-import time
-import datetime
-import quickfix as fix
+import socket
+import struct
 
-# Global variables
-sessions = {}
+# TCP/IP connection details
+host = '10.2.128.10'
+port = 30076
 
-# Class representing the FIX application
-class MyApplication(fix.Application):
-    def __init__(self, template_file, message_weights, message_rate):
-        super().__init__()
-        self.template_file = template_file
-        self.message_weights = message_weights
-        self.message_rate = message_rate
-        self.sessions = {}
+# Token and header details
+user = 'exactpro6'
+password = 'expro6pwd'
+token = f'{user}:{password}'
 
-    def onCreate(self, sessionID):
-        print("Session created -", sessionID.toString())
-        self.sessions[sessionID] = fix.Session.lookupSession(sessionID)
+# Login request
+message_type = 100
+token_type = 'P'  # Assuming token type is always 'P'
+token_length = len(token)
+header = struct.pack('!BHB', message_type, token_length + 1, token_type.encode('utf-8')[0])
+message = header + token.encode('utf-8')
 
-    def toAdmin(self, message, sessionID):
-        if message.getHeader().getField(fix.MsgType()).getString() == fix.MsgType_Logon:
-            message.getHeader().setField(1408, "1.10")
-            print("sent admin message", message.toString())
-        return True
+# Create a socket and establish the connection
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client_socket.connect((host, port))
 
-    def toApp(self, message, sessionID):
-        print("sent application message", message.toString())
+# Set socket to binary mode
+client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
-    def fromApp(self, message, sessionID):
-        print("Received application message", message.toString())
+# Send the login request
+client_socket.sendall(message)
 
-    def fromAdmin(self, message, sessionID):
-        global sessions
-        session_id = sessionID.toString()
-        incoming_msg_seq_num = int(message.getHeader().getField(34))
-        msg_type = message.getHeader().getField(35)
+# Receive and handle the response
+response_header = client_socket.recv(2)
+response_type, response_length = struct.unpack('!BB', response_header)
 
-        if msg_type == 'A':  # Logon message
-            if incoming_msg_seq_num == 1:
-                print(f"Session established for {session_id}")
-                sessions[session_id] = True
-        elif msg_type == '5':  # Logout message
-            print(f"Session disconnected for {session_id}")
-            sessions[session_id] = False
+if response_type == 1:  # Login Accepted
+    response_message = client_socket.recv(response_length)
+    print("Login Accepted:", response_message.decode('utf-8'))
+    session_id = None
+elif response_type == 2:  # Login Rejected
+    response_message = client_socket.recv(response_length)
+    print("Login Rejected:", response_message.decode('utf-8'))
+    client_socket.close()
+    exit()  # Exit the script gracefully after login rejection
+else:
+    print("Invalid response received.")
+    client_socket.close()
+    exit()  # Exit the script if an invalid response is received
 
-    def onLogout(self, sessionID):
-        print("Logout initiated -", sessionID.toString())
+# Continue with the session
+while True:
+    response_header = client_socket.recv(2)
+    response_type, response_length = struct.unpack('!BB', response_header)
+    print(response_header, response_type, response_length)
 
-    def onLogon(self, sessionID):
-        print("Logon Successful -", sessionID.toString())
-
-    def generate_clordid(self):
-        return str(random.randint(100000, 999999))
-
-    def calculate_checksum(self, message):
-        checksum = sum(ord(c) for c in message) % 256
-        return f"{checksum:03}"  # Ensure the CheckSum is three digits
-
-    def get_outgoing_seq_num(self, session_id):
-        session = fix.Session.lookupSession(session_id)
-        if session is not None:
-            return session.getExpectedSenderNum()
-        return 0
-
-    def generate_message(self, template, session_id):
-            # Replace placeholders in the message template
-            message = template.replace('<ClOrdID>', self.generate_clordid())
-
-            # Get the outgoing sequence number
-            seq_num = str(self.get_outgoing_seq_num(session_id))
-            print(seq_num)
-
-            # Replace the <SeqNum> placeholder with the sequence number
-            message = message.replace('<MsgSeqNum>', seq_num)
-
-            # Generate the SendingTime in the desired format
-            sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
-            message = message.replace('<SendingTime>', sending_time)
-        
-            # Replace the field delimiter from '|' to SOH character
-            message = message.replace('|', chr(0x01))
-
-            # Calculate the CheckSum
-            #message_factory = fix.MessageFactory()
-            fix_message = fix.Message(message, False)
-            #fix_message.setString(message, False, message_factory)
-            checksum = self.calculate_checksum(fix_message.toString())
-
-            #fix_message.setField(10, checksum)
-            print("generated_message",fix_message)
-
-            # Calculate the message length (excluding SOH characters)
-            #body_start_index = message.index('9=')
-            #body_end_index = message.index('10=')
-            body_length = fix_message.getHeader().getField(9)
-            #print("generated_message",fix_message)
-            #print(body_length)
-
-            # Replace the placeholders for message length and CheckSum
-            #message = message.replace('<BodyLength>', str(body_length))
-            #message = message.replace('<CheckSum>', checksum)
-            #print(message)
-
-            return fix_message
-
-    def increment_outgoing_seq_num(self, session_id):
-        session = fix.Session.lookupSession(fix.SessionID(session_id))
-        if session is not None:
-            session.incrementNextSenderMsgSeqNum()
-
-    def send_heartbeats(self, session_id, interval):
-        while sessions[session_id]:
-            session = fix.Session.lookupSession(fix.SessionID(session_id))
-            if session is not None:
-                heartbeat_message = fix.Message()
-                heartbeat_message.getHeader().setField(34, str(self.get_outgoing_seq_num(session_id)))
-                fix.Session.sendToTarget(heartbeat_message, session_id)
-                self.increment_outgoing_seq_num(session_id)
-            time.sleep(interval)
-
-    def generate_load(self):
-        with open(self.template_file, "r") as file:
-            templates = file.readlines()
-
-        load = []
-        for template in templates:
-            message_type = self.get_message_type(template)
-            if message_type and message_type in self.message_weights:
-                weight = int(self.message_weights[message_type])
-                load.extend([template.strip()] * weight)
-
-        print(f"Generated load: {load}")
-        random.shuffle(load)
-        load_length = len(load)
-        iterations = int(self.message_rate * self.send_duration)
-
-        if iterations > load_length:
-            quotient, remainder = divmod(iterations, load_length)
-            print(f"Repeating load: {quotient} times, with remainder: {remainder}")
-            load = load * quotient + load[:remainder]
-        else:
-            load = load[:iterations]
-
-        return load
-
-    def get_message_type(self, message):
-        fields = message.split("|")
-        for field in fields:
-            if field.startswith("35="):
-                return field.split("=")[1].lower()
-        return ""
-
-    """
-    def run(self):
-        settings = fix.SessionSettings(self.connection_config_file)
-        application = fix.SocketInitiator(self, fix.FileStoreFactory(settings), settings)
-        application.start()
-
-        while not all(sessions.values()):
-            time.sleep(1)
-
-        load = self.generate_load()
-
-        start_time = time.time()
-        message_count = 0
-
-        while True:
-            elapsed_time = time.time() - start_time
-
-            if elapsed_time >= self.send_duration:
-                break
-
-            if message_count >= len(load):
-                message_count = 0
-            print(sessions)
-
-            for session_id in sessions:
-                session = fix.Session.lookupSession(session_id)
-                print(session)
-
-                if session is not None and session.isLoggedOn():
-                   message = self.generate_message(load[message_count])
-                   fix.Session.sendToTarget(message, self.session_id)
-
-            message_count += 1
-
-            time.sleep(1)
-
-        application.stop()
-
-    """
-        
-    def run(self):
-        settings = fix.SessionSettings(self.connection_config_file)
-        application = fix.SocketInitiator(self, fix.FileStoreFactory(settings), settings)
-        application.start()
-
-        while not all(session.isLoggedOn() for session in self.sessions.values()):
-            time.sleep(1)
-
-        load = self.generate_load()
-
-        start_time = time.time()
-        message_count = 0
-
-        while True:
-            elapsed_time = time.time() - start_time
-
-            if elapsed_time >= self.send_duration:
-                break
-
-            if message_count >= len(load):
-                message_count = 0
-            print(self.sessions)
-
-            for session_id in self.sessions:
-                session = self.sessions[session_id]
-                print(session)   
-
-                if session is not None and session.isLoggedOn():
-                    message = self.generate_message(load[message_count], session_id)
-                    fix.Session.sendToTarget(message, session_id)
-            message_count += 1
-
-            time.sleep(1)
-
-        application.stop()
+    if response_type == 3:  # Start of Session
+        response_message = client_socket.recv(response_length)
+        session_id = struct.unpack('!Q', response_message[3:11])[0]
+        print("Start of Session. Session ID:", session_id)
+        break
+    else:
+        print("Invalid response received.")
 
 
-# Read configuration from config.ini
-config = configparser.ConfigParser()
-config.read("config.ini")
+# Stream Request
+stream_request_type = 103
+stream_request_length = 16  # 4 bytes for message type and length, 8 bytes for session ID, 8 bytes for next sequence number
+NEXT_SEQUENCE_NUMBER = 0
+stream_request_header = struct.pack('!BHBQQ', stream_request_type, stream_request_length, session_id, NEXT_SEQUENCE_NUMBER)
+stream_request = stream_request_header
 
-# Load configuration values
-template_file = config.get("LoadGenerator", "template_file")
-connection_config_file = config.get("LoadGenerator", "connection_config_file")
-log_file = config.get("LoadGenerator", "log_file")
-message_rate = float(config.get("LoadGenerator", "message_rate"))
-send_duration = int(config.get("LoadGenerator", "send_duration"))
 
-message_weights = dict(config.items("MessageTypes"))
+# Send the Stream Request
+client_socket.sendall(stream_request)
+
+
+response_header = client_socket.recv(2)
+response_type, response_length = struct.unpack('!BB', response_header)
+
+if response_type == 9:  # Stream Rejected
+    response_message = client_socket.recv(response_length)
+    reject_code = response_message.decode('utf-8')
+    print("Stream Rejected. Reject Code:", reject_code)
+    client_socket.close()
+    exit()
+elif response_type == 10:  # End of Stream
+    response_message = client_socket.recv(response_length)
+    print("End of Stream")
+    client_socket.close()
+    exit()
+else:
+    print("Invalid response received.")
+
+# New Order Single
+cl_ord_id = 1686883344217
+symbol = 'UBER'
+side = 2  # Sell
+order_qty = 300
+ord_type = 2  # Limit
+price = 1500000
+exponent = -6
+time_in_force = 0  # Day
+order_capacity = 'A'  # Agency
+cust_order_capacity = 1  # MemberTradingOnTheirOwnAccount
+exec_inst = 0
+reprice_frequency = 0  # SingleReprice
+reprice_behavior = 2  # RepriceLockRepriceCross
+price_type_bytes = struct.pack('!qB',price, exponent)
+
+#SBE Header
+BlockLength = 96
+TemplateID = 1
+SchemaID = 1
+Version =  266
+new_order_single_header = struct.pack( '!HBBH',BlockLength,TemplateID,SchemaID,Version)
+
+new_order_single_body = struct.pack('!16s6sBIBqBsBB2sBB',cl_ord_id,
+symbol.encode('utf-8'),side,order_qty,ord_type,price,exponent,time_in_force,order_capacity.encode('utf-8')[0],cust_order_capacity,exec_inst,reprice_frequency,reprice_behavior)
+new_order_single = new_order_single_header + new_order_single_body
+
+# Unsequenced Message
+unsequenced_message_header = struct.pack('!BH', 104, 102) # MessageType=104, MessageLength=6, TCP Header Length=102
+unsequenced_message_body = struct.pack('!H', 104)  # TCP Header MessageLength=102, MessageType=104
+unsequenced_message = unsequenced_message_header + unsequenced_message_body
+
+# Send the New Order Single with Unsequenced Message
+client_socket.sendall(new_order_single + unsequenced_message)
+
+# Receive and handle the response
+response_header = client_socket.recv(2)
+response_type, response_length = struct.unpack('!BB', response_header)
 
 
 
-# Initialize the FIX application
-app = MyApplication(template_file, message_weights, message_rate)
-app.connection_config_file = connection_config_file
-app.send_duration = send_duration
+# Close the socket
+client_socket.close()
 
-# Run the FIX application
-app.run()
+
+Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/sbe/options/sbe_tool.py", line 56, in <module>
+    session_id = struct.unpack('!Q', response_message[3:11])[0]
+struct.error: unpack requires a buffer of 8 bytes
+
+Start of Session(MessageType=3)
+SessionID (Offset:3, Length:8, Type numeric)
+
+
