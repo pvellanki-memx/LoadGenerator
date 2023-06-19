@@ -202,5 +202,8 @@ MatchTradePrevention(Offset:66, Length:1)
 CancelGroupID(Offset:67, Length:2 Type:UINT16)
 RiskGroupID(Offset:69, Length:2 Type:UINT16)
 
-{NoPartyIDS, Parties]
-NoPartyIDs (Offset:
+Repeating group: {NoPartyIDS, Parties]
+
+NoPartyIDS as one field that defines the dimensions of repeating group and inside parties group, we have 3 fields partyID(Offset:0, Length:16, Type:Char) , PartyIDSource(Offset:17, Length:1, Type: Char), PartyRole,(Offset:18, Length:1, Type:UINT8)
+
+
