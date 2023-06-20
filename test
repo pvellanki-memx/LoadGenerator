@@ -234,3 +234,34 @@ unsequenced_message_body = struct.pack('!H', 104)  # TCP Header MessageLength=10
 unsequenced_message = unsequenced_message_header + unsequenced_message_body
 
 
+ Here's a reminder of the format strings used in the struct.pack function:
+
+'x': Pad byte (no value)
+'c': Character
+'b': Signed char
+'B': Unsigned char
+'h': Short
+'H': Unsigned short
+'i': Int
+'I': Unsigned int
+'l': Long
+'L': Unsigned long
+'q': Long long
+'Q': Unsigned long long
+'f': Float
+'d': Double
+'s': String (must be preceded by the length of the string, e.g., '20s')
+'p': Packed pointer (used for platform-specific pointers)
+'?': Boolean (requires Python 3.4+)
+Each format character is followed by an optional number that specifies the size of the field, e.g., '20s' indicates a string of length 20.
+
+Additionally, you can use special characters to control byte order, alignment, and size:
+
+'=': Native byte order (default)
+'<': Little-endian
+'>': Big-endian
+'!': Network byte order (big-endian)
+For example, '>Q' represents an unsigned long long (8 bytes) in big-endian byte order.
+
+Note that the format strings may vary depending on the platform and Python version you are using. It's always a good idea to consult the struct documentation for the specific details.
+
