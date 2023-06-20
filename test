@@ -46,3 +46,7 @@ new_order_single_body = new_order_single_body[:0] + struct.pack('!H', sbe_header
 # Print the hexadecimal representation
 hex_representation = new_order_single_body.hex()
 print(hex_representation)
+
+
+16s4s6s6sBIBB8s1s1sQI4s4sB4s4sB2s2sHBH'
+
