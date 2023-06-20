@@ -48,5 +48,5 @@ hex_representation = new_order_single_body.hex()
 print(hex_representation)
 
 
-6s16s4s6s6sBIBdBBB2s8sB8sIIBB4sBBBHHBH
+16s4s6s6sBIBdBBB2s8sB8sIIBB4sBBBHHBH4s
 
