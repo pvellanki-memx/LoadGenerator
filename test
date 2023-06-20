@@ -74,3 +74,8 @@ new_order_single_body = struct.pack('!16sB6sBIB4s1sccBBBBHHLHHLBHLHHLH',
 
 message_length = len(new_order_single_header) + len(new_order_single_body)
 print("NewOrderSingle message length:", message_length)
+
+
+hex_representation = new_order_single_header.hex() + new_order_single_body.hex()
+print("Hex representation:")
+print(hex_representation)
