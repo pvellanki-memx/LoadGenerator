@@ -28,8 +28,9 @@ client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 client_socket.sendall(message)
 
 # Receive and handle the response
-response_header = client_socket.recv(2)
-response_type, response_length = struct.unpack('!BB', response_header)
+response_header = client_socket.recv(3)
+response_type, response_length = struct.unpack('!B H', response_header)
+print(response_type, response_length)
 
 if response_type == 1:  # Login Accepted
     response_message = client_socket.recv(response_length)
@@ -47,14 +48,12 @@ else:
 
 # Continue with the session
 while True:
-    response_header = client_socket.recv(2)
-    response_type, response_length = struct.unpack('!BB', response_header)
+    response_header = client_socket.recv(11)
+    response_type, response_length, session_id = struct.unpack('!B H Q', response_header)
     print(response_header, response_type, response_length)
 
     if response_type == 3:  # Start of Session
-        response_message = client_socket.recv(response_length)
-        session_id = struct.unpack('!Q', response_message[3:11])[0]
-        print("Start of Session. Session ID:", session_id)
+        print("Startof Session. Session ID", session_id)
         break
     else:
         print("Invalid response received.")
@@ -64,7 +63,7 @@ while True:
 stream_request_type = 103
 stream_request_length = 16  # 4 bytes for message type and length, 8 bytes for session ID, 8 bytes for next sequence number
 NEXT_SEQUENCE_NUMBER = 0
-stream_request_header = struct.pack('!BHBQQ', stream_request_type, stream_request_length, session_id, NEXT_SEQUENCE_NUMBER)
+stream_request_header = struct.pack('!BHQQ', stream_request_type, stream_request_length, session_id, NEXT_SEQUENCE_NUMBER)
 stream_request = stream_request_header
 
 
@@ -72,8 +71,9 @@ stream_request = stream_request_header
 client_socket.sendall(stream_request)
 
 
-response_header = client_socket.recv(2)
-response_type, response_length = struct.unpack('!BB', response_header)
+response_header = client_socket.recv(3)
+response_type, response_type = struct.unpack('!B H', response_header)
+print(response_type,response_type)
 
 if response_type == 9:  # Stream Rejected
     response_message = client_socket.recv(response_length)
@@ -86,120 +86,13 @@ elif response_type == 10:  # End of Stream
     print("End of Stream")
     client_socket.close()
     exit()
+elif response_type == 8:  # Stream Begin 
+    response_message = client_socket.recv(response_length - 2)
+    print(response_message)
+    NEXT_SEQUENCE_NUMBER, MAX_SEQUENCE_NUMBER = struct.unpack('!QQ', response_message[2:])
+    print("Stream Begin received")
 else:
-    print("Invalid response received.")
-
-# New Order Single
-cl_ord_id = 1686883344217
-symbol = 'UBER'
-side = 2  # Sell
-order_qty = 300
-ord_type = 2  # Limit
-price = 1500000
-exponent = -6
-time_in_force = 0  # Day
-order_capacity = 'A'  # Agency
-cust_order_capacity = 1  # MemberTradingOnTheirOwnAccount
-exec_inst = 0
-reprice_frequency = 0  # SingleReprice
-reprice_behavior = 2  # RepriceLockRepriceCross
-price_type_bytes = struct.pack('!qB',price, exponent)
-
-#SBE Header
-BlockLength = 96
-TemplateID = 1
-SchemaID = 1
-Version =  266
-new_order_single_header = struct.pack( '!HBBH',BlockLength,TemplateID,SchemaID,Version)
-
-new_order_single_body = struct.pack('!16s6sBIBqBsBB2sBB',cl_ord_id,
-symbol.encode('utf-8'),side,order_qty,ord_type,price,exponent,time_in_force,order_capacity.encode('utf-8')[0],cust_order_capacity,exec_inst,reprice_frequency,reprice_behavior)
-new_order_single = new_order_single_header + new_order_single_body
-
-# Unsequenced Message
-unsequenced_message_header = struct.pack('!BH', 104, 102) # MessageType=104, MessageLength=6, TCP Header Length=102
-unsequenced_message_body = struct.pack('!H', 104)  # TCP Header MessageLength=102, MessageType=104
-unsequenced_message = unsequenced_message_header + unsequenced_message_body
-
-# Send the New Order Single with Unsequenced Message
-client_socket.sendall(new_order_single + unsequenced_message)
-
-# Receive and handle the response
-response_header = client_socket.recv(2)
-response_type, response_length = struct.unpack('!BB', response_header)
-
-
-
-# Close the socket
-client_socket.close()
-
-
-Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/sbe/options/sbe_tool.py", line 56, in <module>
-    session_id = struct.unpack('!Q', response_message[3:11])[0]
-struct.error: unpack requires a buffer of 8 bytes
-
-Start of Session(MessageType=3)
-SessionID (Offset:3, Length:8, Type numeric)
-
-
-
-# Continue with the session
-while True:
-    response_header = client_socket.recv(2)
-    response_type, response_length = struct.unpack('!BB', response_header)
-    print(response_header, response_type, response_length)
-
-    if response_type == 3:  # Start of Session
-        response_message = b""
-        while len(response_message) < response_length:
-            chunk = client_socket.recv(response_length - len(response_message))
-            if not chunk:
-                break
-            response_message += chunk
-
-        if len(response_message) >= response_length:
-            session_id = struct.unpack('!Q', response_message[2:10])[0]  # Adjusted indexing
-            print("Start of Session. Session ID:", session_id)
-            break
-        else:
-            print("Incomplete response received. Waiting for the complete message.")
-    else:
-        print("Invalid response received.")
-
-Login Accepted: 
-b'\x01S' 1 83
-Invalid response received.
-b'\x03\x00' 3 0
-Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/sbe/options/sbe_tool.py", line 63, in <module>
-    session_id = struct.unpack('!Q', response_message[3:11])[0]  # Adjusted indexing
-struct.error: unpack requires a buffer of 8 bytes
-
-
-
-new_order_single_body = struct.pack('!16s6sBIBqBsBBHBB', cl_ord_id.encode('utf-8'),
-                                    symbol.encode('utf-8'), side, order_qty, ord_type, price, exponent,
-                                    time_in_force.encode('utf-8')[0], order_capacity.encode('utf-8')[0],
-                                    cust_order_capacity, exec_inst,
-                                    reprice_frequency, reprice_behavior)
-
-
-
-raceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/sbe/options/sbe_tool.py", line 120, in <module>
-    new_order_single_body = struct.pack('!16s6sBIBqBsBBHBB', cl_ord_id.encode('utf-8'),
-struct.error: ubyte format requires 0 <= number <= 255
-
-
-
-Invalid Message received
-Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/sbe/options/sbe_tool.py", line 120, in <module>
-    new_order_single_body = struct.pack('!16s6sBIBqBsBBHBB', cl_ord_id,
-struct.error: argument for 's' must be a bytes object
-
-
+    print("Invalid Message received")
 
 # New Order Single
 cl_ord_id = '1686883344217'
@@ -224,44 +117,25 @@ SchemaID = 1
 Version =  266
 new_order_single_header = struct.pack( '!HBBH',BlockLength,TemplateID,SchemaID,Version)
 
-new_order_single_body = struct.pack('!16s6sBIBqbcBcBBB', cl_ord_id.encode('utf-8'),
-                                    symbol.encode('utf-8'), side, order_qty, ord_type, price, exponent ,time_in_force.encode('utf-8'), order_capacity.encode('utf-8'),cust_order_capacity, exec_inst,reprice_frequency, reprice_behavior)
+new_order_single_body = struct.pack('!16s6sBIBqbccBBBB', cl_ord_id.encode('utf-8'),symbol.encode('utf-8'), side, order_qty, ord_type, price, exponent ,time_in_force.encode('utf-8'), order_capacity.encode('utf-8'),cust_order_capacity, exec_inst,reprice_frequency, reprice_behavior)
                                     
-#'',time_in_force.encode('utf-8'), order_capacity.encode('utf-8'),cust_order_capacity, exec_inst,eprice_frequency, reprice_behavior)
+
 # Unsequenced Message
 unsequenced_message_header = struct.pack('!BH', 104, 102) # MessageType=104, MessageLength=6, TCP Header Length=102
 unsequenced_message_body = struct.pack('!H', 104)  # TCP Header MessageLength=102, MessageType=104
 unsequenced_message = unsequenced_message_header + unsequenced_message_body
 
+# Send the New Order Single with Unsequenced Message
+client_socket.sendall(new_order_single_header + new_order_single_body + unsequenced_message)
 
- Here's a reminder of the format strings used in the struct.pack function:
+# Receive and handle the response
+response_header = client_socket.recv(3)
+response_type, response_length = struct.unpack('!B H', response_header)
+print(response_type, response_length)
 
-'x': Pad byte (no value)
-'c': Character
-'b': Signed char
-'B': Unsigned char
-'h': Short
-'H': Unsigned short
-'i': Int
-'I': Unsigned int
-'l': Long
-'L': Unsigned long
-'q': Long long
-'Q': Unsigned long long
-'f': Float
-'d': Double
-'s': String (must be preceded by the length of the string, e.g., '20s')
-'p': Packed pointer (used for platform-specific pointers)
-'?': Boolean (requires Python 3.4+)
-Each format character is followed by an optional number that specifies the size of the field, e.g., '20s' indicates a string of length 20.
 
-Additionally, you can use special characters to control byte order, alignment, and size:
 
-'=': Native byte order (default)
-'<': Little-endian
-'>': Big-endian
-'!': Network byte order (big-endian)
-For example, '>Q' represents an unsigned long long (8 bytes) in big-endian byte order.
+# Close the socket
+client_socket.close()
 
-Note that the format strings may vary depending on the platform and Python version you are using. It's always a good idea to consult the struct documentation for the specific details.
 
