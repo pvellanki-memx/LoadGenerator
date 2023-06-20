@@ -1,166 +1,3 @@
-import socket
-import struct
-
-# TCP/IP connection details
-host = '10.2.128.10'
-port = 30076
-
-# Token and header details
-user = 'exactpro6'
-password = 'expro6pwd'
-token = f'{user}:{password}'
-
-# Login request
-message_type = 100
-token_type = 'P'  # Assuming token type is always 'P'
-token_length = len(token)
-header = struct.pack('!BHB', message_type, token_length + 1, token_type.encode('utf-8')[0])
-message = header + token.encode('utf-8')
-
-# Create a socket and establish the connection
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client_socket.connect((host, port))
-
-# Set socket to binary mode
-client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-
-# Send the login request
-client_socket.sendall(message)
-
-# Receive and handle the response
-response_header = client_socket.recv(3)
-response_type, response_length = struct.unpack('!B H', response_header)
-print(response_type, response_length)
-
-if response_type == 1:  # Login Accepted
-    response_message = client_socket.recv(response_length)
-    print("Login Accepted:", response_message.decode('utf-8'))
-    session_id = None
-elif response_type == 2:  # Login Rejected
-    response_message = client_socket.recv(response_length)
-    print("Login Rejected:", response_message.decode('utf-8'))
-    client_socket.close()
-    exit()  # Exit the script gracefully after login rejection
-else:
-    print("Invalid response received.")
-    client_socket.close()
-    exit()  # Exit the script if an invalid response is received
-
-# Continue with the session
-while True:
-    response_header = client_socket.recv(11)
-    response_type, response_length, session_id = struct.unpack('!B H Q', response_header)
-    print(response_header, response_type, response_length)
-
-    if response_type == 3:  # Start of Session
-        print("Start of Session. Session ID:", session_id)
-        break
-    else:
-        print("Invalid response received.")
-
-
-# Stream Request
-stream_request_type = 103
-stream_request_length = 16  # 4 bytes for message type and length, 8 bytes for session ID, 8 bytes for next sequence number
-NEXT_SEQUENCE_NUMBER = 0
-stream_request_header = struct.pack('!BHQQ', stream_request_type, stream_request_length, session_id, NEXT_SEQUENCE_NUMBER)
-stream_request = stream_request_header
-
-# Send the Stream Request
-client_socket.sendall(stream_request)
-
-response_header = client_socket.recv(3)
-response_type, response_length = struct.unpack('!B H', response_header)
-print(response_type, response_length)
-
-if response_type == 9:  # Stream Rejected
-    response_message = client_socket.recv(response_length)
-    reject_code = response_message.decode('utf-8')
-    print("Stream Rejected. Reject Code:", reject_code)
-    client_socket.close()
-    exit()
-elif response_type == 10:  # End of Stream
-    response_message = client_socket.recv(response_length)
-    print("End of Stream")
-    client_socket.close()
-    exit()
-elif response_type == 8:  # Stream Begin
-    response_message = client_socket.recv(response_length - 2)
-    print(response_message)
-    NEXT_SEQUENCE_NUMBER, MAX_SEQUENCE_NUMBER = struct.unpack('!QQ', response_message[2:])
-    print("Stream Begin received")
-else:
-    print("Invalid Message received")
-
-# New Order Single
-cl_ord_id = '1686883344217'
-symbol = 'UBER'
-side = 2  # Sell
-order_qty = 300
-ord_type = 2  # Limit
-price = 150000
-exponent = -6
-time_in_force = '0'  # Day
-order_capacity = 'A'  # Agency
-cust_order_capacity = 1  # MemberTradingOnTheirOwnAccount
-exec_inst = 0
-reprice_frequency = 0  # SingleReprice
-reprice_behavior = 2  # RepriceLockRepriceCross
-
-# SBE Header
-BlockLength = 96
-TemplateID = 1
-SchemaID = 1
-Version = 266
-new_order_single_header = struct.pack('!HBBH', BlockLength, TemplateID, SchemaID, Version)
-
-new_order_single_body = struct.pack('!16s6sBIBqbccBBBB', cl_ord_id.encode('utf-8'), symbol.encode('utf-8'),
-                                    side, order_qty, ord_type, price, exponent, time_in_force.encode('utf-8'),
-                                    order_capacity.encode('utf-8'), cust_order_capacity, exec_inst,
-                                    reprice_frequency, reprice_behavior)
-
-# Unsequenced Message
-unsequenced_message_header = struct.pack('!BH', 104, 102)  # MessageType=104, MessageLength=6, TCP Header Length=102
-unsequenced_message_body = struct.pack('!H', 104)  # TCP Header MessageLength=102, MessageType=104
-unsequenced_message = unsequenced_message_header + unsequenced_message_body
-
-# Decode function
-def decode_new_order_single(message):
-    cl_ord_id, symbol, side, order_qty, ord_type, price, exponent, time_in_force, order_capacity, cust_order_capacity, exec_inst, reprice_frequency, reprice_behavior = struct.unpack('!16s6sBIBqbccBBBB', message)
-    cl_ord_id = cl_ord_id.decode('utf-8').strip('\x00')
-    symbol = symbol.decode('utf-8').strip('\x00')
-    time_in_force = time_in_force.decode('utf-8')
-    order_capacity = order_capacity.decode('utf-8')
-    print("Decoded New Order Single Message:")
-    print("ClOrdID:", cl_ord_id)
-    print("Symbol:", symbol)
-    print("Side:", side)
-    print("Order Quantity:", order_qty)
-    print("Order Type:", ord_type)
-    print("Price:", price)
-    print("Exponent:", exponent)
-    print("Time in Force:", time_in_force)
-    print("Order Capacity:", order_capacity)
-    print("Cust Order Capacity:", cust_order_capacity)
-    print("Exec Inst:", exec_inst)
-    print("Reprice Frequency:", reprice_frequency)
-    print("Reprice Behavior:", reprice_behavior)
-
-# Print decoded New Order Single message
-decode_new_order_single(new_order_single_body)
-
-# Send the New Order Single with Unsequenced Message
-client_socket.sendall(new_order_single_header + new_order_single_body + unsequenced_message)
-
-# Receive and handle the response
-response_header = client_socket.recv(3)
-response_type, response_length = struct.unpack('!B H', response_header)
-print(response_type, response_length)
-
-# Close the socket
-client_socket.close()
-
-
 import struct
 
 # New Order Single
@@ -200,21 +37,23 @@ schema_id = 1
 version = 266
 new_order_single_header = struct.pack('!HBBH', block_length, template_id, schema_id, version)
 
-new_order_single_body = struct.pack('!16sB6sBIB4s1sccBBBBHHLHH',
+new_order_single_body = struct.pack('!16sB6sBIB4s1sccBBBBHHLHHLBHLHHLH',
                                     cl_ord_id.encode('utf-8'),
-                                    len(mpid) if mpid else 255,
+                                    len(mpid) if mpid else 0,
                                     mpid.encode('utf-8') if mpid else b'\xFF',
+                                    len(symbol),
                                     symbol.encode('utf-8'),
-                                    len(symbol_sfx) if symbol_sfx else 255,
+                                    len(symbol_sfx) if symbol_sfx else 0,
                                     symbol_sfx.encode('utf-8') if symbol_sfx else b'\xFF',
                                     side,
                                     order_qty,
                                     ord_type,
                                     price if price else 0.0,
+                                    len(time_in_force),
                                     time_in_force.encode('utf-8'),
                                     order_capacity.encode('utf-8'),
                                     cust_order_capacity,
-                                    exec_inst,
+                                    exec_inst.to_bytes(2, 'big'),
                                     peg_offset_value if peg_offset_value else 0.0,
                                     peg_price_type if peg_price_type else b'\xFF',
                                     expire_time if expire_time else 0,
@@ -225,7 +64,7 @@ new_order_single_body = struct.pack('!16sB6sBIB4s1sccBBBBHHLHH',
                                     display_min_incr if display_min_incr else 0,
                                     locate_reqd if locate_reqd else b'\xFF',
                                     reprice_frequency if reprice_frequency else 0,
-                                    reprice_behavior if reprice_behavior else 0,
+                                    reprice_behavior if reprice_behavior else b'\xFF',
                                     cancel_group_id if cancel_group_id else 0,
                                     stp_group_id if stp_group_id else 0,
                                     self_trade_prevention if self_trade_prevention else 0,
@@ -233,7 +72,5 @@ new_order_single_body = struct.pack('!16sB6sBIB4s1sccBBBBHHLHH',
                                     lnk_id if lnk_id else 0
                                     )
 
-# Print the hexadecimal representation of the complete message
-complete_message = new_order_single_header + new_order_single_body
-hex_representation = ''.join([format(byte, '02X') for byte in complete_message])
-print(hex_representation)
+message_length = len(new_order_single_header) + len(new_order_single_body)
+print("NewOrderSingle message length:", message_length)
