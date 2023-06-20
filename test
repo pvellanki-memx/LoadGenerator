@@ -161,34 +161,79 @@ print(response_type, response_length)
 client_socket.close()
 
 
+import struct
 
- format strings used in the struct.pack function:
+# New Order Single
+cl_ord_id = '1686883344217'
+mpid = None  # Null value
+symbol = 'UBER'
+symbol_sfx = None  # Null value
+side = 2  # Sell
+order_qty = 300
+ord_type = 2  # Limit
+price = None  # Null value
+time_in_force = '0'  # Day
+order_capacity = 'A'  # Agency
+cust_order_capacity = 1  # MemberTradingOnTheirOwnAccount
+exec_inst = 0
+peg_offset_value = None  # Null value
+peg_price_type = None  # Null value
+expire_time = None  # Null value
+min_qty = None  # Null value
+display_qty = None  # Null value
+display_method = None  # Null value
+reserve_replenish_timing = None  # Null value
+display_min_incr = None  # Null value
+locate_reqd = None  # Null value
+reprice_frequency = None  # Null value
+reprice_behavior = None  # Null value
+cancel_group_id = None  # Null value
+stp_group_id = None  # Null value
+self_trade_prevention = None  # Null value
+risk_group_id = None  # Null value
+lnk_id = None  # Null value
 
-'x': Pad byte (no value)
-'c': Character
-'b': Signed char
-'B': Unsigned char
-'h': Short
-'H': Unsigned short
-'i': Int
-'I': Unsigned int
-'l': Long
-'L': Unsigned long
-'q': Long long
-'Q': Unsigned long long
-'f': Float
-'d': Double
-'s': String (must be preceded by the length of the string, e.g., '20s')
-'p': Packed pointer (used for platform-specific pointers)
-'?': Boolean (requires Python 3.4+)
-Each format character is followed by an optional number that specifies the size of the field, e.g., '20s' indicates a string of length 20.
+# SBE Header
+block_length = 96
+template_id = 1
+schema_id = 1
+version = 266
+new_order_single_header = struct.pack('!HBBH', block_length, template_id, schema_id, version)
 
-Additionally, you can use special characters to control byte order, alignment, and size:
+new_order_single_body = struct.pack('!16sB6sBIB4s1sccBBBBHHLHH',
+                                    cl_ord_id.encode('utf-8'),
+                                    len(mpid) if mpid else 255,
+                                    mpid.encode('utf-8') if mpid else b'\xFF',
+                                    symbol.encode('utf-8'),
+                                    len(symbol_sfx) if symbol_sfx else 255,
+                                    symbol_sfx.encode('utf-8') if symbol_sfx else b'\xFF',
+                                    side,
+                                    order_qty,
+                                    ord_type,
+                                    price if price else 0.0,
+                                    time_in_force.encode('utf-8'),
+                                    order_capacity.encode('utf-8'),
+                                    cust_order_capacity,
+                                    exec_inst,
+                                    peg_offset_value if peg_offset_value else 0.0,
+                                    peg_price_type if peg_price_type else b'\xFF',
+                                    expire_time if expire_time else 0,
+                                    min_qty if min_qty else 0,
+                                    display_qty if display_qty else 0,
+                                    display_method if display_method else b'\xFF',
+                                    reserve_replenish_timing if reserve_replenish_timing else b'\xFF',
+                                    display_min_incr if display_min_incr else 0,
+                                    locate_reqd if locate_reqd else b'\xFF',
+                                    reprice_frequency if reprice_frequency else 0,
+                                    reprice_behavior if reprice_behavior else 0,
+                                    cancel_group_id if cancel_group_id else 0,
+                                    stp_group_id if stp_group_id else 0,
+                                    self_trade_prevention if self_trade_prevention else 0,
+                                    risk_group_id if risk_group_id else 0,
+                                    lnk_id if lnk_id else 0
+                                    )
 
-'=': Native byte order (default)
-'<': Little-endian
-'>': Big-endian
-'!': Network byte order (big-endian)
-For example, '>Q' represents an unsigned long long (8 bytes) in big-endian byte order.
-
-Note that the format strings may vary depending on the platform and Python version you are using. It's always a good idea to consult the struct documentation for the specific details.
+# Print the hexadecimal representation of the complete message
+complete_message = new_order_single_header + new_order_single_body
+hex_representation = ''.join([format(byte, '02X') for byte in complete_message])
+print(hex_representation)
