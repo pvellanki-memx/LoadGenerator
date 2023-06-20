@@ -1,153 +1,15 @@
 import struct
 
-# New Order Single
-cl_ord_id = '1686883344217'
-mpid = None  # Null value
-symbol = 'UBER'
-symbol_sfx = None  # Null value
-side = 2  # Sell
-order_qty = 300
-ord_type = 2  # Limit
-price = None  # Null value
-time_in_force = '0'  # Day
-order_capacity = 'A'  # Agency
-cust_order_capacity = 1  # MemberTradingOnTheirOwnAccount
-exec_inst = 0
-peg_offset_value = None  # Null value
-peg_price_type = None  # Null value
-expire_time = None  # Null value
-min_qty = None  # Null value
-display_qty = None  # Null value
-display_method = None  # Null value
-reserve_replenish_timing = None  # Null value
-display_min_incr = None  # Null value
-locate_reqd = None  # Null value
-reprice_frequency = None  # Null value
-reprice_behavior = None  # Null value
-cancel_group_id = None  # Null value
-stp_group_id = None  # Null value
-self_trade_prevention = None  # Null value
-risk_group_id = None  # Null value
-lnk_id = None  # Null value
-
-# SBE Header
-block_length = 96
-template_id = 1
-schema_id = 1
-version = 266
-new_order_single_header = struct.pack('!HBBH', block_length, template_id, schema_id, version)
-
-new_order_single_body = struct.pack('!16sB6sBIB4s1sccBBBBHHLHHLBHLHHLH',
-                                    cl_ord_id.encode('utf-8'),
-                                    len(mpid) if mpid else 0,
-                                    mpid.encode('utf-8') if mpid else b'\xFF',
-                                    len(symbol),
-                                    symbol.encode('utf-8'),
-                                    len(symbol_sfx) if symbol_sfx else 0,
-                                    symbol_sfx.encode('utf-8') if symbol_sfx else b'\xFF',
-                                    side,
-                                    order_qty,
-                                    ord_type,
-                                    price if price else 0.0,
-                                    len(time_in_force),
-                                    time_in_force.encode('utf-8'),
-                                    order_capacity.encode('utf-8'),
-                                    cust_order_capacity,
-                                    exec_inst.to_bytes(2, 'big'),
-                                    peg_offset_value if peg_offset_value else 0.0,
-                                    peg_price_type if peg_price_type else b'\xFF',
-                                    expire_time if expire_time else 0,
-                                    min_qty if min_qty else 0,
-                                    display_qty if display_qty else 0,
-                                    display_method if display_method else b'\xFF',
-                                    reserve_replenish_timing if reserve_replenish_timing else b'\xFF',
-                                    display_min_incr if display_min_incr else 0,
-                                    locate_reqd if locate_reqd else b'\xFF',
-                                    reprice_frequency if reprice_frequency else 0,
-                                    reprice_behavior if reprice_behavior else b'\xFF',
-                                    cancel_group_id if cancel_group_id else 0,
-                                    stp_group_id if stp_group_id else 0,
-                                    self_trade_prevention if self_trade_prevention else 0,
-                                    risk_group_id if risk_group_id else 0,
-                                    lnk_id if lnk_id else 0
-                                    )
-
-message_length = len(new_order_single_header) + len(new_order_single_body)
-print("NewOrderSingle message length:", message_length)
-
-
-hex_representation = new_order_single_header.hex() + new_order_single_body.hex()
-print("Hex representation:")
-print(hex_representation)
-
-
-
-
-
-
-import struct
-
-# Define the fields with their respective lengths and data types
-fields = [
-    (cl_ord_id.encode('utf-8'), 16),  # cl_ord_id
-    (mpid.encode('utf-8') if mpid else b'\xFF', 4),  # mpid
-    (symbol.encode('utf-8'), 6),  # symbol
-    (symbol_sfx.encode('utf-8') if symbol_sfx else b'\xFF', 1),  # symbol_sfx
-    (side, 1),  # side (assuming it is an integer)
-    (order_qty, 4),  # order_qty (assuming it is an integer)
-    (ord_type, 1),  # ord_type (assuming it is an integer)
-    (price if price else 0.0, 8),  # price (assuming it is a float)
-    (time_in_force.encode('utf-8'), 1),  # time_in_force
-    (order_capacity.encode('utf-8'), 1),  # order_capacity
-    (cust_order_capacity, 1),  # cust_order_capacity (assuming it is an integer)
-    (exec_inst, 2),  # exec_inst (assuming it is an integer)
-    (peg_offset_value if peg_offset_value else 0.0, 8),  # peg_offset_value (assuming it is a float)
-    (peg_price_type.encode('utf-8') if peg_price_type else b'\xFF', 1),  # peg_price_type
-    (expire_time if expire_time else 0, 4),  # expire_time (assuming it is an integer)
-    (min_qty if min_qty else 0, 4),  # min_qty (assuming it is an integer)
-    (display_qty if display_qty else 0, 4),  # display_qty (assuming it is an integer)
-    (display_method.encode('utf-8') if display_method else b'\xFF', 1),  # display_method
-    (reserve_replenish_timing.encode('utf-8') if reserve_replenish_timing else b'\xFF', 1),  # reserve_replenish_timing
-    (display_min_incr if display_min_incr else 0, 4),  # display_min_incr (assuming it is an integer)
-    (locate_reqd.encode('utf-8') if locate_reqd else b'\xFF', 1),  # locate_reqd
-    (reprice_frequency if reprice_frequency else 0, 1),  # reprice_frequency (assuming it is an integer)
-    (reprice_behavior if reprice_behavior else 0, 1),  # reprice_behavior (assuming it is an integer)
-    (cancel_group_id if cancel_group_id else 0, 2),  # cancel_group_id (assuming it is an integer)
-    (stp_group_id if stp_group_id else 0, 2),  # stp_group_id (assuming it is an integer)
-    (self_trade_prevention if self_trade_prevention else 0, 1),  # self_trade_prevention (assuming it is an integer)
-    (risk_group_id if risk_group_id else 0, 2),  # risk_group_id (assuming it is an integer)
-    (lnk_id if lnk_id else 0, 2),  # lnk_id (assuming it is an integer)
-]
-
-# Construct the format string based on field lengths and data types
-format_string = '!' + ''.join(f'{length}s' for _, length in fields)
-
-# Pack the fields into the binary representation
-new_order_single_body = struct.pack(format_string, *(field for field, _ in fields))
-
-# Print the hex representation
-hex_representation = new_order_single_body.hex()
-print(hex_representation)
-
-
-
-
-
-
-
-
-import struct
-
 # Define the format string
-format_string = '!H16s4s6s6sBB4s8s1s1sH8s1IBBHBBBH'
+format_string = '!H16s4s6s6sBB4s8s1s1sH8s1Q4s4sB4s4sB2s2sH2sL'
 
 # Define the values for the fields
 values = (
     0,  # Placeholder for SBEHeader length (will be updated later)
     cl_ord_id.encode('utf-8'),
-    mpid.encode('utf-8') if mpid else b'\xFF',
+    mpid.encode('utf-8') if mpid else b'\x00' * 4,
     symbol.encode('utf-8'),
-    symbol_sfx.encode('utf-8') if symbol_sfx else b'\xFF',
+    symbol_sfx.encode('utf-8') if symbol_sfx else b'\x00' * 6,
     side,
     order_qty,
     ord_type,
@@ -157,16 +19,17 @@ values = (
     cust_order_capacity,
     exec_inst,
     b'\x00' * 8,  # Placeholder for PegOffsetType (8 bytes)
-    peg_price_type.encode('utf-8') if peg_price_type else b'\xFF',
+    peg_price_type.encode('utf-8') if peg_price_type else b'\x00',
     0,  # Placeholder for ExpireTime (8 bytes, will be updated later)
     min_qty if min_qty else 0,
     display_qty if display_qty else 0,
+    b'\x00',  # Placeholder for DisplayMethod
     b'\x00',  # Placeholder for ReserveReplenishTiming
     0,  # Placeholder for DisplayMinIncr (4 bytes)
     b'\x00',  # Placeholder for LocateReqd
     0,  # Placeholder for RepriceFrequency
     0,  # Placeholder for RepriceBehaviour
-    0,  # Placeholder for CancelGroupID (2 bytes)
+     0,  # Placeholder for CancelGroupID (2 bytes)
     0,  # Placeholder for StpGroupID (2 bytes)
     0,  # Placeholder for SelfTradePrevention
     0,  # Placeholder for RiskGroupID (2 bytes)
@@ -183,5 +46,3 @@ new_order_single_body = new_order_single_body[:0] + struct.pack('!H', sbe_header
 # Print the hexadecimal representation
 hex_representation = new_order_single_body.hex()
 print(hex_representation)
-
-
