@@ -53,7 +53,7 @@ while True:
     print(response_header, response_type, response_length)
 
     if response_type == 3:  # Start of Session
-        print("Startof Session. Session ID", session_id)
+        print("Start of Session. Session ID:", session_id)
         break
     else:
         print("Invalid response received.")
@@ -66,14 +66,12 @@ NEXT_SEQUENCE_NUMBER = 0
 stream_request_header = struct.pack('!BHQQ', stream_request_type, stream_request_length, session_id, NEXT_SEQUENCE_NUMBER)
 stream_request = stream_request_header
 
-
 # Send the Stream Request
 client_socket.sendall(stream_request)
 
-
 response_header = client_socket.recv(3)
-response_type, response_type = struct.unpack('!B H', response_header)
-print(response_type,response_type)
+response_type, response_length = struct.unpack('!B H', response_header)
+print(response_type, response_length)
 
 if response_type == 9:  # Stream Rejected
     response_message = client_socket.recv(response_length)
@@ -86,7 +84,7 @@ elif response_type == 10:  # End of Stream
     print("End of Stream")
     client_socket.close()
     exit()
-elif response_type == 8:  # Stream Begin 
+elif response_type == 8:  # Stream Begin
     response_message = client_socket.recv(response_length - 2)
     print(response_message)
     NEXT_SEQUENCE_NUMBER, MAX_SEQUENCE_NUMBER = struct.unpack('!QQ', response_message[2:])
@@ -108,22 +106,48 @@ cust_order_capacity = 1  # MemberTradingOnTheirOwnAccount
 exec_inst = 0
 reprice_frequency = 0  # SingleReprice
 reprice_behavior = 2  # RepriceLockRepriceCross
-#price_type_bytes = struct.pack('!qB',price, exponent)
 
-#SBE Header
+# SBE Header
 BlockLength = 96
 TemplateID = 1
 SchemaID = 1
-Version =  266
-new_order_single_header = struct.pack( '!HBBH',BlockLength,TemplateID,SchemaID,Version)
+Version = 266
+new_order_single_header = struct.pack('!HBBH', BlockLength, TemplateID, SchemaID, Version)
 
-new_order_single_body = struct.pack('!16s6sBIBqbccBBBB', cl_ord_id.encode('utf-8'),symbol.encode('utf-8'), side, order_qty, ord_type, price, exponent ,time_in_force.encode('utf-8'), order_capacity.encode('utf-8'),cust_order_capacity, exec_inst,reprice_frequency, reprice_behavior)
-                                    
+new_order_single_body = struct.pack('!16s6sBIBqbccBBBB', cl_ord_id.encode('utf-8'), symbol.encode('utf-8'),
+                                    side, order_qty, ord_type, price, exponent, time_in_force.encode('utf-8'),
+                                    order_capacity.encode('utf-8'), cust_order_capacity, exec_inst,
+                                    reprice_frequency, reprice_behavior)
 
 # Unsequenced Message
-unsequenced_message_header = struct.pack('!BH', 104, 102) # MessageType=104, MessageLength=6, TCP Header Length=102
+unsequenced_message_header = struct.pack('!BH', 104, 102)  # MessageType=104, MessageLength=6, TCP Header Length=102
 unsequenced_message_body = struct.pack('!H', 104)  # TCP Header MessageLength=102, MessageType=104
 unsequenced_message = unsequenced_message_header + unsequenced_message_body
+
+# Decode function
+def decode_new_order_single(message):
+    cl_ord_id, symbol, side, order_qty, ord_type, price, exponent, time_in_force, order_capacity, cust_order_capacity, exec_inst, reprice_frequency, reprice_behavior = struct.unpack('!16s6sBIBqbccBBBB', message)
+    cl_ord_id = cl_ord_id.decode('utf-8').strip('\x00')
+    symbol = symbol.decode('utf-8').strip('\x00')
+    time_in_force = time_in_force.decode('utf-8')
+    order_capacity = order_capacity.decode('utf-8')
+    print("Decoded New Order Single Message:")
+    print("ClOrdID:", cl_ord_id)
+    print("Symbol:", symbol)
+    print("Side:", side)
+    print("Order Quantity:", order_qty)
+    print("Order Type:", ord_type)
+    print("Price:", price)
+    print("Exponent:", exponent)
+    print("Time in Force:", time_in_force)
+    print("Order Capacity:", order_capacity)
+    print("Cust Order Capacity:", cust_order_capacity)
+    print("Exec Inst:", exec_inst)
+    print("Reprice Frequency:", reprice_frequency)
+    print("Reprice Behavior:", reprice_behavior)
+
+# Print decoded New Order Single message
+decode_new_order_single(new_order_single_body)
 
 # Send the New Order Single with Unsequenced Message
 client_socket.sendall(new_order_single_header + new_order_single_body + unsequenced_message)
@@ -133,9 +157,5 @@ response_header = client_socket.recv(3)
 response_type, response_length = struct.unpack('!B H', response_header)
 print(response_type, response_length)
 
-
-
 # Close the socket
 client_socket.close()
-
-
