@@ -129,3 +129,59 @@ new_order_single_body = struct.pack(format_string, *(field for field, _ in field
 hex_representation = new_order_single_body.hex()
 print(hex_representation)
 
+
+
+
+
+
+
+
+import struct
+
+# Define the format string
+format_string = '!H16s4s6s6sBB4s8s1s1sH8s1IBBHBBBH'
+
+# Define the values for the fields
+values = (
+    0,  # Placeholder for SBEHeader length (will be updated later)
+    cl_ord_id.encode('utf-8'),
+    mpid.encode('utf-8') if mpid else b'\xFF',
+    symbol.encode('utf-8'),
+    symbol_sfx.encode('utf-8') if symbol_sfx else b'\xFF',
+    side,
+    order_qty,
+    ord_type,
+    price if price else 0.0,
+    time_in_force.encode('utf-8'),
+    order_capacity.encode('utf-8'),
+    cust_order_capacity,
+    exec_inst,
+    b'\x00' * 8,  # Placeholder for PegOffsetType (8 bytes)
+    peg_price_type.encode('utf-8') if peg_price_type else b'\xFF',
+    0,  # Placeholder for ExpireTime (8 bytes, will be updated later)
+    min_qty if min_qty else 0,
+    display_qty if display_qty else 0,
+    b'\x00',  # Placeholder for ReserveReplenishTiming
+    0,  # Placeholder for DisplayMinIncr (4 bytes)
+    b'\x00',  # Placeholder for LocateReqd
+    0,  # Placeholder for RepriceFrequency
+    0,  # Placeholder for RepriceBehaviour
+    0,  # Placeholder for CancelGroupID (2 bytes)
+    0,  # Placeholder for StpGroupID (2 bytes)
+    0,  # Placeholder for SelfTradePrevention
+    0,  # Placeholder for RiskGroupID (2 bytes)
+    0,  # Placeholder for LnkID (4 bytes)
+)
+
+# Pack the values into a binary string
+new_order_single_body = struct.pack(format_string, *values)
+
+# Update the SBEHeader length field
+sbe_header_length = len(new_order_single_body) + 2  # Add 2 bytes for block length field
+new_order_single_body = new_order_single_body[:0] + struct.pack('!H', sbe_header_length) + new_order_single_body[2:]
+
+# Print the hexadecimal representation
+hex_representation = new_order_single_body.hex()
+print(hex_representation)
+
+
