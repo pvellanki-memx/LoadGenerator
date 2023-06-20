@@ -200,3 +200,37 @@ Traceback (most recent call last):
 struct.error: argument for 's' must be a bytes object
 
 
+
+# New Order Single
+cl_ord_id = '1686883344217'
+symbol = 'UBER'
+side = 2  # Sell
+order_qty = 300
+ord_type = 2  # Limit
+price = 150000
+exponent = -6
+time_in_force = '0'  # Day
+order_capacity = 'A'  # Agency
+cust_order_capacity = 1  # MemberTradingOnTheirOwnAccount
+exec_inst = 0
+reprice_frequency = 0  # SingleReprice
+reprice_behavior = 2  # RepriceLockRepriceCross
+#price_type_bytes = struct.pack('!qB',price, exponent)
+
+#SBE Header
+BlockLength = 96
+TemplateID = 1
+SchemaID = 1
+Version =  266
+new_order_single_header = struct.pack( '!HBBH',BlockLength,TemplateID,SchemaID,Version)
+
+new_order_single_body = struct.pack('!16s6sBIBqbcBcBBB', cl_ord_id.encode('utf-8'),
+                                    symbol.encode('utf-8'), side, order_qty, ord_type, price, exponent ,time_in_force.encode('utf-8'), order_capacity.encode('utf-8'),cust_order_capacity, exec_inst,reprice_frequency, reprice_behavior)
+                                    
+#'',time_in_force.encode('utf-8'), order_capacity.encode('utf-8'),cust_order_capacity, exec_inst,eprice_frequency, reprice_behavior)
+# Unsequenced Message
+unsequenced_message_header = struct.pack('!BH', 104, 102) # MessageType=104, MessageLength=6, TCP Header Length=102
+unsequenced_message_body = struct.pack('!H', 104)  # TCP Header MessageLength=102, MessageType=104
+unsequenced_message = unsequenced_message_header + unsequenced_message_body
+
+
