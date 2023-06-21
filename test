@@ -1,196 +1,64 @@
-import socket
-
-
-import socket
 import struct
-import configparser
 
-# Read configuration from config.ini file
-config = configparser.ConfigParser()
-config.read('config.ini')
-
-
-# TCP/IP connection details
-host = config.get('Connection', 'host')
-port = config.getint('Connection', 'port')
-
-# Token and header details
-user = config.get('Credentials', 'user')
-password = config.get('Credentials', 'password')
-token = f'{user}:{password}'
-
-# Login request
-message_type = 100
-token_type = 'P'  # Assuming token type is always 'P'
-token_length = len(token)
-header = struct.pack('!BHB', message_type, token_length + 1, token_type.encode('utf-8')[0])
-message = header + token.encode('utf-8')
-
-# Create a socket and establish the connection
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client_socket.connect((host, port))
-
-# Set socket to binary mode
-client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-
-# Send the login request
-client_socket.sendall(message)
-
-# Receive and handle the response
-response_header = client_socket.recv(3)
-response_type, response_length = struct.unpack('!B H', response_header)
-print(response_type, response_length)
-
-if response_type == 1:  # Login Accepted
-    response_message = client_socket.recv(response_length)
-    print("Login Accepted:", response_message.decode('utf-8'))
-    session_id = None
-elif response_type == 2:  # Login Rejected
-    response_message = client_socket.recv(response_length)
-    print("Login Rejected:", response_message.decode('utf-8'))
-    client_socket.close()
-    exit()  # Exit the script gracefully after login rejection
-else:
-    print("Invalid response received.")
-    client_socket.close()
-    exit()  # Exit the script if an invalid response is received
-
-# Continue with the session
-while True:
-    response_header = client_socket.recv(11)
-    response_type, response_length, session_id = struct.unpack('!B H Q', response_header)
-    print(response_header, response_type, response_length)
-
-    if response_type == 3:  # Start of Session
-        print("Start of Session. Session ID:", session_id)
-        break
-    else:
-        print("Invalid response received.")
+def encode_message(cl_ord_id, mpid, symbol, symbol_sfx, side, order_qty, ord_type, price, time_in_force, order_capacity, cust_order_capacity, exec_inst, peg_offset_value, peg_price_type, expire_time, min_qty, display_qty, display_method, reserve_replenish_timing, display_min_incr, locate_reqd, reprice_frequency, reprice_behavior, cancel_group_id, stp_group_id, self_trade_prevention, risk_group_id, lnk_id):
+    encoded_fields = [
+        cl_ord_id.encode(),
+        mpid.encode() if mpid else b'',
+        symbol.encode(),
+        symbol_sfx.encode() if symbol_sfx else b'',
+        side.encode(),
+        struct.pack('I', order_qty),
+        ord_type.encode(),
+        struct.pack('d', price) if price else b'',
+        time_in_force.encode(),
+        order_capacity.encode(),
+        cust_order_capacity.encode(),
+        exec_inst.encode(),
+        struct.pack('d', peg_offset_value) if peg_offset_value else b'',
+        peg_price_type.encode() if peg_price_type else b'',
+        struct.pack('Q', expire_time) if expire_time else b'',
+        struct.pack('I', min_qty) if min_qty else b'',
+        struct.pack('I', display_qty) if display_qty else b'',
+        display_method.encode() if display_method else b'',
+        reserve_replenish_timing.encode() if reserve_replenish_timing else b'',
+        struct.pack('I', display_min_incr) if display_min_incr else b'',
+        locate_reqd.encode() if locate_reqd else b'',
+        reprice_frequency.encode() if reprice_frequency else b'',
+        reprice_behavior.encode() if reprice_behavior else b'',
+        struct.pack('H', cancel_group_id) if cancel_group_id else b'',
+        struct.pack('H', stp_group_id) if stp_group_id else b'',
+        self_trade_prevention.encode() if self_trade_prevention else b'',
+        struct.pack('H', risk_group_id) if risk_group_id else b'',
+        lnk_id.encode() if lnk_id else b'',
+    ]
+    encoded_message = b''.join(encoded_fields)
+    return encoded_message
 
 
-# Stream Request
-stream_request_type = 103
-stream_request_length = 16  # 4 bytes for message type and length, 8 bytes for session ID, 8 bytes for next sequence number
-NEXT_SEQUENCE_NUMBER = 0
-stream_request_header = struct.pack('!BHQQ', stream_request_type, stream_request_length, session_id, NEXT_SEQUENCE_NUMBER)
-stream_request = stream_request_header
-
-# Send the Stream Request
-client_socket.sendall(stream_request)
-
-response_header = client_socket.recv(3)
-response_type, response_length = struct.unpack('!B H', response_header)
-print(response_type, response_length)
-
-if response_type == 9:  # Stream Rejected
-    response_message = client_socket.recv(response_length)
-    reject_code = response_message.decode('utf-8')
-    print("Stream Rejected. Reject Code:", reject_code)
-    client_socket.close()
-    exit()
-elif response_type == 10:  # End of Stream
-    response_message = client_socket.recv(response_length)
-    print("End of Stream")
-    client_socket.close()
-    exit()
-elif response_type == 8:  # Stream Begin
-    response_message = client_socket.recv(response_length - 2)
-    print(response_message)
-    NEXT_SEQUENCE_NUMBER  = struct.unpack('!Q', response_message[3:11])
-    print("Stream Begin received")
-else:
-    print("Invalid Message received")
-
-cl_ord_id = '1686883344217'
-mpid = None  # Null value
-symbol = 'UBER'
-symbol_sfx = None  # Null value
-side = 2  # Sell
-order_qty = 300
-ord_type = 2  # Limit
-price = 15.0  # Null value
-time_in_force = '0'  # Day
-order_capacity = 'A'  # Agency
-cust_order_capacity = 1  # MemberTradingOnTheirOwnAccount
-exec_inst = '0'
-peg_offset_value = None  # Null value
-peg_price_type = None  # Null value
-expire_time = 0  # Null value (assigned 0 for now)
-min_qty = 0  # Null value
-display_qty = 0  # Null value
-display_method = None  # Null value
-reserve_replenish_timing = None  # Null value
-display_min_incr = 0  # Null value
-locate_reqd = None  # Null value
-reprice_frequency = None  # Null value
-reprice_behavior = None  # Null value
-cancel_group_id = None  # Null value
-stp_group_id = None  # Null value
-self_trade_prevention = None  # Null value
-risk_group_id = None  # Null value
-lnk_id = None  # Null value
-
-
-# SBE Header
-block_length = 96
-template_id = 1
-schema_id = 1
-version = 266
-new_order_single_header = struct.pack('!HBBH', block_length, template_id, schema_id, version)
-
-# Unsequenced Message
-# Unsequenced Message
-unsequenced_message_header = struct.pack('!BH', 104, 102)  # MessageType=104, MessageLength=6, TCP Header Length=102
-unsequenced_message_body = struct.pack('!H', 102)  # TCP Header MessageLength=102, MessageType=104
-unsequenced_message = unsequenced_message_header
-
-new_order_single_body = struct.pack('!16s4s6s6sBIBfssBsf2sQBB2s2sB2sQ2sQQQQQ',
-                                    cl_ord_id.encode('utf-8'),
-                                    (mpid.encode('utf-8') if mpid else b'\xFF'),
-                                    symbol.encode('utf-8'),
-                                    (symbol_sfx.encode('utf-8') if symbol_sfx else b'\xFF'),
-                                    side,
-                                    order_qty,
-                                    ord_type,
-                                    price if price else 0.0,
-                                    time_in_force.encode('utf-8'),
-                                    order_capacity.encode('utf-8'),
-                                    cust_order_capacity,
-                                    exec_inst.encode('utf-8'),
-                                    peg_offset_value if peg_offset_value else 0.0,
-                                    (peg_price_type.encode('utf-8') if peg_price_type else b'\xFF'),
-                                    expire_time,
-                                    min_qty if min_qty else 0,
-                                    display_qty if display_qty else 0,
-                                    (display_method.encode('utf-8') if display_method else b'\xFF').ljust(1, b'\xFF'),
-                                    (reserve_replenish_timing.encode('utf-8') if reserve_replenish_timing else b'\xFF'),
-                                    display_min_incr if display_min_incr else 0,
-                                    (locate_reqd.encode('utf-8') if locate_reqd else b'\xFF'),
-                                    reprice_frequency if reprice_frequency else 0,
-                                    (reprice_behavior.encode('utf-8') if reprice_behavior else b'\xFF'),
-                                    cancel_group_id if cancel_group_id else 0,
-                                    stp_group_id if stp_group_id else 0,
-                                    self_trade_prevention if self_trade_prevention else 0,
-                                    risk_group_id if risk_group_id else 0,
-                                    lnk_id if lnk_id else 0)
+cl_ord_id = "ORDER001"
+mpid = "MPID001"
+symbol = "AAPL"
+#symbol_sfx = "SFX001"
+side = "Buy"
+order_qty = 100
+ord_type = "Limit"
+price = 100.5
+time_in_force = "Day"
+order_capacity = "Agency"
+cust_order_capacity = "Member"
+exec_inst = "FillOrKill"
 
 
 
-# Print the hex representation
-hex_representation = new_order_single_body.hex()
-print(hex_representation)
+encoded_message = encode_message(
+    cl_ord_id, mpid, symbol, symbol_sfx, side, order_qty, ord_type, price, time_in_force,
+    order_capacity, cust_order_capacity, exec_inst, peg_offset_value, peg_price_type,
+    expire_time, min_qty, display_qty, display_method, reserve_replenish_timing, display_min_incr,
+    locate_reqd, reprice_frequency, reprice_behavior, cancel_group_id, stp_group_id,
+    self_trade_prevention, risk_group_id, lnk_id
+)
 
+print(encoded_message)
 
-# Send the New Order Single with Unsequenced Message
-client_socket.sendall(unsequenced_message + new_order_single_header + new_order_single_body )
-
-# Receive and handle the response
-response_header = client_socket.recv(3)
-print(response_header)
-response_type, response_length = struct.unpack('!B H', response_header)
-print(response_type, response_length)
-
-# Close the socket
-client_socket.close()
-
-
+decoded_fields = decode_message(encoded_message)
+print(decoded_fields)
