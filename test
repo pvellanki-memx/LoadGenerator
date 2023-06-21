@@ -1,7 +1,6 @@
 import struct
 
 # New Order Single
-# New Order Single
 cl_ord_id = '1686883344217'
 mpid = None  # Null value
 symbol = 'UBER'
@@ -32,24 +31,25 @@ risk_group_id = None  # Null value
 lnk_id = None  # Null value
 
 # SBE Header
-BlockLength = 96
-TemplateID = 1
-SchemaID = 1
-Version = 266
-new_order_single_header = struct.pack('!HBBH', BlockLength, TemplateID, SchemaID, Version)
-
-
+block_length = 96
+template_id = 1
+schema_id = 1
+version = 266
+new_order_single_header = struct.pack('!HBBH', block_length, template_id, schema_id, version)
 
 # Unsequenced Message
-unsequenced_message_header = struct.pack('!BH', 104, 102)  # MessageType=104, MessageLength=6, TCP Header Length=102
-unsequenced_message_body = struct.pack('!H', 102)  # TCP Header MessageLength=102, MessageType=104
-unsequenced_message = unsequenced_message_header
+message_type = 104
+message_length = 6
+tcp_header_length = 102
+unsequenced_message_header = struct.pack('!BH', message_type, message_length, tcp_header_length)
+unsequenced_message_body = struct.pack('!H', message_length)
+unsequenced_message = unsequenced_message_header + unsequenced_message_body
 
 new_order_single_body = struct.pack('!16s4s6s6sBIBfBs2s2s8sB8sIQBBBH4sBBBH4sB',
                                     cl_ord_id.encode('utf-8'),
-                                    mpid.encode('utf-8') if mpid else b'\xFF',
+                                    (mpid.encode('utf-8') if mpid else b'\xFF'),
                                     symbol.encode('utf-8'),
-                                    symbol_sfx.encode('utf-8') if symbol_sfx else b'\xFF',
+                                    (symbol_sfx.encode('utf-8') if symbol_sfx else b'\xFF'),
                                     side,
                                     order_qty,
                                     ord_type,
@@ -59,25 +59,21 @@ new_order_single_body = struct.pack('!16s4s6s6sBIBfBs2s2s8sB8sIQBBBH4sBBBH4sB',
                                     cust_order_capacity,
                                     exec_inst.encode('utf-8'),
                                     peg_offset_value if peg_offset_value else 0.0,
-                                    peg_price_type if peg_price_type else b'\xFF',
+                                    (peg_price_type.encode('utf-8') if peg_price_type else b'\xFF'),
                                     expire_time if expire_time else 0,
                                     min_qty if min_qty else 0,
                                     display_qty if display_qty else 0,
-                                    display_method if display_method else b'\xFF',
-                                    reserve_replenish_timing if reserve_replenish_timing else b'\xFF',
+                                    (display_method.encode('utf-8') if display_method else b'\xFF'),
+                                    (reserve_replenish_timing.encode('utf-8') if reserve_replenish_timing else b'\xFF'),
                                     display_min_incr if display_min_incr else 0,
-                                    locate_reqd if locate_reqd else b'\xFF',
+                                    (locate_reqd.encode('utf-8') if locate_reqd else b'\xFF'),
                                     reprice_frequency if reprice_frequency else 0,
-                                    reprice_behavior if reprice_behavior else b'\xFF',
+                                    (reprice_behavior.encode('utf-8') if reprice_behavior else b'\xFF'),
                                     cancel_group_id if cancel_group_id else 0,
                                     stp_group_id if stp_group_id else 0,
                                     self_trade_prevention if self_trade_prevention else 0,
                                     risk_group_id if risk_group_id else 0,
                                     lnk_id if lnk_id else 0)
-
-
-
-
 
 # Print the hex representation
 hex_representation = new_order_single_body.hex()
