@@ -1,21 +1,22 @@
-
-
-
-
-
-
+import socket
 
 
 import socket
 import struct
+import configparser
+
+# Read configuration from config.ini file
+config = configparser.ConfigParser()
+config.read('config.ini')
+
 
 # TCP/IP connection details
-host = '10.2.128.10'
-port = 30076
+host = config.get('Connection', 'host')
+port = config.getint('Connection', 'port')
 
 # Token and header details
-user = 'exactpro6'
-password = 'expro6pwd'
+user = config.get('Credentials', 'user')
+password = config.get('Credentials', 'password')
 token = f'{user}:{password}'
 
 # Login request
