@@ -31,7 +31,8 @@ risk_group_id = None  # Null value
 lnk_id = None  # Null value
 
 
-new_order_single_body = struct.pack('!16s4s6s6sBIBfBs2s2s8sB8sIQBBBH4sBBBH4s',
+
+new_order_single_body = struct.pack('!16s4s6s6sBIBfBs2s2s8sB8sIQBBBH4sBBBH4sB',
                                     cl_ord_id.encode('utf-8'),
                                     (mpid.encode('utf-8') if mpid else b'\xFF'),
                                     symbol.encode('utf-8'),
