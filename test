@@ -45,7 +45,7 @@ unsequenced_message_header = struct.pack('!BH', message_type, message_length, tc
 unsequenced_message_body = struct.pack('!H', message_length)
 unsequenced_message = unsequenced_message_header + unsequenced_message_body
 
-new_order_single_body = struct.pack('!16s4s6s6sBIBfBs2s2s8sB8sIQBBBH4sBBBH4sB',
+new_order_single_body = struct.pack('!16s4s6s6sBIBfBs2s2s8sB8sQBBH4sBBBH4sB',
                                     cl_ord_id.encode('utf-8'),
                                     (mpid.encode('utf-8') if mpid else b'\xFF'),
                                     symbol.encode('utf-8'),
@@ -63,7 +63,7 @@ new_order_single_body = struct.pack('!16s4s6s6sBIBfBs2s2s8sB8sIQBBBH4sBBBH4sB',
                                     expire_time,
                                     min_qty if min_qty else 0,
                                     display_qty if display_qty else 0,
-                                    (display_method.encode('utf-8') if display_method else b'\xFF').ljust(1, b'\xFF'),
+                                    (display_method.encode('utf-8') if display_method else b'\xFF'),
                                     (reserve_replenish_timing.encode('utf-8') if reserve_replenish_timing else b'\xFF'),
                                     display_min_incr if display_min_incr else 0,
                                     (locate_reqd.encode('utf-8') if locate_reqd else b'\xFF'),
