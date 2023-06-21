@@ -15,7 +15,7 @@ cust_order_capacity = 1  # MemberTradingOnTheirOwnAccount
 exec_inst = '0'
 peg_offset_value = None  # Null value
 peg_price_type = None  # Null value
-expire_time = 0  # Null value (assigned 0 for now)
+expire_time = None  # Null value
 min_qty = 0  # Null value
 display_qty = 0  # Null value
 display_method = None  # Null value
@@ -30,22 +30,8 @@ self_trade_prevention = None  # Null value
 risk_group_id = None  # Null value
 lnk_id = None  # Null value
 
-# SBE Header
-block_length = 96
-template_id = 1
-schema_id = 1
-version = 266
-new_order_single_header = struct.pack('!HHBBH', block_length, template_id, schema_id, version)
 
-# Unsequenced Message
-message_type = 104
-message_length = 6
-tcp_header_length = 102
-unsequenced_message_header = struct.pack('!BH', message_type, message_length, tcp_header_length)
-unsequenced_message_body = struct.pack('!H', message_length)
-unsequenced_message = unsequenced_message_header + unsequenced_message_body
-
-new_order_single_body = struct.pack('!16s4s6s6sBIBfBs2s2s8sB8sQBBH4sBBBH4sB',
+new_order_single_body = struct.pack('!16s4s6s6sBIBfBs2s2s8sB8sIQBBBH4sBBBH4s',
                                     cl_ord_id.encode('utf-8'),
                                     (mpid.encode('utf-8') if mpid else b'\xFF'),
                                     symbol.encode('utf-8'),
@@ -60,11 +46,21 @@ new_order_single_body = struct.pack('!16s4s6s6sBIBfBs2s2s8sB8sQBBH4sBBBH4sB',
                                     exec_inst.encode('utf-8'),
                                     peg_offset_value if peg_offset_value else 0.0,
                                     (peg_price_type.encode('utf-8') if peg_price_type else b'\xFF'),
-                                    expire_time,
+                                    expire_time if expire_time else 0,
                                     min_qty if min_qty else 0,
                                     display_qty if display_qty else 0,
                                     (display_method.encode('utf-8') if display_method else b'\xFF'),
                                     (reserve_replenish_timing.encode('utf-8') if reserve_replenish_timing else b'\xFF'),
                                     display_min_incr if display_min_incr else 0,
                                     (locate_reqd.encode('utf-8') if locate_reqd else b'\xFF'),
-                                    reprice_frequency if reprice_frequency
+                                    reprice_frequency if reprice_frequency else 0,
+                                    (reprice_behavior.encode('utf-8') if reprice_behavior else b'\xFF'),
+                                    cancel_group_id if cancel_group_id else 0,
+                                    stp_group_id if stp_group_id else 0,
+                                    self_trade_prevention if self_trade_prevention else 0,
+                                    risk_group_id if risk_group_id else 0,
+                                    lnk_id if lnk_id else 0)
+
+# Print the hex representation
+hex_representation = new_order_single_body.hex()
+print(hex_representation)
