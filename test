@@ -30,7 +30,20 @@ self_trade_prevention = None  # Null value
 risk_group_id = None  # Null value
 lnk_id = None  # Null value
 
+# SBE Header
+block_length = 96
+template_id = 1
+schema_id = 1
+version = 266
+new_order_single_header = struct.pack('!HHBBH', block_length, template_id, schema_id, version)
 
+# Unsequenced Message
+message_type = 104
+message_length = 6
+tcp_header_length = 102
+unsequenced_message_header = struct.pack('!BH', message_type, message_length, tcp_header_length)
+unsequenced_message_body = struct.pack('!H', message_length)
+unsequenced_message = unsequenced_message_header + unsequenced_message_body
 
 new_order_single_body = struct.pack('!16s4s6s6sBIBfBs2s2s8sB8sIQBBBH4sBBBH4sB',
                                     cl_ord_id.encode('utf-8'),
