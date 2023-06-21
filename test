@@ -67,14 +67,4 @@ new_order_single_body = struct.pack('!16s4s6s6sBIBfBs2s2s8sB8sQBBH4sBBBH4sB',
                                     (reserve_replenish_timing.encode('utf-8') if reserve_replenish_timing else b'\xFF'),
                                     display_min_incr if display_min_incr else 0,
                                     (locate_reqd.encode('utf-8') if locate_reqd else b'\xFF'),
-                                    reprice_frequency if reprice_frequency else 0,
-                                    (reprice_behavior.encode('utf-8') if reprice_behavior else b'\xFF'),
-                                    cancel_group_id if cancel_group_id else 0,
-                                    stp_group_id if stp_group_id else 0,
-                                    self_trade_prevention if self_trade_prevention else 0,
-                                    risk_group_id if risk_group_id else 0,
-                                    lnk_id if lnk_id else 0)
-
-# Print the hex representation
-hex_representation = new_order_single_body.hex()
-print(hex_representation)
+                                    reprice_frequency if reprice_frequency
