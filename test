@@ -1,26 +1,39 @@
 import xml.etree.ElementTree as ET
 
-def load_schema(schema_file):
-    tree = ET.parse(schema_file)
-    root = tree.getroot()
+def load_schema(xml_schema):
+    root = ET.fromstring(xml_schema)
 
     composite_dict = {}
     type_dict = {}
 
-    # Load composite definitions
-    for composite_def in root.iter("composite"):
-        composite_id = int(composite_def.attrib["id"])
-        fields = {}
-        for field_def in composite_def.iter("field"):
-            field_id = int(field_def.attrib["id"])
-            field_name = field_def.attrib["name"]
-            fields[field_id] = field_name
-        composite_dict[composite_id] = fields
+    for composite_elem in root.findall(".//composite"):
+        composite_name = composite_elem.get("name")
+        field_dict = {}
 
-    # Load type definitions
-    for type_def in root.iter("type"):
-        type_id = int(type_def.attrib["id"])
-        type_name = type_def.attrib["name"]
-        type_dict[type_id] = type_name
+        for type_elem in composite_elem.findall(".//type"):
+            type_name = type_elem.get("name")
+            primitive_type = type_elem.get("primitiveType")
+            presence = type_elem.get("presence", "optional")
+            constant_value = type_elem.text
+
+            field_dict[type_name] = {
+                "primitiveType": primitive_type,
+                "presence": presence,
+                "constantValue": constant_value,
+            }
+
+        composite_dict[composite_name] = field_dict
+
+    for enum_elem in root.findall(".//enum"):
+        enum_name = enum_elem.get("name")
+        value_dict = {}
+
+        for valid_value_elem in enum_elem.findall(".//validValue"):
+            valid_value_name = valid_value_elem.get("name")
+            valid_value = valid_value_elem.text
+
+            value_dict[valid_value_name] = valid_value
+
+        type_dict[enum_name] = value_dict
 
     return composite_dict, type_dict
