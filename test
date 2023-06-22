@@ -51,11 +51,11 @@ def encode_field(field_id, field_value, type_dict, composite_dict):
         composite_fields = composite_dict[field_id]
         encoded_composite = bytearray()
 
-        for subfield_id, subfield_value in field_value.items():
-            if subfield_id not in composite_fields:
-                raise ValueError(f"Invalid subfield '{subfield_id}' for composite field '{field_id}'")
+        for subfield_id, subfield_info in composite_fields.items():
+            subfield_primitive_type = subfield_info['primitiveType']
+            subfield_presence = subfield_info['presence']
+            subfield_value = field_value.get(subfield_id) if subfield_presence == 'required' else 0
 
-            subfield_primitive_type = composite_fields[subfield_id]['primitiveType']
             encoded_subfield = struct.pack(f">{subfield_primitive_type}", int(subfield_value))
             encoded_composite += encoded_subfield
 
@@ -78,7 +78,7 @@ def encode_message(schema_file, message_name, field_values):
             field_value = field_values[field_id]
             encoded_field = encode_field(field_id, field_value, type_dict, composite_dict)
             encoded_message += encoded_field
-        else:
+        elif field_info['presence'] == 'optional':
             primitive_type = field_info['primitiveType']
             encoded_field = struct.pack(f">{primitive_type}", 0)
             encoded_message += encoded_field
@@ -87,7 +87,7 @@ def encode_message(schema_file, message_name, field_values):
 
 
 # Example usage
-schema_file = 'sbe-schema-options.xml'
+schema_file = 'schema.xml'
 message_name = 'NewOrderSingle'
 field_values = {
     '52': 1623322435000000000,
