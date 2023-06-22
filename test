@@ -111,3 +111,24 @@ field_values = {
 
 encoded_message = encode_message(schema_file, message_name, field_values)
 print(f"Encoded Message: {encoded_message.hex()}")
+
+
+Encoded field 52: 
+Encoded field 11: 
+Encoded field 21035: 
+Encoded field 54: 
+Encoded field 38: 
+Encoded field 40: 
+Encoded field 44: 
+Encoded field 59: 
+Encoded field 77: 
+Encoded field 18: 
+Encoded field 1815: 
+Encoded field 21020: 
+Encoded field 21021: 
+Encoded field 2362: 
+Encoded field 21001: 
+Encoded field 21000: 
+Encoded field 21005: 
+Encoded field 453: 
+Encoded Message: 
