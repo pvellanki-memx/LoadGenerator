@@ -43,6 +43,15 @@ def encode_message(schema_file, message_name, field_values):
     composite_fields = composite_dict.get(message_name, {})
 
     # Encode all fields with their values or null values
+    for field_id, field_info in composite_fields.items():
+        if field_id not in field_values:
+            primitive_type = field_info['primitiveType']
+            encoded_field = struct.pack(f">{primitive_type}", 0)
+            encoded_message += encoded_field
+
+            # Debug print statement
+            print(f"Encoded field {field_id}: None ({encoded_field.hex()})")
+
     for field_id, field_value in field_values.items():
         if field_id in type_dict:
             field_type = type_dict[field_id]['type']
@@ -52,8 +61,11 @@ def encode_message(schema_file, message_name, field_values):
             if field_value not in valid_values:
                 raise ValueError(f"Invalid value '{field_value}' for field '{field_id}'")
 
-            encoded_value = struct.pack(f">{encoding_type}", int(valid_values[field_value]))
-            encoded_message += encoded_value
+            encoded_field = struct.pack(f">{encoding_type}", int(valid_values[field_value]))
+            encoded_message += encoded_field
+
+            # Debug print statement
+            print(f"Encoded field {field_id}: {field_value} ({encoded_field.hex()})")
 
         elif field_id in composite_fields:
             type_info = composite_fields[field_id]
@@ -63,19 +75,21 @@ def encode_message(schema_file, message_name, field_values):
                 for composite_value in field_value:
                     for subfield_id, subfield_value in composite_value.items():
                         subfield_primitive_type = composite_dict[field_id][subfield_id]['primitiveType']
-                        encoded_message += struct.pack(f">{subfield_primitive_type}", int(subfield_value))
+                        encoded_field = struct.pack(f">{subfield_primitive_type}", int(subfield_value))
+                        encoded_message += encoded_field
+                        # Debug print statement
+                        print(f"Encoded field {subfield_id}: {subfield_value} ({encoded_field.hex()})")
             else:
-                encoded_message += struct.pack(f">{primitive_type}", int(field_value))
-        
-        # Debug print statement
-        print(f"Encoded field {field_id}: {field_value} ({encoded_value.hex()})")
+                encoded_field = struct.pack(f">{primitive_type}", int(field_value))
+                encoded_message += encoded_field
+                # Debug print statement
+                print(f"Encoded field {field_id}: {field_value} ({encoded_field.hex()})")
 
     return encoded_message
 
 
-# Example usage
-schema_file = 'sample.xml'
-
+# Example encoding
+schema_file = 'schema.xml'
 message_name = 'NewOrderSingle'
 field_values = {
     52: 1623322435000000000,
@@ -111,26 +125,3 @@ field_values = {
 
 encoded_message = encode_message(schema_file, message_name, field_values)
 print(f"Encoded Message: {encoded_message.hex()}")
-
-
-
-
-Encoded field 52: 1623322435000000000 ()
-Encoded field 11: CLORD12345 ()
-Encoded field 21035: SECURITY123 ()
-Encoded field 54: BUY ()
-Encoded field 38: 100 ()
-Encoded field 40: LIMIT ()
-Encoded field 44: 99.99 ()
-Encoded field 59: DAY ()
-Encoded field 77: OPEN ()
-Encoded field 18: ADD ()
-Encoded field 1815: MEDIUM ()
-Encoded field 21020: 1 ()
-Encoded field 21021: 2 ()
-Encoded field 2362: 123 ()
-Encoded field 21001: PREVENT ()
-Encoded field 21000: 456 ()
-Encoded field 21005: 789 ()
-Encoded field 453: [{448: 'PARTY1', 447: 'SRC1', 452: 1}, {448: 'PARTY2', 447: 'SRC2', 452: 2}] ()
-Encoded Message: 
