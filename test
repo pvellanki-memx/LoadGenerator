@@ -72,33 +72,22 @@ def encode_message(schema_file, message_name, field_values):
 
     composite_fields = composite_dict.get(message_name, {})
 
-    # Print available field IDs for debugging
-    print("Available Field IDs:")
-    for field_id in composite_fields:
-        print(field_id)
-
     # Encode all fields with their values or null values
     for field_id, field_info in composite_fields.items():
-        if field_id not in field_values:
+        if field_id in field_values:
+            field_value = field_values[field_id]
+            encoded_field = encode_field(field_id, field_value, type_dict, composite_dict)
+            encoded_message += encoded_field
+        else:
             primitive_type = field_info['primitiveType']
             encoded_field = struct.pack(f">{primitive_type}", 0)
             encoded_message += encoded_field
-
-            # Debug print statement
-            print(f"Encoded field {field_id}: None ({encoded_field.hex()})")
-
-    for field_id, field_value in field_values.items():
-        encoded_field = encode_field(field_id, field_value, type_dict, composite_dict)
-        encoded_message += encoded_field
-
-        # Debug print statement
-        print(f"Encoded field {field_id}: {field_value} ({encoded_field.hex()})")
 
     return encoded_message
 
 
 # Example usage
-schema_file = 'schema.xml'
+schema_file = 'sbe-schema-options.xml'
 message_name = 'NewOrderSingle'
 field_values = {
     '52': 1623322435000000000,
