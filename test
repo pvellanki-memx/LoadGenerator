@@ -72,6 +72,11 @@ def encode_message(schema_file, message_name, field_values):
 
     composite_fields = composite_dict.get(message_name, {})
 
+    # Print available field IDs for debugging
+    print("Available Field IDs:")
+    for field_id in composite_fields:
+        print(field_id)
+
     # Encode all fields with their values or null values
     for field_id, field_info in composite_fields.items():
         if field_id not in field_values:
