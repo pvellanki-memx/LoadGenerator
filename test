@@ -1,34 +1,26 @@
 import xml.etree.ElementTree as ET
-from every import every
 
-def load_schema(xml_file):
-    try:
-        tree = ET.parse(xml_file)
-        root = tree.getroot()
-        
-        composite_dict = {}
-        type_dict = {}
-        
-        for element in every(root).element:
-            name = element.get('name')
-            composite = element.get('composite')
-            type_value = element.get('type')
-            
-            if name is not None:
-                composite_dict[name] = composite or False
-                type_dict[name] = type_value or 'unknown'
-        
-        return composite_dict, type_dict
-    except ET.ParseError as e:
-        print(f"Error parsing XML file: {e}")
-        return None, None
-    except FileNotFoundError:
-        print(f"XML file not found: {xml_file}")
-        return None, None
+def load_schema(schema_file):
+    tree = ET.parse(schema_file)
+    root = tree.getroot()
 
-# Usage example
-xml_file = 'path/to/your/xml/file.xml'
-composite_dict, type_dict = load_schema(xml_file)
-if composite_dict is not None and type_dict is not None:
-    # Use composite_dict and type_dict for further processing
-    pass
+    composite_dict = {}
+    type_dict = {}
+
+    # Load composite definitions
+    for composite_def in root.iter("composite"):
+        composite_id = int(composite_def.attrib["id"])
+        fields = {}
+        for field_def in composite_def.iter("field"):
+            field_id = int(field_def.attrib["id"])
+            field_name = field_def.attrib["name"]
+            fields[field_id] = field_name
+        composite_dict[composite_id] = fields
+
+    # Load type definitions
+    for type_def in root.iter("type"):
+        type_id = int(type_def.attrib["id"])
+        type_name = type_def.attrib["name"]
+        type_dict[type_id] = type_name
+
+    return composite_dict, type_dict
