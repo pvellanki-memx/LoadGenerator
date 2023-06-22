@@ -7,19 +7,19 @@ def load_schema(schema_file):
     composite_dict = {}
     type_dict = {}
 
-    for composite in root.findall(".//composite"):
-        composite_name = composite.attrib["name"]
-        composite_fields = []
-        for field in composite.findall(".//field"):
-            field_id = int(field.attrib["id"])
-            field_name = field.attrib["name"]
-            composite_fields.append((field_id, field_name))
-        composite_dict[composite_name] = composite_fields
+    # Load composite definitions
+    for composite_def in root.iter("composite"):
+        composite_id = int(composite_def.attrib["id"])
+        fields = {}
+        for field_def in composite_def.iter("field"):
+            field_id = int(field_def.attrib["id"])
+            fields[field_id] = field_def.attrib["name"]
+        composite_dict[composite_id] = fields
 
-    for type_def in root.findall(".//type"):
-        type_id = int(type_def.attrib.get("id", -1))
-        if type_id != -1:
-            type_name = type_def.attrib["name"]
-            type_dict[type_id] = type_name
+    # Load type definitions
+    for type_def in root.iter("type"):
+        type_id = int(type_def.attrib["id"])
+        type_name = type_def.attrib["name"]
+        type_dict[type_id] = type_name
 
     return composite_dict, type_dict
