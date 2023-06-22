@@ -92,52 +92,40 @@ def encode_message(schema_file, message_name, field_values):
     return encoded_message
 
 
-# Example encoding
+# Example usage
 schema_file = 'schema.xml'
 message_name = 'NewOrderSingle'
 field_values = {
-    52: 1623322435000000000,
-    11: "CLORD12345",
-    21035: "SECURITY123",
-    54: "BUY",
-    38: 100,
-    40: "LIMIT",
-    44: 99.99,
-    59: "DAY",
-    77: "OPEN",
-    18: "ADD",
-    1815: "MEDIUM",
-    21020: 1,
-    21021: 2,
-    2362: 123,
-    21001: "PREVENT",
-    21000: 456,
-    21005: 789,
-    453: [
+    '52': 1623322435000000000,
+    '11': "CLORD12345",
+    '21035': "SECURITY123",
+    '54': "BUY",
+    '38': 100,
+    '40': "LIMIT",
+    '44': 99.99,
+    '59': "DAY",
+    '77': "OPEN",
+    '18': "ADD",
+    '1815': "MEDIUM",
+    '21020': 1,
+    '21021': 2,
+    '2362': 123,
+    '21001': "PREVENT",
+    '21000': 456,
+    '21005': 789,
+    '453': [
         {
-            448: "PARTY1",
-            447: "SRC1",
-            452: 1
+            '448': "PARTY1",
+            '447': "SRC1",
+            '452': 1
         },
         {
-            448: "PARTY2",
-            447: "SRC2",
-            452: 2
+            '448': "PARTY2",
+            '447': "SRC2",
+            '452': 2
         }
     ]
 }
 
 encoded_message = encode_message(schema_file, message_name, field_values)
 print(f"Encoded Message: {encoded_message.hex()}")
-
-
-
-
-Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/sbe/options/testy.py", line 130, in <module>
-    encoded_message = encode_message(schema_file, message_name, field_values)
-  File "/home/pvellanki/loadgenerator/sbe/options/testy.py", line 86, in encode_message
-    encoded_field = encode_field(field_id, field_value, type_dict, composite_dict)
-  File "/home/pvellanki/loadgenerator/sbe/options/testy.py", line 65, in encode_field
-    raise ValueError(f"Invalid field ID '{field_id}'")
-ValueError: Invalid field ID '52'
