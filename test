@@ -35,6 +35,36 @@ def load_schema(xml_file):
     return type_dict, composite_dict
 
 
+def encode_field(field_id, field_value, type_dict, composite_dict):
+    if field_id in type_dict:
+        field_type = type_dict[field_id]['type']
+        encoding_type = type_dict[field_id]['encodingType']
+        valid_values = type_dict[field_id]['validValues']
+
+        if field_value not in valid_values:
+            raise ValueError(f"Invalid value '{field_value}' for field '{field_id}'")
+
+        encoded_value = struct.pack(f">{encoding_type}", int(valid_values[field_value]))
+        return encoded_value
+
+    elif field_id in composite_dict:
+        composite_fields = composite_dict[field_id]
+        encoded_composite = bytearray()
+
+        for subfield_id, subfield_value in field_value.items():
+            if subfield_id not in composite_fields:
+                raise ValueError(f"Invalid subfield '{subfield_id}' for composite field '{field_id}'")
+
+            subfield_primitive_type = composite_fields[subfield_id]['primitiveType']
+            encoded_subfield = struct.pack(f">{subfield_primitive_type}", int(subfield_value))
+            encoded_composite += encoded_subfield
+
+        return encoded_composite
+
+    else:
+        raise ValueError(f"Invalid field ID '{field_id}'")
+
+
 def encode_message(schema_file, message_name, field_values):
     type_dict, composite_dict = load_schema(schema_file)
 
@@ -53,37 +83,11 @@ def encode_message(schema_file, message_name, field_values):
             print(f"Encoded field {field_id}: None ({encoded_field.hex()})")
 
     for field_id, field_value in field_values.items():
-        if field_id in type_dict:
-            field_type = type_dict[field_id]['type']
-            encoding_type = type_dict[field_id]['encodingType']
-            valid_values = type_dict[field_id]['validValues']
+        encoded_field = encode_field(field_id, field_value, type_dict, composite_dict)
+        encoded_message += encoded_field
 
-            if field_value not in valid_values:
-                raise ValueError(f"Invalid value '{field_value}' for field '{field_id}'")
-
-            encoded_field = struct.pack(f">{encoding_type}", int(valid_values[field_value]))
-            encoded_message += encoded_field
-
-            # Debug print statement
-            print(f"Encoded field {field_id}: {field_value} ({encoded_field.hex()})")
-
-        elif field_id in composite_fields:
-            type_info = composite_fields[field_id]
-            primitive_type = type_info['primitiveType']
-            if isinstance(field_value, list):
-                encoded_message += struct.pack(f">{primitive_type}", len(field_value))
-                for composite_value in field_value:
-                    for subfield_id, subfield_value in composite_value.items():
-                        subfield_primitive_type = composite_dict[field_id][subfield_id]['primitiveType']
-                        encoded_field = struct.pack(f">{subfield_primitive_type}", int(subfield_value))
-                        encoded_message += encoded_field
-                        # Debug print statement
-                        print(f"Encoded field {subfield_id}: {subfield_value} ({encoded_field.hex()})")
-            else:
-                encoded_field = struct.pack(f">{primitive_type}", int(field_value))
-                encoded_message += encoded_field
-                # Debug print statement
-                print(f"Encoded field {field_id}: {field_value} ({encoded_field.hex()})")
+        # Debug print statement
+        print(f"Encoded field {field_id}: {field_value} ({encoded_field.hex()})")
 
     return encoded_message
 
