@@ -129,3 +129,15 @@ field_values = {
 
 encoded_message = encode_message(schema_file, message_name, field_values)
 print(f"Encoded Message: {encoded_message.hex()}")
+
+
+
+
+Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/sbe/options/testy.py", line 130, in <module>
+    encoded_message = encode_message(schema_file, message_name, field_values)
+  File "/home/pvellanki/loadgenerator/sbe/options/testy.py", line 86, in encode_message
+    encoded_field = encode_field(field_id, field_value, type_dict, composite_dict)
+  File "/home/pvellanki/loadgenerator/sbe/options/testy.py", line 65, in encode_field
+    raise ValueError(f"Invalid field ID '{field_id}'")
+ValueError: Invalid field ID '52'
