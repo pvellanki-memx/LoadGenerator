@@ -1,7 +1,8 @@
 import xml.etree.ElementTree as ET
 
-def load_schema(xml_schema):
-    root = ET.fromstring(xml_schema)
+def load_schema(file_name):
+    tree = ET.parse(file_name)
+    root = tree.getroot()
 
     composite_dict = {}
     type_dict = {}
@@ -37,3 +38,24 @@ def load_schema(xml_schema):
         type_dict[enum_name] = value_dict
 
     return composite_dict, type_dict
+
+# Example usage
+file_name = "sbe-schema-options.xml"
+
+composite_dict, type_dict = load_schema(file_name)
+
+print("Composite Dictionary:")
+for composite_name, field_dict in composite_dict.items():
+    print(f"Composite: {composite_name}")
+    for type_name, type_info in field_dict.items():
+        print(f"\tType: {type_name}")
+        print(f"\tPrimitive Type: {type_info['primitiveType']}")
+        print(f"\tPresence: {type_info['presence']}")
+        print(f"\tConstant Value: {type_info['constantValue']}")
+        print()
+
+print("Type Dictionary:")
+for enum_name, value_dict in type_dict.items():
+    print(f"Enum: {enum_name}")
+    for valid_value_name, valid_value in value_dict.items():
+        print(f"\tValid Value: {valid_value_name} ({valid_value})")
