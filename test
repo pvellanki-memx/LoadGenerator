@@ -111,3 +111,26 @@ field_values = {
 
 encoded_message = encode_message(schema_file, message_name, field_values)
 print(f"Encoded Message: {encoded_message.hex()}")
+
+
+
+
+Encoded field 52: 1623322435000000000 ()
+Encoded field 11: CLORD12345 ()
+Encoded field 21035: SECURITY123 ()
+Encoded field 54: BUY ()
+Encoded field 38: 100 ()
+Encoded field 40: LIMIT ()
+Encoded field 44: 99.99 ()
+Encoded field 59: DAY ()
+Encoded field 77: OPEN ()
+Encoded field 18: ADD ()
+Encoded field 1815: MEDIUM ()
+Encoded field 21020: 1 ()
+Encoded field 21021: 2 ()
+Encoded field 2362: 123 ()
+Encoded field 21001: PREVENT ()
+Encoded field 21000: 456 ()
+Encoded field 21005: 789 ()
+Encoded field 453: [{448: 'PARTY1', 447: 'SRC1', 452: 1}, {448: 'PARTY2', 447: 'SRC2', 452: 2}] ()
+Encoded Message: 
