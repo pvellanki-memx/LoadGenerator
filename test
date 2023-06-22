@@ -1,8 +1,25 @@
-Traceback (most recent call last):
-  File "/home/pvellanki/loadgenerator/sbe/options/testy.py", line 100, in <module>
-    encoded_message = encode_message(schema_file, message_name, field_values)
-  File "/home/pvellanki/loadgenerator/sbe/options/testy.py", line 27, in encode_message
-    composite_dict, type_dict = load_schema(schema_file)
-  File "/home/pvellanki/loadgenerator/sbe/options/testy.py", line 20, in load_schema
-    type_id = int(type_def.attrib["id"])
-KeyError: 'id'
+import xml.etree.ElementTree as ET
+
+def load_schema(schema_file):
+    tree = ET.parse(schema_file)
+    root = tree.getroot()
+
+    composite_dict = {}
+    type_dict = {}
+
+    for composite in root.findall(".//composite"):
+        composite_name = composite.attrib["name"]
+        composite_fields = []
+        for field in composite.findall(".//field"):
+            field_id = int(field.attrib["id"])
+            field_name = field.attrib["name"]
+            composite_fields.append((field_id, field_name))
+        composite_dict[composite_name] = composite_fields
+
+    for type_def in root.findall(".//type"):
+        type_id = int(type_def.attrib.get("id", -1))
+        if type_id != -1:
+            type_name = type_def.attrib["name"]
+            type_dict[type_id] = type_name
+
+    return composite_dict, type_dict
