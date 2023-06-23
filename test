@@ -83,3 +83,6 @@ field_values = {
 
 encoded_message = encode_message(schema_file, message_name, field_values)
 print('Encoded Message:', encoded_message)
+
+
+{'NewOrderSingle': {'id': 1, 'fields': {52: 'UTCTimestampNanos', 11: 'NewOrderSingleClOrdID', 21035: 'NewOrderSingleOptionsSecurityID', 54: 'SideType', 38: 'uint32', 40: 'OrdType', 44: 'PriceType', 59: 'TimeInForceType', 77: 'OpenOrCloseType', 18: 'ExecInstType', 1815: 'TradingCapacityType', 21020: 'RepriceFrequencyType', 21021: 'RepriceBehaviorType', 2362: 'uint16', 21001: 'MatchTradePreventionType', 21000: 'uint16', 21005: 'uint16', 448: 'NewOrderSinglePartyID', 447: 'char', 452: 'uint8'}}, 'ShortTwoSidedBulkQuote': {'id': 2, 'fields': {52: 'UTCTimestampNanos', 11: 'ShortTwoSidedBulkQuoteClOrdID', 59: 'TimeInForceType', 18: 'ExecInstType', 1815: 'TradingCapacityType', 2362: 'uint16', 21001: 'MatchTradePreventionType', 21000: 'uint16', 21005: 'uint16', 448: 'ShortTwoSidedBulkQuotePartyID', 447: 'char', 452: 'uint8', 67: 'uint8', 21035: 'ShortTwoSidedBulkQuoteOptionsSecurityID', 134: 'uint16', 132: 'ShortPriceType', 135: 'uint16', 133: 'ShortPriceType'}}, 'LongTwoSidedBulkQuote': {'id': 3, 'fields': {52: 'UTCTimestampNanos', 11: 'LongTwoSidedBulkQuoteClOrdID', 59: 'TimeInForceType'
