@@ -22,7 +22,10 @@ def load_schema(schema_file):
             field_id = int(field_elem.attrib["id"])
             field_name = field_elem.attrib["name"]
             field_type = field_elem.attrib.get("type")
-            fields[field_id] = field_type
+            fields[field_id] = {
+                "name": field_name,
+                "type": field_type
+            }
 
         messages[message_name] = {
             "id": message_id,
@@ -59,8 +62,9 @@ def encode_message(schema_file, message_name, field_values):
         raise ValueError(f"Invalid message name '{message_name}'")
 
     encoded_fields = []
-    for field_id, field_type in message['fields'].items():
-        field_name = [name for name, data in schema.items() if 'id' in data['fields'] and data['fields']['id'] == field_id][0]
+    for field_id, field_data in message['fields'].items():
+        field_name = field_data['name']
+        field_type = field_data['type']
         field_value = field_values.get(field_name, None)
         encoded_field = encode_field(field_id, field_value, field_type, schema, field_values)
         encoded_fields.append(encoded_field)
@@ -94,9 +98,10 @@ def encode_field(tag, value, field_type, schema, field_values):
         composite_fields = schema.get(field_type.split(':')[1])
         if not composite_fields:
             raise ValueError(f"Invalid composite field '{field_type}'")
-        for sub_field_name, sub_field_data in composite_fields['fields'].items():
+        for sub_field_data in composite_fields['fields'].values():
             sub_field_id = sub_field_data['id']
             sub_field_type = sub_field_data['type']
+            sub_field_name = sub_field_data['name']
             sub_field_value = field_values.get(sub_field_name, None)
             encoded_sub_field = encode_field(sub_field_id, sub_field_value, sub_field_type, schema, field_values)
             encoded_value += encoded_sub_field
