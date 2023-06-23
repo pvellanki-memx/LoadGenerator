@@ -129,3 +129,40 @@ field_values = {
 
 encoded_message = encode_message(schema_file, message_name, field_values)
 print('Encoded Message:', encoded_message)
+
+
+def encode_message(schema_file, message_name, field_values):
+    schema = load_schema(schema_file)
+    message = schema.get(message_name)
+    if not message:
+        raise ValueError(f"Invalid message name '{message_name}'")
+
+    encoded_fields = []
+    for field_id, field_data in message['fields'].items():
+        field_name = field_data['name']
+        field_type = field_data['type']
+        field_value = field_values.get(field_name)
+        if field_value is None:
+            field_value = get_default_value(field_type)
+        encoded_field = encode_field(field_id, field_value, field_type, schema, field_values)
+        encoded_fields.append(encoded_field)
+
+    encoded_message = b''.join(encoded_fields)
+    return encoded_message
+
+def get_default_value(field_type):
+    if field_type == 'int':
+        return 0
+    elif field_type == 'uint':
+        return 0
+    elif field_type == 'float':
+        return 0.0
+    elif field_type == 'double':
+        return 0.0
+    elif field_type == 'char':
+        return None
+    elif field_type == 'boolean':
+        return False
+    else:
+        return 255
+
