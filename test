@@ -85,6 +85,7 @@ def encode_field(tag, value, field_type, schema, field_values):
     elif field_type == 'double':
         encoded_value = struct.pack('!d', float(value))
     elif field_type == 'char':
+        value = value if value is not None else ''
         encoded_value = struct.pack('!s', value.encode())
     elif field_type == 'boolean':
         encoded_value = struct.pack('!?', bool(value))
