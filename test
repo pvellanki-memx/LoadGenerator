@@ -1,3 +1,4 @@
+import struct
 import xml.etree.ElementTree as ET
 
 def load_schema(schema_file):
@@ -47,8 +48,9 @@ def load_schema(schema_file):
         }
 
         type_counter += 1
-    print(messages)
+
     return messages
+
 
 def encode_message(schema_file, message_name, field_values):
     schema = load_schema(schema_file)
@@ -57,37 +59,50 @@ def encode_message(schema_file, message_name, field_values):
         raise ValueError(f"Invalid message name '{message_name}'")
 
     encoded_fields = []
-    for field_name, field_type in message['fields'].items():
+    for field_id, field_type in message['fields'].items():
+        field_name = [name for name, data in schema.items() if data['id'] == field_id][0]
         field_value = field_values.get(field_name, None)
-        encoded_field = encode_field(field_name, field_value, field_type,schema)
+        encoded_field = encode_field(field_id, field_value, field_type, schema)
         encoded_fields.append(encoded_field)
 
-    encoded_message = ''.join(encoded_fields)
+    encoded_message = b''.join(encoded_fields)
     return encoded_message
 
-def encode_field(field_name, field_value, field_type,schema):
-    if field_value is None:
-        field_value = ''
 
-    encoded_value = ''
-    if field_type == 'char':
-        encoded_value = str(field_value)
-    elif field_type == 'int':
-        encoded_value = str(field_value) if field_value is not None else '0'
+def encode_field(tag, value, field_type, schema):
+    encoded_value = b''
+
+    if field_type == 'int':
+        encoded_value = struct.pack('!i', int(value))
+    elif field_type == 'uint':
+        encoded_value = struct.pack('!I', int(value))
     elif field_type == 'float':
-        encoded_value = str(field_value) if field_value is not None else '0.0'
-    elif field_type == 'composite':
-        composite_fields = schema.get(field_value)
+        encoded_value = struct.pack('!f', float(value))
+    elif field_type == 'double':
+        encoded_value = struct.pack('!d', float(value))
+    elif field_type == 'char':
+        encoded_value = struct.pack('!s', value.encode())
+    elif field_type == 'boolean':
+        encoded_value = struct.pack('!?', bool(value))
+    elif field_type.startswith('group'):
+        group_fields = field_type.split(':')[1:]
+        for group_field in group_fields:
+            group_tag, group_value = group_field.split('=')
+            encoded_group_field = encode_field(int(group_tag), group_value, field_type, schema)
+            encoded_value += encoded_group_field
+    elif field_type.startswith('composite'):
+        composite_fields = schema.get(field_type.split(':')[1])
         if not composite_fields:
-            raise ValueError(f"Invalid composite field '{field_value}'")
-        for sub_field_name, sub_field_data in composite_fields.items():
+            raise ValueError(f"Invalid composite field '{field_type}'")
+        for sub_field_name, sub_field_data in composite_fields['fields'].items():
             sub_field_id = sub_field_data['id']
             sub_field_type = sub_field_data['type']
-            sub_field_value = field_values.get(sub_field_name, None)
+            sub_field_value = value.get(sub_field_name, None)
             encoded_sub_field = encode_field(sub_field_id, sub_field_value, sub_field_type, schema)
             encoded_value += encoded_sub_field
 
     return encoded_value
+
 
 # Example usage
 schema_file = 'sbe-schema-options.xml'
