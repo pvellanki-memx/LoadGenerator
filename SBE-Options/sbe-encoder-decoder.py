@@ -575,3 +575,277 @@ class LongTwoSideBulkQuote:
             self.quotes.append(quote)
             offset += LongTwoSidedQuote.SIZE
 
+
+class ShortOneSideQuote:
+    def __init__(self, list_seq_no: int, options_security_id: str, side: str, quantity: int, price: int):
+        self.list_seq_no = list_seq_no
+        self.options_security_id = options_security_id
+        self.side = side
+        self.quantity = quantity
+        self.price = price
+
+    def encode(self, encoder):
+        encoder.encode_uint8(self.list_seq_no)
+        encoder.encode_char(self.options_security_id)
+        encoder.encode_byte(self.side)
+        encoder.encode_uint16(self.quantity)
+        encoder.encode_short(self.price)
+
+
+class ShortOneSideBulkQuote:
+    def __init__(self, sbe_header: SBEHeader, sending_time: int, cl_ord_id: str, time_in_force: str, exec_inst: str,
+                 trading_capacity: str, mtp_group_id: int, match_trade_prevention: int, cancel_group_id: int,
+                 risk_group_id: int, parties: List[Party], quotes: List[ShortOneSideQuote]):
+        self.sbe_header = sbe_header
+        self.sending_time = sending_time
+        self.cl_ord_id = cl_ord_id
+        self.time_in_force = time_in_force
+        self.exec_inst = exec_inst
+        self.trading_capacity = trading_capacity
+        self.mtp_group_id = mtp_group_id
+        self.match_trade_prevention = match_trade_prevention
+        self.cancel_group_id = cancel_group_id
+        self.risk_group_id = risk_group_id
+        self.parties = parties
+        self.quotes = quotes
+
+    def encode(self, encoder):
+        self.sbe_header.encode(encoder)
+        encoder.encode_int64(self.sending_time)
+        encoder.encode_string(self.cl_ord_id, length=20)
+        encoder.encode_byte(self.time_in_force)
+        encoder.encode_short(self.exec_inst)
+        encoder.encode_byte(self.trading_capacity)
+        encoder.encode_short(self.mtp_group_id)
+        encoder.encode_byte(self.match_trade_prevention)
+        encoder.encode_short(self.cancel_group_id)
+        encoder.encode_short(self.risk_group_id)
+
+        encoder.encode_repeating_group(self.parties, self.encode_party)
+        encoder.encode_repeating_group(self.quotes, self.encode_short_one_side_quote)
+
+    @staticmethod
+    def encode_party(encoder, party):
+        party.encode(encoder)
+
+    @staticmethod
+    def encode_short_one_side_quote(encoder, quote):
+        quote.encode(encoder)
+
+
+# Decoders
+class ShortOneSideQuoteDecoder:
+    def __init__(self):
+        self.list_seq_no = None
+        self.options_security_id = None
+        self.side = None
+        self.quantity = None
+        self.price = None
+
+    def decode(self, decoder):
+        self.list_seq_no = decoder.decode_uint8()
+        self.options_security_id = decoder.decode_char()
+        self.side = decoder.decode_byte()
+        self.quantity = decoder.decode_uint16()
+        self.price = decoder.decode_short()
+
+
+class ShortOneSideBulkQuoteDecoder:
+    def __init__(self):
+        self.sbe_header = SBEHeaderDecoder()
+        self.sending_time = None
+        self.cl_ord_id = None
+        self.time_in_force = None
+        self.exec_inst = None
+        self.trading_capacity = None
+        self.mtp_group_id = None
+        self.match_trade_prevention = None
+        self.cancel_group_id = None
+        self.risk_group_id = None
+        self.parties = []
+        self.quotes = []
+
+    def decode(self, decoder):
+        self.sbe_header.decode(decoder)
+        self.sending_time = decoder.decode_int64()
+        self.cl_ord_id = decoder.decode_string(length=20)
+        self.time_in_force = decoder.decode_byte()
+        self.exec_inst = decoder.decode_short()
+        self.trading_capacity = decoder.decode_byte()
+        self.mtp_group_id = decoder.decode_short()
+        self.match_trade_prevention = decoder.decode_byte()
+        self.cancel_group_id = decoder.decode_short()
+        self.risk_group_id = decoder.decode_short()
+
+        self.parties = decoder.decode_repeating_group(self.decode_party)
+        self.quotes = decoder.decode_repeating_group(self.decode_short_one_side_quote)
+
+    def decode_party(self, decoder):
+        party_decoder = PartyDecoder()
+        party_decoder.decode(decoder)
+        return party_decoder.party
+
+    def decode_short_one_side_quote(self, decoder):
+        quote_decoder = ShortOneSideQuoteDecoder()
+        quote_decoder.decode(decoder)
+        return quote_decoder
+
+'''
+# Usage example
+encoder = Encoder()
+
+# Encode ShortOneSideQuote
+quote = ShortOneSideQuote(1, "XYZ", "Buy", 100, 500)
+quote.encode(encoder)
+encoded_data = encoder.get_encoded_data()
+print("Encoded ShortOneSideQuote:", encoded_data)
+
+# Decode ShortOneSideQuote
+decoder = Decoder(encoded_data)
+decoded_quote = ShortOneSideQuoteDecoder()
+decoded_quote.decode(decoder)
+print("Decoded ShortOneSideQuote:")
+print("ListSeqNo:", decoded_quote.list_seq_no)
+print("OptionsSecurityID:", decoded_quote.options_security_id)
+print("Side:", decoded_quote.side)
+print("Quantity:", decoded_quote.quantity)
+print("Price:", decoded_quote.price)
+
+# Encode ShortOneSideBulkQuote
+party1 = Party(...)
+party2 = Party(...)
+quote1 = ShortOneSideQuote(...)
+quote2 = ShortOneSideQuote(...)
+bulk_quote = ShortOneSideBulkQuote(sbe_header, sending_time, cl_ord_id, time_in_force, exec_inst,
+                                  trading_capacity, mtp_group_id, match_trade_prevention, cancel_group_id,
+                                  risk_group_id, [party1, party2], [quote1, quote2])
+bulk_quote.encode(encoder)
+encoded_data = encoder.get_encoded_data()
+print("Encoded ShortOneSideBulkQuote:", encoded_data)
+
+# Decode ShortOneSideBulkQuote
+decoder = Decoder(encoded_data)
+decoded_bulk_quote = ShortOneSideBulkQuoteDecoder()
+decoded_bulk_quote.decode(decoder)
+print("Decoded ShortOneSideBulkQuote:")
+print("SendingTime:", decoded_bulk_quote.sending_time)
+print("ClOrdID:", decoded_bulk_quote.cl_ord_id)
+print("TimeInForce:", decoded_bulk_quote.time_in_force)
+print("ExecInst:", decoded_bulk_quote.exec_inst)
+print("TradingCapacity:", decoded_bulk_quote.trading_capacity)
+# ...
+'''
+class LongOneSideQuote:
+    def __init__(self, list_seq_no: int, options_security_id: str, side: str, quantity: int, price: int):
+        self.list_seq_no = list_seq_no
+        self.options_security_id = options_security_id
+        self.side = side
+        self.quantity = quantity
+        self.price = price
+
+    def encode(self, encoder):
+        encoder.encode_uint8(self.list_seq_no)
+        encoder.encode_char(self.options_security_id)
+        encoder.encode_byte(self.side)
+        encoder.encode_uint32(self.quantity)
+        encoder.encode_price(self.price)
+
+
+class LongOneSideBulkQuote:
+    def __init__(self, sbe_header: SBEHeader, sending_time: int, cl_ord_id: str, time_in_force: str, exec_inst: str,
+                 trading_capacity: str, mtp_group_id: int, match_trade_prevention: int, cancel_group_id: int,
+                 risk_group_id: int, parties: List[Party], quotes: List[LongOneSideQuote]):
+        self.sbe_header = sbe_header
+        self.sending_time = sending_time
+        self.cl_ord_id = cl_ord_id
+        self.time_in_force = time_in_force
+        self.exec_inst = exec_inst
+        self.trading_capacity = trading_capacity
+        self.mtp_group_id = mtp_group_id
+        self.match_trade_prevention = match_trade_prevention
+        self.cancel_group_id = cancel_group_id
+        self.risk_group_id = risk_group_id
+        self.parties = parties
+        self.quotes = quotes
+
+    def encode(self, encoder):
+        self.sbe_header.encode(encoder)
+        encoder.encode_int64(self.sending_time)
+        encoder.encode_string(self.cl_ord_id, length=20)
+        encoder.encode_byte(self.time_in_force)
+        encoder.encode_short(self.exec_inst)
+        encoder.encode_byte(self.trading_capacity)
+        encoder.encode_short(self.mtp_group_id)
+        encoder.encode_byte(self.match_trade_prevention)
+        encoder.encode_short(self.cancel_group_id)
+        encoder.encode_short(self.risk_group_id)
+
+        encoder.encode_repeating_group(self.parties, self.encode_party)
+        encoder.encode_repeating_group(self.quotes, self.encode_long_one_side_quote)
+
+    @staticmethod
+    def encode_party(encoder, party):
+        party.encode(encoder)
+
+    @staticmethod
+    def encode_long_one_side_quote(encoder, quote):
+        quote.encode(encoder)
+
+
+# Decoders
+class LongOneSideQuoteDecoder:
+    def __init__(self):
+        self.list_seq_no = None
+        self.options_security_id = None
+        self.side = None
+        self.quantity = None
+        self.price = None
+
+    def decode(self, decoder):
+        self.list_seq_no = decoder.decode_uint8()
+        self.options_security_id = decoder.decode_char()
+        self.side = decoder.decode_byte()
+        self.quantity = decoder.decode_uint32()
+        self.price = decoder.decode_price()
+
+
+class LongOneSideBulkQuoteDecoder:
+    def __init__(self):
+        self.sbe_header = SBEHeaderDecoder()
+        self.sending_time = None
+        self.cl_ord_id = None
+        self.time_in_force = None
+        self.exec_inst = None
+        self.trading_capacity = None
+        self.mtp_group_id = None
+        self.match_trade_prevention = None
+        self.cancel_group_id = None
+        self.risk_group_id = None
+        self.parties = []
+        self.quotes = []
+
+    def decode(self, decoder):
+        self.sbe_header.decode(decoder)
+        self.sending_time = decoder.decode_int64()
+        self.cl_ord_id = decoder.decode_string(length=20)
+        self.time_in_force = decoder.decode_byte()
+        self.exec_inst = decoder.decode_short()
+        self.trading_capacity = decoder.decode_byte()
+        self.mtp_group_id = decoder.decode_short()
+        self.match_trade_prevention = decoder.decode_byte()
+        self.cancel_group_id = decoder.decode_short()
+        self.risk_group_id = decoder.decode_short()
+
+        self.parties = decoder.decode_repeating_group(self.decode_party)
+        self.quotes = decoder.decode_repeating_group(self.decode_long_one_side_quote)
+
+    def decode_party(self, decoder):
+        party_decoder = PartyDecoder()
+        party_decoder.decode(decoder)
+        return party_decoder.party
+
+    def decode_long_one_side_quote(self, decoder):
+        quote_decoder = LongOneSideQuoteDecoder()
+        quote_decoder.decode(decoder)
+        return quote_decoder
+
