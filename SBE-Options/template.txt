@@ -1,0 +1,54 @@
+[NewOrderSingle]
+SendingTime = RANDOM
+ClOrdID = RANDOM
+TimeInForce = GTC
+ExecInst = RANDOM
+TradingCapacity = RANDOM
+MtpGroupID = RANDOM
+MatchTradePrevention = RANDOM
+CancelGroupID = RANDOM
+RiskGroupID = RANDOM
+
+[ShortTwoSideBulkQuote]
+SendingTime = RANDOM
+ClOrdID = RANDOM
+TimeInForce = GTC
+ExecInst = RANDOM
+TradingCapacity = RANDOM
+MtpGroupID = RANDOM
+MatchTradePrevention = RANDOM
+CancelGroupID = RANDOM
+RiskGroupID = RANDOM
+
+[LongTwoSideBulkQuote]
+SendingTime = RANDOM
+ClOrdID = RANDOM
+TimeInForce = GTC
+ExecInst = RANDOM
+TradingCapacity = RANDOM
+MtpGroupID = RANDOM
+MatchTradePrevention = RANDOM
+CancelGroupID = RANDOM
+RiskGroupID = RANDOM
+
+[ShortOneSideBulkQuote]
+SendingTime = RANDOM
+ClOrdID = RANDOM
+TimeInForce = GTC
+ExecInst = RANDOM
+TradingCapacity = RANDOM
+MtpGroupID = RANDOM
+MatchTradePrevention = RANDOM
+CancelGroupID = RANDOM
+RiskGroupID = RANDOM
+
+[LongOneSideBulkQuote]
+SendingTime = RANDOM
+ClOrdID = RANDOM
+TimeInForce = GTC
+ExecInst = RANDOM
+TradingCapacity = RANDOM
+MtpGroupID = RANDOM
+MatchTradePrevention = RANDOM
+CancelGroupID = RANDOM
+RiskGroupID = RANDOM
