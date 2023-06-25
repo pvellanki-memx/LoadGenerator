@@ -170,8 +170,9 @@ def get_default_value(field_type):
 
 
 
+						
 Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
-SBE Header	0	7	SBE Header	N/A	Y	SBE Header with templateID = 2
+SBE Header	0	7	SBE Header	N/A	Y	SBE Header with templateID = 3
 SendingTime	7	8	UTCTimestampNanos	52	Y	Time of message transmission always expressed in UTC (Universal Time Coordinated, also known as GMT)
 ClOrdID	15	20	CHAR	11	Y	Unique identifier of the order as assigned by the client.
 TimeInForce	35	1	TimeInForceType	59	Y	Defines the time during which an order is eligible for execution.
@@ -184,14 +185,15 @@ RiskGroupID	44	2	UINT16	21005	N	Unique identifier of a custom risk control set t
 NoPartyIDs	-	-	RepeatingGroupDimensions	453	Y	The dimensions of the Repeating Group.
 Parties	-	-	Parties Group	N/A	Y	The parties associated with the quotes.
 NoQuoteEntries	-	-	RepeatingGroupDimensions	295	Y	The dimensions of the Repeating Group.
-Quotes	-	-	Short Two Sided Quote	N/A	Y	The characteristics of each quote.
+Quotes	-	-	Long Two Sided Quote	N/A	Y	The characteristics of each quote.
 						
 Field	Offset	Length	Type	Tag Ref	Req'd	Description
 				Num		
-ListSeqNo	0	1	UINT8	67	Y	Unique identifier for a single Quote within the collection.
+Field	Offset	Length	Type	Tag Ref	Req'd	Description
+				Num		
+ListSeqNo	0	1	UINT8	67	Y	Unique identifier for a single Quote within the collection
 OptionsSecurityID	1	8	CHAR	21035	Y	The OptionsSecurityID of the tradable options product for the quote. The Underlier for all quotes in the repeating group must match the Underlier of the first quote in the repeating group.
-BidSize	9	2	UINT16	134	Y	Bid side quantity of the quote.
-BidPx	11	2	ShortPriceType	132	Y	Bid side price of the quote. Price per unit of quantity.
-OfferSize	13	2	UINT16	135	Y	Ask side quantity of the quote.
-OfferPx	15	2	ShortPriceType	133	Y	Ask side price of the quote. Price per unit of quantity.
-
+BidSize	9	4	UINT32	134	Y	Bid side quantity of the quote.
+BidPx	13	8	PriceType	132	Y	Bid side price of the quote. Price per unit of quantity.
+OfferSize	21	4	UINT32	135	Y	Ask side quantity of the quote.
+OfferPx	25	8	PriceType	133	Y	Ask side price of the quote. Price per unit of quantity.
