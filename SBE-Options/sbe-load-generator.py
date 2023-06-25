@@ -12,13 +12,13 @@ config.read('config.ini')
 
 # Read connection details from connections.cfg
 connection_config = configparser.ConfigParser()
-connection_config.read(config['Default']['connection_config'])
+connection_config.read(config['Server']['config_file'])
 
 # TCP/IP connection details
-host = connection_config['Connection']['host']
-port = int(connection_config['Connection']['port'])
-user = connection_config['Connection']['user']
-password = connection_config['Connection']['password']
+host = connection_config['Session1']['host']
+port = int(connection_config['Session1']['port'])
+user = connection_config['Session1']['user']
+password = connection_config['Session1']['password']
 token = f'{user}:{password}'
 
 # Token and header details
@@ -28,22 +28,23 @@ header = struct.pack('!BHB', 100, token_length + 1, token_type.encode('utf-8')[0
 message = header + token.encode('utf-8')
 
 # Read other configuration parameters
-message_rates = config['Default'].getint('message_rates')
-duration = config['Default'].getint('duration')
+message_rate = config.getint('Load', 'message_rate')
+duration = config.getint('Load', 'duration')
+
 weights = {
-    'NewOrderSingle': config['Default'].getint('NewOrderSingle_weight'),
-    'ShortTwoSideBulkQuote': config['Default'].getint('ShortTwoSideBulkQuote_weight'),
-    'LongTwoSideBulkQuote': config['Default'].getint('LongTwoSideBulkQuote_weight'),
-    'ShortOneSideBulkQuote': config['Default'].getint('ShortOneSideBulkQuote_weight'),
-    'LongOneSideBulkQuote': config['Default'].getint('LongOneSideBulkQuote_weight'),
+    'NewOrderSingle': config.getfloat('Weights', 'NewOrderSingle'),
+    'ShortTwoSideBulkQuote': config.getfloat('Weights', 'ShortTwoSideBulkQuote'),
+    'LongTwoSideBulkQuote': config.getfloat('Weights', 'LongTwoSideBulkQuote'),
+    'ShortOneSideBulkQuote': config.getfloat('Weights', 'ShortOneSideBulkQuote'),
+    'LongOneSideBulkQuote': config.getfloat('Weights', 'LongOneSideBulkQuote')
 }
 
-# Read optionsSecurityID's from config.ini
-options_security_ids = config['Default']['options_security_ids'].split(',')
+security_ids = config.get('OptionsSecurityIDs', 'security_ids').split(',')
+
+template_file = config.get('Template', 'template_file')
 
 # Load template.txt
-template_file_path = config['Default']['template_file']
-with open(template_file_path) as template_file:
+with open(template_file) as template_file:
     template = template_file.read()
 
 # Establish SBE TCP session
@@ -164,7 +165,7 @@ def send_message(client_socket, message):
     client_socket.sendall(encoded_message)
 
     # Sleep for a short period to control the message rate
-    time.sleep(1 / message_rates)
+    time.sleep(1 / message_rate)
 
 # Main execution
 def main():
