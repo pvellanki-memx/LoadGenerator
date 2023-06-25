@@ -4,15 +4,20 @@ from struct import pack, unpack_from
 class SBEHeader:
     BLOCK_LENGTH = 7
 
-    def __init__(self, template_id):
+    def __init__(self, block_length, template_id, schema_id, version, num_groups):
+        self.block_length = block_length
         self.template_id = template_id
+        self.schema_id = schema_id
+        self.version = version
+        self.num_groups = num_groups
 
     def encode(self):
-        return pack('B6s', self.BLOCK_LENGTH, self.template_id.to_bytes(6, 'big'))
+        return pack('>HBBHH', self.block_length, self.template_id, self.schema_id, self.version, self.num_groups)
 
     def decode(self, buffer):
-        block_length, template_id = unpack_from('B6s', buffer)
-        return block_length, int.from_bytes(template_id, 'big')
+        block_length, template_id, schema_id, version, num_groups = unpack_from('>HBBHH', buffer)
+        return block_length, template_id, schema_id, version, num_groups
+
 
 
 class UTCTimestampNanos:
