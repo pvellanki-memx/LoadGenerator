@@ -123,12 +123,31 @@ def generate_message_type():
     return choices(message_types, weights=list(weights.values()), k=1)[0]
 
 # Generate a random message based on the specified type
-def generate_message(message_type):
     if message_type == 'NewOrderSingle':
-        # Generate NewOrderSingle message
-        # Implement the logic to generate the field values for this message type
-        # Return an instance of the NewOrderSingle class with the generated field values
-        pass
+        sending_time = UTCTimestampNanos()
+        cl_ord_id = ''.join(choices(string.ascii_uppercase + string.digits, k=20))
+        options_security_id = choices(options_security_ids)[0]
+        side = SideType.BUY  # Assuming a BUY order, you can customize this
+        order_qty = UINT32(randint(1, 100))
+        ord_type = OrdType.LIMIT  # Assuming a LIMIT order, you can customize this
+        time_in_force = TimeInForceType.GOOD_TILL_CANCEL  # Assuming a GTC order, you can customize this
+        exec_inst = [ExecInstType.PRIMARY_PEG, ExecInstType.DISPLAY_PRICE]  # Assuming primary peg and display price instructions, you can customize this
+        trading_capacity = TradingCapacityType.PRINCIPAL  # Assuming principal capacity, you can customize this
+    
+        # Create an instance of NewOrderSingle and set the field values
+        new_order_single = NewOrderSingle()
+        new_order_single.sending_time = sending_time
+        new_order_single.cl_ord_id = cl_ord_id
+        new_order_single.options_security_id = options_security_id
+        new_order_single.side = side
+        new_order_single.order_qty = order_qty
+        new_order_single.ord_type = ord_type
+        new_order_single.time_in_force = time_in_force
+        new_order_single.exec_inst = exec_inst
+        new_order_single.trading_capacity = trading_capacity
+
+        return new_order_single
+
 
     elif message_type == 'ShortTwoSideBulkQuote':
         # Generate ShortTwoSideBulkQuote message
