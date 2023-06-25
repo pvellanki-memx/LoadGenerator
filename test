@@ -166,3 +166,29 @@ def get_default_value(field_type):
     else:
         return 255
 
+
+
+
+
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header 	0	7	SBE Header	N/A	N/A	SBE Header with templateID = 1
+SendingTime	7	8	UTCTimestampNanos	52	Y	Time of message transmission always expressed in UTC (Universal Time Coordinated, also known as GMT)
+ClOrdID	15	20	CHAR	11	Y	Unique identifier of the order as assigned by the client.
+OptionsSecurityID	35	8	CHAR	21035	Y	The OptionsSecurityID of the tradable options product for the order.
+Side	43	1	SideType	54	Y	Side of order.
+OrderQty	44	4	UINT32	38	Y	Quantity ordered. This represents the number of options contracts.
+OrdType	48	1	OrdType	40	Y	Type of the order.
+Price	49	8	PriceType	44	N	Price per unit of quantity (e.g. per contract).
+TimeInForce	57	1	TimeInForceType	59	Y	Defines the time during which an order is eligible for execution.
+OpenOrClose	58	1	OpenOrCloseType	77	N	Opening or closing a position.
+ExecInst	59	2	ExecInstType	18	Y	Instructions for order handling on exchange.
+TradingCapacity	61	1	TradingCapacityType	1815	Y	Capacity of the order.
+RepriceFrequency	62	1	RepriceFrequencyType	21020	N	Defines the frequency of a reprice.  If this tag is not sent then the order will not be repriced.
+RepriceBehavior	63	1	RepriceBehaviorType	21021	N	Defines the reprice behavior when market is locked or crossed.
+MtpGroupID	64	2	MtpGroupIDType	2362	N	Unique identifier of custom match-trade prevention group.
+MatchTradePrevention	66	1	MatchTradePreventionType	21001	N	Defines the desired behavior in the event of a wash. The UINT8 Null (0xFF) value disables match trade prevention.
+CancelGroupID	67	2	UINT16	21000	N	Unique identifier of custom cancel group.
+RiskGroupID	69	2	UINT16	21005	N	Unique identifier of a custom risk control set to be applied to this order. The UINT16 Null value (0xFFFF) disables custom risk controls.
+NoPartyIDs	-	-	RepeatingGroupDimensions	453	Y	The dimensions of the Repeating Group.
+Parties	-	-	Parties Group	N/A	N	The parties associated with the quotes.
+
