@@ -366,3 +366,11 @@ print("TradingCapacity:", decoded_message.trading_capacity.value)
 print("PartyID:", decoded_message.party_id.value)
 print("PartyIDSource:", decoded_message.party_id_source.value)
 print("PartyRole:", decoded_message.party_role.value)
+
+
+
+from sbe_encoder_decoder import UTCTimestampNanos, NewOrderSingle, ShortTwoSideBulkQuote, LongTwoSideBulkQuote, ShortOneSideBulkQuote, LongOneSideBulkQuote
+from sbe_encoder_decoder import UINT32, OrdType, TimeInForceType, ExecInstType, TradingCapacityType, SideType
+from random import choices, randint
+import string
+
