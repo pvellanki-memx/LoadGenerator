@@ -1,0 +1,46 @@
+SBE Load Generator
+The SBE Load Generator is a Python script that generates and sends random SBE (Simple Binary Encoding) messages over a TCP connection. It utilizes the sbe_encoder_decoder.py module for encoding the messages based on your specified SBE templates.
+
+Prerequisites
+Before running the load generator script, ensure that you have the following:
+
+Python 3.x installed on your machine.
+The config.ini file that contains the configuration parameters for the load generator.
+The connections.cfg file that contains the connection details for the SBE TCP session.
+The sbe_encoder_decoder.py module that provides the encoding and decoding functionality for the SBE messages.
+The SBE template file (template.txt) that defines the structure and fields of the SBE messages.
+Installation
+Clone or download the repository containing the load generator script and the required files.
+
+Install the necessary dependencies by running the following command:
+
+Copy code
+pip install -r requirements.txt
+Configuration
+Open the config.ini file and configure the following parameters:
+
+Load: Set the message_rate parameter to specify the desired message rate (messages per second).
+Load: Set the duration parameter to specify the duration of the load generation (in seconds).
+Weights: Set the weights for each message type according to your desired distribution.
+OptionsSecurityIDs: Set the security_ids parameter with a comma-separated list of security IDs.
+Open the connections.cfg file and configure the following parameters:
+
+Set the host parameter to the IP address or hostname of the SBE server.
+Set the port parameter to the port number on which the SBE server is listening.
+Set the user and password parameters with the appropriate credentials for the SBE session.
+Ensure that the SBE template file (template.txt) is present and correctly defines the structure and fields of the SBE messages.
+
+Usage
+Open a terminal or command prompt and navigate to the directory containing the load generator script.
+
+Run the load generator script using the following command:
+
+
+
+python sbe_load_generator.py
+
+The load generator will establish a TCP connection with the SBE server, perform the login procedure, and start sending random SBE messages based on the specified configuration.
+
+The load generator will generate messages according to the configured weights and send them over the TCP connection at the specified rate.
+
+The load generator will continue sending messages for the specified duration and then close the TCP connection.
