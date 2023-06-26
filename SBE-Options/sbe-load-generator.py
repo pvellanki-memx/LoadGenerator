@@ -2,9 +2,13 @@ import configparser
 import socket
 import struct
 import time
+from sbe-encoder-decoder import UTCTimestampNanos, NewOrderSingle, ShortTwoSideBulkQuote, LongTwoSideBulkQuote, ShortOneSideBulkQuote, LongOneSideBulkQuote
+from sbe-encoder-decoder import UINT32, OrdType, TimeInForceType, ExecInstType, TradingCapacityType, SideType
+from random import choices, randint
+import string
 from random import choices, randint
 
-from sbe_encoder_decoder import *
+from sbe-encoder-decoder import *
 
 # Read configuration from config.ini
 config = configparser.ConfigParser()
@@ -122,11 +126,11 @@ def generate_message_type():
     message_types = list(weights.keys())
     return choices(message_types, weights=list(weights.values()), k=1)[0]
 
-# Generate a random message based on the specified type
+def generate_message(message_type)
     if message_type == 'NewOrderSingle':
         sending_time = UTCTimestampNanos()
         cl_ord_id = ''.join(choices(string.ascii_uppercase + string.digits, k=20))
-        options_security_id = choices(options_security_ids)[0]
+        options_security_id = choices(security_ids)[0]
         side = SideType.BUY  # Assuming a BUY order, you can customize this
         order_qty = UINT32(randint(1, 100))
         ord_type = OrdType.LIMIT  # Assuming a LIMIT order, you can customize this
