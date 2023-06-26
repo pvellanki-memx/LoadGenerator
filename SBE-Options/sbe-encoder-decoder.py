@@ -29,11 +29,11 @@ class PriceType:
         return buffer
 
     def decode(self, buffer):
-        self.exponent, _, self.mantissa = unpack('>biQ', buffer)
+        self.exponent, _, self.mantissa = unpack_from('>biQ', buffer)
 
 
 
-class Uint32:
+class UINT32:
     def __init__(self, value):
         self.value = value
 
@@ -42,7 +42,19 @@ class Uint32:
         return buffer
 
     def decode(self, buffer):
-        self.value = unpack('>I', buffer)[0]
+        self.value = unpack_from('>I', buffer)[0]
+
+class UINT8:
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        buffer = pack('>B', self.value)
+        return buffer
+
+    def decode(self, buffer):
+        self.value = unpack_from('>B', buffer)[0]
+
 
 
 class ShortPriceType:
@@ -51,11 +63,11 @@ class ShortPriceType:
         self.mantissa = mantissa
 
     def encode(self):
-        buffer = struct.pack('>bQ', self.exponent, self.mantissa)
+        buffer = pack('>bQ', self.exponent, self.mantissa)
         return buffer
 
     def decode(self, buffer):
-        self.exponent, self.mantissa = struct.unpack('>bQ', buffer)
+        self.exponent, self.mantissa = unpack_from('>bQ', buffer)
 
     def __str__(self):
         return f"Exponent: {self.exponent}, Mantissa: {self.mantissa}"
@@ -83,11 +95,11 @@ class Party:
         self.party_role = party_role
 
     def encode(self):
-        return struct.pack('>4s2s2s', self.party_id.encode(), self.party_id_source.encode(), self.party_role.encode())
+        return pack('>4s2s2s', self.party_id.encode(), self.party_id_source.encode(), self.party_role.encode())
 
     @classmethod
     def decode(cls, buffer):
-        party_id, party_id_source, party_role = struct.unpack_from('>4s2s2s', buffer)
+        party_id, party_id_source, party_role = unpack_from('>4s2s2s', buffer)
         return cls(party_id.decode(), party_id_source.decode(), party_role.decode())
 
 
@@ -314,7 +326,7 @@ class ShortTwoSidedQuote:
 
     def __init__(self, list_seq_no, options_security_id, bid_size, bid_px, offer_size, offer_px):
         self.list_seq_no = UINT8(list_seq_no)
-        self.options_security_id = CHAR(options_security_id)
+        self.options_security_id = Char(options_security_id)
         self.bid_size = UINT16(bid_size)
         self.bid_px = ShortPriceType(bid_px)
         self.offer_size = UINT16(offer_size)
@@ -338,9 +350,9 @@ class ShortTwoSidedQuote:
         self.list_seq_no.decode(buffer[offset:])
         offset += UINT8.SIZE
 
-        self.options_security_id = CHAR('')
+        self.options_security_id = Char('')
         self.options_security_id.decode(buffer[offset:])
-        offset += CHAR.SIZE
+        offset += Char.SIZE
 
         self.bid_size = UINT16(0)
         self.bid_size.decode(buffer[offset:])
@@ -480,7 +492,7 @@ class LongTwoSidedQuote:
 
     def __init__(self, list_seq_no, options_security_id, bid_size, bid_px, offer_size, offer_px):
         self.list_seq_no = UINT8(list_seq_no)
-        self.options_security_id = CHAR(options_security_id)
+        self.options_security_id = Char(options_security_id)
         self.bid_size = UINT32(bid_size)
         self.bid_px = PriceType(bid_px)
         self.offer_size = UINT32(offer_size)
@@ -504,9 +516,9 @@ class LongTwoSidedQuote:
         self.list_seq_no.decode(buffer[offset:])
         offset += UINT8.SIZE
 
-        self.options_security_id = CHAR('')
+        self.options_security_id = Char('')
         self.options_security_id.decode(buffer[offset:])
-        offset += CHAR.SIZE
+        offset += Char.SIZE
 
         self.bid_size = UINT32(0)
         self.bid_size.decode(buffer[offset:])
@@ -646,8 +658,8 @@ class ShortOneSideQuote:
 
     def __init__(self, list_seq_no, options_security_id, side, quantity, price):
         self.list_seq_no = UINT8(list_seq_no)
-        self.options_security_id = CHAR(options_security_id)
-        self.side = CHAR(side)
+        self.options_security_id = Char(options_security_id)
+        self.side = Char(side)
         self.quantity = UINT32(quantity)
         self.price = PriceType(price)
 
@@ -667,13 +679,13 @@ class ShortOneSideQuote:
         self.list_seq_no.decode(buffer[offset:])
         offset += UINT8.SIZE
 
-        self.options_security_id = CHAR('')
+        self.options_security_id = Char('')
         self.options_security_id.decode(buffer[offset:])
-        offset += CHAR.SIZE
+        offset += Char.SIZE
 
-        self.side = CHAR('')
+        self.side = Char('')
         self.side.decode(buffer[offset:])
-        offset += CHAR.SIZE
+        offset += Char.SIZE
 
         self.quantity = UINT32(0)
         self.quantity.decode(buffer[offset:])
@@ -850,8 +862,8 @@ class LongOneSideQuote:
 
     def __init__(self, list_seq_no, options_security_id, side, quantity, price):
         self.list_seq_no = UINT8(list_seq_no)
-        self.options_security_id = CHAR(options_security_id)
-        self.side = CHAR(side)
+        self.options_security_id = Char(options_security_id)
+        self.side = Char(side)
         self.quantity = UINT32(quantity)
         self.price = PriceType(price)
 
@@ -871,13 +883,13 @@ class LongOneSideQuote:
         self.list_seq_no.decode(buffer[offset:])
         offset += UINT8.SIZE
 
-        self.options_security_id = CHAR('')
+        self.options_security_id = Char('')
         self.options_security_id.decode(buffer[offset:])
-        offset += CHAR.SIZE
+        offset += Char.SIZE
 
-        self.side = CHAR('')
+        self.side = Char('')
         self.side.decode(buffer[offset:])
-        offset += CHAR.SIZE
+        offset += Char.SIZE
 
         self.quantity = UINT32(0)
         self.quantity.decode(buffer[offset:])
