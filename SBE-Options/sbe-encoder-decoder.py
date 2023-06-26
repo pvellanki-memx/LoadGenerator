@@ -32,6 +32,22 @@ class UTCTimestampNanos:
     def decode(self, buffer):
         self.timestamp, = unpack_from('>Q', buffer)
 
+class Party:
+    def __init__(self, party_id: str, party_id_source: str, party_role: str):
+        self.party_id = party_id
+        self.party_id_source = party_id_source
+        self.party_role = party_role
+
+    def encode(self):
+        return struct.pack('>4s2s2s', self.party_id.encode(), self.party_id_source.encode(), self.party_role.encode())
+
+    @classmethod
+    def decode(cls, buffer):
+        party_id, party_id_source, party_role = struct.unpack_from('>4s2s2s', buffer)
+        return cls(party_id.decode(), party_id_source.decode(), party_role.decode())
+
+
+
 
 class Char:
     SIZE = 1
