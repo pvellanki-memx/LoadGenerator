@@ -19,6 +19,50 @@ class SBEHeader:
         return block_length, template_id, schema_id, version, num_groups
 
 
+class PriceType:
+    def __init__(self, mantissa, exponent):
+        self.mantissa = mantissa
+        self.exponent = exponent
+
+    def encode(self):
+        buffer = pack('>biQ', self.exponent, -8, self.mantissa)
+        return buffer
+
+    def decode(self, buffer):
+        self.exponent, _, self.mantissa = unpack('>biQ', buffer)
+
+
+
+class Uint32:
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        buffer = pack('>I', self.value)
+        return buffer
+
+    def decode(self, buffer):
+        self.value = unpack('>I', buffer)[0]
+
+
+class ShortPriceType:
+    def __init__(self, exponent, mantissa):
+        self.exponent = exponent
+        self.mantissa = mantissa
+
+    def encode(self):
+        buffer = struct.pack('>bQ', self.exponent, self.mantissa)
+        return buffer
+
+    def decode(self, buffer):
+        self.exponent, self.mantissa = struct.unpack('>bQ', buffer)
+
+    def __str__(self):
+        return f"Exponent: {self.exponent}, Mantissa: {self.mantissa}"
+
+
+
+
 
 class UTCTimestampNanos:
     SIZE = 8
