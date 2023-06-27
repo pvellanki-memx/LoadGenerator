@@ -1,580 +1,168 @@
-from struct import pack, unpack_from
-
-
-class SBEHeader:
-    BLOCK_LENGTH = 7
-
-    def __init__(self, template_id):
-        self.block_length = self.BLOCK_LENGTH
-        self.template_id = template_id
-        self.schema_id = 0
-        self.version = 0
-        self.num_groups = 0
-
-    def encode(self):
-        return pack('>HBBHH', self.block_length, self.template_id, self.schema_id, self.version, self.num_groups)
-
-    @classmethod
-    def decode(cls, buffer):
-        block_length, template_id, schema_id, version, num_groups = unpack_from('>HBBHH', buffer)
-        return cls(template_id), block_length
-
-
-class PriceType:
-    def __init__(self, mantissa, exponent):
-        self.mantissa = mantissa
-        self.exponent = exponent
-
-    def encode(self):
-        return pack('>biQ', self.exponent, -8, self.mantissa)
-
-    @classmethod
-    def decode(cls, buffer):
-        exponent, _, mantissa = unpack_from('>biQ', buffer)
-        return cls(mantissa, exponent)
-
-
-class Uint32:
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return pack('>I', self.value)
-
-    @classmethod
-    def decode(cls, buffer):
-        value, = unpack_from('>I', buffer)
-        return cls(value)
-
-
-class ShortPriceType:
-    def __init__(self, exponent, mantissa):
-        self.exponent = exponent
-        self.mantissa = mantissa
-
-    def encode(self):
-        return pack('>bQ', self.exponent, self.mantissa)
-
-    @classmethod
-    def decode(cls, buffer):
-        exponent, mantissa = unpack_from('>bQ', buffer)
-        return cls(exponent, mantissa)
-
-    def __str__(self):
-        return f"Exponent: {self.exponent}, Mantissa: {self.mantissa}"
-
-
-class UTCTimestampNanos:
-    SIZE = 8
-
-    def __init__(self, timestamp):
-        self.timestamp = timestamp
-
-    def encode(self):
-        return pack('>Q', self.timestamp)
-
-    @classmethod
-    def decode(cls, buffer):
-        timestamp, = unpack_from('>Q', buffer)
-        return cls(timestamp)
-
-
-class Party:
-    def __init__(self, party_id: str, party_id_source: str, party_role: str):
-        self.party_id = party_id
-        self.party_id_source = party_id_source
-        self.party_role = party_role
-
-    def encode(self):
-        return pack('>4s2s2s', self.party_id.encode(), self.party_id_source.encode(), self.party_role.encode())
-
-    @classmethod
-    def decode(cls, buffer):
-        party_id, party_id_source, party_role = unpack_from('>4s2s2s', buffer)
-        return cls(party_id.decode(), party_id_source.decode(), party_role.decode())
-
-
-class Char:
-    SIZE = 1
-
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return pack('s', self.value.encode())
-
-    @classmethod
-    def decode(cls, buffer):
-        value, = unpack_from('s', buffer)
-        return cls(value.decode())
-
-
-class TimeInForceType:
-    SIZE = 1
-
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return pack('B', self.value)
-
-    @classmethod
-    def decode(cls, buffer):
-        value, = unpack_from('B', buffer)
-        return cls(value)
-
-
-class ExecInstType:
-    SIZE = 1
-
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return pack('B', self.value)
-
-    @classmethod
-    def decode(cls, buffer):
-        value, = unpack_from('B', buffer)
-        return cls(value)
-
-
-class TradingCapacityType:
-    SIZE = 1
-
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return pack('B', self.value)
-
-    @classmethod
-    def decode(cls, buffer):
-        value, = unpack_from('B', buffer)
-        return cls(value)
-
-
-class MtpGroupIDType:
-    SIZE = 2
-
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return pack('>H', self.value)
-
-    @classmethod
-    def decode(cls, buffer):
-        value, = unpack_from('>H', buffer)
-        return cls(value)
-
-
-class MatchTradePreventionType:
-    SIZE = 1
-
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return pack('B', self.value)
-
-    @classmethod
-    def decode(cls, buffer):
-        value, = unpack_from('B', buffer)
-        return cls(value)
-
-
-class UINT16:
-    SIZE = 2
-
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return pack('>H', self.value)
-
-    @classmethod
-    def decode(cls, buffer):
-        value, = unpack_from('>H', buffer)
-        return cls(value)
-
-
-class RepeatingGroupDimensions:
-    SIZE = 2
-
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return pack('>H', self.value)
-
-    @classmethod
-    def decode(cls, buffer):
-        value, = unpack_from('>H', buffer)
-        return cls(value)
-
-
-class PartyID:
-    SIZE = 4
-
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return pack('>I', self.value)
-
-    @classmethod
-    def decode(cls, buffer):
-        value, = unpack_from('>I', buffer)
-        return cls(value)
-
-
-class PartiesGroup:
-    def __init__(self, party_id, party_id_source, party_role):
-        self.party_id = party_id
-        self.party_id_source = party_id_source
-        self.party_role = party_role
-
-    def encode(self):
-        return self.party_id.encode() + self.party_id_source.encode() + self.party_role.encode()
-
-    @classmethod
-    def decode(cls, buffer):
-        party_id = PartyID.decode(buffer)
-        party_id_source = Char.decode(buffer[PartyID.SIZE:])
-        party_role = Char.decode(buffer[PartyID.SIZE + Char.SIZE:])
-        return cls(party_id, party_id_source, party_role)
-
-
 class NewOrderSingle:
-    MESSAGE_SIZE = 35
+    TEMPLATE_ID = 1
 
-    def __init__(self, timestamp, cl_ord_id, symbol, price, order_qty, side, time_in_force, exec_inst, trading_capacity,
-                 party_id, party_id_source, party_role):
-        self.timestamp = timestamp
+    def __init__(self, sending_time, cl_ord_id, options_security_id_35, side, order_qty, ord_type, price, time_in_force,
+                 open_or_close, exec_inst, trading_capacity, reprice_frequency, reprice_behavior, mtp_group_id,
+                 match_trade_prevention, cancel_group_id, risk_group_id, parties):
+        self.sbe_header = SBEHeader(self.TEMPLATE_ID)
+        self.sending_time = sending_time
         self.cl_ord_id = cl_ord_id
-        self.symbol = symbol
-        self.price = price
-        self.order_qty = order_qty
+        self.options_security_id_35 = options_security_id_35
         self.side = side
+        self.order_qty = order_qty
+        self.ord_type = ord_type
+        self.price = price
         self.time_in_force = time_in_force
+        self.open_or_close = open_or_close
         self.exec_inst = exec_inst
         self.trading_capacity = trading_capacity
-        self.party_id = party_id
-        self.party_id_source = party_id_source
-        self.party_role = party_role
+        self.reprice_frequency = reprice_frequency
+        self.reprice_behavior = reprice_behavior
+        self.mtp_group_id = mtp_group_id
+        self.match_trade_prevention = match_trade_prevention
+        self.cancel_group_id = cancel_group_id
+        self.risk_group_id = risk_group_id
+        self.parties = parties
 
     def encode(self):
-        return (
-            self.timestamp.encode()
-            + self.cl_ord_id.encode()
-            + self.symbol.encode()
-            + self.price.encode()
-            + self.order_qty.encode()
-            + self.side.encode()
-            + self.time_in_force.encode()
-            + self.exec_inst.encode()
-            + self.trading_capacity.encode()
-            + self.party_id.encode()
-            + self.party_id_source.encode()
-            + self.party_role.encode()
-        )
+        encoded_header = self.sbe_header.encode()
+        encoded_sending_time = self.sending_time.encode()
+        encoded_cl_ord_id = self.cl_ord_id.encode()
+        encoded_options_security_id_35 = self.options_security_id_35.encode()
+        encoded_side = self.side.encode()
+        encoded_order_qty = self.order_qty.encode()
+        encoded_ord_type = self.ord_type.encode()
+        encoded_price = b'' if self.price is None else self.price.encode()
+        encoded_time_in_force = self.time_in_force.encode()
+        encoded_open_or_close = b'' if self.open_or_close is None else self.open_or_close.encode()
+        encoded_exec_inst = self.exec_inst.encode()
+        encoded_trading_capacity = self.trading_capacity.encode()
+        encoded_reprice_frequency = b'' if self.reprice_frequency is None else self.reprice_frequency.encode()
+        encoded_reprice_behavior = b'' if self.reprice_behavior is None else self.reprice_behavior.encode()
+        encoded_mtp_group_id = b'' if self.mtp_group_id is None else self.mtp_group_id.encode()
+        encoded_match_trade_prevention = b'' if self.match_trade_prevention is None else self.match_trade_prevention.encode()
+        encoded_cancel_group_id = b'' if self.cancel_group_id is None else self.cancel_group_id.encode()
+        encoded_risk_group_id = b'' if self.risk_group_id is None else self.risk_group_id.encode()
+        encoded_parties = b'' if self.parties is None else self.parties.encode()
 
-   @classmethod
-	def decode(cls, buffer):
-	    timestamp, header_length = UTCTimestampNanos.decode(buffer)
-	    cl_ord_id = UINT16.decode(buffer[header_length:])
-	    symbol = Char.decode(buffer[header_length + UINT16.SIZE:])
-	    price, price_length = ShortPriceType.decode(buffer[header_length + UINT16.SIZE + Char.SIZE:])
-	    order_qty = Uint32.decode(buffer[header_length + UINT16.SIZE + Char.SIZE + price_length:])
-	    side = Char.decode(buffer[header_length + UINT16.SIZE + Char.SIZE + price_length + Uint32.SIZE:])
-	    time_in_force = TimeInForceType.decode(buffer[header_length + UINT16.SIZE + Char.SIZE + price_length + Uint32.SIZE + Char.SIZE:])
-	    exec_inst = ExecInstType.decode(buffer[header_length + UINT16.SIZE + Char.SIZE + price_length + Uint32.SIZE + Char.SIZE + TimeInForceType.SIZE:])
-	    trading_capacity = TradingCapacityType.decode(buffer[header_length + UINT16.SIZE + Char.SIZE + price_length + Uint32.SIZE + Char.SIZE + TimeInForceType.SIZE + ExecInstType.SIZE:])
-	    party_id, party_id_length = PartyID.decode(buffer[header_length + UINT16.SIZE + Char.SIZE + price_length + Uint32.SIZE + Char.SIZE + TimeInForceType.SIZE + ExecInstType.SIZE + TradingCapacityType.SIZE:])
-	    party_id_source = Char.decode(buffer[header_length + UINT16.SIZE + Char.SIZE + price_length + Uint32.SIZE + Char.SIZE + TimeInForceType.SIZE + ExecInstType.SIZE + TradingCapacityType.SIZE + party_id_length:])
-	    party_role = Char.decode(buffer[header_length + UINT16.SIZE + Char.SIZE + price_length + Uint32.SIZE + Char.SIZE + TimeInForceType.SIZE + ExecInstType.SIZE + TradingCapacityType.SIZE + party_id_length + Char.SIZE:])
-	    
-	    return cls(
-	        timestamp,
-	        cl_ord_id,
-	        symbol,
-	        price,
-	        order_qty,
-	        side,
-	        time_in_force,
-	        exec_inst,
-	        trading_capacity,
-	        party_id,
-	        party_id_source,
-	        party_role,
-	    )
+        encoded_message = encoded_header + encoded_sending_time + encoded_cl_ord_id + encoded_options_security_id_35 + \
+            encoded_side + encoded_order_qty + encoded_ord_type + encoded_price + encoded_time_in_force + \
+            encoded_open_or_close + encoded_exec_inst + encoded_trading_capacity + encoded_reprice_frequency + \
+            encoded_reprice_behavior + encoded_mtp_group_id + encoded_match_trade_prevention + \
+            encoded_cancel_group_id + encoded_risk_group_id + encoded_parties
 
-        return cls(
-            timestamp,
-            cl_ord_id,
-            symbol,
-            price,
-            order_qty,
-            side,
-            time_in_force,
-            exec_inst,
-            trading_capacity,
-            party_id,
-            party_id_source,
-            party_role,
-        )
+        return encoded_message
+
+    def decode(self, buffer):
+        offset = 0
+
+        block_length, template_id = self.sbe_header.decode(buffer[offset:])
+        offset += SBEHeader.BLOCK_LENGTH
+
+        self.sending_time = UTCTimestampNanos(0)
+        self.sending_time.decode(buffer[offset:])
+        offset += UTCTimestampNanos.SIZE
+
+        self.cl_ord_id = Char('')
+        self.cl_ord_id.decode(buffer[offset:])
+        offset += Char.SIZE
+
+        self.options_security_id_35 = Char('')
+        self.options_security_id_35.decode(buffer[offset:])
+        offset += Char.SIZE
+
+        self.side = SideType('')
+        self.side.decode(buffer[offset:])
+        offset += SideType.SIZE
+
+        self.order_qty = UINT32(0)
+        self.order_qty.decode(buffer[offset:])
+        offset += UINT32.SIZE
+
+        self.ord_type = OrdType('')
+        self.ord_type.decode(buffer[offset:])
+        offset += OrdType.SIZE
+
+        self.price = PriceType(0.0)
+        self.price.decode(buffer[offset:])
+        offset += PriceType.SIZE
+
+        self.time_in_force = TimeInForceType(0)
+        self.time_in_force.decode(buffer[offset:])
+        offset += TimeInForceType.SIZE
+
+        self.open_or_close = OpenOrCloseType('')
+        self.open_or_close.decode(buffer[offset:])
+        offset += OpenOrCloseType.SIZE
+
+        self.exec_inst = ExecInstType(0)
+        self.exec_inst.decode(buffer[offset:])
+        offset += ExecInstType.SIZE
+
+        self.trading_capacity = TradingCapacityType(0)
+        self.trading_capacity.decode(buffer[offset:])
+        offset += TradingCapacityType.SIZE
+
+        self.reprice_frequency = RepriceFrequencyType('')
+        self.reprice_frequency.decode(buffer[offset:])
+        offset += RepriceFrequencyType.SIZE
+
+        self.reprice_behavior = RepriceBehaviorType('')
+        self.reprice_behavior.decode(buffer[offset:])
+        offset += RepriceBehaviorType.SIZE
+
+        if template_id >= 2:
+            self.mtp_group_id = MtpGroupIDType(0)
+            self.mtp_group_id.decode(buffer[offset:])
+            offset += MtpGroupIDType.SIZE
+
+            if template_id >= 4:
+                self.match_trade_prevention = MatchTradePreventionType(0)
+                self.match_trade_prevention.decode(buffer[offset:])
+                offset += MatchTradePreventionType.SIZE
+
+                if template_id >= 6:
+                    self.cancel_group_id = UINT16(0)
+                    self.cancel_group_id.decode(buffer[offset:])
+                    offset += UINT16.SIZE
+
+                    if template_id >= 8:
+                        self.risk_group_id = UINT16(0)
+                        self.risk_group_id.decode(buffer[offset:])
+                        offset += UINT16.SIZE
+
+                        if template_id >= 10:
+                            self.parties = Party.decode(buffer[offset:])
+                            offset += Party.SIZE
+
+        return offset
 
 
-header = SBEHeader(100)
-new_order_single = NewOrderSingle(
-    UTCTimestampNanos(1234567890),
-    UINT16(100),
-    Char('AAPL'),
-    ShortPriceType(2, 25000000000),
-    Uint32(1000),
-    Char('B'),
-    TimeInForceType(1),
-    ExecInstType(0),
-    TradingCapacityType(1),
-    PartyID(1234),
-    Char('4'),
-    Char('1'),
+
+# Create an instance of NewOrderSingle
+order = NewOrderSingle(
+    sending_time=UTCTimestampNanos(1234567890),
+    cl_ord_id=Char('ORDER001'),
+    options_security_id_35=Char('OPT123'),
+    side=SideType('BUY'),
+    order_qty=UINT32(100),
+    ord_type=OrdType('LIMIT'),
+    price=PriceType(10.5),
+    time_in_force=TimeInForceType('GTC'),
+    open_or_close=OpenOrCloseType('OPEN'),
+    exec_inst=ExecInstType(0),
+    trading_capacity=TradingCapacityType('CUSTOMER'),
+    reprice_frequency=None,
+    reprice_behavior=None,
+    mtp_group_id=None,
+    match_trade_prevention=None,
+    cancel_group_id=None,
+    risk_group_id=None,
+    parties=Party('PARTY001', 'CLIENT', 'TRADER')
 )
 
-# Encode and decode
-encoded_header = header.encode()
-decoded_header, block_length = SBEHeader.decode(encoded_header)
-encoded_message = new_order_single.encode()
-decoded_message = NewOrderSingle.decode(encoded_message)
-
-# Print decoded values
-print("Decoded Header:")
-print("Block Length:", block_length)
-print("Template ID:", decoded_header.template_id)
-
-print("\nDecoded Message:")
-print("Timestamp:", decoded_message.timestamp.timestamp)
-print("ClOrdID:", decoded_message.cl_ord_id.value)
-print("Symbol:", decoded_message.symbol.value)
-print("Price:", decoded_message.price.mantissa, "x 10^", decoded_message.price.exponent)
-print("OrderQty:", decoded_message.order_qty.value)
-print("Side:", decoded_message.side.value)
-print("TimeInForce:", decoded_message.time_in_force.value)
-print("ExecInst:", decoded_message.exec_inst.value)
-print("TradingCapacity:", decoded_message.trading_capacity.value)
-print("PartyID:", decoded_message.party_id.value)
-print("PartyIDSource:", decoded_message.party_id_source.value)
-print("PartyRole:", decoded_message.party_role.value)
-
-
-
-class BooleanType:
-    FALSE = 0
-    TRUE = 1
-
-    SIZE = 1
-
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return pack('B', self.value)
-
-    def decode(self, buffer):
-        self.value, = unpack_from('B', buffer)
-
-
-class SideType:
-    BUY = 1
-    SELL = 2
-
-    SIZE = 1
-
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return pack('B', self.value)
-
-    def decode(self, buffer):
-        self.value, = unpack_from('B', buffer)
-
-
-class OrdType:
-    MARKET = 1
-    LIMIT = 2
-
-    SIZE = 1
-
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return pack('B', self.value)
-
-    def decode(self, buffer):
-        self.value, = unpack_from('B', buffer)
-
-
-class TimeInForceType:
-    DAY = 0
-    IMMEDIATE_OR_CANCEL = 3
-
-    SIZE = 1
-
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return pack('B', self.value)
-
-    def decode(self, buffer):
-        self.value, = unpack_from('B', buffer)
-
-
-class TradingCapacityType:
-    CUSTOMER = 1
-    PROFESSIONAL_CUSTOMER = 2
-    BROKER_DEALER = 3
-    BROKER_DEALER_CUSTOMER = 4
-    FIRM = 5
-    MARKET_MAKER = 6
-    AWAY_MARKET_MAKER = 7
-    NULL_VALUE = 255
-
-    SIZE = 1
-
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return pack('B', self.value)
-
-    def decode(self, buffer):
-        self.value, = unpack_from('B', buffer)
-
-
-class RepriceFrequencyType:
-    SINGLE_REPRICE = 0
-    CONTINUOUS_REPRICE = 1
-    NONE = 2
-    NULL_VALUE = 255
-
-    SIZE = 1
-
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return pack('B', self.value)
-
-    def decode(self, buffer):
-        self.value, = unpack_from('B', buffer)
-
-
-class RepriceBehaviorType:
-    REPRICE_LOCK_CANCEL_CROSS = 1
-    REPRICE_LOCK_REPRICE_CROSS = 2
-    NULL_VALUE = 255
-
-    SIZE = 1
-
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return pack('B', self.value)
-
-    def decode(self, buffer):
-        self.value, = unpack_from('B', buffer)
-
-
-class OrdStatusType:
-    NEW = 0
-    PARTIAL_FILLED = 1
-    FILLED = 2
-    CANCELED = 4
-    PENDING_CANCEL = 6
-    REJECTED = 8
-    PENDING_NEW = 10
-    PENDING_REPLACE = 14
-    EXPIRED = 12
-
-    SIZE = 1
-
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return pack('B', self.value)
-
-    def decode(self, buffer):
-        self.value, = unpack_from('B', buffer)
-
-
-class CxlRejResponseToType:
-    ORDER_CANCEL_REQUEST = 1
-    ORDER_CANCEL_REPLACE_REQUEST = 2
-
-    SIZE = 1
-
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return pack('B', self.value)
-
-    def decode(self, buffer):
-        self.value, = unpack_from('B', buffer)
-
-
-class LastLiquidityIndType:
-    ADDED = 1
-    REMOVED = 2
-    NULL_VALUE = 255
-
-    SIZE = 1
-
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return pack('B', self.value)
-
-    def decode(self, buffer):
-        self.value, = unpack_from('B', buffer)
-
-
-class MatchTradePreventionType:
-    CANCEL_NEWEST = 0
-    CANCEL_OLDEST = 1
-    CANCEL_BOTH = 3
-    NULL_VALUE = 255
-
-    SIZE = 1
-
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return pack('B', self.value)
-
-    def decode(self, buffer):
-        self.value, = unpack_from('B', buffer)
-
-
-class CancelReasonCode:
-    # Add your valid values here
-    # ...
-
-    SIZE = 1
-
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return pack('B', self.value)
-
-    def decode(self, buffer):
-        self.value, = unpack_from('B', buffer)
+# Encode the order
+encoded_order = order.encode()
+
+# Print the encoded order
+print(encoded_order)
