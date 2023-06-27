@@ -170,19 +170,6 @@ print(encoded_order)
 
 
 
-class OpenOrCloseType(Enum):
-    OPEN = 'O'
-    CLOSE = 'C'
-    NULL_VALUE = '0'
-
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return self.value.encode()
-
-    @classmethod
-    def decode(cls, buffer):
-        value = buffer.decode()
-        return cls(value)
+    new_order_single = NewOrderSingle()
+TypeError: NewOrderSingle.__init__() missing 18 required positional arguments: 'sending_time', 'cl_ord_id', 'options_security_id_35', 'side', 'order_qty', 'ord_type', 'price', 'time_in_force', 'open_or_close', 'exec_inst', 'trading_capacity', 'reprice_frequency', 'reprice_behavior', 'mtp_group_id', 'match_trade_prevention', 'cancel_group_id', 'risk_group_id', and 'parties'
 
