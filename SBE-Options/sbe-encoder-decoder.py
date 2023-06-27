@@ -31,6 +31,29 @@ class PriceType:
     def decode(self, buffer):
         self.exponent, _, self.mantissa = unpack_from('>biQ', buffer)
 
+class OrdType:
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        buffer = pack('>B', self.value)
+        return buffer
+
+    def decode(self, buffer):
+        self.value = unpack_from('>B', buffer)[0]
+
+
+class SideType:
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        buffer = pack('>B', self.value)
+        return buffer
+
+    def decode(self, buffer):
+        self.value = unpack_from('>B', buffer)[0]
+
 
 
 class UINT32:
