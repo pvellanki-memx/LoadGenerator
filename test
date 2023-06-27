@@ -369,8 +369,7 @@ print("PartyRole:", decoded_message.party_role.value)
 
 
 
-from sbe_encoder_decoder import UTCTimestampNanos, NewOrderSingle, ShortTwoSideBulkQuote, LongTwoSideBulkQuote, ShortOneSideBulkQuote, LongOneSideBulkQuote
-from sbe_encoder_decoder import UINT32, OrdType, TimeInForceType, ExecInstType, TradingCapacityType, SideType
-from random import choices, randint
-import string
-
+  File "/home/pvellanki/loadgenerator/sbe/options/sbe_load_generator.py", line 5
+    from sbe-encoder-decoder import UTCTimestampNanos, NewOrderSingle, ShortTwoSideBulkQuote, LongTwoSideBulkQuote, ShortOneSideBulkQuote, LongOneSideBulkQuote
+            ^
+SyntaxError: invalid syntax
