@@ -166,3 +166,23 @@ encoded_order = order.encode()
 
 # Print the encoded order
 print(encoded_order)
+
+
+
+
+class OpenOrCloseType(Enum):
+    OPEN = 'O'
+    CLOSE = 'C'
+    NULL_VALUE = '0'
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return self.value.encode()
+
+    @classmethod
+    def decode(cls, buffer):
+        value = buffer.decode()
+        return cls(value)
+
