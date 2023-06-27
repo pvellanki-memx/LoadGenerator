@@ -369,28 +369,212 @@ print("PartyRole:", decoded_message.party_role.value)
 
 
 
-def generate_message(message_type):
-    if message_type == 'NewOrderSingle':
-        sending_time = UTCTimestampNanos()
-        cl_ord_id = ''.join(choices(string.ascii_uppercase + string.digits, k=20))
-        options_security_id = choices(security_ids)[0]
-        side = SideType.BUY  # Assuming a BUY order, you can customize this
-        order_qty = UINT32(randint(1, 100))
-        ord_type = OrdType.LIMIT  # Assuming a LIMIT order, you can customize this
-        time_in_force = TimeInForceType.GOOD_TILL_CANCEL  # Assuming a GTC order, you can customize this
-        exec_inst = [ExecInstType.PRIMARY_PEG, ExecInstType.DISPLAY_PRICE]  # Assuming primary peg and display price instructions, you can customize this
-        trading_capacity = TradingCapacityType.PRINCIPAL  # Assuming principal capacity, you can customize this
-    
-        # Create an instance of NewOrderSingle and set the field values
-        new_order_single = NewOrderSingle()
-        new_order_single.sending_time = sending_time
-        new_order_single.cl_ord_id = cl_ord_id
-        new_order_single.options_security_id = options_security_id
-        new_order_single.side = side
-        new_order_single.order_qty = order_qty
-        new_order_single.ord_type = ord_type
-        new_order_single.time_in_force = time_in_force
-        new_order_single.exec_inst = exec_inst
-        new_order_single.trading_capacity = trading_capacity
+class BooleanType:
+    FALSE = 0
+    TRUE = 1
 
-        return new_order_single
+    SIZE = 1
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('B', self.value)
+
+    def decode(self, buffer):
+        self.value, = unpack_from('B', buffer)
+
+
+class SideType:
+    BUY = 1
+    SELL = 2
+
+    SIZE = 1
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('B', self.value)
+
+    def decode(self, buffer):
+        self.value, = unpack_from('B', buffer)
+
+
+class OrdType:
+    MARKET = 1
+    LIMIT = 2
+
+    SIZE = 1
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('B', self.value)
+
+    def decode(self, buffer):
+        self.value, = unpack_from('B', buffer)
+
+
+class TimeInForceType:
+    DAY = 0
+    IMMEDIATE_OR_CANCEL = 3
+
+    SIZE = 1
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('B', self.value)
+
+    def decode(self, buffer):
+        self.value, = unpack_from('B', buffer)
+
+
+class TradingCapacityType:
+    CUSTOMER = 1
+    PROFESSIONAL_CUSTOMER = 2
+    BROKER_DEALER = 3
+    BROKER_DEALER_CUSTOMER = 4
+    FIRM = 5
+    MARKET_MAKER = 6
+    AWAY_MARKET_MAKER = 7
+    NULL_VALUE = 255
+
+    SIZE = 1
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('B', self.value)
+
+    def decode(self, buffer):
+        self.value, = unpack_from('B', buffer)
+
+
+class RepriceFrequencyType:
+    SINGLE_REPRICE = 0
+    CONTINUOUS_REPRICE = 1
+    NONE = 2
+    NULL_VALUE = 255
+
+    SIZE = 1
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('B', self.value)
+
+    def decode(self, buffer):
+        self.value, = unpack_from('B', buffer)
+
+
+class RepriceBehaviorType:
+    REPRICE_LOCK_CANCEL_CROSS = 1
+    REPRICE_LOCK_REPRICE_CROSS = 2
+    NULL_VALUE = 255
+
+    SIZE = 1
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('B', self.value)
+
+    def decode(self, buffer):
+        self.value, = unpack_from('B', buffer)
+
+
+class OrdStatusType:
+    NEW = 0
+    PARTIAL_FILLED = 1
+    FILLED = 2
+    CANCELED = 4
+    PENDING_CANCEL = 6
+    REJECTED = 8
+    PENDING_NEW = 10
+    PENDING_REPLACE = 14
+    EXPIRED = 12
+
+    SIZE = 1
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('B', self.value)
+
+    def decode(self, buffer):
+        self.value, = unpack_from('B', buffer)
+
+
+class CxlRejResponseToType:
+    ORDER_CANCEL_REQUEST = 1
+    ORDER_CANCEL_REPLACE_REQUEST = 2
+
+    SIZE = 1
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('B', self.value)
+
+    def decode(self, buffer):
+        self.value, = unpack_from('B', buffer)
+
+
+class LastLiquidityIndType:
+    ADDED = 1
+    REMOVED = 2
+    NULL_VALUE = 255
+
+    SIZE = 1
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('B', self.value)
+
+    def decode(self, buffer):
+        self.value, = unpack_from('B', buffer)
+
+
+class MatchTradePreventionType:
+    CANCEL_NEWEST = 0
+    CANCEL_OLDEST = 1
+    CANCEL_BOTH = 3
+    NULL_VALUE = 255
+
+    SIZE = 1
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('B', self.value)
+
+    def decode(self, buffer):
+        self.value, = unpack_from('B', buffer)
+
+
+class CancelReasonCode:
+    # Add your valid values here
+    # ...
+
+    SIZE = 1
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('B', self.value)
+
+    def decode(self, buffer):
+        self.value, = unpack_from('B', buffer)
