@@ -2,7 +2,7 @@ from struct import pack, unpack_from
 
 
 class SBEHeader:
-    BLOCK_LENGTH = 7
+    
 
     def __init__(self, block_length, template_id, schema_id, version, num_groups):
         self.block_length = block_length
@@ -12,7 +12,7 @@ class SBEHeader:
         self.num_groups = num_groups
 
     def encode(self):
-        return pack('>HBBHH', self.block_length, self.template_id, self.schema_id, self.version, self.num_groups)
+        return pack('>HBBHB', self.block_length, self.template_id, self.schema_id, self.version, self.num_groups)
 
     def decode(self, buffer):
         block_length, template_id, schema_id, version, num_groups = unpack_from('>HBBHH', buffer)
@@ -32,6 +32,10 @@ class PriceType:
         self.exponent, _, self.mantissa = unpack_from('>biQ', buffer)
 
 class OrdType:
+    MARKET = 1
+    LIMIT = 2
+
+    SIZE = 1
     def __init__(self, value):
         self.value = value
 
@@ -42,8 +46,26 @@ class OrdType:
     def decode(self, buffer):
         self.value = unpack_from('>B', buffer)[0]
 
+class BooleanType:
+    FALSE = 0
+    TRUE = 1
+
+    SIZE = 1
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('B', self.value)
+
+    def decode(self, buffer):
+        self.value, = unpack_from('B', buffer)
+
 
 class SideType:
+    BUY = 1
+    SELL = 2
+    SIZE = 1
     def __init__(self, value):
         self.value = value
 
@@ -142,7 +164,28 @@ class Char:
         self.value = value.decode()
 
 
+class OpenOrCloseType:
+    OPEN ='o'
+    CLOSE = 'c'
+    NULL_VALUE = 'o'
+    SIZE = 1
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('s', self.value.encode())
+
+    def decode(self, buffer):
+        value, = unpack_from('s', buffer)
+        self.value = value.decode()
+
+
 class TimeInForceType:
+    DAY = 0
+    IMMEDIATE_OR_CANCEL = 3
+
+
     SIZE = 1
 
     def __init__(self, value):
@@ -156,6 +199,9 @@ class TimeInForceType:
 
 
 class ExecInstType:
+    ParticipateDoNotInitiate = 0
+    IntermarketSweep = 1
+    ExternalRoutingNotAllowed = 2
     SIZE = 2
 
     def __init__(self, value):
@@ -169,6 +215,16 @@ class ExecInstType:
 
 
 class TradingCapacityType:
+    CUSTOMER = 1
+    PROFESSIONAL_CUSTOMER = 2
+    BROKER_DEALER = 3
+    BROKER_DEALER_CUSTOMER = 4
+    FIRM = 5
+    MARKET_MAKER = 6
+    AWAY_MARKET_MAKER = 7
+    NULL_VALUE = 255
+
+   
     SIZE = 1
 
     def __init__(self, value):
@@ -195,6 +251,11 @@ class MtpGroupIDType:
 
 
 class MatchTradePreventionType:
+    CANCEL_NEWEST = 0
+    CANCEL_OLDEST = 1
+    CANCEL_BOTH = 3
+    NULL_VALUE = 255
+
     SIZE = 1
 
     def __init__(self, value):
@@ -205,6 +266,41 @@ class MatchTradePreventionType:
 
     def decode(self, buffer):
         self.value, = unpack_from('B', buffer)
+
+class RepriceFrequencyType:
+    SINGLE_REPRICE = 0
+    CONTINUOUS_REPRICE = 1
+    NONE = 2
+    NULL_VALUE = 255
+
+    SIZE = 1
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('B', self.value)
+
+    def decode(self, buffer):
+        self.value, = unpack_from('B', buffer)
+
+class RepriceBehaviorType:
+    REPRICE_LOCK_CANCEL_CROSS = 1
+    REPRICE_LOCK_REPRICE_CROSS = 2
+    NULL_VALUE = 255
+
+    SIZE = 1
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('B', self.value)
+
+    def decode(self, buffer):
+        self.value, = unpack_from('B', buffer)
+
+
 
 
 class UINT16:
@@ -221,29 +317,56 @@ class UINT16:
 
 
 class RepeatingGroupDimensions:
-    SIZE = 4
+    SIZE = 2
 
-    def __init__(self, count):
-        self.count = count
+    def __init__(self, block_length,num_groups):
+        self.block_length = block_length
+        self.num_groups = num_groups
 
     def encode(self):
-        return pack('>I', self.count)
+        return pack('>II', self.block_length, self.num_groups)
 
     def decode(self, buffer):
-        self.count, = unpack_from('>I', buffer)
+        self.block_length,self.num_groups = unpack_from('>II', buffer)
 
 
 class PartyID:
-    SIZE = 2
+
+    SIZE = 16
 
     def __init__(self, value):
         self.value = value
 
     def encode(self):
-        return pack('>H', self.value)
+        return self.value.encode()[:16].ljust(16, b'\x00')
 
     def decode(self, buffer):
-        self.value, = unpack_from('>H', buffer)
+        self.value = buffer.decode().rstrip('\x00')
+
+class PartyIDSource:
+    SIZE = 1
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return self.value.encode()
+
+    def decode(self, buffer):
+        self.value = buffer.decode()
+
+
+class PartyRoleType:
+    SIZE = 1
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return self.value.encode()
+
+    def decode(self, buffer):
+        self.value = buffer.decode()
 
 
 class PartiesGroup:
@@ -251,56 +374,107 @@ class PartiesGroup:
         self.party_ids = party_ids
 
     def encode(self):
-        encoded_parties = b''.join(party_id.encode() for party_id in self.party_ids)
+        encoded_parties = b''.join(party_id.encode() for party in self.party_ids for party_id in party)
         return encoded_parties
 
     def decode(self, buffer):
-        num_party_ids = len(buffer) // PartyID.SIZE
+        num_party_ids = len(buffer) // (PartyID.SIZE + PartyIDSource.SIZE + PartyRoleType.SIZE)
         self.party_ids = []
         for i in range(num_party_ids):
-            offset = i * PartyID.SIZE
-            party_id_value, = unpack_from('>H', buffer, offset)
-            self.party_ids.append(PartyID(party_id_value))
+            offset = i * (PartyID.SIZE + PartyIDSource.SIZE + PartyRoleType.SIZE)
+            party_id = PartyID('')
+            party_id.decode(buffer[offset:offset + PartyID.SIZE])
+            offset += PartyID.SIZE
+            party_id_source = PartyIDSource('')
+            party_id_source.decode(buffer[offset:offset + PartyIDSource.SIZE])
+            offset += PartyIDSource.SIZE
+            party_role = PartyRoleType('')
+            party_role.decode(buffer[offset:offset + PartyRoleType.SIZE])
+            self.party_ids.append([party_id, party_id_source, party_role])
+
 
 
 class NewOrderSingle:
     TEMPLATE_ID = 1
+    num_groups = 1
+    schema_id = 1
+    version = 266
+    BLOCK_LENGTH = 96
 
-    def __init__(self, sending_time, cl_ord_id, time_in_force, exec_inst, trading_capacity, mtp_group_id,
-                 match_trade_prevention, cancel_group_id, risk_group_id):
-        self.sbe_header = SBEHeader(self.TEMPLATE_ID)
-        self.sending_time = sending_time
-        self.cl_ord_id = cl_ord_id
-        self.time_in_force = time_in_force
-        self.exec_inst = exec_inst
-        self.trading_capacity = trading_capacity
-        self.mtp_group_id = mtp_group_id
-        self.match_trade_prevention = match_trade_prevention
-        self.cancel_group_id = cancel_group_id
-        self.risk_group_id = risk_group_id
+    def __init__(self, **kwargs):
+        self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups )
+        self.sending_time = kwargs.get('sending_time', UTCTimestampNanos(0))
+        self.cl_ord_id = kwargs.get('cl_ord_id', Char(''))
+        self.options_security_id = kwargs.get('options_security_id', Char(''))
+        self.side = kwargs.get('side', SideType(''))
+        self.order_qty = kwargs.get('order_qty', UINT32(0))
+        self.ord_type = kwargs.get('ord_type', Char(''))
+        self.price = kwargs.get('price', PriceType(0,0))
+        self.time_in_force = kwargs.get('time_in_force', TimeInForceType(0))
+        self.open_or_close = kwargs.get('open_or_close', OpenOrCloseType('O'))
+        self.exec_inst = kwargs.get('exec_inst', ExecInstType(0))
+        self.trading_capacity = kwargs.get('trading_capacity', TradingCapacityType(0))
+        self.reprice_frequency = kwargs.get('reprice_frequency', RepriceFrequencyType(0))
+        self.reprice_behavior = kwargs.get('reprice_behavior', RepriceBehaviorType(0))
+        self.mtp_group_id = kwargs.get('mtp_group_id', MtpGroupIDType(0))
+        self.match_trade_prevention = kwargs.get('match_trade_prevention', MatchTradePreventionType(0))
+        self.cancel_group_id = kwargs.get('cancel_group_id', UINT16(0))
+        self.risk_group_id = kwargs.get('risk_group_id', UINT16(0))
+        self.RepeatingGroupDimensions = kwargs.get('repeating_group_dimensions', RepeatingGroupDimensions(18,3))
+        self.parties = kwargs.get('parties', [])
+        print(self.sbe_header,self.sending_time,self.cl_ord_id,self.options_security_id,self.side,self.ord_type,self.order_qty,self.price)
 
     def encode(self):
         encoded_header = self.sbe_header.encode()
         encoded_sending_time = self.sending_time.encode()
         encoded_cl_ord_id = self.cl_ord_id.encode()
+        encoded_options_security_id = self.options_security_id.encode()
+        encoded_side = self.side.encode()
+        encoded_order_qty = self.order_qty.encode()
+        encoded_ord_type = self.ord_type.encode()
+        encoded_price = self.price.encode()
         encoded_time_in_force = self.time_in_force.encode()
+        encoded_open_or_close = self.open_or_close.encode()
         encoded_exec_inst = self.exec_inst.encode()
         encoded_trading_capacity = self.trading_capacity.encode()
-        encoded_mtp_group_id = b'' if self.mtp_group_id is None else self.mtp_group_id.encode()
-        encoded_match_trade_prevention = b'' if self.match_trade_prevention is None else self.match_trade_prevention.encode()
-        encoded_cancel_group_id = b'' if self.cancel_group_id is None else self.cancel_group_id.encode()
-        encoded_risk_group_id = b'' if self.risk_group_id is None else self.risk_group_id.encode()
+        encoded_reprice_frequency = self.reprice_frequency.encode()
+        encoded_reprice_behavior = self.reprice_behavior.encode()
+        encoded_mtp_group_id = self.mtp_group_id.encode()
+        encoded_match_trade_prevention = self.match_trade_prevention.encode()
+        encoded_cancel_group_id = self.cancel_group_id.encode()
+        encoded_risk_group_id = self.risk_group_id.encode()
+        encoded_RepeatingGroupDimensions = self.RepeatingGroupDimensions.encode()
+        encoded_parties = self.PartiesGroup.encode()
 
-        encoded_message = encoded_header + encoded_sending_time + encoded_cl_ord_id + encoded_time_in_force + \
-            encoded_exec_inst + encoded_trading_capacity + encoded_mtp_group_id + encoded_match_trade_prevention + \
-            encoded_cancel_group_id + encoded_risk_group_id
+        encoded_message = (
+            encoded_header +
+            encoded_sending_time +
+            encoded_cl_ord_id +
+            encoded_options_security_id +
+            encoded_side +
+            encoded_order_qty +
+            encoded_ord_type +
+            encoded_price +
+            encoded_time_in_force +
+            encoded_open_or_close +
+            encoded_exec_inst +
+            encoded_trading_capacity +
+            encoded_reprice_frequency +
+            encoded_reprice_behavior +
+            encoded_mtp_group_id +
+            encoded_match_trade_prevention +
+            encoded_cancel_group_id +
+            encoded_risk_group_id +
+            encoded_RepeatingGroupDimensions
+            encoded_parties
+        )
 
         return encoded_message
 
     def decode(self, buffer):
         offset = 0
 
-        block_length, template_id = self.sbe_header.decode(buffer[offset:])
+        block_length, template_id = self.sbe_header.decode(buffer[offset:offset + SBEHeader.BL])
         offset += SBEHeader.BLOCK_LENGTH
 
         self.sending_time = UTCTimestampNanos(0)
@@ -311,9 +485,33 @@ class NewOrderSingle:
         self.cl_ord_id.decode(buffer[offset:])
         offset += Char.SIZE
 
+        self.options_security_id_35 = Char('')
+        self.options_security_id_35.decode(buffer[offset:])
+        offset += Char.SIZE
+
+        self.side = Char('')
+        self.side.decode(buffer[offset:])
+        offset += Char.SIZE
+
+        self.order_qty = UINT32(0)
+        self.order_qty.decode(buffer[offset:])
+        offset += UINT32.SIZE
+
+        self.ord_type = Char('')
+        self.ord_type.decode(buffer[offset:])
+        offset += Char.SIZE
+
+        self.price = PriceType(0)
+        self.price.decode(buffer[offset:])
+        offset += PriceType.SIZE
+
         self.time_in_force = TimeInForceType(0)
         self.time_in_force.decode(buffer[offset:])
         offset += TimeInForceType.SIZE
+
+        self.open_or_close = OpenOrCloseType('O')
+        self.open_or_close.decode(buffer[offset:])
+        offset += OpenOrCloseType.SIZE
 
         self.exec_inst = ExecInstType(0)
         self.exec_inst.decode(buffer[offset:])
@@ -323,25 +521,33 @@ class NewOrderSingle:
         self.trading_capacity.decode(buffer[offset:])
         offset += TradingCapacityType.SIZE
 
-        if template_id >= 2:
-            self.mtp_group_id = MtpGroupIDType(0)
-            self.mtp_group_id.decode(buffer[offset:])
-            offset += MtpGroupIDType.SIZE
+        self.reprice_frequency = RepriceFrequencyType(0)
+        self.reprice_frequency.decode(buffer[offset:])
+        offset += RepriceFrequencyType.SIZE
 
-            if template_id >= 4:
-                self.match_trade_prevention = MatchTradePreventionType(0)
-                self.match_trade_prevention.decode(buffer[offset:])
-                offset += MatchTradePreventionType.SIZE
+        self.reprice_behavior = RepriceBehaviorType(0)
+        self.reprice_behavior.decode(buffer[offset:])
+        offset += RepriceBehaviorType.SIZE
 
-                if template_id >= 6:
-                    self.cancel_group_id = UINT16(0)
-                    self.cancel_group_id.decode(buffer[offset:])
-                    offset += UINT16.SIZE
+        self.mtp_group_id = MtpGroupIDType(0)
+        self.mtp_group_id.decode(buffer[offset:])
+        offset += MtpGroupIDType.SIZE
 
-                    if template_id >= 8:
-                        self.risk_group_id = UINT16(0)
-                        self.risk_group_id.decode(buffer[offset:])
-                        offset += UINT16.SIZE
+        self.match_trade_prevention = MatchTradePreventionType(0)
+        self.match_trade_prevention.decode(buffer[offset:])
+        offset += MatchTradePreventionType.SIZE
+
+        self.cancel_group_id = UINT16(0)
+        self.cancel_group_id.decode(buffer[offset:])
+        offset += UINT16.SIZE
+
+        self.risk_group_id = UINT16(0)
+        self.risk_group_id.decode(buffer[offset:])
+        offset += UINT16.SIZE
+
+        self.decode_parties(buffer[offset:])
+
+
 
 
 class ShortTwoSidedQuote:
