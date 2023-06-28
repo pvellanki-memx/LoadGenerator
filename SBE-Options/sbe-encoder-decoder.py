@@ -602,23 +602,29 @@ class ShortTwoSidedQuote:
 
 class ShortTwoSideBulkQuote:
     TEMPLATE_ID = 2
+    num_groups = 2
+    schema_id = 1
+    version = 266
+    BLOCK_LENGTH = 96
 
-    def __init__(self, sending_time, cl_ord_id, time_in_force, exec_inst, trading_capacity, mtp_group_id,
-                 match_trade_prevention, cancel_group_id, risk_group_id, parties, quotes):
-        self.sbe_header = SBEHeader(self.TEMPLATE_ID)
-        self.sending_time = sending_time
-        self.cl_ord_id = cl_ord_id
-        self.time_in_force = time_in_force
-        self.exec_inst = exec_inst
-        self.trading_capacity = trading_capacity
-        self.mtp_group_id = mtp_group_id
-        self.match_trade_prevention = match_trade_prevention
-        self.cancel_group_id = cancel_group_id
-        self.risk_group_id = risk_group_id
-        self.no_party_ids = RepeatingGroupDimensions(len(parties))
-        self.parties = parties
-        self.no_quote_entries = RepeatingGroupDimensions(len(quotes))
-        self.quotes = quotes
+
+    def __init__(self, *kwargs ):
+        self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups )
+        quote_entries = len(kwargs.get('quotes', []))
+        party_entries = len(kwargs.get('parties', []))
+        self.sending_time = kwargs.get('sending_time', UTCTimestampNanos(0))
+        self.cl_ord_id = kwargs.get('cl_ord_id', Char(''))
+        self.time_in_force = kwargs.get('time_in_force', TimeInForceType(0))
+        self.exec_inst = kwargs.get('exec_inst', ExecInstType(0))
+        self.trading_capacity = kwargs.get('trading_capacity', TradingCapacityType(0))
+        self.mtp_group_id = kwargs.get('mtp_group_id', MtpGroupIDType(0))
+        self.match_trade_prevention = kwargs.get('match_trade_prevention', MatchTradePreventionType(0))
+        self.cancel_group_id = kwargs.get('cancel_group_id', UINT16(0))
+        self.risk_group_id = kwargs.get('risk_group_id', UINT16(0))
+        self.no_party_ids = kwargs.get('repeating_group_dimensions', RepeatingGroupDimensions(18,party_entries))
+        self.parties = kwargs.get('parties', [])
+        self.no_quote_entries = kwargs.get(RepeatingGroupDimensions(15,quote_entries))
+        self.quotes = kwargs.get('quotes', [])
 
     def encode(self):
         encoded_header = self.sbe_header.encode()
