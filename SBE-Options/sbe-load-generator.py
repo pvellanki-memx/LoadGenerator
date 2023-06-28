@@ -2,8 +2,8 @@ import configparser
 import socket
 import struct
 import time
-from sbe_encoder_decoder import UTCTimestampNanos, NewOrderSingle, ShortTwoSideBulkQuote, LongTwoSideBulkQuote, ShortOneSideBulkQuote, LongOneSideBulkQuote
-from sbe_encoder_decoder import UINT32, OrdType, TimeInForceType, ExecInstType, TradingCapacityType, SideType, Party
+from sbe_encoder_decoder import UTCTimestampNanos, NewOrderSingle, ShortTwoSideBulkQuote, LongTwoSideBulkQuote, ShortOneSideBulkQuote, LongOneSideBulkQuote, ShortTwoSidedQuote,MatchTradePreventionType,MtpGroupIDType
+from sbe_encoder_decoder import UINT32,UINT16, OrdType, TimeInForceType, ExecInstType, TradingCapacityType, SideType, Party, PartiesGroup
 from random import choices, randint
 import string
 from random import choices, randint
@@ -151,7 +151,7 @@ def generate_message(message_type):
         time_in_force = TimeInForceType(value=TimeInForceType.DAY)  # Set the time in force to "Day"
         exec_inst = ExecInstType(value=ExecInstType.ParticipateDoNotInitiate)  # Set the execution instructions
         trading_capacity = TradingCapacityType(value=TradingCapacityType.CUSTOMER)  # Set the trading capacity
-        parties = [Party(party_id='EFID', party_id_source='D', party_role='CUSTOMER')]  # Set the parties
+        parties = [PartiesGroup(party_id='EFID', party_id_source='D', party_role='CUSTOMER')]  # Set the parties
 
         # Create an instance of NewOrderSingle and set the field values
         new_order_single = NewOrderSingle(
@@ -182,9 +182,44 @@ def generate_message(message_type):
 
     elif message_type == 'ShortTwoSideBulkQuote':
         # Generate ShortTwoSideBulkQuote message
-        # Implement the logic to generate the field values for this message type
-        # Return an instance of the ShortTwoSideBulkQuote class with the generated field values
-        pass
+        sending_time = UTCTimestampNanos(int(time.time() * 10**9))
+        cl_ord_id = ''.join(choices(string.ascii_uppercase + string.digits, k=20))
+        time_in_force = TimeInForceType(0)
+        exec_inst = ExecInstType(0)
+        trading_capacity = TradingCapacityType(0)
+        mtp_group_id = MtpGroupIDType(0)
+        match_trade_prevention = MatchTradePreventionType(0)
+        cancel_group_id = UINT16(0)
+        risk_group_id = UINT16(0)
+        parties = [PartiesGroup(party_id='EFID', party_id_source='D', party_role='CUSTOMER')]  # Update with the desired party details
+        quotes = [
+            ShortTwoSidedQuote(1, 'ABC', 10, 100.0, 15, 110.0),  # Quote 1
+            ShortTwoSidedQuote(2, 'XYZ', 20, 200.0, 25, 210.0),  # Quote 2
+        ]
+
+        Short_Two_Side_Bulk_Quote = ShortTwoSideBulkQuote(
+            sending_time=sending_time,
+            cl_ord_id=cl_ord_id,
+            time_in_force=time_in_force,
+            exec_inst=exec_inst,
+            trading_capacity=trading_capacity,
+            mtp_group_id=mtp_group_id,
+            match_trade_prevention=match_trade_prevention,
+            cancel_group_id=cancel_group_id,
+            risk_group_id=risk_group_id,
+            parties=parties,
+            quotes=quotes
+        )
+
+        # Encode the ShortTwoSideBulkQuote instance
+        encoded_message = Short_Two_Side_Bulk_Quote.encode()
+        unsequenced_message = struct.pack('!BH', 104, 102)  # MessageType=104, MessageLength=6, TCP Header Length=102
+        message = unsequenced_message + encoded_message
+
+        # Print the encoded message
+        print(message)
+        return message
+
 
     elif message_type == 'LongTwoSideBulkQuote':
         # Generate LongTwoSideBulkQuote message
