@@ -1,255 +1,169 @@
-import configparser
-import socket
-import struct
-import time
-from sbe_encoder_decoder import UTCTimestampNanos, NewOrderSingle, ShortTwoSideBulkQuote, LongTwoSideBulkQuote, ShortOneSideBulkQuote, LongOneSideBulkQuote
-from sbe_encoder_decoder import UINT32, OrdType, TimeInForceType, ExecInstType, TradingCapacityType, SideType, Party
-from random import choices, randint
-import string
-from random import choices, randint
 
+class NewOrderSingle:
+    TEMPLATE_ID = 1
+    num_groups = 1
+    schema_id = 1
+    version = 266
+    BLOCK_LENGTH = 7
 
+    def __init__(self, **kwargs):
+        self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups )
+        self.sending_time = kwargs.get('sending_time', UTCTimestampNanos(0))
+        self.cl_ord_id = kwargs.get('cl_ord_id', Char(''))
+        self.options_security_id = kwargs.get('options_security_id', Char(''))
+        self.side = kwargs.get('side', SideType(''))
+        self.order_qty = kwargs.get('order_qty', UINT32(0))
+        self.ord_type = kwargs.get('ord_type', Char(''))
+        self.price = kwargs.get('price', PriceType(0,0))
+        self.time_in_force = kwargs.get('time_in_force', TimeInForceType(0))
+        self.open_or_close = kwargs.get('open_or_close', OpenOrCloseType('O'))
+        self.exec_inst = kwargs.get('exec_inst', ExecInstType(0))
+        self.trading_capacity = kwargs.get('trading_capacity', TradingCapacityType(0))
+        self.reprice_frequency = kwargs.get('reprice_frequency', RepriceFrequencyType(0))
+        self.reprice_behavior = kwargs.get('reprice_behavior', RepriceBehaviorType(0))
+        self.mtp_group_id = kwargs.get('mtp_group_id', MtpGroupIDType(0))
+        self.match_trade_prevention = kwargs.get('match_trade_prevention', MatchTradePreventionType(0))
+        self.cancel_group_id = kwargs.get('cancel_group_id', UINT16(0))
+        self.risk_group_id = kwargs.get('risk_group_id', UINT16(0))
+        self.parties = kwargs.get('parties', [])
+        print(self.sbe_header,self.sending_time,self.cl_ord_id,self.options_security_id,self.side,self.ord_type,self.order_qty,self.price)
 
-# Read configuration from config.ini
-config = configparser.ConfigParser()
-config.read('config.ini')
+    def encode(self):
+        encoded_header = self.sbe_header.encode()
+        encoded_sending_time = self.sending_time.encode()
+        encoded_cl_ord_id = self.cl_ord_id.encode()
+        encoded_options_security_id = self.options_security_id.encode()
+        encoded_side = self.side.encode()
+        encoded_order_qty = self.order_qty.encode()
+        encoded_ord_type = self.ord_type.encode()
+        encoded_price = self.price.encode()
+        encoded_time_in_force = self.time_in_force.encode()
+        encoded_open_or_close = self.open_or_close.encode()
+        encoded_exec_inst = self.exec_inst.encode()
+        encoded_trading_capacity = self.trading_capacity.encode()
+        encoded_reprice_frequency = self.reprice_frequency.encode()
+        encoded_reprice_behavior = self.reprice_behavior.encode()
+        encoded_mtp_group_id = self.mtp_group_id.encode()
+        encoded_match_trade_prevention = self.match_trade_prevention.encode()
+        encoded_cancel_group_id = self.cancel_group_id.encode()
+        encoded_risk_group_id = self.risk_group_id.encode()
+        encoded_parties = self.encode_parties()
 
-# Read connection details from connections.cfg
-connection_config = configparser.ConfigParser()
-connection_config.read(config['Server']['config_file'])
-
-# TCP/IP connection details
-host = connection_config['Session1']['host']
-port = int(connection_config['Session1']['port'])
-user = connection_config['Session1']['user']
-password = connection_config['Session1']['password']
-token = f'{user}:{password}'
-
-
-# Read other configuration parameters
-message_rate = config.getint('Load', 'message_rate')
-duration = config.getint('Load', 'duration')
-
-weights = {
-    'NewOrderSingle': config.getfloat('Weights', 'NewOrderSingle'),
-    'ShortTwoSideBulkQuote': config.getfloat('Weights', 'ShortTwoSideBulkQuote'),
-    'LongTwoSideBulkQuote': config.getfloat('Weights', 'LongTwoSideBulkQuote'),
-    'ShortOneSideBulkQuote': config.getfloat('Weights', 'ShortOneSideBulkQuote'),
-    'LongOneSideBulkQuote': config.getfloat('Weights', 'LongOneSideBulkQuote')
-}
-
-security_ids = config.get('OptionsSecurityIDs', 'security_ids').split(',')
-
-template_file = config.get('Template', 'template_file')
-
-# Load template.txt
-with open(template_file) as template_file:
-    template = template_file.read()
-
-# Establish SBE TCP session
-def establish_session():
-
-        # Login request
-    message_type = 100
-    token_type = 'P'  # Assuming token type is always 'P'
-    token_length = len(token)
-    header = struct.pack('!BHB', message_type, token_length + 1, token_type.encode('utf-8')[0])
-    message = header + token.encode('utf-8')
-
-    # Create a socket and establish the connection
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect((host, port))
-
-    # Set socket to binary mode
-    client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-
-        # Send the login request
-    client_socket.sendall(message)
-
-    # Receive and handle the response
-    response_header = client_socket.recv(3)
-    response_type, response_length = struct.unpack('!B H', response_header)
-    print(response_type, response_length)
-
-    if response_type == 1:  # Login Accepted
-        response_message = client_socket.recv(response_length)
-        print("Login Accepted:", response_message.decode('utf-8'))
-        session_id = None
-    elif response_type == 2:  # Login Rejected
-        response_message = client_socket.recv(response_length)
-        print("Login Rejected:", response_message.decode('utf-8'))
-        client_socket.close()
-        exit()  # Exit the script gracefully after login rejection
-    else:
-        print("Invalid response received.")
-        client_socket.close()
-        exit()  # Exit the script if an invalid response is received
-
-    # Continue with the session
-    while True:
-        response_header = client_socket.recv(11)
-        response_type, response_length, session_id = struct.unpack('!B H Q', response_header)
-        print(response_header, response_type, response_length)
-
-        if response_type == 3:  # Start of Session
-            print("Start of Session. Session ID:", session_id)
-            break
-        else:
-            print("Invalid response received.")
-
-
-    # Stream Request
-    stream_request_type = 103
-    stream_request_length = 16  # 4 bytes for message type and length, 8 bytes for session ID, 8 bytes for next sequence number
-    NEXT_SEQUENCE_NUMBER = 0
-    stream_request_header = struct.pack('!BHQQ', stream_request_type, stream_request_length, session_id, NEXT_SEQUENCE_NUMBER)
-    stream_request = stream_request_header
-
-    # Send the Stream Request
-    client_socket.sendall(stream_request)
-
-    response_header = client_socket.recv(3)
-    response_type, response_length = struct.unpack('!B H', response_header)
-    print(response_type, response_length)
-
-    if response_type == 9:  # Stream Rejected
-        response_message = client_socket.recv(response_length)
-        reject_code = response_message.decode('utf-8')
-        print("Stream Rejected. Reject Code:", reject_code)
-        client_socket.close()
-        exit()
-    elif response_type == 10:  # End of Stream
-        response_message = client_socket.recv(response_length)
-        print("End of Stream")
-        client_socket.close()
-        exit()
-    elif response_type == 8:  # Stream Begin
-        response_message = client_socket.recv(response_length - 2)
-        print(response_message)
-        NEXT_SEQUENCE_NUMBER  = struct.unpack('!Q', response_message[3:11])
-        print("Stream Begin received")
-    else:
-        print("Invalid Message received")
-    
-
-    return client_socket, session_id
-
-# Generate a random message type based on the weights
-def generate_message_type():
-    message_types = list(weights.keys())
-    return choices(message_types, weights=list(weights.values()), k=1)[0]
-
-def generate_message(message_type):
-    if message_type == 'NewOrderSingle':
-        # Generate values for the fields
-        sending_time = UTCTimestampNanos(int(time.time() * 10**9))
-        cl_ord_id = ''.join(choices(string.ascii_uppercase + string.digits, k=20))
-        options_security_id = choices(security_ids)[0]
-        side = SideType(value=SideType.BUY)  # Set the side to "Buy"
-        order_qty = UINT32(value=randint(1, 100))
-        ord_type = OrdType(value=OrdType.LIMIT)  # Set the order type to "Limit"
-        time_in_force = TimeInForceType(value=TimeInForceType.DAY)  # Set the time in force to "Day"
-        exec_inst = ExecInstType(value=ExecInstType.ParticipateDoNotInitiate)  # Set the execution instructions
-        trading_capacity = TradingCapacityType(value=TradingCapacityType.CUSTOMER)  # Set the trading capacity
-        parties = [Party(party_id='EFID', party_id_source='D', party_role='CUSTOMER')]  # Set the parties
-
-        # Create an instance of NewOrderSingle and set the field values
-        new_order_single = NewOrderSingle(
-            sending_time=sending_time,
-            cl_ord_id=cl_ord_id,
-            options_security_id_35=options_security_id,
-            side=side,
-            order_qty=order_qty,
-            ord_type=ord_type,
-            time_in_force=time_in_force,
-            exec_inst=exec_inst,
-            trading_capacity=trading_capacity,
-            parties=parties
+        encoded_message = (
+            encoded_header +
+            encoded_sending_time +
+            encoded_cl_ord_id +
+            encoded_options_security_id +
+            encoded_side +
+            encoded_order_qty +
+            encoded_ord_type +
+            encoded_price +
+            encoded_time_in_force +
+            encoded_open_or_close +
+            encoded_exec_inst +
+            encoded_trading_capacity +
+            encoded_reprice_frequency +
+            encoded_reprice_behavior +
+            encoded_mtp_group_id +
+            encoded_match_trade_prevention +
+            encoded_cancel_group_id +
+            encoded_risk_group_id +
+            encoded_parties
         )
-
-        # Encode the NewOrderSingle instance
-        encoded_message = new_order_single.encode()
-
-        # Print the encoded message
-        print(encoded_message)
 
         return encoded_message
 
-        
+    def decode(self, buffer):
+        offset = 0
 
+        block_length, template_id = self.sbe_header.decode(buffer[offset:])
+        offset += SBEHeader.BLOCK_LENGTH
 
-    elif message_type == 'ShortTwoSideBulkQuote':
-        # Generate ShortTwoSideBulkQuote message
-        # Implement the logic to generate the field values for this message type
-        # Return an instance of the ShortTwoSideBulkQuote class with the generated field values
-        pass
+        self.sending_time = UTCTimestampNanos(0)
+        self.sending_time.decode(buffer[offset:])
+        offset += UTCTimestampNanos.SIZE
 
-    elif message_type == 'LongTwoSideBulkQuote':
-        # Generate LongTwoSideBulkQuote message
-        # Implement the logic to generate the field values for this message type
-        # Return an instance of the LongTwoSideBulkQuote class with the generated field values
-        pass
+        self.cl_ord_id = Char('')
+        self.cl_ord_id.decode(buffer[offset:])
+        offset += Char.SIZE
 
-    elif message_type == 'ShortOneSideBulkQuote':
-        # Generate ShortOneSideBulkQuote message
-        # Implement the logic to generate the field values for this message type
-        # Return an instance of the ShortOneSideBulkQuote class with the generated field values
-        pass
+        self.options_security_id_35 = Char('')
+        self.options_security_id_35.decode(buffer[offset:])
+        offset += Char.SIZE
 
-    elif message_type == 'LongOneSideBulkQuote':
-        # Generate LongOneSideBulkQuote message
-        # Implement the logic to generate the field values for this message type
-        # Return an instance of the LongOneSideBulkQuote class with the generated field values
-        pass
+        self.side = Char('')
+        self.side.decode(buffer[offset:])
+        offset += Char.SIZE
 
-    else:
-        raise ValueError(f"Invalid message type: {message_type}")
+        self.order_qty = UINT32(0)
+        self.order_qty.decode(buffer[offset:])
+        offset += UINT32.SIZE
 
-# Send the generated message over the TCP connection
-def send_message(client_socket, message):
-    encoded_message = message.encode()
+        self.ord_type = Char('')
+        self.ord_type.decode(buffer[offset:])
+        offset += Char.SIZE
 
-    # Send the message
-    client_socket.sendall(encoded_message)
+        self.price = PriceType(0)
+        self.price.decode(buffer[offset:])
+        offset += PriceType.SIZE
 
-    # Sleep for a short period to control the message rate
-    time.sleep(1 / message_rate)
+        self.time_in_force = TimeInForceType(0)
+        self.time_in_force.decode(buffer[offset:])
+        offset += TimeInForceType.SIZE
 
-# Main execution
-def main():
-    # Establish SBE TCP session
-    client_socket, session_id = establish_session()
+        self.open_or_close = OpenOrCloseType('O')
+        self.open_or_close.decode(buffer[offset:])
+        offset += OpenOrCloseType.SIZE
 
-    # Start time for calculating duration
-    start_time = time.time()
+        self.exec_inst = ExecInstType(0)
+        self.exec_inst.decode(buffer[offset:])
+        offset += ExecInstType.SIZE
 
-    # Generate and send messages for the specified duration
-    while time.time() - start_time < duration:
-        # Generate a random message type
-        message_type = generate_message_type()
+        self.trading_capacity = TradingCapacityType(0)
+        self.trading_capacity.decode(buffer[offset:])
+        offset += TradingCapacityType.SIZE
 
-        # Generate a message based on the random message type
-        message = generate_message(message_type)
+        self.reprice_frequency = RepriceFrequencyType(0)
+        self.reprice_frequency.decode(buffer[offset:])
+        offset += RepriceFrequencyType.SIZE
 
-        # Send the generated message over the TCP connection
-        send_message(client_socket, message)
+        self.reprice_behavior = RepriceBehaviorType(0)
+        self.reprice_behavior.decode(buffer[offset:])
+        offset += RepriceBehaviorType.SIZE
 
-        # Sleep for a short period to control the message rate
-        time.sleep(1 / message_rate)
+        self.mtp_group_id = MtpGroupIDType(0)
+        self.mtp_group_id.decode(buffer[offset:])
+        offset += MtpGroupIDType.SIZE
 
-    # Close the TCP connection
-    client_socket.close()
+        self.match_trade_prevention = MatchTradePreventionType(0)
+        self.match_trade_prevention.decode(buffer[offset:])
+        offset += MatchTradePreventionType.SIZE
 
-if __name__ == '__main__':
-    main()
+        self.cancel_group_id = UINT16(0)
+        self.cancel_group_id.decode(buffer[offset:])
+        offset += UINT16.SIZE
 
+        self.risk_group_id = UINT16(0)
+        self.risk_group_id.decode(buffer[offset:])
+        offset += UINT16.SIZE
 
+        self.decode_parties(buffer[offset:])
 
+    def encode_parties(self):
+        encoded_parties = b''
+        for party in self.parties:
+            encoded_parties += party.encode()
+        return encoded_parties
 
+    def decode_parties(self, buffer):
+        offset = 0
+        self.parties = []
 
+        while offset < len(buffer):
+            party = Party.decode(buffer[offset:])
+            self.parties.append(party)
+            offset += party.SIZE
 
-
-
-
-
-
+    def add_party(self, party_id, party_id_source, party_role):
+        party = Party(party_id, party_id_source, party_role)
+        self.parties.append(party)
