@@ -146,3 +146,16 @@ encoded_message = new_order_single.encode()
 # Print the encoded message
 print(encoded_message)
 
+
+def encode(self):
+    encoded_header = self.sbe_header.encode()
+    encoded_fields = []
+    for field in self.fields.values():
+        if field is None or field == 0:
+            encoded_fields.append(bytes())
+        else:
+            encoded_fields.append(field.encode())
+    encoded_message = encoded_header + b''.join(encoded_fields)
+    return encoded_message
+
+
