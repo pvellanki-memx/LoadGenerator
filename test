@@ -175,6 +175,82 @@ def generate_message(message_type):
         # Print the encoded message
         print(encoded_message)
 
+
+
+class NewOrderSingle:
+    TEMPLATE_ID = 1
+    num_groups = 1
+    schema_id = 1
+    version = 266
+    BLOCK_LENGTH = 7
+
+    def __init__(self, **kwargs):
+        self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups )
+        self.sending_time = kwargs.get('sending_time', UTCTimestampNanos(0))
+        self.cl_ord_id = kwargs.get('cl_ord_id', Char(''))
+        self.options_security_id = kwargs.get('options_security_id', Char(''))
+        self.side = kwargs.get('side', SideType(''))
+        self.order_qty = kwargs.get('order_qty', UINT32(0))
+        self.ord_type = kwargs.get('ord_type', Char(''))
+        self.price = kwargs.get('price', PriceType(0,0))
+        self.time_in_force = kwargs.get('time_in_force', TimeInForceType(0))
+        self.open_or_close = kwargs.get('open_or_close', OpenOrCloseType('O'))
+        self.exec_inst = kwargs.get('exec_inst', ExecInstType(0))
+        self.trading_capacity = kwargs.get('trading_capacity', TradingCapacityType(0))
+        self.reprice_frequency = kwargs.get('reprice_frequency', RepriceFrequencyType(0))
+        self.reprice_behavior = kwargs.get('reprice_behavior', RepriceBehaviorType(0))
+        self.mtp_group_id = kwargs.get('mtp_group_id', MtpGroupIDType(0))
+        self.match_trade_prevention = kwargs.get('match_trade_prevention', MatchTradePreventionType(0))
+        self.cancel_group_id = kwargs.get('cancel_group_id', UINT16(0))
+        self.risk_group_id = kwargs.get('risk_group_id', UINT16(0))
+        self.parties = kwargs.get('parties', [])
+        print(self.sbe_header,self.sending_time,self.cl_ord_id,self.options_security_id,self.side,self.ord_type,self.order_qty,self.price)
+
+    def encode(self):
+        encoded_header = self.sbe_header.encode()
+        encoded_sending_time = self.sending_time.encode()
+        encoded_cl_ord_id = self.cl_ord_id.encode()
+        encoded_options_security_id = self.options_security_id.encode()
+        encoded_side = self.side.encode()
+        encoded_order_qty = self.order_qty.encode()
+        encoded_ord_type = self.ord_type.encode()
+        encoded_price = self.price.encode()
+        encoded_time_in_force = self.time_in_force.encode()
+        encoded_open_or_close = self.open_or_close.encode()
+        encoded_exec_inst = self.exec_inst.encode()
+        encoded_trading_capacity = self.trading_capacity.encode()
+        encoded_reprice_frequency = self.reprice_frequency.encode()
+        encoded_reprice_behavior = self.reprice_behavior.encode()
+        encoded_mtp_group_id = self.mtp_group_id.encode()
+        encoded_match_trade_prevention = self.match_trade_prevention.encode()
+        encoded_cancel_group_id = self.cancel_group_id.encode()
+        encoded_risk_group_id = self.risk_group_id.encode()
+        encoded_parties = self.encode_parties()
+
+        encoded_message = (
+            encoded_header +
+            encoded_sending_time +
+            encoded_cl_ord_id +
+            encoded_options_security_id +
+            encoded_side +
+            encoded_order_qty +
+            encoded_ord_type +
+            encoded_price +
+            encoded_time_in_force +
+            encoded_open_or_close +
+            encoded_exec_inst +
+            encoded_trading_capacity +
+            encoded_reprice_frequency +
+            encoded_reprice_behavior +
+            encoded_mtp_group_id +
+            encoded_match_trade_prevention +
+            encoded_cancel_group_id +
+            encoded_risk_group_id +
+            encoded_parties
+        )
+
+        return encoded_message
+
         return encoded_message
 
 
