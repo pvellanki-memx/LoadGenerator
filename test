@@ -140,22 +140,41 @@ new_order_single = NewOrderSingle(
     parties=parties
 )
 
-# Encode the NewOrderSingle instance
-encoded_message = new_order_single.encode()
+def generate_message(message_type):
+    if message_type == 'NewOrderSingle':
+        sending_time = UTCTimestampNanos(int(time.time() * 10**9))
+        cl_ord_id = ''.join(choices(string.ascii_uppercase + string.digits, k=20))
+        options_security_id = choices(security_ids)[0]
+        side = SideType.BUY  # Assuming a BUY order, you can customize this
+        order_qty = UINT32(randint(1, 100))
+        ord_type = OrdType.LIMIT  # Assuming a LIMIT order, you can customize this
+        time_in_force = TimeInForceType.DAY  # Assuming a GTC order, you can customize this
+        exec_inst = ExecInstType.ParticipateDoNotInitiate  # Assuming primary peg and display price instructions, you can customize this
+        trading_capacity = TradingCapacityType.CUSTOMER  # Assuming principal capacity, you can customize this
+        parties = [Party('EFID', 'D', 'CUSTOMER')]  # Assuming a single party, you can customize this
 
-# Print the encoded message
-print(encoded_message)
+        print(sending_time,cl_ord_id,options_security_id,side,order_qty,ord_type,time_in_force,exec_inst,trading_capacity,parties)
 
+        # Create an instance of NewOrderSingle and set the field values
+        new_order_single = NewOrderSingle(
+            sending_time=sending_time,
+            cl_ord_id=cl_ord_id,
+            options_security_id_35=options_security_id,
+            side=side,
+            order_qty=order_qty,
+            ord_type=ord_type,
+            time_in_force=time_in_force,
+            exec_inst=exec_inst,
+            trading_capacity=trading_capacity,
+            parties=parties
+        )
 
-def encode(self):
-    encoded_header = self.sbe_header.encode()
-    encoded_fields = []
-    for field in self.fields.values():
-        if field is None or field == 0:
-            encoded_fields.append(bytes())
-        else:
-            encoded_fields.append(field.encode())
-    encoded_message = encoded_header + b''.join(encoded_fields)
-    return encoded_message
+        # Encode the NewOrderSingle instance
+        encoded_message = new_order_single.encode()
+
+        # Print the encoded message
+        print(encoded_message)
+
+        return encoded_message
 
 
