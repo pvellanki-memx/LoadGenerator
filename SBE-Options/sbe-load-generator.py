@@ -3,7 +3,7 @@ import socket
 import struct
 import time
 from sbe_encoder_decoder import UTCTimestampNanos, NewOrderSingle, ShortTwoSideBulkQuote, LongTwoSideBulkQuote, ShortOneSideBulkQuote, LongOneSideBulkQuote, ShortTwoSidedQuote,MatchTradePreventionType,MtpGroupIDType
-from sbe_encoder_decoder import UINT32,UINT16, OrdType, TimeInForceType, ExecInstType, TradingCapacityType, SideType, Party, PartiesGroup
+from sbe_encoder_decoder import UINT32,UINT16, OrdType, TimeInForceType, ExecInstType, TradingCapacityType, SideType, PartyID, PartiesGroup,PartyIDSource, PartyRoleType
 from random import choices, randint
 import string
 from random import choices, randint
@@ -14,17 +14,19 @@ from random import choices, randint
 config = configparser.ConfigParser()
 config.read('config.ini')
 
+
 # Read connection details from connections.cfg
 connection_config = configparser.ConfigParser()
 connection_config.read(config['Server']['config_file'])
 
+'''
 # TCP/IP connection details
 host = connection_config['Session1']['host']
 port = int(connection_config['Session1']['port'])
 user = connection_config['Session1']['user']
 password = connection_config['Session1']['password']
 token = f'{user}:{password}'
-
+'''
 
 # Read other configuration parameters
 message_rate = config.getint('Load', 'message_rate')
@@ -47,7 +49,17 @@ with open(template_file) as template_file:
     template = template_file.read()
 
 # Establish SBE TCP session
-def establish_session():
+def establish_session(session_name):
+
+
+    # Get connection details for the specified session name
+    host = connection_config[session_name]['host']
+    port = int(connection_config[session_name]['port'])
+    user = connection_config[session_name]['user']
+    password = connection_config[session_name]['password']
+    token = f'{user}:{password}'
+    
+
 
         # Login request
     message_type = 100
@@ -139,7 +151,7 @@ def generate_message_type():
     message_types = list(weights.keys())
     return choices(message_types, weights=list(weights.values()), k=1)[0]
 
-def generate_message(message_type):
+def generate_message(message_type,session_name):
     if message_type == 'NewOrderSingle':
         # Generate values for the fields
         sending_time = UTCTimestampNanos(int(time.time() * 10**9))
@@ -151,7 +163,14 @@ def generate_message(message_type):
         time_in_force = TimeInForceType(value=TimeInForceType.DAY)  # Set the time in force to "Day"
         exec_inst = ExecInstType(value=ExecInstType.ParticipateDoNotInitiate)  # Set the execution instructions
         trading_capacity = TradingCapacityType(value=TradingCapacityType.CUSTOMER)  # Set the trading capacity
-        parties = [PartiesGroup(party_id='EFID', party_id_source='D', party_role='CUSTOMER')]  # Set the parties
+        efid = connection_config[session_name]['EFID']
+        print(efid)
+        party_id = PartyID(efid)
+        party_id_source = PartyIDSource('D')
+        party_role = PartyRoleType('CUSTOMER')
+        parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role]])]
+        print(sending_time,cl_ord_id,options_security_id,side,order_qty,ord_type,time_in_force,exec_inst,trading_capacity,parties)
+       
 
         # Create an instance of NewOrderSingle and set the field values
         new_order_single = NewOrderSingle(
@@ -164,7 +183,7 @@ def generate_message(message_type):
             time_in_force=time_in_force,
             exec_inst=exec_inst,
             trading_capacity=trading_capacity,
-            parties=parties
+            PartiesGroup=parties
         )
 
         unsequenced_message = struct.pack('!BH', 104, 102)  # MessageType=104, MessageLength=6, TCP Header Length=102
@@ -252,33 +271,54 @@ def send_message(client_socket, message):
     # Sleep for a short period to control the message rate
     time.sleep(1 / message_rate)
 
-# Main execution
 def main():
-    # Establish SBE TCP session
-    client_socket, session_id = establish_session()
+    # Read session names from connections.cfg
+    session_names = connection_config.sections()
 
-    # Start time for calculating duration
-    start_time = time.time()
+    # Counter for the number of active sessions
+    active_sessions = 0
 
-    # Generate and send messages for the specified duration
-    while time.time() - start_time < duration:
-        # Generate a random message type
-        message_type = generate_message_type()
+    # Iterate over session names and establish sessions
+    for session_name in session_names:
+        try:
+            # Establish SBE TCP session for the current session name
+            client_socket, session_id = establish_session(session_name)
 
-        # Generate a message based on the random message type
-        message = generate_message(message_type)
+            # Increment the active sessions counter
+            active_sessions += 1
 
-        # Send the generated message over the TCP connection
-        send_message(client_socket, message)
+            # Start time for calculating duration
+            start_time = time.time()
 
-        # Sleep for a short period to control the message rate
-        time.sleep(1 / message_rate)
+            # Generate and send messages for the specified duration
+            while time.time() - start_time < duration:
+                # Generate a random message type
+                message_type = generate_message_type()
 
-    # Close the TCP connection
-    client_socket.close()
+                # Generate a message based on the random message type
+                message = generate_message(message_type,session_name)
 
+                # Send the generated message over the TCP connection
+                send_message(client_socket, message)
+
+                # Sleep for a short period to control the message rate
+                time.sleep(1 / message_rate)
+
+            # Close the TCP connection for the current session
+            client_socket.close()
+
+        except Exception as e:
+            print(f"Failed to establish session for {session_name}: {str(e)}")
+
+    # Print the number of active sessions
+    print(f"Total active sessions: {active_sessions}")
+
+# Start the main execution
 if __name__ == '__main__':
     main()
+
+
+
 
 
 
