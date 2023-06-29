@@ -37,3 +37,6 @@ def generate_message(message_type):
         exec_inst = ExecInstType(value=ExecInstType.ParticipateDoNotInitiate)  # Set the execution instructions
         trading_capacity = TradingCapacityType(value=TradingCapacityType.CUSTOMER)  # Set the trading capacity
         parties = [PartiesGroup(party_id='EFID', party_id_source='D', party_role='CUSTOMER')]  
+
+
+Failed to establish session for Session1: PartiesGroup.__init__() got an unexpected keyword argument 'party_id'
