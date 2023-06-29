@@ -370,11 +370,12 @@ class PartyRoleType:
 
 
 class PartiesGroup:
-    def __init__(self, party_ids):
-        self.party_ids = party_ids
+    def __init__(self, party_ids=None):
+        self.party_ids = party_ids or []
+     
 
     def encode(self):
-        encoded_parties = b''.join(party_id.encode() for party in self.party_ids for party_id in party)
+        encoded_parties = b''.join(party_obj.encode() for party_obj in self.party_ids)
         return encoded_parties
 
     def decode(self, buffer):
@@ -421,8 +422,8 @@ class NewOrderSingle:
         self.cancel_group_id = kwargs.get('cancel_group_id', UINT16(0))
         self.risk_group_id = kwargs.get('risk_group_id', UINT16(0))
         self.RepeatingGroupDimensions = kwargs.get('repeating_group_dimensions', RepeatingGroupDimensions(18,3))
-        self.parties = kwargs.get('parties', [])
-        print(self.sbe_header,self.sending_time,self.cl_ord_id,self.options_security_id,self.side,self.ord_type,self.order_qty,self.price)
+        self.parties_group = kwargs.get('parties_group',PartiesGroup() )
+        
 
     def encode(self):
         encoded_header = self.sbe_header.encode()
@@ -444,7 +445,7 @@ class NewOrderSingle:
         encoded_cancel_group_id = self.cancel_group_id.encode()
         encoded_risk_group_id = self.risk_group_id.encode()
         encoded_RepeatingGroupDimensions = self.RepeatingGroupDimensions.encode()
-        encoded_parties = self.PartiesGroup.encode()
+        encoded_parties = self.parties_group.encode()
 
         encoded_message = (
             encoded_header +
@@ -465,7 +466,7 @@ class NewOrderSingle:
             encoded_match_trade_prevention +
             encoded_cancel_group_id +
             encoded_risk_group_id +
-            encoded_RepeatingGroupDimensions
+            encoded_RepeatingGroupDimensions +
             encoded_parties
         )
 
