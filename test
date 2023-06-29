@@ -1,114 +1,39 @@
-import configparser
-import socket
-import struct
-import time
-from sbe_encoder_decoder import UTCTimestampNanos, NewOrderSingle, ShortTwoSideBulkQuote, LongTwoSideBulkQuote, ShortOneSideBulkQuote, LongOneSideBulkQuote, ShortTwoSidedQuote, MatchTradePreventionType, MtpGroupIDType
-from sbe_encoder_decoder import UINT32, UINT16, OrdType, TimeInForceType, ExecInstType, TradingCapacityType, SideType, Party, PartiesGroup
-from random import choices, randint
-import string
 
-# Read configuration from config.ini
-config = configparser.ConfigParser()
-config.read('config.ini')
+class PartiesGroup:
+    def __init__(self, party_ids):
+        self.party_ids = party_ids
 
-# Read connection details from connections.cfg
-connection_config = configparser.ConfigParser()
-connection_config.read(config['Server']['config_file'])
+    def encode(self):
+        encoded_parties = b''.join(party_id.encode() for party in self.party_ids for party_id in party)
+        return encoded_parties
 
-# TCP/IP connection details
-message_rate = config.getint('Load', 'message_rate')
-duration = config.getint('Load', 'duration')
+    def decode(self, buffer):
+        num_party_ids = len(buffer) // (PartyID.SIZE + PartyIDSource.SIZE + PartyRoleType.SIZE)
+        self.party_ids = []
+        for i in range(num_party_ids):
+            offset = i * (PartyID.SIZE + PartyIDSource.SIZE + PartyRoleType.SIZE)
+            party_id = PartyID('')
+            party_id.decode(buffer[offset:offset + PartyID.SIZE])
+            offset += PartyID.SIZE
+            party_id_source = PartyIDSource('')
+            party_id_source.decode(buffer[offset:offset + PartyIDSource.SIZE])
+            offset += PartyIDSource.SIZE
+            party_role = PartyRoleType('')
+            party_role.decode(buffer[offset:offset + PartyRoleType.SIZE])
+            self.party_ids.append([party_id, party_id_source, party_role])
 
-weights = {
-    'NewOrderSingle': config.getfloat('Weights', 'NewOrderSingle'),
-    'ShortTwoSideBulkQuote': config.getfloat('Weights', 'ShortTwoSideBulkQuote'),
-    'LongTwoSideBulkQuote': config.getfloat('Weights', 'LongTwoSideBulkQuote'),
-    'ShortOneSideBulkQuote': config.getfloat('Weights', 'ShortOneSideBulkQuote'),
-    'LongOneSideBulkQuote': config.getfloat('Weights', 'LongOneSideBulkQuote')
-}
 
-security_ids = config.get('OptionsSecurityIDs', 'security_ids').split(',')
 
-template_file = config.get('Template', 'template_file')
-
-# Load template.txt
-with open(template_file) as template_file:
-    template = template_file.read()
-
-# Establish SBE TCP session
-def establish_session(session_name):
-    # Read connection details from connections.cfg
-    connection_config = configparser.ConfigParser()
-    connection_config.read(config['Server']['config_file'])
-
-    # Get connection details for the specified session name
-    host = connection_config[session_name]['host']
-    port = int(connection_config[session_name]['port'])
-    user = connection_config[session_name]['user']
-    password = connection_config[session_name]['password']
-    token = f'{user}:{password}'
-
-    # Rest of the function code remains the same
-    # ...
-
-# Generate a random message type based on the weights
-def generate_message_type():
-    # Rest of the function code remains the same
-    # ...
-
-# Generate a message based on the message type
 def generate_message(message_type):
-    # Rest of the function code remains the same
-    # ...
-
-# Send the generated message over the TCP connection
-def send_message(client_socket, message):
-    # Rest of the function code remains the same
-    # ...
-
-# Main execution
-def main():
-    # Read session names from connections.cfg
-    session_names = connection_config.sections()
-
-    # Counter for the number of active sessions
-    active_sessions = 0
-
-    # Iterate over session names and establish sessions
-    for session_name in session_names:
-        try:
-            # Establish SBE TCP session for the current session name
-            client_socket, session_id = establish_session(session_name)
-
-            # Increment the active sessions counter
-            active_sessions += 1
-
-            # Start time for calculating duration
-            start_time = time.time()
-
-            # Generate and send messages for the specified duration
-            while time.time() - start_time < duration:
-                # Generate a random message type
-                message_type = generate_message_type()
-
-                # Generate a message based on the random message type
-                message = generate_message(message_type)
-
-                # Send the generated message over the TCP connection
-                send_message(client_socket, message)
-
-                # Sleep for a short period to control the message rate
-                time.sleep(1 / message_rate)
-
-            # Close the TCP connection for the current session
-            client_socket.close()
-
-        except Exception as e:
-            print(f"Failed to establish session for {session_name}: {str(e)}")
-
-    # Print the number of active sessions
-    print(f"Total active sessions: {active_sessions}")
-
-# Start the main execution
-if __name__ == '__main__':
-    main()
+    if message_type == 'NewOrderSingle':
+        # Generate values for the fields
+        sending_time = UTCTimestampNanos(int(time.time() * 10**9))
+        cl_ord_id = ''.join(choices(string.ascii_uppercase + string.digits, k=20))
+        options_security_id = choices(security_ids)[0]
+        side = SideType(value=SideType.BUY)  # Set the side to "Buy"
+        order_qty = UINT32(value=randint(1, 100))
+        ord_type = OrdType(value=OrdType.LIMIT)  # Set the order type to "Limit"
+        time_in_force = TimeInForceType(value=TimeInForceType.DAY)  # Set the time in force to "Day"
+        exec_inst = ExecInstType(value=ExecInstType.ParticipateDoNotInitiate)  # Set the execution instructions
+        trading_capacity = TradingCapacityType(value=TradingCapacityType.CUSTOMER)  # Set the trading capacity
+        parties = [PartiesGroup(party_id='EFID', party_id_source='D', party_role='CUSTOMER')]  
