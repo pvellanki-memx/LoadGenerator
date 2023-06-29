@@ -164,12 +164,11 @@ def generate_message(message_type,session_name):
         exec_inst = ExecInstType(value=ExecInstType.ParticipateDoNotInitiate)  # Set the execution instructions
         trading_capacity = TradingCapacityType(value=TradingCapacityType.CUSTOMER)  # Set the trading capacity
         efid = connection_config[session_name]['EFID']
-        print(efid)
         party_id = PartyID(efid)
         party_id_source = PartyIDSource('D')
         party_role = PartyRoleType('CUSTOMER')
         parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role]])]
-        print(sending_time,cl_ord_id,options_security_id,side,order_qty,ord_type,time_in_force,exec_inst,trading_capacity,parties)
+        
        
 
         # Create an instance of NewOrderSingle and set the field values
@@ -210,7 +209,11 @@ def generate_message(message_type,session_name):
         match_trade_prevention = MatchTradePreventionType(0)
         cancel_group_id = UINT16(0)
         risk_group_id = UINT16(0)
-        parties = [PartiesGroup(party_id='EFID', party_id_source='D', party_role='CUSTOMER')]  # Update with the desired party details
+        efid = connection_config[session_name]['EFID']
+        party_id = PartyID(efid)
+        party_id_source = PartyIDSource('D')
+        party_role = PartyRoleType('CUSTOMER')
+        parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role]])]
         quotes = [
             ShortTwoSidedQuote(1, 'ABC', 10, 100.0, 15, 110.0),  # Quote 1
             ShortTwoSidedQuote(2, 'XYZ', 20, 200.0, 25, 210.0),  # Quote 2
