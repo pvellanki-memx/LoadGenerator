@@ -1,139 +1,114 @@
-class ShortTwoSideBulkQuote:
-    TEMPLATE_ID = 2
-    num_groups = 1
-    schema_id = 1
-    version = 266
-    BLOCK_LENGTH = 96
+import configparser
+import socket
+import struct
+import time
+from sbe_encoder_decoder import UTCTimestampNanos, NewOrderSingle, ShortTwoSideBulkQuote, LongTwoSideBulkQuote, ShortOneSideBulkQuote, LongOneSideBulkQuote, ShortTwoSidedQuote, MatchTradePreventionType, MtpGroupIDType
+from sbe_encoder_decoder import UINT32, UINT16, OrdType, TimeInForceType, ExecInstType, TradingCapacityType, SideType, Party, PartiesGroup
+from random import choices, randint
+import string
 
+# Read configuration from config.ini
+config = configparser.ConfigParser()
+config.read('config.ini')
 
-    def __init__(self, *kwargs ):
-        self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups )
-        self.sending_time = kwargs.get('sending_time', UTCTimestampNanos(0))
-        self.cl_ord_id = kwargs.get('cl_ord_id', Char(''))
-        self.time_in_force = kwargs.get('time_in_force', TimeInForceType(0))
-        self.exec_inst = kwargs.get('exec_inst', ExecInstType(0))
-        self.trading_capacity = kwargs.get('trading_capacity', TradingCapacityType(0))
-        self.mtp_group_id = kwargs.get('mtp_group_id', MtpGroupIDType(0))
-        self.match_trade_prevention = kwargs.get('match_trade_prevention', MatchTradePreventionType(0))
-        self.cancel_group_id = kwargs.get('cancel_group_id', UINT16(0))
-        self.risk_group_id = kwargs.get('risk_group_id', UINT16(0))
-        self.no_party_ids = kwargs.get('repeating_group_dimensions', RepeatingGroupDimensions(18,1))
-        self.parties = kwargs.get('parties', [])
-        self.no_quote_entries = kwargs.get(RepeatingGroupDimensions(15,len(quotes)))
-        self.quotes = kwargs.get('quotes', [])
+# Read connection details from connections.cfg
+connection_config = configparser.ConfigParser()
+connection_config.read(config['Server']['config_file'])
 
-    def encode(self):
-        encoded_header = self.sbe_header.encode()
-        encoded_sending_time = self.sending_time.encode()
-        encoded_cl_ord_id = self.cl_ord_id.encode()
-        encoded_time_in_force = self.time_in_force.encode()
-        encoded_exec_inst = self.exec_inst.encode()
-        encoded_trading_capacity = self.trading_capacity.encode()
-        encoded_mtp_group_id = b'' if self.mtp_group_id is None else self.mtp_group_id.encode()
-        encoded_match_trade_prevention = b'' if self.match_trade_prevention is None else \
-            self.match_trade_prevention.encode()
-        encoded_cancel_group_id = b'' if self.cancel_group_id is None else self.cancel_group_id.encode()
-        encoded_risk_group_id = b'' if self.risk_group_id is None else self.risk_group_id.encode()
+# TCP/IP connection details
+message_rate = config.getint('Load', 'message_rate')
+duration = config.getint('Load', 'duration')
 
-        encoded_parties = b''
-        for party in self.parties:
-            encoded_parties += party.encode()
+weights = {
+    'NewOrderSingle': config.getfloat('Weights', 'NewOrderSingle'),
+    'ShortTwoSideBulkQuote': config.getfloat('Weights', 'ShortTwoSideBulkQuote'),
+    'LongTwoSideBulkQuote': config.getfloat('Weights', 'LongTwoSideBulkQuote'),
+    'ShortOneSideBulkQuote': config.getfloat('Weights', 'ShortOneSideBulkQuote'),
+    'LongOneSideBulkQuote': config.getfloat('Weights', 'LongOneSideBulkQuote')
+}
 
-        encoded_quotes = b''
-        for quote in self.quotes:
-            encoded_quotes += quote.encode()
+security_ids = config.get('OptionsSecurityIDs', 'security_ids').split(',')
 
-        encoded_message = encoded_header + encoded_sending_time + encoded_cl_ord_id + encoded_time_in_force + \
-            encoded_exec_inst + encoded_trading_capacity + encoded_mtp_group_id + encoded_match_trade_prevention + \
-            encoded_cancel_group_id + encoded_risk_group_id + encoded_parties + encoded_quotes
+template_file = config.get('Template', 'template_file')
 
-        return encoded_message
+# Load template.txt
+with open(template_file) as template_file:
+    template = template_file.read()
 
+# Establish SBE TCP session
+def establish_session(session_name):
+    # Read connection details from connections.cfg
+    connection_config = configparser.ConfigParser()
+    connection_config.read(config['Server']['config_file'])
 
+    # Get connection details for the specified session name
+    host = connection_config[session_name]['host']
+    port = int(connection_config[session_name]['port'])
+    user = connection_config[session_name]['user']
+    password = connection_config[session_name]['password']
+    token = f'{user}:{password}'
 
+    # Rest of the function code remains the same
+    # ...
 
+# Generate a random message type based on the weights
+def generate_message_type():
+    # Rest of the function code remains the same
+    # ...
 
-
-
-
-
+# Generate a message based on the message type
 def generate_message(message_type):
-    if message_type == 'NewOrderSingle':
-        # Generate values for the fields
-        sending_time = UTCTimestampNanos(int(time.time() * 10**9))
-        cl_ord_id = ''.join(choices(string.ascii_uppercase + string.digits, k=20))
-        options_security_id = choices(security_ids)[0]
-        side = SideType(value=SideType.BUY)  # Set the side to "Buy"
-        order_qty = UINT32(value=randint(1, 100))
-        ord_type = OrdType(value=OrdType.LIMIT)  # Set the order type to "Limit"
-        time_in_force = TimeInForceType(value=TimeInForceType.DAY)  # Set the time in force to "Day"
-        exec_inst = ExecInstType(value=ExecInstType.ParticipateDoNotInitiate)  # Set the execution instructions
-        trading_capacity = TradingCapacityType(value=TradingCapacityType.CUSTOMER)  # Set the trading capacity
-        parties = [Party(party_id='EFID', party_id_source='D', party_role='CUSTOMER')]  # Set the parties
+    # Rest of the function code remains the same
+    # ...
 
-        # Create an instance of NewOrderSingle and set the field values
-        new_order_single = NewOrderSingle(
-            sending_time=sending_time,
-            cl_ord_id=cl_ord_id,
-            options_security_id_35=options_security_id,
-            side=side,
-            order_qty=order_qty,
-            ord_type=ord_type,
-            time_in_force=time_in_force,
-            exec_inst=exec_inst,
-            trading_capacity=trading_capacity,
-            parties=parties
-        )
+# Send the generated message over the TCP connection
+def send_message(client_socket, message):
+    # Rest of the function code remains the same
+    # ...
 
-        unsequenced_message = struct.pack('!BH', 104, 102)  # MessageType=104, MessageLength=6, TCP Header Length=102
-        # Encode the NewOrderSingle instance
-        encoded_message = new_order_single.encode()
-        message = unsequenced_message + encoded_message
+# Main execution
+def main():
+    # Read session names from connections.cfg
+    session_names = connection_config.sections()
 
-        # Print the encoded message
-        print(encoded_message)
+    # Counter for the number of active sessions
+    active_sessions = 0
 
-        return message
+    # Iterate over session names and establish sessions
+    for session_name in session_names:
+        try:
+            # Establish SBE TCP session for the current session name
+            client_socket, session_id = establish_session(session_name)
 
-    elif message_type == 'ShortTwoSideBulkQuote':
-        # Generate ShortTwoSideBulkQuote message
-        sending_time = UTCTimestampNanos(0)
-        cl_ord_id = Char('')
-        time_in_force = TimeInForceType(0)
-        exec_inst = ExecInstType(0)
-        trading_capacity = TradingCapacityType(0)
-        mtp_group_id = MtpGroupIDType(0)
-        match_trade_prevention = MatchTradePreventionType(0)
-        cancel_group_id = UINT16(0)
-        risk_group_id = UINT16(0)
-        no_party_ids = RepeatingGroupDimensions(18, 1)
-        parties = PartiesGroup([['', '', '']])  # Update with the desired party details
-        no_quote_entries = RepeatingGroupDimensions(15, 2)  # Update with the desired number of quotes
-        quotes = [
-            ShortTwoSidedQuote(1, 'ABC', 10, 100.0, 15, 110.0),  # Quote 1
-            ShortTwoSidedQuote(2, 'XYZ', 20, 200.0, 25, 210.0),  # Quote 2
-        ]
+            # Increment the active sessions counter
+            active_sessions += 1
 
-        message = ShortTwoSideBulkQuote(
-            sending_time=sending_time,
-            cl_ord_id=cl_ord_id,
-            time_in_force=time_in_force,
-            exec_inst=exec_inst,
-            trading_capacity=trading_capacity,
-            mtp_group_id=mtp_group_id,
-            match_trade_prevention=match_trade_prevention,
-            cancel_group_id=cancel_group_id,
-            risk_group_id=risk_group_id,
-            no_party_ids=no_party_ids,
-            parties=parties,
-            no_quote_entries=no_quote_entries,
-            quotes=quotes
-        )
+            # Start time for calculating duration
+            start_time = time.time()
 
-        # Encode the ShortTwoSideBulkQuote instance
-        encoded_message = message.encode()
+            # Generate and send messages for the specified duration
+            while time.time() - start_time < duration:
+                # Generate a random message type
+                message_type = generate_message_type()
 
-        # Print the encoded message
-        print(encoded_message)
+                # Generate a message based on the random message type
+                message = generate_message(message_type)
 
-        return encoded_message
+                # Send the generated message over the TCP connection
+                send_message(client_socket, message)
+
+                # Sleep for a short period to control the message rate
+                time.sleep(1 / message_rate)
+
+            # Close the TCP connection for the current session
+            client_socket.close()
+
+        except Exception as e:
+            print(f"Failed to establish session for {session_name}: {str(e)}")
+
+    # Print the number of active sessions
+    print(f"Total active sessions: {active_sessions}")
+
+# Start the main execution
+if __name__ == '__main__':
+    main()
