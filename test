@@ -44,3 +44,6 @@ party_id = PartyID('EFID')
         party_role = PartyRoleType('CUSTOMER')
         parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role]])]
 
+
+self.PartiesGroup = kwargs.get('PartiesGroup',[] )
+
