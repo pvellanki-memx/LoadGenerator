@@ -1,0 +1,1632 @@
+MEMO for Options - SBE
+•	Overview
+•	Architecture
+•	Encoding 
+o	SBE Data Types 
+	PriceType
+	ShortPriceType
+	ClOrdID
+	Symbology
+	UTCTimestampNanos
+o	SBE Header
+o	Repeating Groups 
+	RepeatingGroupDimensions Field
+	Short Two Sided Quote Group
+	Long Two Sided Quote Group
+	Short One Sided Quote Group
+	Long One Sided Quote Group
+	Parties Group (Repeating Group 453)
+	Allocations Group (Repeating Group 78)
+•	Message Field Types 
+o	AllocTransType (FIX tag 71)
+o	AllocType (FIX tag 626)
+o	AllocStatusType (FIX tag 87)
+o	AllocRejCode (FIX tag 88)
+o	CxlRejReasonCode (FIX tag 102)
+o	CancelReasonCode (MEMX custom FIX tag 21004)
+o	CxlRejResponseToType (FIX tag 434)
+o	ExchangeCode (used in FIX tag 30)
+o	ExecInstType Bitset (FIX tag 18)
+o	ExecRestatementType (FIX tag 378)
+o	ExtendedRestatementReasonType (Custom FIX tag 21022)
+o	LastLiquidityIndType (FIX tag 851)
+o	OrdStatusType (FIX tag 39)
+o	MassCxlRejReasonCode (MEMX Custom FIX tag 21028)
+o	MassCancelInstType Bitset (FIX tag 21031)
+o	MassCancelClearLockoutRejCode (FIX tag 21037)
+o	UnderlyingOrSeriesType (MEMX Custom FIX tag 21029)
+o	OpenOrCloseType (FIX tag 77)
+o	OrderRejectReasonCode (FIX tag 103)
+o	OrdType (FIX tag 40)
+o	TradingCapacityType (FIX tag 1815)
+o	RepriceFrequencyType (MEMX custom FIX tag 21020)
+o	RepriceBehaviorType(MEMX custom FIX tag 21021)
+o	MatchTradePreventionType (MEMX custom FIX tag 21001)
+o	PartyRoleType (FIX tag 452)
+o	SideType (FIX tag 54)
+o	MtpGroupIDType (FIX tag 2362)
+o	TimeInForceType (FIX tag 59)
+o	UserStatusType (FIX tag 926)
+•	Messages 
+o	Client To Server 
+	NewOrderSingle
+	ShortTwoSidedBulkQuote
+	LongTwoSidedBulkQuote
+	ShortOneSidedBulkQuote
+	LongOneSidedBulkQuote
+	OrderCancelReplaceRequest
+	OrderCancelRequest
+	MassCancelRequest
+	MassCancelClearLockoutRequest
+	AllocationInstruction
+o	Server To Client 
+	ExecutionReport 
+	ExecutionReport_New
+	ExecutionReport_BulkQuote_PendingNew
+	ExecutionReport_BulkQuote_ComponentNew
+	ExecutionReport_Rejected
+	ExecutionReport_Trade
+	ExecutionReport_PendingCancel
+	ExecutionReport_Canceled
+	ExecutionReport_PendingReplace
+	ExecutionReport_Replaced
+	ExecutionReport_TradeCorrection
+	ExecutionReport_TradeBreak
+	ExecutionReport_Restatement
+	PendingMassCancel
+	MassCancelReject
+	MassCancelDone
+	MassCancelClearLockoutReject
+	MassCancelClearLockoutDone
+	OrderCancelReject
+	AllocationInstructionAck
+	AllocationReport
+	UserNotification
+Overview
+MEMO SBE Options is a binary protocol used by members to submit orders to the MEMX exchange.
+Architecture
+A MEMO SBE Options session is a sequenced messaging protocol that uses fixed width binary messages.
+The MEMO SBE Options wire format uses an SBE-encoded subset of FIX 5.0 SP2 tags and messages.
+More information about the FIX protocol and associated tag numbers can be found on the Financial Information Exchange (FIX) Protocol version 5.0 Service Pack 2 page.
+MEMO SBE Options messages are transported using the MEMX-TCP protocol to provide reliable ordered transmission of messages between clients and servers.  Connected clients should always use the streaming mode of MEMX-TCP.
+Making MEMX-TCP requests for message replay will result in the client being disconnected, as per the MEMX-TCP specification.  Heartbeat and heartbeat timeout intervals for a MEMO connection may be configured via the MEMO port support request process.
+Encoding
+The MEMO SBE Options protocol uses the FIX Trading Community's Simple Binary Encoding (SBE) to specify message encoding.  More information about SBE can be found at the FIX SBE XML Primer.
+MEMO SBE Options is always encoded in Big Endian byte order.
+In order to support clients with hardware word alignment restrictions, MEMO SBE will allow clients to supply up to 7 extra bytes after the content of the SBE message. These extra bytes should be added in the MEMX-TCP framing protocol's message length prefix, and not in the message's SBE header.
+SBE Data Types
+All encoding and decoding for SBE is centered around a set of basic primitive types.
+For more information on primitive type encoding, see the SBE specification.
+Type	Length (bytes)	Description	Value Range	Null Value	Null Value (Hex)
+CHAR	1	ASCII Character	32 to 126 (printable ASCII)	0	0x00
+BOOLEAN	1	Boolean value (true or false)	0 to 1
+0 = false
+1 = true	255	0xFF
+INT8	1	Signed Integer	-127 to 127	-128 	0x80
+INT16	2	Signed Integer	-32767 to 32767	-32768	0x8000
+INT32	4	Signed Integer	-2^31 + 1 to 2^31 - 1	-2^31	0x80000000
+INT64	8	Signed Integer	-2^63 + 1 to 2^63 - 1	-2^63	0x8000000000000000
+UINT8	1	Unsigned Integer	0 to 254	255	0xFF
+UINT16	2	Unsigned Integer	0 to 65534	65535	0xFFFF
+UINT32	4	Unsigned Integer	0 to 2^32-2	2^32 - 1	0xFFFFFFFF
+UINT64	8	Unsigned Integer	0 to 2^63 - 1	2^64 - 1	0xFFFFFFFFFFFFFFFF
+
+The MEMO specification does not use the SBE floating point data types.
+PriceType
+Some prices are encoded as a fixed-point scaled decimal, consisting of an unsigned long (UINT64) mantissa and a constant exponent of -8.
+Type Name	Length	Type	Description
+Mantissa	8	UINT64
+The fixed-point decimal representation of the price.
+Exponent	N/A	INT8
+MEMO uses a constant exponent of -8 for all prices.
+For example, a mantissa of 123456789 (0x75BCD15) with the constant exponent of -8 represents the decimal number 1.23456789, and would appear encoded on the wire as the hex value 00000000075BCD15.
+ShortPriceType
+To conserve bytes on the wire, some prices are encoded as a fixed-point scaled decimal, consisting of an unsigned short (UINT16) mantissa and a constant exponent of -2.
+Type Name	Length	Type	Description
+Mantissa	2	UINT16
+The fixed-point decimal representation of the price.
+Exponent	N/A	INT8
+MEMO uses a constant exponent of -2 for all short prices.
+For example, a mantissa of 12345 with the constant exponent of -2 represents the decimal number 123.45, and would appear encoded on the wire as the hex value 00003039
+ClOrdID
+All ClOrdIDs can be up to 20 characters. They can contain only ASCII printable characters.
+Symbology 
+Upon request via a separate channel, the exchange provides a list of instrument directory messages. Each instrument directory message provides these relevant field used to identify a product for order processing:
+•	OptionsSecurityID, (custom tag 21035) an 8 CHAR field that uniquely identifies an options security on the exchange,
+The MEMO for Options SBE protocol uses the OptionsSecurityID (custom tag 21035) in the order related and quote related messages to identify the option security for the message. 
+UTCTimestampNanos
+Fields with the UTCTimestampNanos type represent a timestamp in Coordinated Universal Time (UTC), which began on the UNIX epoch (January 1, 1970 at 00:00:00 UTC).  UTCTimestampNanos has the time unit of nanoseconds and is encoded as follows:
+Type Name	Length	Type	Description
+Time	8	UINT64
+UTC timestamp since UNIX epoch with nanosecond precision.
+Unit	N/A	UINT8
+Unit of time.  UTCTimestampNanos are represented in nanoseconds. This field is constant (value=9) and as such will not be transferred on the wire.
+SBE Header
+SBE includes a header for each message. The SBE header is followed by the SBE body for the message.
+The SBE message header contains the fields that allows the decoder to identify what codec should be used for a message.
+1.	blockLength: The length of the message. Note: this does not include the header length.
+2.	templateID: The identifier for the template type of the message that is to follow.
+3.	schemaID: The identifier for the schema the message belongs to.
+4.	version: The version of the schema allowing for extension. MEMX packs two pieces of information into the (UINT16) version field, a major version and a minor update version. So for example a version of 258 = 0x0102 indicates major version 1, minor update 2.
+5.	numGroups: A count of repeating groups at the root level of the message. The count does not include nested repeating groups.
+The MEMO SBE header appears on the wire as:
+Field	Offset	Length	Type	Description
+BlockLength	0	2	UINT16
+The number of bytes in the message body (does not include the header bytes). Note that MEMO messages do not use repeating groups or variable-length fields.
+TemplateID	2	1	UINT8
+Identifier of the message template (ie. the message type)
+SchemaID	3	1	UINT8
+The identifier of a message schema. SchemaID=9 for MEMO for US Options
+Version	4	2	UINT16
+The version number of the message schema that was used to encode a message. MEMX packs two pieces of information into the UNIT16 version field, a major version and a minor update version. So for example a version of 258 = 0x0102 indicates major version 1, minor update 2.
+NumGroups	6	1	UINT8
+A count of repeating groups at the root level of the message. The count does not include nested repeating groups.
+Repeating Groups
+RepeatingGroupDimensions Field
+Some messages in this specification use repeating groups of fields. A RepeatingGroupDimensions block is inserted prior to each repeating group and contains:
+1.	The BlockLength representing the total space reserved for a single repeating group entry (not counting any nested repeating groups or variable-length fields). BlockLength only represents message body fields; it does not include the length of the group dimension itself, which is fixed size.
+2.	A counter representing the number of entries in a repeating group.
+Type Name	Length	Type	Description
+BlockLength	1	UINT8
+The total space reserved for a single repeating group entry.
+NumInGroup	1	UINT8
+A counter representing the number of entries in a repeating group.
+Short Two Sided Quote Group
+The Short Two Sided Quote repeating group allows for up to 20 two sided quotes in messages. This group is used within the ShortTwoSidedBulkQuote message. All quotes in a Short Two Sided Quote repeating group must be for the same Underlier. The OptionsSecurityID of the first quote in the repeating group identifies the Underlier that is used to validate all of the following quotes in the repeating group.
+This group is always preceded by a RepeatingGroupDimensions field that denotes the length of this group and the number of them expected in the message.
+Field	Offset	Length	Type	Tag Ref 
+Num	Req'd	Description
+ListSeqNo	0	1	UINT8
+67	Y	Unique identifier for a single Quote within the collection. Note the ListSeqNo must be continuous starting with a value of 1 for the quote group.
+OptionsSecurityID	1	8	CHAR
+21035	Y	The OptionsSecurityID of the tradable options product for the quote. The Underlier for all quotes in the repeating group must match the Underlier of the first quote in the repeating group.
+BidSize	9	2	UINT16
+134	Y	Bid side quantity of the quote.
+BidPx	11	2	ShortPriceType
+132	Y	Bid side price of the quote. Price per unit of quantity.
+OfferSize	13	2	UINT16
+135	Y	Ask side quantity of the quote. 
+OfferPx	15	2	ShortPriceType
+133	Y	Ask side price of the quote. Price per unit of quantity.
+Long Two Sided Quote Group
+The Two Sided Quote repeating group allows for up to 20 two sided quotes in messages. This group is used within the LongTwoSidedBulkQuote message. All quotes in a Long Two Sided Quote repeating group must be for the same Underlier. The OptionsSecurityID of the first quote in the repeating group identifies the Underlier that is used to validate all of the following quotes in the repeating group.
+This group is always preceded by a RepeatingGroupDimensions field that denotes the length of this group and the number of them expected in the message.
+Field	Offset	Length	Type	Tag Ref 
+Num	Req'd	Description
+ListSeqNo	0	1	UINT8
+67	Y	Unique identifier for a single Quote within the collection. Note the ListSeqNo must be continuous starting with a value of 1 for the quote group.
+OptionsSecurityID	1	8	CHAR
+21035	Y	The OptionsSecurityID of the tradable options product for the quote. The Underlier for all quotes in the repeating group must match the Underlier of the first quote in the repeating group.
+BidSize	9	4	UINT32
+134	Y	Bid side quantity of the quote.
+BidPx	13	8	PriceType
+132	Y	Bid side price of the quote. Price per unit of quantity.
+OfferSize	21	4	UINT32
+135	Y	Ask side quantity of the quote. 
+OfferPx	25	8	PriceType
+133	Y	Ask side price of the quote. Price per unit of quantity.
+Short One Sided Quote Group
+The One Sided Quote repeating group allows for up to 20 one sided quotes in messages. This group is used within the ShortOneSidedBulkQuote message. All quotes in a Short One Sided Quote repeating group must be for the same Underlier. The OptionsSecurityID of the first quote in the repeating group identifies the Underlier that is used to validate all of the following quotes in the repeating group.
+This group is always preceded by RepeatingGroupDimensions field that denotes the length of this group and the number of them expected in the message.
+Field	Offset	Length	Type	Tag Ref 
+Num	Req'd	Description
+ListSeqNo	0	1	UINT8
+67	Y	Unique identifier for a single Quote within the collection. Note the ListSeqNo must be continuous starting with a value of 1 for the quote group.
+OptionsSecurityID	1	8	CHAR
+21035	Y	The OptionsSecurityID of the tradable options product for the quote. The Underlier for all quotes in the repeating group must match the Underlier of the first quote in the repeating group.
+Side	9	1	SideType
+54	Y	Side of the quote.
+Quantity	10	2	UINT16
+53	Y	Contracts in the quote.
+Price	12	2	ShortPriceType
+44	Y	Price of the quote. Price per unit of quantity.
+Long One Sided Quote Group
+The One Sided Quote repeating group allows for up to 20 one sided quotes in messages. This group is used within the LongOneSidedBulkQuote message. All quotes in a Long One Sided Quote repeating group must be for the same Underlier. The OptionsSecurityID of the first quote in the repeating group identifies the Underlier that is used to validate all of the following quotes in the repeating group.
+This group is always preceded by RepeatingGroupDimensions field that denotes the length of this group and the number of them expected in the message.
+Field	Offset	Length	Type	Tag Ref 
+Num	Req'd	Description
+ListSeqNo	0	1	UINT8
+67	Y	Unique identifier for a single Quote within the collection. Note the ListSeqNo must be continuous starting with a value of 1 for the quote group.
+OptionsSecurityID	1	8	CHAR
+21035	Y	The OptionsSecurityID of the tradable options product for the quote. The Underlier for all quotes in the repeating group must match the Underlier of the first quote in the repeating group.
+Side	9	1	SideType
+54	Y	Side of the quote.
+Quantity	10	4	UINT32
+53	Y	Contracts in the quote.
+Price	14	8	PriceType
+44	Y	Price of the quote. Price per unit of quantity.
+Parties Group (Repeating Group 453)
+The Parties Group repeating group allows for multiple party identifiers to be supplied in a message.
+This group is always preceded by RepeatingGroupDimensions field that denotes the length of this group and the number of the items in the group in the message.
+Field	Offset	Length	Type	Tag Ref 
+Num	Req'd	Description
+PartyID	0	16	CHAR
+448	Y	Party identifier/code.
+PartyIDSource	17	1	CHAR
+447	Y	Identifies class or source of the PartyID (448) value. The exchange currently accepts the following values for this field:
+- 'D' for Proprietary/Custom Code 
+PartyRole	18	1	PartyRoleType	452	Y	Identifies the type or role of the PartyID (448) specified. 
+Allocations Group (Repeating Group 78)
+The Allocations Group repeating group allows for multiple allocations to be supplied in a message.
+This group is always preceded by RepeatingGroupDimensions field that denotes the length of this group and the number of the items in the group in the message.
+Field	Offset	Length	Type	Tag Ref 
+Num	Req'd	Description
+AllocQty	0	4	UINT32
+80	Y	Quantity of child trade.
+TradingCapacity	4	1	TradingCapacityType
+1815	Y	Trade capacity for the trade.
+OpenOrClose	5	1	OpenOrCloseType
+77	Y	Opening or closing a position.
+NoPartyIDs	6	2	RepeatingGroupDimensions
+453	Y	The dimensions of the Repeating Group.
+Parties	-	-	Parties Group
+N/A	N	The parties associated with the allocation.
+Message Field Types
+All messages are composed of fields. Each field has a type. This section defines the non-primitive field types, their underlying type on the wire, acceptable values, and their descriptions.
+AllocTransType (FIX tag 71)
+The AllocTransType Identifies an allocation transaction type. 
+AllocTransType is a 1-byte UINT8 value.
+Value	Name	Description
+0	New	Replace existing trade with allocation. This is the first allocation on a trade and clients should reference ExecID when submitting.
+1	Replace	Replacing existing allocations with new allocations. This is any subsequent allocation and clients should use tag 72 to match a previously reported tag 755 from an AllocationReport message.
+AllocType (FIX tag 626)
+The AllocType Identifies an allocation type.
+AllocType is a 1-byte UINT8 value.
+Value	Name	Description
+100	PostTradeEdit	The allocation was a post trade edit.
+AllocStatusType (FIX tag 87)
+The AllocStatusType Identifies the status of an allocation.
+AllocStatusType is a 1-byte UINT8 value.
+Value	Name	Description
+0	Accepted	The allocation was accepted (successfully processed)
+1	BlockLevelReject	Block level reject.
+2	AccountLevelReject	Account level reject.
+AllocRejCode (FIX tag 88)
+The AllocRejCode Identifies the reason an allocation instruction was rejected.
+AllocRejCode is a 2-byte UINT16 value.
+Value	Name	Description
+1	IncorrectQuantity	Incorrect or missing block quantity.
+8	IncorrectAllocatedQuantity	Incorrect or missing allocated quantity.
+10	UnknownOrStaleExecID	Unknown or Stale ExecID(17)
+11	MismatchedData	Some data in the new allocation does not match the original trade data.
+14	DuplicateOrMissingIndividualAllocID	The AllocID is a duplicate or was missing.
+15	TradeNotRecognized	The trade (specified by ExecID or TrdMatchID was unknown.
+16	DuplicateTrade	Trade previously allocated.
+17	IncorrectOrMissingInstrument	Incorrect or missing instrument.
+23	UnknownOrMissingParty	Unknown or missing party.
+24	IncorrectOrMissingSide	The side is missing of incorrect.
+26	IncorrectOrMissingTradeDate	Incorrect or missing trade date.
+27	MissingTradingCapacity	The TradingCapacity field is missing.
+28	InvalidTradingCapacity	The TradingCapacity field is invalid.
+29	MissingOpenOrCloseType	The OpenOrClose field is missing.
+30	InvalidOpenOrCloseType	The OpenOrClose field is invalid.
+99	Other	The allocation was rejected for some other reason.
+CxlRejReasonCode (FIX tag 102)
+Identifies the reason why an order cancellation or replace request was rejected.
+Values 0-99 are reserved by the FIX specification. Note that not all of the reserved FIX codes are used.
+Values 100-199 are used to denote issues with specific request fields.
+Values 200-299 are used to denote issues with the request as a whole.
+Values 300-399 are used to denote issues related to risk.
+Also note that some codes in this table may not be sent in SBE but are listed here to maintain consistency with the FIX order entry specification, or reserved for future use.
+CxlRejReasonCode is a 2-byte UINT16 value.
+Value	Name	Description
+0	TooLateToCancel	A cancel or replace request was received after the exchange has closed.
+1	UnknownOrder	An order with the specified identifer was not found. (OrigClOrdID or OrderID for single orders, or the combination of OrigClOrdID, Side, and ListSeqNo for components of Bulk Quote requests).
+3	OrderAlreadyPendingCancelOrReplace	There is a pending request on this order.
+6	DuplicateClOrdID	The supplied ClOrderID was already used on a previous request.
+8	PriceExceedsCurrentPriceBand	The price of the replacement order fell outside execution price collar bands.
+18	InvalidPriceIncrement	Request Limit Price increment is invalid.
+99	Other	This request was rejected for some other reason not listed.
+100	MissingSymbol	The request did not supply a Symbol/OptionsSecurityID.
+101	InvalidSymbol	The request supplied an invalid Symbol/OptionsSecurityID.
+102	MissingClOrdID	The request did not supply a ClOrdID.
+103	InvalidClOrdID	The request supplied an invalid ClOrdID.
+104	MissingSide	The request did not supply a side.
+105	InvalidSide	The request supplied an invalid side.
+106	MissingOrderQty	The request did not supply a quantity.
+107	InvalidOrderQty	The request supplied a quantity, but it was set to an invalid value (i.e. 0, larger than exchange max, etc).
+108	MissingOrderType	The request did not supply an order type.
+109	InvalidOrderType	The request supplied an invalid order type.
+110	MissingLimitPrice	The request did not supply a LimitPrice field and was required to due to OrderType requested.
+111	InvalidLimitPrice	The request supplied the LimitPrice field but the value was invalid (0, more than the max allowed by the exchange, etc) or not applicable (i.e. the OrderType was set to Market).
+112-113	N/A	
+114	MissingListSeqNo	The request did not supply the ListSeqNo field.
+115	InvalidListSeqNo	The request supplied the ListSeqNo field, but it was set to an invalid value.
+116	MissingOrigClOrdID	The request did not supply the OrigClOrdID field.
+117	InvalidOrigClOrdID	The request supplied the OrigClOrdID field, but it was too large, contained illegal characters, etc.
+118	MissingOrderID	The request did not supply the OrderID field, and was required to (for example, request omitted the OrigClOrdID field and was trying to perform a delegated cancel for an order from another port).
+119	InvalidOrderID	The request supplied the OrderID field, but it was too large, contained illegal characters, etc.
+120-199	N/A	Reserved.
+200	Halted	The symbol/OptionsSecurityID supplied in the request is currently halted.
+201	FirmDisabled	The request was rejected because the firm sending the order has been disabled.
+202	EFIDDisabled	The request was rejected because the EFID used in the order has been disabled.
+203	AccountDisabled	The request was rejected because the account sending the order has been disabled.
+204	UnsupportedOrdTypeChange	Change of OrdType in replace request not supported.
+205	UnsupportedSideChange	Change of side in replace request not supported.
+206	SymbolMismatch	Symbol/OptionsSecurityID provided on a replace request does not match the Symbol/OptionsSecurityID on the original order associated with the provided OrigClOrdID or OrderID.
+207	OrigOrderIDMismatch	OrigClOrdID and OrderID were both provided, but the provided OrderID does not match the actual OrderID associated with the provided OrigClOrdID (or OrigClOrdID, Side, and ListSeqNo for components of Bulk Quote requests).
+208-299	N/A	Reserved.
+300	NonTestSymbolsBlocked	The replace was for a non-test symbol/OptionsSecurityID and the port is configured in test-only mode (exchange configuration).
+301	NotionalValueExceedsThreshold	The notional value of the replace exceeded an exchange configured maximum.
+302	MaxNotionalValuePerOrder
+RiskRuleViolated	The notional value of the replace violated the firm’s max notional value per order risk rule.
+303	BlockNonTestSymbol
+RiskRuleViolated	The replace violated the firm’s test symbol/OptionsSecurityID trading risk rule.
+304	MaxContractsPerOrder
+RiskRuleViolated	The replace breached the firm’s max contracts per order risk rule.
+305 	NBBOWidthExceedsThreshold	The width of the NBBO is greater than the exchange specified threshold.
+306	ExchangePriceValueCollar
+RiskRuleViolated	A replace Limit Order to buy with a price that is more than an Exchange specified amount above the NBO or an incoming replace Limit Order to sell with a price that is less than an Exchange specified amount below the NBB
+307	ExecutionPriceHigherThanStrikePrice	Replace Market Order or the remaining portion of a Market Order to buy a put that would execute in whole or in part at a price higher than or equal to the strike price of the option or an incoming Limit Order to buy a put that would execute at a price higher than or equal to the strike price of the option.
+308	MarketBuyWhenNBOIsZero	Replace Market Order to buy in an open series when the NBO is zero.
+309	MarketSellWhenNBBGreaterThanThreshold	Replace Market Order to sell in an open series when the NBB is greater than $0.50. 
+310	QuotePriceOutsideExchangeThreshold	Bulk quote replace canceled, bid with a price that is more than an Exchange specified amount above the NBO and cancel an incoming bulk replace offer with a price that is less than an Exchange specified amount below the NBB. 
+311	N/A	
+312	NumContractsExecutedExceedsThreshold	The number of contracts executed exceeds firm specified threshold.
+313	NotionalValueOfExecutionsExceedsThreshold	The notional value of contracts executions exceeds firm specified threshold.
+314	CountOfExecutionsExceedsThreshold	The count of contracts executed exceeds firm specified threshold.
+315	OutstandingPercentageThresholdExceeded	The number of contracts executed as a percentage of the  number of contracts outstanding within an Exchange configurable time period or for the trading day has been exceeded.
+316	TripsThresholdExceeded	The number of times a firm reaches the limits in:
+•	NumContractsExecutedExceedsThreshold
+•	NotionalValueOfExecutionsExceedsThreshold 
+•	CountOfExecutionsExceedsThreshold
+•	OutstandingPercentageThresholdExceeded
+exceeds a threshold.
+317	ISOOrdersNotAllowed	ISO marked orders at disabled.
+318	MarketIsCrossed	Order not allowed while market is crossed.
+319	ActiveRiskBreach	Order not allowed because of an active breach.
+320	ManualRiskBreach	Order not allowed because of a manual breach.
+321	GrossNotionalValueExceedsThreshold	Order not allowed because it surpassed the gross notional risk threshold.
+322	NetNotionalValueExceedsThreshold	Order not allowed because it surpassed the net notional risk threshold.
+323	DuplicateOrderThresholdExceeded	Order not allowed because it surpassed the duplicate order risk threshold.
+324	OrderRateThresholdExceeded	Order not allowed because it surpassed the order rate risk threshold.
+325	MassCancelLockoutInEffect	Order not allowed because a Mass Cancel Lockout is in effect.
+326	MarketOrderGrossNotionalValueExceedsThreshold	Market Order not allowed because it surpassed the market order gross notional risk threshold.
+327	MarketOrderNetNotionalValueExceedsThreshold	Market Order not allowed because it surpassed the market order net notional risk threshold.
+CancelReasonCode (MEMX custom FIX tag 21004)
+CancelReasonCode represents the reason the order was canceled by the system.
+CancelReasonCode is a 1-byte UINT8 value.
+Value	Name	Description
+0	Other	This order was canceled for some other reason not listed.
+1	UserRequestedCancel	The client sent a OrderCancelRequest or OrderMassCancelRequest for this order.
+5	ExecutionPriceCollar	The price of the order fell outside execution price collar bands
+6	Halted	The market on the order's security was halted.
+7	ExchangeSupervisory	Operational or supervisory actions taken by the Exchange resulted in the cancellation of this order.
+8	OrderExpired	The order’s supplied expiration time passed.
+10	MatchTradePrevention	This or another associated order's specified match trade prevention behavior triggered the cancellation of this order.
+13	ParticipantDisconnect	The participant directed that their orders should be canceled when the trading system detects a disconnection, and the participant disconnected.
+14	OrderNotBookable	Order is not of bookable type (this may include market orders, IOC, etc)
+17	FirmDisabled	Order was canceled because the firm was disabled
+18	EFIDDisabled	Order was canceled because the EFID was disabled
+19	AccountDisabled	Order was canceled because the Account was disabled
+20, 21	N/A	Reserved
+22	QuoteUpdateRejectedOrigQuoteCanceled	A quote update for an existing quote was rejected, the original quote was canceled.
+23	ActiveRiskBreach	Canceled because an active risk rule was breached.
+24	ManualRiskBreach	Canceled because of a manual breach.
+25	NumContractsExecutedExceedsThreshold	The number of contracts executed exceeds firm specified threshold.
+26	NotionalValueOfExecutionsExceedsThreshold	The notional value of the order violated the firm’s max notional value per order risk rule.
+27	CountOfExecutionsExceedsThreshold	The count of contracts executed exceeds firm specified threshold.
+28	OutstandingPercentageThresholdExceeded	The number of contracts executed as a percentage of the  number of contracts outstanding within an Exchange configurable time period or for the trading day has been exceeded.
+29	TripsThresholdExceeded	The number of times a firm reaches the limits in:
+•	NumContractsExecutedExceedsThreshold
+•	NotionalValueOfExecutionsExceedsThreshold
+•	CountOfExecutionsExceedsThreshold
+•	OutstandingPercentageThresholdExceeded
+exceeds a threshold.
+30	GrossNotionalValueExceedsThreshold	Order not allowed because it surpassed the gross notional risk threshold.
+31	NetNotionalValueExceedsThreshold	Order not allowed because it surpassed the net notional risk threshold.
+32	DuplicateOrderThresholdExceeded	Order not allowed because it surpassed the duplicate order risk threshold.
+33	OrderRateThresholdExceeded	Order not allowed because it surpassed the order rate risk threshold.
+34	MarketOrderGrossNotionalValueExceedsThreshold	Market Order not allowed because it surpassed the market order gross notional risk threshold.
+35	MarketOrderNetNotionalValueExceedsThreshold	Market Order not allowed because it surpassed the market order net notional risk threshold.
+CxlRejResponseToType (FIX tag 434)
+CxlRejResponseToType identifies the request type that a cancel reject was issued for.
+CxlRejResponseToType is a 1-byte CHAR value.
+Value	Name	Description
+'1'	OrderCancelRequest	This response is for a cancel request.
+'2'	OrderCancelReplaceRequest	This response is for a replace request.
+ExchangeCode (used in FIX tag 30)
+ExchangeCode (MIC code) indicates the market of execution for last fill, or an indication of the market where an order was routed. MIC code are maintained here http://www.iso10383.org/ .
+ExchangeCode is a 4-byte CHAR value.
+Value	Market Name
+AMXO	NYSE AMEX OPTIONS
+XBOX	BOX OPTIONS EXCHANGE
+XCBO	CBOE GLOBAL MARKETS INC.
+EMLD	MIAX EMERALD, LLC
+EDGO	CBOE EDGX OPTIONS EXCHANGE
+GMNI	ISE GEMINI EXCHANGE
+XISX	INTERNATIONAL SECURITIES EXCHANGE, LLC
+MCRY	ISE MERCURY, LLC
+XMIO	MIAMI INTERNATIONAL SECURITIES EXCHANGE
+ARCO	NYSE ARCA OPTIONS
+MPRL	MIAX PEARL, LLC
+XNDQ	NASDAQ OPTIONS MARKET
+XBXO	NASDAQ OMX BX OPTIONS
+MXOP	MEMX OPTIONS EXCHANGE
+C2OX	CBOE C2 OPTIONS EXCHANGE
+XPHO	PHILADELPHIA OPTIONS EXCHANGE
+BATO	CBOE BZX OPTIONS EXCHANGE
+ExecInstType Bitset (FIX tag 18)
+The ExecInstType provides instructions for order handling on exchange.
+ExecInstType is a 2-byte UINT16 value.
+Type Name	Length	Type	Values	Description
+ExecInstType	2	UINT16
+Bit 0 - ParticipateDoNotInitiate (Post only)
+Bit 1 - IntermarketSweep (ISO)
+Bit 2 - ExternalRoutingNotAllowed (Book Only)	Enable an execution instruction by setting a bit. Disable an execution instruction by clearing the bit. Bit 0 is the least significant bit.
+ExecRestatementType (FIX tag 378)
+Defines the reason for a restatement.
+ExecRestatementType is a 1-byte UINT8 value.
+Value	Name	Description
+3	OrderReprice	The order’s booking price was updated.
+5	MatchTradePrevention	The order quantity was reduced to prevent a wash trade.
+99	Other	More information is supplied in tag 21022 ExtendedExecRestatementReason.
+ExtendedRestatementReasonType (Custom FIX tag 21022)
+Defines the extended reason for a restatement.
+ExtendedRestatementReasonType is a 1-byte UINT8 value.
+Value	Name	Description
+0	None	No additional information.
+1,2	Reserved	Reserved for future use.
+3	MatchTrade-CancelNewest	Restatement due to MatchTradePrevention - CancelNewest
+4	MatchTrade-CancelOldest	Restatement due to MatchTradePrevention - CancelOldest
+6	MatchTrade-CancelBoth	Restatement due to MatchTradePrevention - CancelBoth
+LastLiquidityIndType (FIX tag 851)
+Indicates the liquidity code for this execution.
+LastLiquidityIndType is a 1-byte UINT8 value.
+Value	Name	Description
+1	Added	The order added displayed liquidity to the Exchange book.
+2	Removed	The order removed liquidity from the Exchange book.
+OrdStatusType (FIX tag 39)
+Indicates the status of an order.
+OrdStatusType is a 1-byte CHAR value.
+Value	Name
+'0'	New
+'1'	PartialFilled
+'2'	Filled
+'4'	Canceled
+'6'	PendingCancel
+'8'	Rejected
+'E'	PendingReplace
+'C'	Expired
+MassCxlRejReasonCode (MEMX Custom FIX tag 21028)
+Identifies the reason why a mass cancellation request was rejected.
+MassCxlRejReasonCode is a 2-byte UINT16 value.
+Value	Name	Description
+0	Other	This order was rejected for some other reason not listed.
+1	DuplicateClOrdID	The ClOrdID is a duplicate and cannot be reused.
+2	MissingClOrdID	The request is malformed, it is missing the ClOrdId field.
+3	InvalidClOrdID	Request was rejected for invalid CHAR value in ClOrdId field.
+4	MissingEFID	The request is malformed, it is missing the EFID field.
+5	InvalidEFID	Request was rejected for invalid EFID.
+6	MissingUnderlyingOrSeries	The request is malformed, it is missing the UnderlyingOrSeries field.
+7	InvalidUnderlyingOrSeries	Request was rejected for invalid UnderlyingOrSeries field.
+8	MissingUnderlier	The request is malformed, it is missing the Underlier field.
+9	InvalidUnderlier	Request was rejected for invalid Underlier field.
+10	MissingOptionsSecurityID	The request is malformed, it is missing the OptionsSecurityID field.
+11	InvalidOptionsSecurityID	Request was rejected for invalid OptionsSecurityID field.
+12	MissingCancelGroupID	The request is malformed, it is missing the CancelGroupI field.
+13	InvalidCancelGroupID	The cancel group id supplied is invalid for the account.
+14	MissingMassCancelInst	The request is malformed, it is missing the MassCancelInst field.
+15	InvalidMassCancelInst	Request was rejected for an invalid MassCancelInst field.
+17	MassCancelInProgress	Request was rejected because a prior Mass Cancel Request with the same semantics is in progress.
+MassCancelInstType Bitset (FIX tag 21031)
+The MassCancelInstType provides instructions for mass cancel request handling on the exchange.
+MassCancelInstType is a 1-byte UINT8 value.
+Type Name	Length	Type	Values	Description
+MassCancelInstType	1	UINT8 
+Bit 0 - Lockout (bit set indicates to lockout future orders that match the mass cancel criteria)
+Bit 1 - SendCancels (bit set indicates to send Cancel messages for each order/quote canceled)
+Bit 2 - CancelOrdersFromThisPortOnly (bit set indicates that only orders that originated from the port that receives the MassCancelRequest should be considered for cancelation. If not set all firm orders are considered for cancelation. 	Enable a handling instruction by setting a bit. Disable an handling instruction by clearing the bit. Bit 0 is the least significant bit.
+MassCancelClearLockoutRejCode (FIX tag 21037)
+The MassCancelClearLockoutRejCode Identifies the reason why a MassCancelClearLockoutRequest was rejected.
+MassCancelClearLockoutRejCode is a 2-byte UINT16 value.
+Value	Name	Description
+0	Other	This order was rejected for some other reason not listed.
+1	MissingClOrdID	The request did not supply a ClOrdID.
+2	InvalidClOrdID	The request supplied an invalid ClOrdID.
+3	MissingLockoutID	The request did not supply a LockoutID.
+4	InvalidLockoutID	The request supplied an invalid LockoutID.
+UnderlyingOrSeriesType (MEMX Custom FIX tag 21029)
+Identifies what category of order/quote to mass cancel.
+UnderlyingOrSeriesType is a 1-byte UINT8 value.
+Value	Name	Description
+0	CancelAllOnUnderlying	Cancel all orders/quotes on the underlying symbol.
+1	CancelAllOnSeries	Cancel all orders/quotes on the options series.
+OpenOrCloseType (FIX tag 77)
+Indicates whether the resulting position after a trade should be an opening position or closing position.
+OpenOrCloseType is a CHAR value.
+Value	Name
+'O'	Open
+'C'	Close
+OrderRejectReasonCode (FIX tag 103)
+Identifies the reason why a new order was rejected by the system.
+Values 0-99 are reserved by the FIX specification. Note that not all of the reserved FIX codes are used.
+Values 100-199 are used to denote issues with specific request fields.
+Values 200-299 are used to denote issues with the request as a whole.
+Values 300-399 are used to denote issues related to risk.
+Also note that some codes in this table may not be sent in SBE but are listed here to maintain consistency with the FIX order entry specification, or reserved for future use.
+OrdRejReason is a 2-byte UINT16 value.
+Value	Name	Description
+1	UnknownSymbol	The order contained a valid symbol/OptionsSecurityID, but the symbol/OptionsSecurityID is not currently traded on this port or exchange.
+2	ExchangeClosed	The exchange is closed and not accepting orders at this time.
+6	DuplicateOrder	The user entered a duplicate order identifier (ClOrdID for single orders, or the combination of ClOrdID, Side, and ListSeqNo for components of Bulk Quote entry).
+16	PriceExceedsCurrentPriceBand	The price of the order fell outside execution price collar bands.
+18	InvalidPriceIncrement	The order contained an invalid limit price increment.
+27	MaxNotionalValuePerOrderRiskRuleBreach	The order breached the firm’s max notional value per order risk rule.
+99	Other	This order was rejected for some other reason not listed.
+100	MissingSymbol	The order did not supply the Symbol/OptionsSecurityID.
+101	InvalidSymbol	The order had an. invalid Symbol/OptionsSecurityID.
+102	MissingClOrdID	The order did not supply the ClOrdID.
+103	InvalidClOrdID	A ClOrdID was present but contained illegal characters.
+104	MissingSide	The order did not supply the side.
+105	InvalidSide	The order contained an invalid side.
+106	MissingOrderQty	The order did not supply the quantity.
+107	InvalidOrderQty	The order contained an invalid order quantity.
+108	MissingOrderType	The order did not supply the order type.
+109	InvalidOrderType	The order contained an invalid order type.
+110	MissingTimeInForce	The order did not supply the time in force.
+111	InvalidTimeInForce	The order contained an invalid time in force.
+112	MissingTradingCapacity	The order did not supply the trading capacity.
+113	InvalidTradingCapacity	The order contained an invalid trading capacity.
+114	MissingExecInst	The order did not supply the execution instructions field.
+115	InvalidExecInst	The order contained an invalid execution instruction.
+116 - 117	N/A	
+118	MissingLimitPrice	The order did not supply the limit price.
+119	InvalidLimitPrice	The order contained an invalid limit price.
+120 - 123	N/A	
+124	MissingMatchTradePreventionType	The order supplied the MTPGroupID field but did not supply the MatchTradePreventionType field.
+125	InvalidMatchTradePreventionType	The order contained an invalid MatchTradePreventionType.
+126	MissingCancelGroupID	The order did not supply the CancelGroupID field (used when a port is configured with a fixed set of allowable CancelGroupIDs).
+127	InvalidCancelGroupID	The order contained an invalid CancelGroupID (used when a port is configured with a fixed set of allowable CancelGroupIDs).
+128	MissingMTPGroupID	The order did not supply the MTPGroupID field (used when a port is configured with a fixed set of allowable MTPGroupIDs).
+129	InvalidMTPGroupID	The order contained an invalid MTPGroupID (used when a port is configured with a fixed set of allowable MTPGroupIDs).
+130-133	N/A	
+134	MissingRiskGroupID	The order did not supply the RiskGroupID field (used when a port is configured with a fixed set of allowable RiskGroupIDs).
+135	InvalidRiskGroupID	The order contained an invalid RiskGroupID (used when a port is configured with a fixed set of allowable RiskGroupIDs).
+136	MissingEFID	The order did not supply the EFID field.
+137	InvalidEFID	The order contained an invalid EFID.
+138	MissingListSeqNo	The order did not supply the ListSeqNo field.
+139	InvalidListSeqNo	The order contained an invalid ListSeqNo.
+140	QuotesHaveDifferentUnderliers	The order contained quotes for different underliers.
+141	TwoSidedQuotesCross	The order contained a two sided quote’s where bidPx and offerPx cross.
+142	MissingOpenOrClose	The order did not supply the OpenOrClose field.
+143	InvalidOpenOrClose	The order contained an invalid OpenOrClose.
+144	MissingRepriceBehaviorType	The order did not supply the RepriceBehaviorType field.
+145	InvalidRepriceBehaviorType	The order contained an invalid RepriceBehaviorType.
+146	MissingRepriceFrequencyType	The order did not supply the RepriceFrequencyType field.
+147	InvalidRepriceFrequencyType	The order contained an invalid RepriceFrequencyType.
+148	MissingPartyRoleType	The order did not supply the PartyRoleType field.
+149	InvalidPartyRoleType	The order contained an invalid PartyRoleType.
+150	MissingPartyID	The order did not supply the PartyID field.
+151	InvalidPartyID	The order contained an invalid PartyID.
+152	MissingPartyIDSource	The order did not supply the PartyIDSource field.
+153	InvalidPartyIDSource	The order contained an invalid PartyIDSource.
+154-199	N/A	Reserved.
+200	Halted	The symbol/OptionsSecurityID supplied in the order is currently halted.
+201	FirmDisabled	The order was rejected because the firm sending the order has been disabled.
+202	EFIDDisabled	The order was rejected because the EFID used in the order has been disabled.
+203	AccountDisabled	The order was rejected because the account sending the order has been disabled.
+204	InvalidModifierForOrderType	The order contained one or more modifiers that are not compatible with the order type provided.
+205	InvalidTimeInForceForOrderType	The order contained a time in force that is not compatible with the order type provided.
+206	N/A	Reserved.
+207	PostOnlyNotAllowed	Post-only behavior is not allowed with one or more of the supplied order directives.
+208	QuoteModifyRejected	Canceled resting bulk quote if an incoming bulk message to modify such quote with the same EFID is rejected or canceled by the Trading System. 
+209	QuotingDisabled	Bulk quote sent by a non-market maker.
+210	InvalidQuoteComponentCount	Empty quote or a quote exceeding max components.
+211-299	N/A	Reserved.
+300	NonTestSymbolsBlocked	The order was for a non-test symbol/OptionsSecurityID and the port is configured in test-only mode (exchange configuration).
+301	NotionalValueExceedsThreshold	The notional value of the order exceeded an exchange configured maximum.
+302	MaxNotionalValuePerOrder
+RiskRuleViolated	The notional value of the order violated the firm’s max notional value per order risk rule.
+303	BlockNonTestSymbol
+RiskRuleViolated	The order violated the firm’s test symbol/OptionsSecurityID trading risk rule.
+304	MaxContractsPerOrder
+RiskRuleViolated	The order breached the firm’s max contracts per order risk rule.
+305 	NBBOWidthExceedsThreshold	The width of the NBBO is greater than the exchange specified threshold.
+306	ExchangePriceValueCollar
+RiskRuleViolated	An incoming Limit Order to buy with a price that is more than an Exchange specified amount above the NBO or an incoming Limit Order to sell with a price that is less than an Exchange specified amount below the NBB
+307	ExecutionPriceHigherThanStrikePrice	Market Order or the remaining portion of a Market Order to buy a put that would execute in whole or in part at a price higher than or equal to the strike price of the option or an incoming Limit Order to buy a put that would execute at a price higher than or equal to the strike price of the option.
+308	MarketBuyWhenNBOIsZero	Market Order to buy in an open series when the NBO is zero.
+309	MarketSellWhenNBBGreaterThanThreshold	An incoming Market Order to sell in an open series when the NBB is greater than $0.50. 
+310	QuotePriceOutsideExchangeThreshold	Bulk quote canceled, bid with a price that is more than an Exchange specified amount above the NBO and cancel an incoming bulk message offer with a price that is less than an Exchange specified amount below the NBB. 
+311	N/A	
+312	NumContractsExecutedExceedsThreshold	The number of contracts executed exceeds firm specified threshold.
+313	NotionalValueOfExecutionsExceedsThreshold	The notional value of contracts executions exceeds firm specified threshold.
+314	CountOfExecutionsExceedsThreshold	The count of contracts executed exceeds firm specified threshold.
+315	OutstandingPercentageThresholdExceeded	The number of contracts executed as a percentage of the  number of contracts outstanding within an Exchange configurable time period or for the trading day has been exceeded.
+316	TripsThresholdExceeded	The number of times a firm reaches the limits in:
+- NumContractsExecutedExceedsThreshold
+- NotionalValueOfExecutionsExceedsThreshold 
+- CountOfExecutionsExceedsThreshold
+- OutstandingPercentageThresholdExceeded
+exceeds a threshold.
+317	ISOOrdersNotAllowed	ISO marked orders at disabled.
+318	MarketIsCrossed	Order not allowed while market is crossed.
+319	ActiveRiskBreach	Active risk controls were breached for the underlying
+320	ManualRiskBreach	Order not allowed because of a manual breach.
+321	GrossNotionalValueExceedsThreshold	Order not allowed because it surpassed the gross notional risk threshold.
+322	NetNotionalValueExceedsThreshold	Order not allowed because it surpassed the net notional risk threshold.
+323	DuplicateOrderThresholdExceeded	Order not allowed because it surpassed the duplicate order risk threshold.
+324	OrderRateThresholdExceeded	Order not allowed because it surpassed the order rate risk threshold.
+325	MassCancelLockoutInEffect	Order not allowed because a Mass Cancel Lockout is in effect.
+326	MarketOrderGrossNotionalValueExceedsThreshold	Market Order not allowed because it surpassed the market order gross notional risk threshold.
+327	MarketOrderNetNotionalValueExceedsThreshold	Market Order not allowed because it surpassed the market order net notional risk threshold.
+OrdType (FIX tag 40)
+Indicates the type of an order.
+OrdType is a 1-byte CHAR value.
+Value	Name
+'1'	Market
+'2'	Limit
+TradingCapacityType (FIX tag 1815)
+Capacity of the order.
+TradingCapacityType is a 1-byte UINT8 value.
+Value	Name
+1	Customer
+2	Professional Customer
+3	Broker Dealer
+4	Broker Dealer Customer
+5	Firm
+6	Market Maker
+7	Away Market Maker
+RepriceFrequencyType (MEMX custom FIX tag 21020)
+Defines the type of reprice used when marking an order for repricing.
+RepriceFrequencyType is a 1-byte UINT8 value.
+Value	Name	Description
+0	SingleReprice	An order will be repriced upon entry.
+1	ContinuousReprice	An order will continuously be repriced after being booked.
+2	None	No repricing will be done.
+RepriceBehaviorType(MEMX custom FIX tag 21021)
+Defines the market conditions for which to apply repricing for.
+RepriceBehaviorType is a 1-byte UINT8 value.
+Value	Name	Description
+1	RepriceLockCancelCross	An order will only be repriced if the market is locked, cancel if market is crossed.
+2	RepriceLockRepriceCross	An order will be repriced if the market is locked or crossed.
+MatchTradePreventionType (MEMX custom FIX tag 21001)
+Defines the match trade operation which will be used if the exchange match-trade-prevention functionality is triggered on this order.
+If this order would execute against an opposite side resting interest with the same match-trade prevention identifier, the behavior specified by this value will be triggered.
+MatchTradePreventionType is a 1-byte UINT8 value.
+Value	Name	Description
+0	CancelNewest	If triggered, this order (the incoming order) will be canceled.
+1	CancelOldest	If triggered, the resting order will be canceled.
+2	N/A	Reserved value.
+3	CancelBoth	If triggered, both the incoming and the resting orders will be canceled.
+PartyRoleType (FIX tag 452)
+Identifies the type or role of the PartyID in the Parties repeating group. Clients must specify the Execution Firm ID (EFID), and if the capacity is M or N the Market Maker Sub Account, on New Orders and Allocation Instructions. Clients may optionally specify the Actionable Identifier, Give Up, Optional OCC Data, and CMTA. Clients will receive the Contra EFID and potentially any of the other Contra fields on Trades and Allocation Report messages. 
+PartyRoleType is a UINT8 value. The exchange currently supports the following values for this field:
+Value	Name
+1 	Executing Firm ID
+3	Actionable Identifier
+14	GiveUp Clearing Firm
+17	Contra EFID
+18	Contra GiveUp
+24	OptionalOCCData
+37	Contra MM Sub Account
+40	CMTA
+41	Contra CMTA
+66	Market Maker Sub Account
+SideType (FIX tag 54)
+Defines the side of an order.
+SideType is a CHAR value.
+Value	Name
+'1'	Buy
+'2'	Sell
+'B'	As Defined - Note this is not a valid Client to Exchange SideType value. It is only sent from the Exchange to the Client. It can be used for the Side field in an ExecutionReport_Rejected message when an entire bulk quote is rejected.
+MtpGroupIDType (FIX tag 2362)
+This field uniquely identifies the match trade prevention group. Several of the values are reserved values while other values are treated as custom values and are at the discretion of the client.
+MtpGroupID is a 2-byte UINT16 value.
+Value	Name	Description
+0	Firm Scope	Prevents orders from the same firm trading with each other
+1	EFID Scope	Prevents orders from the same EFID trading with each other
+2	Account Scope	Prevents orders from the same account trading with each other
+3-65534	Custom Scope	Prevents orders with matching MtpGroupID across the firm from trading with each other
+65535	NULL	The UINT16 Null value (0xFFFF) disables custom match-trade prevention grouping.
+TimeInForceType (FIX tag 59)
+Defines the time during which an order is eligible for execution.
+TimeInForceType is a 1-byte CHAR value.Messages
+Value	Name	Description
+'0'	Day	The order is entered for execution during the open market period.
+'3'	Immediate Or Cancel (IOC)	The order shall be partially or completely executed immediately, or canceled outright.
+UserStatusType (FIX tag 926)
+Defines the changed session state as it pertains the User.
+UserStatusType is a UINT8 value.
+Value	Name
+8	Session shutdown warning.
+100	Session shutdown, end of events for session.
+Messages
+Client To Server
+NewOrderSingle
+The new order message type is used by institutions wishing to electronically submit options orders to the exchange for execution.
+This message corresponds to FIX message type D.
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header 
+0	7	SBE Header
+N/A	N/A	SBE Header with templateID = 1
+SendingTime	7	8	UTCTimestampNanos
+52	Y	Time of message transmission always expressed in UTC (Universal Time Coordinated, also known as GMT)
+ClOrdID	15	20	CHAR
+11	Y	Unique identifier of the order as assigned by the client.
+OptionsSecurityID	35	8	CHAR
+21035	Y	The OptionsSecurityID of the tradable options product for the order.
+Side	43	1	SideType
+54	Y	Side of order.
+OrderQty	44	4	UINT32
+38	Y	Quantity ordered. This represents the number of options contracts. 
+OrdType	48	1	OrdType
+40	Y	Type of the order.
+Price	49	8	PriceType
+44	N	Price per unit of quantity (e.g. per contract).
+TimeInForce	57	1	TimeInForceType
+59	Y	Defines the time during which an order is eligible for execution.
+OpenOrClose	58	1	OpenOrCloseType
+77	N	Opening or closing a position.
+ExecInst	59	2	ExecInstType
+18	Y	Instructions for order handling on exchange.
+TradingCapacity	61	1	TradingCapacityType
+1815	Y	Capacity of the order.
+RepriceFrequency	62	1	RepriceFrequencyType
+21020	N	Defines the frequency of a reprice.  If this tag is not sent then the order will not be repriced.
+RepriceBehavior	63	1	RepriceBehaviorType
+21021	N	Defines the reprice behavior when market is locked or crossed.
+MtpGroupID	64	2	MtpGroupIDType
+2362	N	Unique identifier of custom match-trade prevention group.
+MatchTradePrevention	66	1	MatchTradePreventionType
+21001	N	Defines the desired behavior in the event of a wash. The UINT8 Null (0xFF) value disables match trade prevention.
+CancelGroupID	67	2	UINT16
+21000	N	Unique identifier of custom cancel group.
+RiskGroupID	69	2	UINT16
+21005	N	Unique identifier of a custom risk control set to be applied to this order. The UINT16 Null value (0xFFFF) disables custom risk controls.
+NoPartyIDs	-	-	RepeatingGroupDimensions
+453	Y	The dimensions of the Repeating Group.
+Parties	-	-	Parties Group
+N/A	N	The parties associated with the quotes.
+ShortTwoSidedBulkQuote 
+The two sided bulk quote message type is used by market makers wishing to electronically submit multiple quotes with similar semantics to the exchange for execution. This messages supports two sided quotes with smaller field sizes for quantities and prices.
+This message corresponds to FIX message type i.
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header
+0	7	SBE Header
+N/A	Y	SBE Header with templateID = 2
+SendingTime	7	8	UTCTimestampNanos
+52	Y	Time of message transmission always expressed in UTC (Universal Time Coordinated, also known as GMT)
+ClOrdID	15	20	CHAR
+11	Y	Unique identifier of the order as assigned by the client.
+TimeInForce	35	1	TimeInForceType
+59	Y	Defines the time during which an order is eligible for execution.
+ExecInst	36	2	ExecInstType
+18	Y	Instructions for order handling on exchange.
+TradingCapacity	38	1	TradingCapacityType
+1815	Y	Capacity of the order.
+MtpGroupID	39	2	MtpGroupIDType
+2362	N	Unique identifier of custom match-trade prevention group.
+MatchTradePrevention	41	1	MatchTradePreventionType
+21001	N	Defines the desired behavior in the event of a wash. The UINT8 Null (0xFF) value disables match trade prevention.
+CancelGroupID	42	2	UINT16
+21000	N	Unique identifier of custom cancel group.
+RiskGroupID	44	2	UINT16
+21005	N	Unique identifier of a custom risk control set to be applied to this order. The UINT16 Null value (0xFFFF) disables custom risk controls.
+NoPartyIDs	-	-	RepeatingGroupDimensions
+453	Y	The dimensions of the Repeating Group.
+Parties	-	-	Parties Group
+N/A	Y	The parties associated with the quotes.
+NoQuoteEntries	-	-	RepeatingGroupDimensions
+295	Y	The dimensions of the Repeating Group.
+Quotes	-	-	Short Two Sided Quote
+N/A	Y	The characteristics of each quote.
+LongTwoSidedBulkQuote 
+The two sided bulk quote message type is used by market makers wishing to electronically submit multiple quotes with similar semantics to the exchange for execution. This messages supports two sided quotes with larger field sizes for quantities and prices.
+This message corresponds to FIX message type i.
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header
+0	7	SBE Header
+N/A	Y	SBE Header with templateID = 3
+SendingTime	7	8	UTCTimestampNanos
+52	Y	Time of message transmission always expressed in UTC (Universal Time Coordinated, also known as GMT)
+ClOrdID	15	20	CHAR
+11	Y	Unique identifier of the order as assigned by the client.
+TimeInForce	35	1	TimeInForceType
+59	Y	Defines the time during which an order is eligible for execution.
+ExecInst	36	2	ExecInstType
+18	Y	Instructions for order handling on exchange.
+TradingCapacity	38	1	TradingCapacityType
+1815	Y	Capacity of the order.
+MtpGroupID	39	2	MtpGroupIDType
+2362	N	Unique identifier of custom match-trade prevention group.
+MatchTradePrevention	41	1	MatchTradePreventionType
+21001	N	Defines the desired behavior in the event of a wash. The UINT8 Null (0xFF) value disables match trade prevention.
+CancelGroupID	42	2	UINT16
+21000	N	Unique identifier of custom cancel group.
+RiskGroupID	44	2	UINT16
+21005	N	Unique identifier of a custom risk control set to be applied to this order. The UINT16 Null value (0xFFFF) disables custom risk controls.
+NoPartyIDs	-	-	RepeatingGroupDimensions
+453	Y	The dimensions of the Repeating Group.
+Parties	-	-	Parties Group
+N/A	Y	The parties associated with the quotes.
+NoQuoteEntries	-	-	RepeatingGroupDimensions
+295	Y	The dimensions of the Repeating Group.
+Quotes	-	-	Long Two Sided Quote
+N/A	Y	The characteristics of each quote.
+ShortOneSidedBulkQuote
+The one sided bulk quote message type is used by market makers wishing to electronically submit multiple one sided quotes with similar semantics to the exchange for execution. This messages supports one sided quotes with smaller field sizes for quantities and prices.
+This message corresponds to FIX message type i.
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header
+0	7	SBE Header
+N/A	Y	SBE Header with templateID = 4
+SendingTime	7	8	UTCTimestampNanos
+52	Y	Time of message transmission always expressed in UTC (Universal Time Coordinated, also known as GMT)
+ClOrdID	15	20	CHAR
+11	Y	Unique identifier of the order as assigned by the client.
+TimeInForce	35	1	TimeInForceType
+59	Y	Defines the time during which an order is eligible for execution.
+ExecInst	36	2	ExecInstType
+18	Y	Instructions for order handling on exchange.
+TradingCapacity	38	1	TradingCapacityType
+1815	Y	Capacity of the order.
+MtpGroupID	39	2	MtpGroupIDType
+2362	N	Unique identifier of custom match-trade prevention group.
+MatchTradePrevention	41	1	MatchTradePreventionType
+21001	N	Defines the desired behavior in the event of a wash. The UINT8 Null (0xFF) value disables match trade prevention.
+CancelGroupID	42	2	UINT16
+21000	N	Unique identifier of custom cancel group.
+RiskGroupID	44	2	UINT16
+21005	N	Unique identifier of a custom risk control set to be applied to this order. The UINT16 Null value (0xFFFF) disables custom risk controls.
+NoPartyIDs	-	-	RepeatingGroupDimensions
+453	Y	The dimensions of the Repeating Group.
+Parties	-	-	Parties Group
+N/A	N	The parties associated with the quotes.
+NoQuoteEntries	-	-	RepeatingGroupDimensions
+295	Y	The dimensions of the Repeating Group.
+Quotes	-	-	Short One Sided Quote
+N/A	Y	The characteristics of each quote.
+LongOneSidedBulkQuote
+The one sided bulk quote message type is used by market makers wishing to electronically submit multiple one sided quotes with similar semantics to the exchange for execution. This messages supports one sided quotes with larger field sizes for quantities and prices.
+This message corresponds to FIX message type i.
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header 
+0	7	SBE Header
+N/A	Y	SBE Header with templateID = 5
+SendingTime	7	8	UTCTimestampNanos
+52	Y	Time of message transmission always expressed in UTC (Universal Time Coordinated, also known as GMT)
+ClOrdID	15	20	CHAR
+11	Y	Unique identifier of the order as assigned by the client.
+TimeInForce	35	1	TimeInForceType
+59	Y	Defines the time during which an order is eligible for execution.
+ExecInst	36	2	ExecInstType
+18	Y	Instructions for order handling on exchange.
+TradingCapacity	38	1	TradingCapacityType
+1815	Y	Capacity of the order.
+MtpGroupID	39	2	MtpGroupIDType
+2362	N	Unique identifier of custom match-trade prevention group.
+MatchTradePrevention	41	1	MatchTradePreventionType
+21001	N	Defines the desired behavior in the event of a wash. The UINT8 Null (0xFF) value disables match trade prevention.
+CancelGroupID	42	2	UINT16
+21000	N	Unique identifier of custom cancel group.
+RiskGroupID	44	2	UINT16
+21005	N	Unique identifier of a custom risk control set to be applied to this order. The UINT16 Null value (0xFFFF) disables custom risk controls.
+NoPartyIDs	-	-	RepeatingGroupDimensions
+453	Y	The dimensions of the Repeating Group.
+Parties	-	-	Parties Group
+N/A	Y	The parties associated with the quotes.
+NoQuoteEntries	-	-	RepeatingGroupDimensions
+295	Y	The dimensions of the Repeating Group.
+Quotes	-	-	Long One Sided Quote
+N/A	Y	The characteristics of each quote.
+OrderCancelReplaceRequest
+The order cancel/replace request is used to change the parameters of an existing order.  
+This message corresponds to FIX message type G
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header 
+0	7	SBE Header
+N/A	Y	SBE Header with templateID = 6
+SendingTime	7	8	UTCTimestampNanos
+52	Y	Time of message transmission always expressed in UTC (Universal Time Coordinated, also known as GMT)
+OrderID	15	8	UINT64
+37	N	OrderID as assigned by the exchange.
+ClOrdID	23	20	CHAR
+11	Y	Unique identifier of the replacement order as assigned by the client. Uniqueness must be guaranteed within a single trading day.
+ListSeqNo	43	1	UINT8
+67	Y	This field is used for identifying a specific quote entered via a Bulk Quote request. This field may not change from the value stated in the original Bulk Quote request. For orders entered via New Order Single this field should be zero.
+OrigClOrdID	44	20	CHAR
+41	Y	ClOrdID (11) of the previous order (NOT the initial order of the day) .
+OptionsSecurityID	64	8	CHAR
+21035	Y	The OptionsSecurityID identifying the tradable options product.
+Side	72	1	SideType
+54	Y	This field may not change from the value stated in the original order.
+OrderQty	73	4	UINT32
+38	Y	Quantity ordered. This represents the number of contracts for options.
+OrdType	77	1	OrdType
+40	Y	OrderType may only change from Limit order to Market order.
+Price	78	8	PriceType
+44	N	Price per unit of quantity (e.g. per contract). Changing the price will cause the order to lose its priority in the book.
+OrderCancelRequest 
+The order cancel request message requests the cancellation all remaining size on an order.  
+Note: this message can be used to cancel an order for a different account by specifying the order's exchange order ID (OrderID), the remote order may have been entered via MEMO or MEMO FIX supported ports.
+This message corresponds to FIX message type F
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header 
+0	7	SBE Header
+N/A	Y	SBE Header with templateID = 7 
+SendingTime	7	8	UTCTimestampNanos
+52	Y	Time of message transmission always expressed in UTC (Universal Time Coordinated, also known as GMT)
+OrderID	15	8	UINT64
+37	Y*	OrderID as assigned by the exchange.
+ClOrdID	23	20	CHAR
+11	Y	An identifier for the cancel request.
+ListSeqNo	43	1	UINT8
+67	Y	This field is used for identifying a specific quote entered via a Bulk Quote request. This field may not change from the value stated in the original Bulk Quote request. For orders entered via New Order Single this field should be zero.
+OrigClOrdID	44	20	CHAR
+41	Y*	ClOrdID (11) of the previous order (NOT the initial order of the day) as assigned by the customer.
+OptionsSecurityID	64	8	CHAR
+21035	Y	The OptionsSecurityID identifying the tradable options product.
+Side	72	1	SideType
+54	N	This field is used to identify a specific quote entered via a Bulk Quote request.
+Note: either OrigClOrdID or OrderID fields must be present.
+MassCancelRequest
+The mass cancel request message requests the cancellation all remaining size on a set of existing orders that match the given criteria.
+Note: this message can be used to cancel orders from different accounts. Orders affected by this request may have been entered via either MEMO or MEMO FIX supported protocol
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header
+0	7	SBE Header
+N/A	Y	SBE Header with templateID = 8
+SendingTime	7	8	UTCTimestampNanos
+52	Y	Time of message transmission always expressed in UTC (Universal Time Coordinated, also known as GMT)
+ClOrdID	15	20	CHAR
+11	Y	A unique identifier for the mass cancel request.
+EFID	35	4	CHAR
+21007	N	Cancel all orders on this EFID.
+UnderlyingOrSeries	39	1	UnderlyingOrSeriesType
+21029	N	If UnderlyingOrSeries is set to CancelAllOnSeries then OptionsSecurityID must be provided to denote the specific option series (root, put/call, expirtation, and strike price) to cancel orders on. If UnderlyingOrSeries is set to CancelAllOnUnderlying then Underlier must be provided to denote the Underlier on which to cancel all orders (across all series)
+Underlier	40	6	CHAR
+55	N	The Underlier on which to cancel all orders (across all series).
+OptionsSecurityID	46	8	CHAR
+21035	N	The OptionsSecurityID identifying the tradable options product. In this case it is used to identify the entire series the OptionsSecurityID is part of. 
+CancelGroupID	54	2	UINT16
+21000	N	Identifier of custom cancel group.
+MassCancelInst	56	1	MassCancelInstType
+21031	Y	The instructions for mass cancel request handling.
+MassCancelClearLockoutRequest
+The mass cancel clear lockout request message requests the clearing of a previous lockout. A lockout can be requested as part of a Mass Cancel Request using the MassCancelInst field. The LockoutID is assigned by the exchange and is returned in a PendingMassCancel message. The lockoutID from the PendingMassCancel message is used to identify the lockout to clear.
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header
+0	7	SBE Header
+N/A	Y	SBE Header with templateID = 9
+SendingTime	7	8	UTCTimestampNanos
+52	Y	Time of message transmission always expressed in UTC (Universal Time Coordinated, also known as GMT)
+ClOrdID	15	20	CHAR
+11	Y	A unique identifier for the mass cancel clear lockout request.
+LockoutID	35	8	UINT64
+21033	Y	The LockoutID of a previous lockout, returned in a PendingMassCancel message.
+
+AllocationInstruction
+The allocation instruction message modifies the clearing information on the trade. Supported fields to change are the non-contra fields in the Parties block, the TradingCapacity, and the OpenOrClose fields. Changes requested with this messages are returned in AllocationReport messages.
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header
+0	7	SBE Header
+N/A	Y	SBE Header with templateID = 10
+SendingTime	7	8	UTCTimestampNanos
+52	Y	Time of message transmission always expressed in UTC (Universal Time Coordinated, also known as GMT)
+AllocID	15	20	CHAR
+70	Y	Unique identifier for this allocation instruction message.
+AllocTransType	35	1	AllocTransType
+71	Y	Identifies allocation transaction type.
+AllocType	36	1	AllocType
+626	Y	Specifies the purpose or type of Allocation message.
+RefAllocReportID	37	8	UINT64
+72	N	AllocReportID (755) of the allocation being modified further. 
+ExecRefID	45	8	UINT64
+19	N	ExecID (17) of the trade being modified. This is used for the first allocation request.
+TrdMatchID	53	8	UINT64
+880	Y	TrdMatchID for the trade being modified.
+OptionsSecurityID	61	8	CHAR
+21035	Y	The MEMX OptionsSecurityID that identifies the options security.
+Side	69	1	SideType
+54	Y	The side of the order.
+Quantity	70	4	UINT32
+53	Y	Total quantity (e.g. number of contracts) of the trade.
+TradeDate	74	8	CHAR
+75	Y	ndicates date of trading day. Date of Local Market (vs. UTC) in YYYYMMDD format. Only same day allocations supported.
+NoAllocs	-	-	RepeatingGroupDimensions
+78	Y	The dimensions of the Allocations Repeating Group.
+Allocations	-	-	Allocations Group
+N/A	Y	The allocations for the trade.
+Server To Client
+ExecutionReport 
+The MEMO schema defines multiple Execution Report messages each conforming to FIX message type 8.
+ExecutionReport_New
+The ExecutionReport_New is a response to order requests in the event the order was accepted by the exchange. This message echos back to the requester all the fields as been configured on the request with additional information about the state of the order.  
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header 
+0	7	SBE Header 
+N/A	Y	SBE Header with templateID = 11
+OrderID	7	8	UINT64
+37	Y	OrderID as assigned by the exchange.
+ClOrdID	15	20	CHAR
+11	Y	As stated in the order.
+ListSeqNo	35	1	UINT8
+67	Y	As stated in a Bulk Quote request or 0 for NewOrderSingle request
+ExecID	36	8	UINT64
+17	Y	Identifier of execution message as assigned by the exchange. The ExecID can be correlated with the Memoir OrderID value.
+OrdStatus	44	1	OrdStatusType
+39	Y	The status of the order.
+OptionsSecurityID	45	8	CHAR
+21035	Y	As stated in the order.
+Side	53	1	SideType
+54	Y	As stated in the order.
+OrderQty	54	4	UINT32
+38	Y	As stated in the order.
+OrdType	58	1	OrdType
+40	Y	As stated in the order.
+Price	59	8	PriceType
+44	N	As stated in the order.
+TimeInForce	67	1	TimeInForceType
+59	Y	As stated in the order.
+OpenOrClose	68	1	OpenOrCloseType
+77	N	As stated in the order.
+ExecInst	69	2	ExecInstType
+18	Y	As stated in the order.
+TradingCapacity	71	1	TradingCapacityType
+1815	Y	As stated in the order.
+RepriceFrequency	72	1	RepriceFrequencyType
+21020	N	As stated in the order.
+RepriceBehavior	73	1	RepriceBehaviorType
+21021	N	As stated in the order.
+LeavesQty	74	4	UINT32
+151	Y	Quantity open for further execution.
+CumQty	78	4	UINT32
+14	Y	Total quantity (e.g. number of contracts) filled.
+SendingTime	82	8	UTCTimestampNanos
+52	Y	The time the ExecutionReport was sent. UTC timestamp since unix epoch with nanosecond precision.
+TransactTime	90	8	UTCTimestampNanos
+60	Y	The time at which the transaction occurred. UTC timestamp since epoch with nanosecond precision.
+MtpGroupID	98	2	MtpGroupIDType
+2362	N	As stated in the order.
+MatchTradePrevention	100	1	MatchTradePreventionType
+21001	N	As stated in the order.
+CancelGroupID	101	2	UINT16
+21000	N	As stated in the order.
+RiskGroupID	103	2	UINT16
+21005	N	As stated in the order.
+NoPartyIDs	-	-	RepeatingGroupDimensions
+453	Y	The dimensions of the Repeating Group.
+Parties	-	-	Parties Group
+N/A	Y	The parties associated with the quotes.
+ 
+ExecutionReport_BulkQuote_PendingNew
+The ExecutionReport_BulkQuote_PendingNew is a response to bulk quote requests (ShortTwoSidedBulkQuote, LongTwoSidedBulkQuote, ShortOneSidedBulkQuote, LongOneSidedBulkQuote) in the event the bulk quote request was accepted by the exchange. This message echos back to the requester fields configured on the request with additional information about the state of the bulk quote handling.  
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header
+0	7	SBE Header
+N/A	Y	SBE Header with templateID = 12
+ClOrdID	7	20	CHAR
+11	Y	As stated in the request.
+Symbol (Underlier)	27	6	CHAR
+55	Y	As stated in the request.
+TimeInForce	33	1	TimeInForceType
+59	Y	As stated in the request.
+ExecInst	34	2	ExecInstType
+18	Y	As stated in the request.
+TradingCapacity	36	1	TradingCapacityType
+1815	Y	As stated in the request.
+SendingTime	37	8	UTCTimestampNanos
+52	Y	The time the ExecutionReport was sent. UTC timestamp since unix epoch with nanosecond precision.
+TransactTime	45	8	UTCTimestampNanos
+60	Y	The time at which the transaction occurred. UTC timestamp since epoch with nanosecond precision.
+MtpGroupID	53	2	MtpGroupIDType
+2362	N	As stated in the request.
+MatchTradePrevention	55	1	MatchTradePreventionType
+21001	N	As stated in the request.
+CancelGroupID	56	2	UINT16
+21000	N	As stated in the request.
+RiskGroupID	58	2	UINT16
+21005	N	As stated in the request.
+NumberOfOrders	60	1	UINT8
+346	Y	The number of orders/quote entries in the request.
+NoPartyIDs	-	-	RepeatingGroupDimensions
+453	Y	The dimensions of the Repeating Group.
+Parties	-	-	Parties Group
+N/A	Y	The parties associated with the quotes.
+ExecutionReport_BulkQuote_ComponentNew
+The ExecutionReport_BulkQuote_ComponentNew is a response to bulk quote requests (ShortTwoSidedBulkQuote, LongTwoSidedBulkQuote, ShortOneSidedBulkQuote, LongOneSidedBulkQuote). This message gives state information about an individual single sided quote within the bulk quote request. The requester will receive a component new message for each side of a two-sided entry. This message echos back to the requester fields configured on the individual single sided quote with additional information about the state of the individual quote handling. 
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header
+0	7	SBE Header
+N/A	Y	SBE Header with templateID = 13
+OrderID	7	8	UINT64
+37	Y	OrderID as assigned by the exchange.
+ClOrdID	15	20	CHAR
+11	Y	As stated in the request.
+ListSeqNo	35	1	UINT8
+67	Y	As stated in the request.
+ExecID	36	8	UINT64
+17	Y	Unique identifier of execution message as assigned by the exchange. Uniqueness is guaranteed within a single trading day. The ExecID can be correlated with the Memoir OrderID value.
+OrdStatus	44	1	OrdStatusType
+39	Y	The status of the request.
+OptionsSecurityID	45	8	CHAR
+21035	Y	As stated in the request.
+Side	53	1	SideType
+54	Y	As stated in the request.
+OrderQty	54	4	UINT32
+38	Y	As stated in the request.
+Price	58	8	PriceType
+44	N	As stated in the request.
+LeavesQty	66	4	UINT32
+151	Y	Quantity open for further execution.
+CumQty	70	4	UINT32
+14	Y	Total quantity (e.g. number of contracts) filled.
+SendingTime	74	8	UTCTimestampNanos
+52	Y	The time the ExecutionReport was sent. UTC timestamp since unix epoch with nanosecond precision.
+TransactTime	82	8	UTCTimestampNanos
+60	Y	The time at which the transaction occurred. UTC timestamp since epoch with nanosecond precision.
+ExecutionReport_Rejected
+The ExecutionReport_Rejected is a response to order and quote requests in the event the order/quote was rejected by the Exchange. This message echos back to the requester some of the fields as been configured on the request with additional information about the reject reason. 
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header 
+0	7	SBE Header
+N/A	Y	SBE Header with templateID = 14
+ClOrdID	7	20	CHAR
+11	Y	As stated in the order.
+ListSeqNo	27	1	UINT8
+67	Y	As stated in the Bulk Quote request or 0 for NewOrderSingle request
+ExecID	28	8	UINT64
+17	Y	Unique identifier of execution message as assigned by the exchange. Uniqueness is guaranteed within a single trading day. The ExecID can be correlated with the Memoir OrderID value.
+OrdStatus	36	1	OrdStatusType
+39	Y	The status of the order.
+RejectReason	37	2	OrderRejectReasonCode
+103	Y	Reason code for order rejection.
+OptionsSecurityID	39	8	CHAR
+21035	Y	As stated in the order.
+Side	47	1	SideType
+54	Y	As stated in the order. If the order was a Bulk Quote this field will have the value 'B' = “As Defined”.
+LeavesQty	48	4	UINT32
+151	Y	Quantity open for further execution.
+CumQty	52	4	UINT32
+14	Y	Total quantity (e.g. number of contracts) filled.
+SendingTime	56	8	UTCTimestampNanos
+52	Y	The time the ExecutionReport was sent. UTC timestamp since unix epoch with nanosecond precision.
+ 
+ExecutionReport_Trade
+The ExecutionReport_Trade is an unsolicited response triggered as a result of a trade. The message contains all the data describing the trade. 
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header 
+0	7	SBE Header
+N/A	Y	SBE Header with templateID = 15
+OrderID	7	8	UINT64
+37	Y	OrderID as assigned by the exchange.
+ClOrdID	15	20	CHAR
+11	Y	The unique identifier as specified by the client.
+ListSeqNo	35	1	UINT8
+67	Y	As stated in Bulk Quote request or 0 for NewOrderSingle request
+TrdMatchID	36	8	UINT64
+880	Y	Identifier assigned to the Trade by the matching system. In case of executions on orders routed to another exchange, the TrdMatchID field will be filled on a best-effort basis.
+ExecID	44	8	UINT64
+17	Y	Unique identifier of execution message as assigned by the exchange. Uniqueness is guaranteed within a single trading day. The ExecID can be correlated with the Memoir OrderID value.
+OrdStatus	52	1	OrdStatusType
+39	Y	The status of the order.
+OptionsSecurityID	53	8	CHAR
+21035	Y	As stated in the order.
+Side	61	1	SideType
+54	Y	As stated in the order
+LastQty	62	4	UINT32
+32	Y	Quantity (e.g. contracts) bought/sold on this (last) fill.
+LastPx	66	8	PriceType
+31	Y	Price of this (last) fill.
+LeavesQty	74	4	UINT32
+151	Y	Quantity open for further execution.
+CumQty	78	4	UINT32
+14	Y	Total quantity (e.g. number of contracts) filled.
+SendingTime	82	8	UTCTimestampNanos
+52	Y	The time the ExecutionReport was sent. UTC timestamp since unix epoch with nanosecond precision.
+TransactTime	90	8	UTCTimestampNanos
+60	Y	The time at which the transaction occurred. UTC timestamp since epoch with nanosecond precision.
+LastLiquidityInd	98	1	LastLiquidityIndType
+851	Y	Indicator denoting whether the referenced order removed liquidity from or added liquidity to the MEMX book.
+LastMkt	99	4	ExchangeCode
+30	Y	Market of execution for last fill, or an indication of the market where an order was routed.
+OpenOrClose	103	1	OpenOrCloseType
+77	Y	As stated in the order.
+TradingCapacity	104	1	TradingCapacityType
+1815	Y	As stated in the order.
+ContraTradingCapacity	105	1	TradingCapacityType
+21036	Y	TradingCapacity of the contra order.
+NoPartyIDs	-	-	RepeatingGroupDimensions
+453	Y	The dimensions of the Repeating Group.
+Parties	-	-	Parties Group
+N/A	N	The parties associated with the quotes.
+ 
+ExecutionReport_PendingCancel
+The ExecutionReport_PendingCancel is a response to OrderCancelRequest request indicating the request has been received by the exchange and is in the process of being handled. 
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header 
+0	7	SBE Header 
+N/A	Y	SBE Header with templateID = 16
+OrderID	7	8	UINT64
+37	Y	OrderID as assigned by the exchange.
+ClOrdID	15	20	CHAR
+11	Y	As stated in the cancel request
+ListSeqNo	35	1	UINT8
+67	Y	As stated in the cancel request
+OrigClOrdID	36	20	CHAR
+41	Y	As stated in the cancel request
+OrdStatus	56	1	OrdStatusType
+39	Y	The status of the order.
+OptionsSecurityID	57	8	CHAR
+21035	Y	As stated in the cancel request.
+Side	65	1	SideType
+54	N	As stated in the cancel request
+LeavesQty	66	4	UINT32
+151	Y	Quantity open for further execution.
+CumQty	70	4	UINT32
+14	Y	Total quantity (e.g. number of contracts) filled.
+SendingTime	74	8	UTCTimestampNanos
+52	Y	The time the ExecutionReport was sent. UTC timestamp since unix epoch with nanosecond precision.
+ 
+ExecutionReport_Canceled
+The ExecutionReport_Canceled message is an event on an order/quote triggered by a successful handling of cancel / mass cancel request for that order. Orders/quotes that are canceled by the exchange because of Time in Force instructions shall have an OrdStatus as Expired. All other cases shall have OrdStatus as Canceled.
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header 
+0	7	SBE Header 
+N/A	Y	SBE Header with templateID = 17
+OrderID	7	8	UINT64
+37	Y	OrderID as assigned by the exchange to the canceled order.
+ClOrdID	15	20	CHAR
+11	Y	The identifier for the cancel request or the canceled order in the event of an unsolicited cancel*
+ListSeqNo	35	1	UINT8
+67	Y	As stated in the cancel request
+OrigClOrdID	36	20	CHAR
+41	N	A Unique identifier for the canceled order if available*
+ExecID	56	8	UINT64
+17	Y	Unique identifier of execution message as assigned by the exchange. Uniqueness is guaranteed within a single trading day. The ExecID can be correlated with the Memoir OrderID value.
+OrdStatus	64	1	OrdStatusType
+39	Y	The status of the order.
+CancelReason	65	2	CancelReasonCode
+21004	Y	Reason code for order cancellation.
+OptionsSecurityID	67	8	CHAR
+21035	Y	As stated in the cancel request.
+Side	75	1	SideType
+54	N	As stated in the cancel request
+LeavesQty	76	4	UINT32
+151	Y	Quantity open for further execution.
+CumQty	80	4	UINT32
+14	Y	Total quantity (e.g. number of contracts) filled.
+SendingTime	84	8	UTCTimestampNanos
+52	Y	The time the ExecutionReport was sent. UTC timestamp since unix epoch with nanosecond precision.
+TransactTime	92	8	UTCTimestampNanos
+60	Y	The time at which the transaction occurred. UTC timestamp since epoch with nanosecond precision.
+When the client has requested ExecutionRequest_Canceled messages as a result of a mass cancel request the cancels will be reported back to customers as Unsolicited cancel i.e. the ClOrdIDandOrigClOrdIDfields will contain the canceled order identifier. 
+ 
+ExecutionReport_PendingReplace
+The ExecutionReport_PendingReplace message is a response to OrderCancelReplaceRequest request indicating the request has been received by the exchange and is in the process of being handled. 
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header 
+0	7	SBE Header 
+N/A	Y	SBE Header with templateID = 18
+OrderID	7	8	UINT64
+37	Y	OrderID as assigned by the exchange to the canceled order.
+ClOrdID	15	20	CHAR
+11	Y	As stated in the replace request
+ListSeqNo	35	1	UINT8
+67	Y	As stated in the Bulk Quote request or 0 for NewOrderSingle request
+OrigClOrdID	36	20	CHAR
+41	Y	As stated in the replace request
+ExecID	56	8	UINT64
+17	Y	Unique identifier of execution message as assigned by the exchange. Uniqueness is guaranteed within a single trading day. The ExecID can be correlated with the Memoir OrderID value.
+OrdStatus	64	1	OrdStatusType
+39	Y	The status of the order. (PendingReplace)
+OptionsSecurityID	65	8	CHAR
+21035	Y	As stated on the previous order
+Side	73	1	SideType
+54	Y	As stated in the order.
+OrderQty	74	4	UINT32
+38	Y	As stated on the previous order
+OrdType	78	1	OrdType
+40	Y	As stated on the previous order
+Price	79	8	PriceType
+44	N	As stated on the previous order
+LeavesQty	87	4	UINT32
+151	Y	Quantity open for further execution.
+CumQty	91	4	UINT32
+14	Y	Total quantity (e.g. number of contracts) filled.
+SendingTime	95	8	UTCTimestampNanos
+52	Y	The time the ExecutionReport was sent. UTC timestamp since unix epoch with nanosecond precision.
+
+ExecutionReport_Replaced
+The ExecutionReport_Replaced is an unsolicited event on an order/quote triggered by a successful handling of OrderCancelReplaceRequest for the original order/quote.  The original order/quote can be considered fully cancelled and replaced by the stated replacement order upon receipt of this event.
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header 
+0	7	SBE Header
+N/A	Y	SBE Header with templateID = 19
+OrderID	7	8	UINT64
+37	Y	OrderID as assigned by the exchange.
+ClOrdID	15	20	CHAR
+11	Y	As stated in the replace request
+ListSeqNo	35	1	UINT8
+67	Y	As stated in the Bulk Quote request or 0 for NewOrderSingle request
+OrigClOrdID	36	20	CHAR
+41	Y	As stated in the replace request
+ExecID	56	8	UINT64
+17	Y	Unique identifier of execution message as assigned by the exchange. Uniqueness is guaranteed within a single trading day. The ExecID can be correlated with the Memoir OrderID value.
+OrdStatus	64	1	OrdStatusType
+39	Y	The status of the order.
+OptionsSecurityID	65	8	CHAR
+21035	Y	As stated on the replace request
+Side	73	1	SideType
+54	Y	As stated in the replace request
+OrderQty	74	4	UINT32
+38	Y	As stated in the replace request
+OrdType	78	1	OrdType
+40	Y	As stated in the replace request
+Price	79	8	PriceType
+44	N	As stated in the replace request
+LeavesQty	87	4	UINT32
+151	Y	Quantity open for further execution.
+CumQty	91	4	UINT32
+14	Y	Total quantity (e.g. number of contracts) filled.
+SendingTime	95	8	UTCTimestampNanos
+52	Y	The time the ExecutionReport was sent. UTC timestamp since unix epoch with nanosecond precision.
+TransactTime	103	8	UTCTimestampNanos
+60	Y	The time at which the transaction occurred. UTC timestamp since epoch with nanosecond precision.
+ 
+ExecutionReport_TradeCorrection
+The ExecutionReport_TradeCorrection is an unsolicited event notifying of a change to a price and/or quantity of a previously reported trade.
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header
+0	7	SBE Header
+N/A	Y	SBE Header with templateID = 20
+OrderID	7	8	UINT64
+37	Y	OrderID as assigned by the exchange.
+ClOrdID	15	20	CHAR
+11	Y	The ClOrdID associated with the order.
+TrdMatchID	35	8	UINT64
+880	Y	Identifier assigned to the Trade by the matching system. In case of executions on orders routed to another exchange, the TrdMatchID field will be filled on a best-effort basis.
+ExecID	43	8	UINT64
+17	Y	Unique identifier of execution message as assigned by the exchange. Uniqueness is guaranteed within a single trading day. The ExecID can be correlated with the Memoir OrderID value.
+ExecRefID	51	8	UINT64
+19	Y	The ExecID of the trade being corrected
+OrdStatus	59	1	OrdStatusType
+39	Y	Order status
+OptionsSecurityID	60	8	CHAR
+21035	Y	As stated on the order.
+LastQty	68	4	UINT32
+32	Y	Corrected trade quantity.
+LastPx	72	8	PriceType
+31	Y	Corrected trade price.
+LeavesQty	80	4	UINT32
+151	Y	Quantity open for further execution.
+CumQty	84	4	UINT32
+14	Y	Total quantity (e.g. number of contracts) filled.
+SendingTime	88	8	UTCTimestampNanos
+52	Y	The time the ExecutionReport was sent. UTC timestamp since unix epoch with nanosecond precision.
+ 
+ExecutionReport_TradeBreak
+The ExecutionReport_TradeBreak is an unsolicited event notifying of a cancelation of a previously reported trade.  
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header
+0	7	SBE Header
+N/A	Y	SBE Header with templateID = 21
+OrderID	7	8	UINT64
+37	Y	OrderID as assigned by the exchange.
+ClOrdID	15	20	CHAR
+11	Y	The ClOrdID associated with the order.
+TrdMatchID	35	8	UINT64
+880	Y	Identifier assigned to the Trade by the matching system. In case of executions on orders routed to another exchange, the TrdMatchID field will be filled on a best-effort basis.
+ExecID	4	8	UINT64
+17	Y	Unique identifier of execution message as assigned by the exchange. Uniqueness is guaranteed within a single trading day. The ExecID can be correlated with the Memoir OrderID value.
+ExecRefID	51	8	UINT64
+19	Y	The ExecID of the trade being corrected
+OrdStatus	59	1	OrdStatusType
+39	Y	Order status
+OptionsSecurityID	60	8	CHAR
+21035	Y	As stated on the order.
+LeavesQty	68	4	UINT32
+151	Y	Quantity open for further execution.
+CumQty	72	4	UINT32
+14	Y	Total quantity (e.g. number of contracts) filled.
+SendingTime	76	8	UTCTimestampNanos
+52	Y	UTC timestamp since unix epoch with nanosecond precision.
+ 
+ExecutionReport_Restatement
+The ExecutionReport_Restatement is an unsolicited event to notify the client that an open order has been updated by the MEMX system. This message may be sent for orders configured for automatic repricing via the RepriceFrequency instruction. This message can also be sent if the order quantity is partially or fully cancelled because of Match Trade Prevention.
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header
+0	7	SBE Header
+N/A	Y	SBE Header with templateID = 22
+OrderID	7	8	UINT64
+37	Y	OrderID as assigned by the exchange.
+ClOrdID	15	20	CHAR
+11	Y	The ClOrdID associated with the order.
+ListSeqNo	35	1	UINT8
+67	Y	As stated in the Bulk Quote request or 0 for NewOrderSingle request
+ExecID	36	8	UINT64
+17	Y	Unique identifier of execution message as assigned by the exchange. Uniqueness is guaranteed within a single trading day. The ExecID can be correlated with the Memoir OrderID value.
+OrdStatus	44	1	OrdStatusType
+39	Y	Order status
+OptionsSecurityID	45	8	CHAR
+21035	Y	OptionsSecurityID associated with the order.
+ExecRestatementReason	53	1	ExecRestatementType
+378	Y	The reason for the restatement.
+ExtendedRestatementReason	54	1	ExtendedRestatementReason
+21022	N	More restatement information when ExecRestatementReason (378) = 99 Other.
+Side	55	1	SideType
+54	Y	Order side
+LastPx	56	8	PriceType
+31	Y	ExecRestatementType(3):The updated booked price. This is the price that the order can match at. It may be different than the displayed price.
+ExecRestatementType(5): The match price if this order had not been prevented from executing due to MTP restrictions.
+LastQty	64	4	UINT32
+32	N	ExecRestatementType(5): The number of contracts that would have matched if this order had not been prevented from executing due to MTP restrictions.
+LeavesQty	68	4	UINT32
+151	Y	Quantity open for further execution.
+CumQty	72	4	UINT32
+14	Y	Total quantity (e.g. number of contracts) filled.
+SendingTime	76	8	UTCTimestampNanos
+52	Y	UTC timestamp since unix epoch with nanosecond precision.
+TransactTime	84	8	UTCTimestampNanos
+60	Y	The time at which the transaction occurred. UTC timestamp since epoch with nanosecond precision.
+PendingMassCancel 
+The PendingMassCancel is a response to MassCancelRequest request indicating the request has been received by the exchange and is in the process of being handled.
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header
+0	7	SBE Header
+N/A	Y	SBE Header with templateID = 23
+ClOrdID	7	20	CHAR
+11	Y	The identifier for this mass cancel, as stated in the mass cancel request.
+MassCancelInst	27	1	MassCancelInstType
+21031	Y	As stated in the mass cancel request.
+LockoutID	28	8	UINT64
+21033	N	If the request had the Lockout bit set in the MassCancelInst, this field will be present and contain a trading session unique lockout identifier that can be used to clear the lockout with a MassCancelClearLockOut message.
+EFID	36	4	CHAR
+21007	N	As stated in the mass cancel request.
+UnderlyingOrSeries	40	1	UnderlyingOrSeriesType
+21029	N	As stated in the mass cancel request.
+Underlier	41	6	CHAR
+55	N	As stated in the mass cancel request.
+OptionsSecurityID	47	8	CHAR
+21035	N	As stated in the mass cancel request.
+CancelGroupID	55	2	UINT16
+21000	N	As stated in the mass cancel request
+SendingTime	57	8	UTCTimestampNanos
+52	Y	The time the ExecutionReport was sent. UTC timestamp since unix epoch with nanosecond precision.
+MassCancelReject
+The MassCancelReject message is used by the exchange to indicate a mass cancel request cannot be honored as sent.
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header
+0	7	SBE Header
+N/A	Y	SBE Header with templateID = 24
+ClOrdID	7	20	CHAR
+11	Y	The identifier for this mass cancel, as stated in the mass cancel request.
+RejectReason	27	2	MassCxlRejReasonCode
+21028	Y	Code to identify reason for mass cancel rejection
+EFID	29	4	CHAR
+21007	N	As stated in the mass cancel request.
+UnderlyingOrSeries	33	1	UnderlyingOrSeriesType
+21029	N	As stated in the mass cancel request.
+Underlier	34	6	CHAR
+55	N	As stated in the mass cancel request.
+OptionsSecurityID	40	8	CHAR
+21035	N	As stated in the mass cancel request.
+CancelGroupID	48	2	UINT16
+21000	N	As stated in the mass cancel request
+MassCancelInst	50	1	MassCancelInstType
+21031	Y	As stated in the mass cancel request.
+SendingTime	51	8	UTCTimestampNanos
+52	Y	The time the message was sent. UTC timestamp since unix epoch with nanosecond precision.
+MassCancelDone 
+The MassCancelDone is sent when all the orders specified in the MassCancelRequest request have been processed.
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header
+0	7	SBE Header
+N/A	Y	SBE Header with templateID = 25
+ClOrdID	7	20	CHAR
+11	Y	The identifier for this cancel, as stated in the mass cancel request.
+TotalAffectedOrders	27	4	UINT32
+533	Y	The number or orders cancelled.
+SendingTime	31	8	UTCTimestampNanos
+52	Y	The time the message was sent. UTC timestamp since unix epoch with nanosecond precision.
+MassCancelClearLockoutReject 
+The MassCancelClearLockoutReject message is used by the exchange to indicate a MassCancelClearLockoutRequest cannot be honored. 
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header
+0	7	SBE Header
+N/A	Y	SBE Header with templateID = 30
+ClOrdID	7	20	CHAR
+11	Y	Unique identifier from the MassCancelClearLockoutRequest. 
+LockoutID	27	8	UINT64
+21033	Y	The LockoutID in the MassCancelClearLockoutRequest. 
+RejReason	35	2	MassCancelClearRejReasonCode
+21037	Y	Code to identify reason for cancel rejection.
+SendingTime	37	8	UTCTimestampNanos
+52	Y	The time the message was sent. UTC timestamp since unix epoch with nanosecond precision.
+MassCancelClearLockoutDone
+The MassCancelClearLockoutDone message is used by the exchange to indicate a MassCancelClearLockoutRequest has been completed.
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header
+0	7	SBE Header
+N/A	Y	SBE Header with templateID = 31
+ClOrdID	7	20	CHAR
+11	Y	Unique identifier from the MassCancelClearLockoutRequest. 
+LockoutID	27	8	UINT64
+21033	Y	The LockoutID in the MassCancelClearLockoutRequest. 
+SendingTime	35	8	UTCTimestampNanos
+52	Y	The time the message was sent. UTC timestamp since unix epoch with nanosecond precision.
+OrderCancelReject
+The OrderCancelReject message is used by the exchange to indicate a OrderCancelRequest or OrderCancelReplaceRequest cannot be honored. 
+This message corresponds to FIX message type 9
+Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
+SBE Header
+0	7	SBE Header
+N/A	Y	SBE Header with templateID = 26
+ClOrdID	7	20	CHAR
+11	Y	Unique identifier from the cancel request. 
+ListSeqNo	27	1	UINT8
+67	Y	As stated in the Bulk Quote request or 0 for NewOrderSingle request
+CxlRejResponseTo	28	1	CxlRejResponseToType
+434	Y	Identifies the request that this cancel reject is responding to.
+CxlRejReason	29	2	CxlRejReasonCode
+102	Y	Code to identify reason for cancel rejection.
+OptionsSecurityID	31	8	CHAR
+21035	N	As stated in the request.
+Side	39	1	SideType
+54	N	As stated in the request
+SendingTime	40	8	UTCTimestampNanos
+52	Y	UTC timestamp since unix epoch with nanosecond precision.
+AllocationInstructionAck
+The Allocation Instruction Ack message is used to acknowledge the receipt of and provide status for an Allocation Instruction message.
+Field	Offset	Length	Type	Tag Ref Num	Req’d	Meaning
+SBE Header
+0	7	SBE Header
+ 	Y	SBE Header templateID = 27
+AllocReportID	7	8	UINT64
+755	Y	Unique identifier for Allocation Report message.
+AllocID	15	20	CHAR
+70	Y	Unique identifier for this allocation instruction message.
+AllocStatus	35	1	AllocStatusType
+87	Y	Denotes the status of the allocation instruction.
+AllocRejCode	36	2	AllocRejCode
+88	N	The reason the AllocationInstruction was rejected. Required for AllocStatus = 1 ( block level reject) and for AllocStatus 2 (account level reject).
+SendingTime	38	8	UTCTimestampNanos
+52	Y	The timestamp when the event occurred.
+AllocationReport
+Allocation report messages are provided to the requesting party when a post trade edit is made to a trade. These messages will also be sent over drop copy to both the requesting party and the contra.
+Field	Offset	Length	Type	Tag Ref Num	Req’d	Meaning
+SBE Header
+0	7	SBE Header
+ 	Y	SBE Header templateID = 28
+AllocReportID	7	8	UINT64
+755	Y	Unique identifier for Allocation Report message.
+AllocID	15	20	CHAR
+70	Y	Unique identifier for this allocation instruction message.
+AllocTransType	35	1	AllocTransType
+71	Y	Identifies allocation transaction type.
+AllocType	36	1	AllocType
+794	Y	Specifies the purpose or type of Allocation message.
+AllocStatus	37	1	AllocStatusType
+87	Y	Identifies status of allocation. Will be Accepted.
+ExecRefID	38	8	UINT64
+19	Y	ExecID (17) of the trade being modified.
+TrdMatchID	46	8	UINT64
+880	Y	TrdMatchID for the trade being modified.
+OptionsSecurityID	54	8	CHAR
+21035	Y	The OptionSecurityID for the trade.
+Side	62	1	SideType
+54	Y	The side for the trade.
+Quantity	63	4	UINT32
+53	Y	Total quantity (e.g. number of contracts) of the trade.
+TradeDate	67	8	CHAR
+75	Y	Indicates date of trading day. Date of Local Market (vs. UTC) in YYYYMMDD format. Only same day allocations supported.
+SendingTime	75	8	UTCTimestampNanos
+52	Y	The timestamp when the event occurred.
+NoAllocs	-	-	RepeatingGroupDimensions
+78	Y	The dimensions of the Allocations Repeating Group.
+Allocations	-	-	Allocations Group
+N/A	Y	The allocations for the trade.
+UserNotification 
+The UserNotification message is used to notify the user of an event or information about the exchange. This message will be used to provide a logical session shutdown warning.
+This message corresponds to FIX message type CB
+Field	Offset	Length	Type	Tag Ref Num	Req’d	Meaning
+SBE Header
+0	7	SBE Header
+ 	Y	SBE Header templateID = 29
+SendingTime	7	8	UTCTimestampNanos
+52	Y	The timestamp when the event occurred.
+UserStatus	15	1	UserStatusType
+926	Y	Reason for notification.
+ 
