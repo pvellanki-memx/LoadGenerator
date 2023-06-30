@@ -1,27 +1,17 @@
-class ShortTwoSidedQuote:
-    SIZE = 25
-
-    def __init__(self, list_seq_no=None, options_security_id=None, bid_size=None, bid_exponent=None,bid_mantissa=None, offer_size=None,offer_exponent=None,offer_mantissa=None):
-        self.list_seq_no = UINT8(list_seq_no)
-        self.options_security_id = OptionsSecurityID(options_security_id)
-        self.bid_size = UINT16(bid_size)
-        self.bid_px = ShortPriceType(bid_exponent,bid_mantissa)
-        self.offer_size = UINT16(offer_size)
-        self.offer_px = ShortPriceType(offer_exponent,offer_mantissa)
-
-
-
 class OptionsSecurityID:
+    SIZE = 20
+
     def __init__(self, value=''):
         self.value = value
 
     def encode(self):
         encoded_value = self.value.encode('utf-8')
-        return encoded_value
+        padding = b'\x00' * (self.SIZE - len(encoded_value))
+        return encoded_value + padding
 
-    def decode(self, encoded_value):
+    def decode(self, buffer):
+        encoded_value = buffer[:self.SIZE].rstrip(b'\x00')
         self.value = encoded_value.decode('utf-8')
 
-
-    encoded_value = self.value.encode('utf-8')
-TypeError: OptionsSecurityID.encode() takes 1 positional argument but 2 were given
+    def __str__(self):
+        return self.value
