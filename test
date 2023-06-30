@@ -57,3 +57,5 @@ class ShortTwoSideBulkQuote:
 
         return encoded_message
 
+
+Failed to establish session for Session1: ShortTwoSidedQuote.__init__() missing 8 required positional arguments: 'list_seq_no', 'options_security_id', 'bid_size', 'bid_exponent', 'bid_mantissa', 'offer_size', 'offer_exponent', and 'offer_mantissa'
