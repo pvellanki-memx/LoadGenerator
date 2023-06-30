@@ -80,3 +80,11 @@ class ShortTwoSideBulkQuote:
         )
 
         return encoded_message
+
+
+
+
+  quotes=[
+        ShortTwoSidedQuote(list_seq_no=1, options_security_id='XYZ', bid_size=10, bid_exponent=0, bid_mantissa=100, offer_size=20, offer_exponent=0, offer_mantissa=150),
+        ShortTwoSidedQuote(list_seq_no=2, options_security_id='ABC', bid_size=15, bid_exponent=0, bid_mantissa=200, offer_size=25, offer_exponent=0, offer_mantissa=250)
+    ]
