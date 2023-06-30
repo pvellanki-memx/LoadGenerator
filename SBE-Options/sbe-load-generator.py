@@ -214,11 +214,10 @@ def generate_message(message_type,session_name):
         party_id_source = PartyIDSource('D')
         party_role = PartyRoleType('CUSTOMER')
         parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role]])]
-        quotes = [
-            ShortTwoSidedQuote(1, 'ABC', 10, 100.0, 15, 110.0),  # Quote 1
-            ShortTwoSidedQuote(2, 'XYZ', 20, 200.0, 25, 210.0),  # Quote 2
-        ]
-
+       quotes = [
+                ShortTwoSidedQuote(1, 'ABC', 10, 0, 100.0, 15, 0, 110.0),  
+                ShortTwoSidedQuote(2, 'XYZ', 20, 0, 120.0, 25, 0, 122.0) 
+            ]
         Short_Two_Side_Bulk_Quote = ShortTwoSideBulkQuote(
             sending_time=sending_time,
             cl_ord_id=cl_ord_id,
