@@ -15,3 +15,22 @@ class OptionsSecurityID:
 
     def __str__(self):
         return self.value
+
+
+
+[[<sbe_encoder_decoder.PartyID object at 0x7fab1d5bdea0>, <sbe_encoder_decoder.PartyIDSource object at 0x7fab1d5bdf00>, <sbe_encoder_decoder.PartyRoleType object at 0x7fab1d5bdf60>]]
+None
+Traceback (most recent call last):
+  File "/home/pvellanki/loadgenerator/sbe/options/sbe_load_generator.py", line 318, in <module>
+    main()
+  File "/home/pvellanki/loadgenerator/sbe/options/sbe_load_generator.py", line 299, in main
+    message = generate_message(message_type,session_name)
+  File "/home/pvellanki/loadgenerator/sbe/options/sbe_load_generator.py", line 234, in generate_message
+    encoded_message = short_two_side_bulk_quote.encode()
+  File "/home/pvellanki/loadgenerator/sbe/options/sbe_encoder_decoder.py", line 669, in encode
+    encoded_quotes += quote.encode()
+  File "/home/pvellanki/loadgenerator/sbe/options/sbe_encoder_decoder.py", line 587, in encode
+    encoded_options_security_id = self.options_security_id.encode()
+  File "/home/pvellanki/loadgenerator/sbe/options/sbe_encoder_decoder.py", line 174, in encode
+    encoded_value = self.value.encode('utf-8')
+TypeError: OptionsSecurityID.encode() takes 1 positional argument but 2 were given
