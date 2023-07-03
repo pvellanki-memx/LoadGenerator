@@ -25,11 +25,11 @@ class PriceType:
         self.exponent = exponent
 
     def encode(self):
-        buffer = pack('>biQ', self.exponent, -8, self.mantissa)
+        buffer = pack('>bQ', self.exponent, -8, self.mantissa)
         return buffer
 
     def decode(self, buffer):
-        self.exponent, _, self.mantissa = unpack_from('>biQ', buffer)
+        self.exponent, _, self.mantissa = unpack_from('>bQ', buffer)
 
 class OrdType:
     MARKET = 1
@@ -108,7 +108,7 @@ class ShortPriceType:
         self.mantissa = mantissa
 
     def encode(self):
-        buffer = pack('>bQ', self.exponent, self.mantissa)
+        buffer = pack('>bH', self.exponent, self.mantissa)
         return buffer
 
     def decode(self, buffer):
@@ -162,6 +162,25 @@ class Char:
     def decode(self, buffer):
         value, = unpack_from('s', buffer)
         self.value = value.decode()
+
+
+class OptionsSecurityID:
+    SIZE = 20
+
+    def __init__(self, value=''):
+        self.value = value
+
+    def encode(self):
+        encoded_value = self.value.encode('utf-8')
+        padding = b'\x00' * (self.SIZE - len(encoded_value))
+        return encoded_value + padding
+
+    def decode(self, buffer):
+        encoded_value = buffer[:self.SIZE].rstrip(b'\x00')
+        self.value = encoded_value.decode('utf-8')
+
+    def __str__(self):
+        return self.value
 
 
 class OpenOrCloseType:
@@ -372,10 +391,11 @@ class PartyRoleType:
 class PartiesGroup:
     def __init__(self, party_ids=None):
         self.party_ids = party_ids or []
+        print(party_ids)
      
 
     def encode(self):
-        encoded_parties = b''.join(party_obj.encode() for party_obj in self.party_ids)
+        encoded_parties = b''.join(b''.join(party_obj.encode() for party_obj in nested_list) for nested_list in self.party_ids)
         return encoded_parties
 
     def decode(self, buffer):
@@ -406,7 +426,7 @@ class NewOrderSingle:
         self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups )
         self.sending_time = kwargs.get('sending_time', UTCTimestampNanos(0))
         self.cl_ord_id = kwargs.get('cl_ord_id', Char(''))
-        self.options_security_id = kwargs.get('options_security_id', Char(''))
+        self.options_security_id = kwargs.get('options_security_id', OptionsSecurityID(''))
         self.side = kwargs.get('side', SideType(''))
         self.order_qty = kwargs.get('order_qty', UINT32(0))
         self.ord_type = kwargs.get('ord_type', Char(''))
@@ -422,7 +442,7 @@ class NewOrderSingle:
         self.cancel_group_id = kwargs.get('cancel_group_id', UINT16(0))
         self.risk_group_id = kwargs.get('risk_group_id', UINT16(0))
         self.RepeatingGroupDimensions = kwargs.get('repeating_group_dimensions', RepeatingGroupDimensions(18,3))
-        self.parties_group = kwargs.get('parties_group',PartiesGroup() )
+        self.parties_group = kwargs.get('parties_group',PartiesGroup())
         
 
     def encode(self):
@@ -554,9 +574,9 @@ class NewOrderSingle:
 class ShortTwoSidedQuote:
     SIZE = 25
 
-    def __init__(self, list_seq_no, options_security_id, bid_size, bid_exponent,bid_mantissa, offer_size,offer_exponent,offer_mantissa):
+    def __init__(self, list_seq_no=None, options_security_id=None, bid_size=None, bid_exponent=None,bid_mantissa=None, offer_size=None,offer_exponent=None,offer_mantissa=None):
         self.list_seq_no = UINT8(list_seq_no)
-        self.options_security_id = Char(options_security_id)
+        self.options_security_id = OptionsSecurityID(options_security_id)
         self.bid_size = UINT16(bid_size)
         self.bid_px = ShortPriceType(bid_exponent,bid_mantissa)
         self.offer_size = UINT16(offer_size)
@@ -572,7 +592,7 @@ class ShortTwoSidedQuote:
 
         return encoded_list_seq_no + encoded_options_security_id + encoded_bid_size + encoded_bid_px + \
                encoded_offer_size + encoded_offer_px
-        
+
     def decode(self, buffer):
         offset = 0
 
@@ -601,6 +621,7 @@ class ShortTwoSidedQuote:
         offset += ShortPriceType.SIZE
 
 
+    
 class ShortTwoSideBulkQuote:
     TEMPLATE_ID = 2
     num_groups = 2
@@ -624,7 +645,7 @@ class ShortTwoSideBulkQuote:
         self.no_party_ids = kwargs.get('repeating_group_dimensions', RepeatingGroupDimensions(18, party_entries))
         self.parties = kwargs.get('parties', PartiesGroup())
         self.no_quote_entries = kwargs.get('no_quote_entries', RepeatingGroupDimensions(15, quote_entries))
-        self.quotes = kwargs.get('quotes', [ShortTwoSidedQuote()])
+        self.quotes = kwargs.get('quotes',ShortTwoSidedQuote())
 
     def encode(self):
         encoded_header = self.sbe_header.encode()
@@ -637,11 +658,16 @@ class ShortTwoSideBulkQuote:
         encoded_match_trade_prevention = self.match_trade_prevention.encode()
         encoded_cancel_group_id = self.cancel_group_id.encode()
         encoded_risk_group_id = self.risk_group_id.encode()
-        encoded_parties = self.parties.encode()
+        encoded_parties = b''
+        for party in self.parties:
+                encoded_parties += party.encode()
+
+
 
         encoded_quotes = b''
         for quote in self.quotes:
-            encoded_quotes += quote.encode()
+                encoded_quotes += quote.encode()
+
 
         encoded_message = (
             encoded_header
@@ -659,7 +685,6 @@ class ShortTwoSideBulkQuote:
         )
 
         return encoded_message
-
 
     def decode(self, buffer):
         offset = 0
