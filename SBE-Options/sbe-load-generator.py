@@ -303,7 +303,7 @@ def generate_message(message_type,session_name):
         party_role = PartyRoleType('CUSTOMER')
         parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role]])]
         quote1 = ShortOneSideQuote(list_seq_no=1, options_security_id='AAPL', side = 1,quantity=10, price=100)
-        quote2 = ShortOneSideQuote(list_seq_no=2, options_security_id='TSLA123',side=2, quantity=15, price=200
+        quote2 = ShortOneSideQuote(list_seq_no=2, options_security_id='TSLA123',side=2, quantity=15, price=200)
 
         quotes = [quote1, quote2]
         
