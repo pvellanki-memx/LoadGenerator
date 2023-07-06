@@ -133,4 +133,31 @@ class OrderCancelRequest:
             orig_cl_ord_id=orig_cl_ord_id,
             options_security_id=options_security_id,
             side=side
+
+
+
+
+
+
+Type Name
+
+Length
+
+Type
+
+Values
+
+Description
+
+ExecInstType
+
+2
+
+UINT16
+
+Bit 0 - ParticipateDoNotInitiate (Post only)
+Bit 1 - IntermarketSweep (ISO)
+Bit 2 - ExternalRoutingNotAllowed (Book Only)
+
+Enable an execution instruction by setting a bit. Disable an execution instruction by clearing the bit. Bit 0 is the least significant bit.
         )
