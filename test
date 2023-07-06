@@ -160,4 +160,23 @@ Bit 1 - IntermarketSweep (ISO)
 Bit 2 - ExternalRoutingNotAllowed (Book Only)
 
 Enable an execution instruction by setting a bit. Disable an execution instruction by clearing the bit. Bit 0 is the least significant bit.
+
+
+
+
+
+class ExecInstType:
+    ParticipateDoNotInitiate = 0
+    IntermarketSweep = 1
+    ExternalRoutingNotAllowed = 2
+    SIZE = 2
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('H', self.value)
+
+    def decode(self, buffer):
+        self.value, = unpack_from('H', buffer)
         )
