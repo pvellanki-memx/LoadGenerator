@@ -25,11 +25,11 @@ class PriceType:
         self.exponent = exponent
 
     def encode(self):
-        buffer = pack('>bQ', -8, self.mantissa)
+        buffer = pack('>Q',self.mantissa)
         return buffer
 
     def decode(self, buffer):
-        self.exponent, _, self.mantissa = unpack_from('>bQ', buffer)
+        self.exponent, _, self.mantissa = unpack_from('>Q', buffer)
 
 class OrdType:
     MARKET = 1
@@ -109,11 +109,11 @@ class ShortPriceType:
         self.exponent = exponent
 
     def encode(self):
-        buffer = pack('>bh', -2, self.mantissa)
+        buffer = pack('>H',self.mantissa)
         return buffer
 
     def decode(self, buffer):
-        self.exponent, _, self.mantissa = unpack_from('>bh', buffer)
+        self.exponent, _, self.mantissa = unpack_from('>H', buffer)
 
     def __str__(self):
         return f"Exponent: {self.exponent}, Mantissa: {self.mantissa}"
@@ -164,7 +164,7 @@ class Char:
 
 
 class OptionsSecurityID:
-    SIZE = 20
+    SIZE = 8
 
     def __init__(self, value=''):
         self.value = value
@@ -342,10 +342,10 @@ class RepeatingGroupDimensions:
         self.num_groups = num_groups
 
     def encode(self):
-        return pack('>II', self.block_length, self.num_groups)
+        return pack('>BB', self.block_length, self.num_groups)
 
     def decode(self, buffer):
-        self.block_length,self.num_groups = unpack_from('>II', buffer)
+        self.block_length,self.num_groups = unpack_from('>BB', buffer)
 
 
 class PartyID:
@@ -464,7 +464,9 @@ class NewOrderSingle:
         encoded_cancel_group_id = self.cancel_group_id.encode()
         encoded_risk_group_id = self.risk_group_id.encode()
         encoded_RepeatingGroupDimensions = self.RepeatingGroupDimensions.encode()
-        encoded_parties = self.parties_group.encode()
+        encoded_parties = b''
+        for party in self.parties:
+                encoded_parties += party.encode()
 
         encoded_message = (
             encoded_header +
@@ -657,12 +659,13 @@ class ShortTwoSideBulkQuote:
         encoded_match_trade_prevention = self.match_trade_prevention.encode()
         encoded_cancel_group_id = self.cancel_group_id.encode()
         encoded_risk_group_id = self.risk_group_id.encode()
+        encoded_no_party_ids =  self.no_party_ids.encode()
         encoded_parties = b''
         for party in self.parties:
                 encoded_parties += party.encode()
 
 
-
+        encoded_no_quote_entries =  self.no_quote_entries.encode()
         encoded_quotes = b''
         for quote in self.quotes:
                 encoded_quotes += quote.encode()
@@ -679,7 +682,9 @@ class ShortTwoSideBulkQuote:
             + encoded_match_trade_prevention
             + encoded_cancel_group_id
             + encoded_risk_group_id
+            + encoded_no_party_ids
             + encoded_parties
+            + encoded_no_quote_entries
             + encoded_quotes
         )
 
@@ -840,12 +845,13 @@ class LongTwoSideBulkQuote:
         encoded_match_trade_prevention = self.match_trade_prevention.encode()
         encoded_cancel_group_id = self.cancel_group_id.encode()
         encoded_risk_group_id = self.risk_group_id.encode()
+        encoded_no_party_ids =  self.no_party_ids.encode()
         encoded_parties = b''
         for party in self.parties:
                 encoded_parties += party.encode()
 
 
-
+        encoded_no_quote_entries =  self.no_quote_entries.encode()
         encoded_quotes = b''
         for quote in self.quotes:
                 encoded_quotes += quote.encode()
@@ -862,7 +868,9 @@ class LongTwoSideBulkQuote:
             + encoded_match_trade_prevention
             + encoded_cancel_group_id
             + encoded_risk_group_id
+            + encoded_no_party_ids
             + encoded_parties
+            + encoded_no_quote_entries
             + encoded_quotes
         )
 
@@ -982,7 +990,7 @@ class ShortOneSideQuote:
 
 
 class ShortOneSideBulkQuote:
-    TEMPLATE_ID = 9
+    TEMPLATE_ID = 4
     num_groups = 2
     schema_id = 1
     version = 266
@@ -1018,18 +1026,19 @@ class ShortOneSideBulkQuote:
             self.match_trade_prevention.encode()
         encoded_cancel_group_id = b'' if self.cancel_group_id is None else self.cancel_group_id.encode()
         encoded_risk_group_id = b'' if self.risk_group_id is None else self.risk_group_id.encode()
-
+        encoded_no_party_ids =  self.no_party_ids.encode()
         encoded_parties = b''
         for party in self.parties:
             encoded_parties += party.encode()
 
+        encoded_no_quote_entries =  self.no_quote_entries.encode()
         encoded_quotes = b''
         for quote in self.quotes:
             encoded_quotes += quote.encode()
 
         encoded_message = encoded_header + encoded_sending_time + encoded_cl_ord_id + encoded_time_in_force + \
             encoded_exec_inst + encoded_trading_capacity + encoded_mtp_group_id + encoded_match_trade_prevention + \
-            encoded_cancel_group_id + encoded_risk_group_id + encoded_parties + encoded_quotes
+            encoded_cancel_group_id + encoded_risk_group_id + encoded_no_party_ids + encoded_parties + encoded_no_quote_entries + encoded_quotes
 
         return encoded_message
 
@@ -1145,7 +1154,7 @@ class LongOneSideQuote:
         offset += PriceType.SIZE
 
 class LongOneSideBulkQuote:
-    TEMPLATE_ID = 10
+    TEMPLATE_ID = 5
     num_groups = 2
     schema_id = 1
     version = 266
@@ -1180,12 +1189,13 @@ class LongOneSideBulkQuote:
         encoded_match_trade_prevention = self.match_trade_prevention.encode()
         encoded_cancel_group_id = self.cancel_group_id.encode()
         encoded_risk_group_id = self.risk_group_id.encode()
+        encoded_no_party_ids =  self.no_party_ids.encode()
         encoded_parties = b''
         for party in self.parties:
                 encoded_parties += party.encode()
 
 
-
+        encoded_no_quote_entries =  self.no_quote_entries.encode()
         encoded_quotes = b''
         for quote in self.quotes:
                 encoded_quotes += quote.encode()
@@ -1202,7 +1212,9 @@ class LongOneSideBulkQuote:
             + encoded_match_trade_prevention
             + encoded_cancel_group_id
             + encoded_risk_group_id
+            + encoded_no_party_ids
             + encoded_parties
+            + encoded_no_quote_entries
             + encoded_quotes
         )
 
