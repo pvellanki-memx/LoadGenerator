@@ -1,143 +1,13 @@
-class MassCancelRequest:
-    TEMPLATE_ID = 3
-    num_groups = 0
-    schema_id = 1
-    version = 266
-    BLOCK_LENGTH = 57
+UnderlyingOrSeriesType.
 
-    def __init__(self, **kwargs):
-        self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups)
-        self.sending_time = kwargs.get('sending_time', UTCTimestampNanos(0))
-        self.cl_ord_id = kwargs.get('cl_ord_id', CHAR(''))
-        self.efid = kwargs.get('efid', CHAR(''))
-        self.underlying_or_series = kwargs.get('underlying_or_series', UnderlyingOrSeriesType(0))
-        self.underlier = kwargs.get('underlier', CHAR(''))
-        self.options_security_id = kwargs.get('options_security_id', CHAR(''))
-        self.cancel_group_id = kwargs.get('cancel_group_id', UINT16(0))
-        self.mass_cancel_inst = kwargs.get('mass_cancel_inst', MassCancelInstType(0))
+UINT64
 
-    def encode(self):
-        encoded_header = self.sbe_header.encode()
-        encoded_sending_time = self.sending_time.encode()
-        encoded_cl_ord_id = self.cl_ord_id.encode()
-        encoded_efid = self.efid.encode()
-        encoded_underlying_or_series = self.underlying_or_series.encode()
-        encoded_underlier = self.underlier.encode()
-        encoded_options_security_id = self.options_security_id.encode()
-        encoded_cancel_group_id = self.cancel_group_id.encode()
-        encoded_mass_cancel_inst = self.mass_cancel_inst.encode()
+MassCancelInstType
 
-        encoded_message = (
-            encoded_header +
-            encoded_sending_time +
-            encoded_cl_ord_id +
-            encoded_efid +
-            encoded_underlying_or_series +
-            encoded_underlier +
-            encoded_options_security_id +
-            encoded_cancel_group_id +
-            encoded_mass_cancel_inst
-        )
+MassCancelInstType Bitset (FIX tag 21031)
+The MassCancelInstType provides instructions for mass cancel request handling on the exchange.
 
-        return encoded_message
-
-    @classmethod
-    def decode(cls, buffer):
-        sbe_header = SBEHeader.decode(buffer[0:8])
-        sending_time = UTCTimestampNanos.decode(buffer[8:16])
-        cl_ord_id = CHAR.decode(buffer[16:36])
-        efid = CHAR.decode(buffer[36:40])
-        underlying_or_series = UnderlyingOrSeriesType.decode(buffer[40:41])
-        underlier = CHAR.decode(buffer[41:47])
-        options_security_id = CHAR.decode(buffer[47:55])
-        cancel_group_id = UINT16.decode(buffer[55:57])
-        mass_cancel_inst = MassCancelInstType.decode(buffer[57:58])
-
-        return cls(
-            sbe_header=sbe_header,
-            sending_time=sending_time,
-            cl_ord_id=cl_ord_id,
-            efid=efid,
-            underlying_or_series=underlying_or_series,
-            underlier=underlier,
-            options_security_id=options_security_id,
-            cancel_group_id=cancel_group_id,
-            mass_cancel_inst=mass_cancel_inst
-        )
-
-
-
-
-
-
-
-
-
-class OrderCancelRequest:
-    TEMPLATE_ID = 2
-    num_groups = 0
-    schema_id = 1
-    version = 266
-    BLOCK_LENGTH = 73
-
-    def __init__(self, **kwargs):
-        self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups)
-        self.sending_time = kwargs.get('sending_time', UTCTimestampNanos(0))
-        self.order_id = kwargs.get('order_id', UINT64(0))
-        self.cl_ord_id = kwargs.get('cl_ord_id', CHAR(''))
-        self.list_seq_no = kwargs.get('list_seq_no', UINT8(0))
-        self.orig_cl_ord_id = kwargs.get('orig_cl_ord_id', CHAR(''))
-        self.options_security_id = kwargs.get('options_security_id', CHAR(''))
-        self.side = kwargs.get('side', SideType(0))
-
-    def encode(self):
-        encoded_header = self.sbe_header.encode()
-        encoded_sending_time = self.sending_time.encode()
-        encoded_order_id = self.order_id.encode()
-        encoded_cl_ord_id = self.cl_ord_id.encode()
-        encoded_list_seq_no = self.list_seq_no.encode()
-        encoded_orig_cl_ord_id = self.orig_cl_ord_id.encode()
-        encoded_options_security_id = self.options_security_id.encode()
-        encoded_side = self.side.encode()
-
-        encoded_message = (
-            encoded_header +
-            encoded_sending_time +
-            encoded_order_id +
-            encoded_cl_ord_id +
-            encoded_list_seq_no +
-            encoded_orig_cl_ord_id +
-            encoded_options_security_id +
-            encoded_side
-        )
-
-        return encoded_message
-
-    @classmethod
-    def decode(cls, buffer):
-        sbe_header = SBEHeader.decode(buffer[0:8])
-        sending_time = UTCTimestampNanos.decode(buffer[8:16])
-        order_id = UINT64.decode(buffer[16:24])
-        cl_ord_id = CHAR.decode(buffer[24:44])
-        list_seq_no = UINT8.decode(buffer[44:45])
-        orig_cl_ord_id = CHAR.decode(buffer[45:65])
-        options_security_id = CHAR.decode(buffer[65:73])
-        side = SideType.decode(buffer[73:74])
-
-        return cls(
-            sbe_header=sbe_header,
-            sending_time=sending_time,
-            order_id=order_id,
-            cl_ord_id=cl_ord_id,
-            list_seq_no=list_seq_no,
-            orig_cl_ord_id=orig_cl_ord_id,
-            options_security_id=options_security_id,
-            side=side
-
-
-
-
-
+MassCancelInstType is a 1-byte UINT8 value.
 
 Type Name
 
@@ -149,34 +19,38 @@ Values
 
 Description
 
-ExecInstType
+MassCancelInstType
 
-2
+1
 
-UINT16
+ UINT8 
 
-Bit 0 - ParticipateDoNotInitiate (Post only)
-Bit 1 - IntermarketSweep (ISO)
-Bit 2 - ExternalRoutingNotAllowed (Book Only)
+Bit 0 - Lockout (bit set indicates to lockout future orders that match the mass cancel criteria)
+Bit 1 - SendCancels (bit set indicates to send Cancel messages for each order/quote canceled)
+Bit 2 - CancelOrdersFromThisPortOnly (bit set indicates that only orders that originated from the port that receives the MassCancelRequest should be considered for cancelation. If not set all firm orders are considered for cancelation. 
 
-Enable an execution instruction by setting a bit. Disable an execution instruction by clearing the bit. Bit 0 is the least significant bit.
-
-
+Enable a handling instruction by setting a bit. Disable an handling instruction by clearing the bit. Bit 0 is the least significant bit.
 
 
+UnderlyingOrSeriesType (MEMX Custom FIX tag 21029)
+Identifies what category of order/quote to mass cancel.
 
-class ExecInstType:
-    ParticipateDoNotInitiate = 0
-    IntermarketSweep = 1
-    ExternalRoutingNotAllowed = 2
-    SIZE = 2
+UnderlyingOrSeriesType is a 1-byte UINT8 value.
 
-    def __init__(self, value):
-        self.value = value
+Value
 
-    def encode(self):
-        return pack('H', self.value)
+Name
 
-    def decode(self, buffer):
-        self.value, = unpack_from('H', buffer)
-        )
+Description
+
+0
+
+CancelAllOnUnderlying
+
+Cancel all orders/quotes on the underlying symbol.
+
+1
+
+CancelAllOnSeries
+
+Cancel all orders/quotes on the options series.
