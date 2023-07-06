@@ -3,7 +3,7 @@ import socket
 import struct
 import time
 from sbe_encoder_decoder import UTCTimestampNanos, NewOrderSingle,  ShortTwoSidedQuote,ShortTwoSideBulkQuote, LongTwoSideBulkQuote, ShortOneSideBulkQuote, LongOneSideBulkQuote,MatchTradePreventionType,MtpGroupIDType, LongOneSideQuote,LongTwoSidedQuote
-from sbe_encoder_decoder import UINT32,UINT16, OrdType, TimeInForceType, ExecInstType, TradingCapacityType, SideType, PartyID, PartiesGroup,PartyIDSource, PartyRoleType, ShortPriceType, OptionsSecurityID,ShortOneSideQuote
+from sbe_encoder_decoder import UINT32,UINT16, OrdType, PriceType,TimeInForceType, ExecInstType, TradingCapacityType, SideType, PartyID, PartiesGroup,PartyIDSource, PartyRoleType, ShortPriceType, OptionsSecurityID,ShortOneSideQuote
 from random import choices, randint
 import string
 from random import choices, randint
@@ -160,7 +160,8 @@ def generate_message(message_type,session_name):
         options_security_id = OptionsSecurityID(choices(security_ids)[0])
         side = SideType(value=SideType.BUY)  # Set the side to "Buy"
         order_qty = UINT32(value=randint(1, 100))
-        ord_type = OrdType(value=OrdType.LIMIT)  # Set the order type to "Limit"
+        ord_type = OrdType(value=OrdType.LIMIT)
+        price = PriceType(112,0)  # Set the order type to "Limit"
         time_in_force = TimeInForceType(value=TimeInForceType.DAY)  # Set the time in force to "Day"
         exec_inst = ExecInstType(value=ExecInstType.ParticipateDoNotInitiate)  # Set the execution instructions
         trading_capacity = TradingCapacityType(value=TradingCapacityType.CUSTOMER)  # Set the trading capacity
@@ -190,6 +191,7 @@ def generate_message(message_type,session_name):
         message = unsequenced_message + encoded_message
 
         # Print the encoded message
+        print('NewOrderSingle:')
         print(encoded_message)
 
         return message
@@ -199,13 +201,13 @@ def generate_message(message_type,session_name):
         # Generate ShortTwoSideBulkQuote message
         sending_time = UTCTimestampNanos(int(time.time() * 10**9))
         cl_ord_id = ''.join(choices(string.ascii_uppercase + string.digits, k=20))
-        time_in_force = TimeInForceType(0)
+        time_in_force = TimeInForceType(1)
         exec_inst = ExecInstType(0)
-        trading_capacity = TradingCapacityType(0)
-        mtp_group_id = MtpGroupIDType(0)
-        match_trade_prevention = MatchTradePreventionType(0)
-        cancel_group_id = UINT16(0)
-        risk_group_id = UINT16(0)
+        trading_capacity = TradingCapacityType(1)
+        mtp_group_id = MtpGroupIDType(1)
+        match_trade_prevention = MatchTradePreventionType(1)
+        cancel_group_id = UINT16(1)
+        risk_group_id = UINT16(1)
         efid = connection_config[session_name]['EFID']
         party_id = PartyID(efid)
         party_id_source = PartyIDSource('D')
@@ -237,6 +239,7 @@ def generate_message(message_type,session_name):
         message = unsequenced_message + encoded_message
 
         # Print the encoded message
+        print('short_two_side_bulk_quote:')
         print(message)
         return message
 
@@ -277,12 +280,13 @@ def generate_message(message_type,session_name):
             quotes=quotes
         )
 
-        # Encode the ShortTwoSideBulkQuote instance
+        # Encode the LongTwoSideBulkQuote instance
         encoded_message = long_two_side_bulk_quote.encode()
         unsequenced_message = struct.pack('!BH', 104, 102)  # MessageType=104, MessageLength=6, TCP Header Length=102
         message = unsequenced_message + encoded_message
 
-        # Print the encoded message
+        # Print the encoded messag´
+        print('long_two_side_bulk_quote:')
         print(message)
         return message
      
@@ -308,7 +312,7 @@ def generate_message(message_type,session_name):
         quotes = [quote1, quote2]
         
 
-        long_one_side_bulk_quote = LongOneSideBulkQuote(
+        short_one_side_bulk_quote = ShortOneSideBulkQuote(
             sending_time=sending_time,
             cl_ord_id=cl_ord_id,
             time_in_force=time_in_force,
@@ -323,11 +327,12 @@ def generate_message(message_type,session_name):
         )
 
         # Encode the ShortTwoSideBulkQuote instance
-        encoded_message = long_one_side_bulk_quote.encode()
+        encoded_message = short_one_side_bulk_quote.encode()
         unsequenced_message = struct.pack('!BH', 104, 102)  # MessageType=104, MessageLength=6, TCP Header Length=102
         message = unsequenced_message + encoded_message
 
         # Print the encoded message
+        print('short_one_side_bulk_quote:')
         print(message)
         return message
 
@@ -367,12 +372,13 @@ def generate_message(message_type,session_name):
             quotes=quotes
         )
 
-        # Encode the ShortTwoSideBulkQuote instance
+       
         encoded_message = long_one_side_bulk_quote.encode()
         unsequenced_message = struct.pack('!BH', 104, 102)  # MessageType=104, MessageLength=6, TCP Header Length=102
         message = unsequenced_message + encoded_message
 
         # Print the encoded message
+        print('long_one_side_bulk_quote:')
         print(message)
         return message
         
