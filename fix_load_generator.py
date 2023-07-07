@@ -22,7 +22,7 @@ class MyApplication(fix.Application):
 
     def toAdmin(self, message, sessionID):
         if message.getHeader().getField(fix.MsgType()).getString() == fix.MsgType_Logon:
-            message.getHeader().setField(1408, "1.10")
+            message.getHeader().setField(1408, "1.3")
             print("sent admin message", message.toString())
         return True
 
