@@ -1,56 +1,37 @@
-UnderlyingOrSeriesType.
+from struct import pack, unpack_from
 
-UINT64
+class UnderlyingOrSeriesType:
+    CancelAllOnUnderlying = 0
+    CancelAllOnSeries = 1
+    SIZE = 1
 
-MassCancelInstType
+    def __init__(self, value):
+        self.value = value
 
-MassCancelInstType Bitset (FIX tag 21031)
-The MassCancelInstType provides instructions for mass cancel request handling on the exchange.
+    def encode(self):
+        return pack('B', self.value)
 
-MassCancelInstType is a 1-byte UINT8 value.
-
-Type Name
-
-Length
-
-Type
-
-Values
-
-Description
-
-MassCancelInstType
-
-1
-
- UINT8 
-
-Bit 0 - Lockout (bit set indicates to lockout future orders that match the mass cancel criteria)
-Bit 1 - SendCancels (bit set indicates to send Cancel messages for each order/quote canceled)
-Bit 2 - CancelOrdersFromThisPortOnly (bit set indicates that only orders that originated from the port that receives the MassCancelRequest should be considered for cancelation. If not set all firm orders are considered for cancelation. 
-
-Enable a handling instruction by setting a bit. Disable an handling instruction by clearing the bit. Bit 0 is the least significant bit.
+    def decode(self, buffer):
+        self.value, = unpack_from('B', buffer)
 
 
-UnderlyingOrSeriesType (MEMX Custom FIX tag 21029)
-Identifies what category of order/quote to mass cancel.
 
-UnderlyingOrSeriesType is a 1-byte UINT8 value.
 
-Value
 
-Name
+from struct import pack, unpack_from
 
-Description
 
-0
+class MassCancelInstType:
+    Lockout = 0
+    SendCancels = 1
+    CancelOrdersFromThisPortOnly = 2
+    SIZE = 1
 
-CancelAllOnUnderlying
+    def __init__(self, value):
+        self.value = value
 
-Cancel all orders/quotes on the underlying symbol.
+    def encode(self):
+        return pack('B', self.value)
 
-1
-
-CancelAllOnSeries
-
-Cancel all orders/quotes on the options series.
+    def decode(self, buffer):
+        self.value, = unpack_from('B', buffer)
