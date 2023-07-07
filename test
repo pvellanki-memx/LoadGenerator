@@ -1,168 +1,95 @@
-Field
-
-Offset
-
-Length
-
-Type
-
-Tag Ref Num
-
-Req'd
-
-Description
-
-SBE Header 
-
-0
-
-7
-
-SBE Header
-
-N/A
-
-Y
-
-SBE Header with templateID = 6
-
-SendingTime
-
-7
-
-8
-
-UTCTimestampNanos
-
-52
-
-Y
-
-Time of message transmission always expressed in UTC (Universal Time Coordinated, also known as GMT)
-
-OrderID
-
-15
-
-8
-
-UINT64
-
-37
-
-N
-
-OrderID as assigned by the exchange.
-
-ClOrdID
-
-23
-
-20
-
-CHAR
-
-11
-
-Y
-
-Unique identifier of the replacement order as assigned by the client. Uniqueness must be guaranteed within a single trading day.
-
-ListSeqNo
-
-43
-
-1
-
-UINT8
-
-67
-
-Y
-
-This field is used for identifying a specific quote entered via a Bulk Quote request. This field may not change from the value stated in the original Bulk Quote request. For orders entered via New Order Single this field should be zero.
-
-OrigClOrdID
-
-44
-
-20
-
-CHAR
-
-41
-
-Y
-
-ClOrdID (11) of the previous order (NOT the initial order of the day) .
-
-OptionsSecurityID
-
-64
-
-8
-
-CHAR
-
-21035
-
-Y
-
-The OptionsSecurityID identifying the tradable options product.
-
-Side
-
-72
-
-1
-
-SideType
-
-54
-
-Y
-
-This field may not change from the value stated in the original order.
-
-OrderQty
-
-73
-
-4
-
-UINT32
-
-38
-
-Y
-
-Quantity ordered. This represents the number of contracts for options.
-
-OrdType
-
-77
-
-1
-
-OrdType
-
-40
-
-Y
-
-OrderType may only change from Limit order to Market order.
-
-Price
-
-78
-
-8
-
-PriceType
-
-44
-
-N
-
-Price per unit of quantity (e.g. per contract). Changing the price will cause the order to lose its priority in the book.
-
+from struct import pack, unpack_from
+
+class OrderReplaceRequest:
+    TEMPLATE_ID = 3
+    num_groups = 1
+    schema_id = 1
+    version = 266
+    BLOCK_LENGTH = 86
+
+    def __init__(self, **kwargs):
+        self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups)
+        self.sending_time = kwargs.get('sending_time', UTCTimestampNanos(0))
+        self.order_id = kwargs.get('order_id', UINT64(0))
+        self.cl_ord_id = kwargs.get('cl_ord_id', Char(''))
+        self.list_seq_no = kwargs.get('list_seq_no', UINT8(0))
+        self.orig_cl_ord_id = kwargs.get('orig_cl_ord_id', Char(''))
+        self.options_security_id = kwargs.get('options_security_id', OptionsSecurityID(''))
+        self.side = kwargs.get('side', SideType(''))
+        self.order_qty = kwargs.get('order_qty', UINT32(0))
+        self.ord_type = kwargs.get('ord_type', OrdType(0))
+        self.price = kwargs.get('price', PriceType(0, 0))
+
+    def encode(self):
+        encoded_header = self.sbe_header.encode()
+        encoded_sending_time = self.sending_time.encode()
+        encoded_order_id = self.order_id.encode()
+        encoded_cl_ord_id = self.cl_ord_id.encode()
+        encoded_list_seq_no = self.list_seq_no.encode()
+        encoded_orig_cl_ord_id = self.orig_cl_ord_id.encode()
+        encoded_options_security_id = self.options_security_id.encode()
+        encoded_side = self.side.encode()
+        encoded_order_qty = self.order_qty.encode()
+        encoded_ord_type = self.ord_type.encode()
+        encoded_price = self.price.encode()
+
+        encoded_message = (
+            encoded_header +
+            encoded_sending_time +
+            encoded_order_id +
+            encoded_cl_ord_id +
+            encoded_list_seq_no +
+            encoded_orig_cl_ord_id +
+            encoded_options_security_id +
+            encoded_side +
+            encoded_order_qty +
+            encoded_ord_type +
+            encoded_price
+        )
+
+        return encoded_message
+
+    def decode(self, buffer):
+        offset = 0
+        block_length, template_id, schema_id, version, num_groups = SBEHeader.decode(buffer)
+        self.sbe_header = SBEHeader(block_length, template_id, schema_id, version, num_groups)
+        offset += SBEHeader.SIZE
+
+        self.sending_time = UTCTimestampNanos(0)
+        self.sending_time.decode(buffer[offset:offset + UTCTimestampNanos.SIZE])
+        offset += UTCTimestampNanos.SIZE
+
+        self.order_id = UINT64(0)
+        self.order_id.decode(buffer[offset:offset + UINT64.SIZE])
+        offset += UINT64.SIZE
+
+        self.cl_ord_id = Char('')
+        self.cl_ord_id.decode(buffer[offset:offset + Char.SIZE])
+        offset += Char.SIZE
+
+        self.list_seq_no = UINT8(0)
+        self.list_seq_no.decode(buffer[offset:offset + UINT8.SIZE])
+        offset += UINT8.SIZE
+
+        self.orig_cl_ord_id = Char('')
+        self.orig_cl_ord_id.decode(buffer[offset:offset + Char.SIZE])
+        offset += Char.SIZE
+
+        self.options_security_id = OptionsSecurityID('')
+        self.options_security_id.decode(buffer[offset:offset + OptionsSecurityID.SIZE])
+        offset += OptionsSecurityID.SIZE
+
+        self.side = SideType('')
+        self.side.decode(buffer[offset:offset + SideType.SIZE])
+        offset += SideType.SIZE
+
+        self.order_qty = UINT32(0)
+        self.order_qty.decode(buffer[offset:offset + UINT32.SIZE])
+        offset += UINT32.SIZE
+
+        self.ord_type = OrdType(0)
+        self.ord_type.decode(buffer[offset:offset + OrdType.SIZE])
+        offset += OrdType.SIZE
+
+        self.price = PriceType(0, 0)
+        self.price.decode(buffer[offset:offset + PriceType.SIZE])
