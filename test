@@ -1,54 +1,168 @@
-from struct import pack, unpack_from
+Field
 
-class UnderlyingOrSeriesType:
-    CancelAllOnUnderlying = 0
-    CancelAllOnSeries = 1
-    SIZE = 1
+Offset
 
-    def __init__(self, value):
-        self.value = value
+Length
 
-    def encode(self):
-        return pack('B', self.value)
+Type
 
-    def decode(self, buffer):
-        self.value, = unpack_from('B', buffer)
+Tag Ref Num
 
+Req'd
 
+Description
 
+SBE Header 
 
+0
 
-from struct import pack, unpack_from
+7
 
+SBE Header
 
-class MassCancelInstType:
-    Lockout = 0
-    SendCancels = 1
-    CancelOrdersFromThisPortOnly = 2
-    SIZE = 1
+N/A
 
-    def __init__(self, value):
-        self.value = value
+Y
 
-    def encode(self):
-        return pack('B', self.value)
+SBE Header with templateID = 6
 
-    def decode(self, buffer):
-        self.value, = unpack_from('B', buffer)
+SendingTime
 
+7
 
+8
 
-from struct import pack, unpack_from
+UTCTimestampNanos
 
-class UINT64:
-    SIZE = 8
+52
 
-    def __init__(self, value):
-        self.value = value
+Y
 
-    def encode(self):
-        return pack('>Q', self.value)
+Time of message transmission always expressed in UTC (Universal Time Coordinated, also known as GMT)
 
-    def decode(self, buffer):
-        self.value, = unpack_from('>Q', buffer)
+OrderID
+
+15
+
+8
+
+UINT64
+
+37
+
+N
+
+OrderID as assigned by the exchange.
+
+ClOrdID
+
+23
+
+20
+
+CHAR
+
+11
+
+Y
+
+Unique identifier of the replacement order as assigned by the client. Uniqueness must be guaranteed within a single trading day.
+
+ListSeqNo
+
+43
+
+1
+
+UINT8
+
+67
+
+Y
+
+This field is used for identifying a specific quote entered via a Bulk Quote request. This field may not change from the value stated in the original Bulk Quote request. For orders entered via New Order Single this field should be zero.
+
+OrigClOrdID
+
+44
+
+20
+
+CHAR
+
+41
+
+Y
+
+ClOrdID (11) of the previous order (NOT the initial order of the day) .
+
+OptionsSecurityID
+
+64
+
+8
+
+CHAR
+
+21035
+
+Y
+
+The OptionsSecurityID identifying the tradable options product.
+
+Side
+
+72
+
+1
+
+SideType
+
+54
+
+Y
+
+This field may not change from the value stated in the original order.
+
+OrderQty
+
+73
+
+4
+
+UINT32
+
+38
+
+Y
+
+Quantity ordered. This represents the number of contracts for options.
+
+OrdType
+
+77
+
+1
+
+OrdType
+
+40
+
+Y
+
+OrderType may only change from Limit order to Market order.
+
+Price
+
+78
+
+8
+
+PriceType
+
+44
+
+N
+
+Price per unit of quantity (e.g. per contract). Changing the price will cause the order to lose its priority in the book.
 
