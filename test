@@ -1,4 +1,16 @@
-generated_message 8=FIXT.1.19=21035=D34=6249=EXP01_1452=20230707-18:03:43.26656=MXOP11=30750718=h38=10040=244=854=255=AMD59=060=20230707-18:03:43.26677=O201=1202=100447=D448=QAX1452=66453=1541=2309151815=621035=A004000110=181
-sent application message 8=FIXT.1.19=21035=D34=6249=QAXMXE1352=20230707-18:03:43.26656=MXOP11=30750718=h38=10040=244=854=255=AMD59=060=20230707-18:03:43.26677=O201=1202=100447=D448=QAX1452=66453=1541=2309151815=621035=A004000110=219
-8=FIXT.1.19=9335=334=8549=MXOP52=20230707-18:03:43.26756=QAXMXE1245=4858=Invalid Value371=453372=D10=028
-8=FIXT.1.19=9435=334=10149=MXOP52=20230707-18:03:43.26756=QAXMXE1345=6258=Invalid Value371=453372=D10=063
+generated_message = "8=FIXT.1.19=21035=D34=6249=QAXMXE1352=20230707-18:03:43.26656=MXOP11=30750718=h38=10040=244=854=255=AMD59=060=20230707-18:03:43.26677=O201=1202=100447=D448=QAX1452=66453=1541=2309151815=621035=A004000110=219"
+
+fields = ['453', '448', '447', '452']
+rearranged_fields = []
+
+for field in fields:
+    start_index = generated_message.find(field + '=')
+    if start_index != -1:
+        end_index = generated_message.find('=', start_index + len(field) + 1)
+        if end_index != -1:
+            value = generated_message[start_index + len(field) + 1: end_index]
+            rearranged_fields.append(field + '=' + value)
+
+rearranged_message = ''.join(rearranged_fields)
+
+print(rearranged_message)
