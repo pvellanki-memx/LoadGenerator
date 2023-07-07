@@ -35,3 +35,20 @@ class MassCancelInstType:
 
     def decode(self, buffer):
         self.value, = unpack_from('B', buffer)
+
+
+
+from struct import pack, unpack_from
+
+class UINT64:
+    SIZE = 8
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('>Q', self.value)
+
+    def decode(self, buffer):
+        self.value, = unpack_from('>Q', buffer)
+
