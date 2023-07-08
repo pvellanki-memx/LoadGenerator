@@ -19,33 +19,46 @@ class TestFIXSession(unittest.TestCase):
     def tearDownClass(cls):
         cls.initiator.stop()
 
-    def send_new_order_single(self, order_type, time_in_force, order_qty, symbol, exec_inst=''):
-        with open(self.app.template_file, 'r') as file:
-            template_messages = file.readlines()
+def send_new_order_single(self, order_type, time_in_force, order_qty, symbol, exec_inst=''):
+    with open(self.app.template_file, 'r') as file:
+        template_messages = file.readlines()
 
-        for template_message in template_messages:
-            placeholders = {
-                '<ClOrdID>': self.app.generate_clordid(),
-                '<OrderQty>': str(order_qty),
-                '<Symbol>': symbol,
-                '<OrdType>': order_type,
-                '<TimeInForce>': time_in_force,
-                '<ExecInst>': exec_inst
-            }
-            message = replace_placeholders(template_message, placeholders)
+    for template_message in template_messages:
+        placeholders = {
+            '<ClOrdID>': self.app.generate_clordid(),
+            '<OrderQty>': str(order_qty),
+            '<Symbol>': symbol,
+            '<OrdType>': order_type,
+            '<TimeInForce>': time_in_force,
+            '<ExecInst>': exec_inst
+        }
+        message = replace_placeholders(template_message, placeholders)
 
-            new_order_message = fix.Message()
-            new_order_message.setString(message, False, self.app.message_factory)
-            fix.Session.sendToTarget(new_order_message, self.session_id)
+        new_order_message = fix.Message()
+        new_order_message.setString(message, False, self.app.message_factory)
 
-            time.sleep(2)
+        # Create the repeating group
+        party_group = fix.Group(453, 448, 447, 452)
 
-            self.assertTrue(self.app.execution_report_received)
-            exec_report = self.app.last_execution_report
-            cl_ord_id = exec_report.getField(11)
+        # Add party details to the repeating group
+        party_group.setField(448, "QAX1")
+        party_group.setField(447, "D")
+        party_group.setField(452, "66")
 
-            validate_execution_report(exec_report, order_qty=order_qty, symbol=symbol, order_type=order_type, tif=time_in_force)
-            self.assertEqual(exec_report.getField(39), '0')
+        # Add the repeating group to the message
+        new_order_message.addGroup(party_group)
+
+        fix.Session.sendToTarget(new_order_message, self.session_id)
+
+        time.sleep(2)
+
+        self.assertTrue(self.app.execution_report_received)
+        exec_report = self.app.last_execution_report
+        cl_ord_id = exec_report.getField(11)
+
+        validate_execution_report(exec_report, order_qty=order_qty, symbol=symbol, order_type=order_type, tif=time_in_force)
+        self.assertEqual(exec_report.getField(39), '0')
+
 
     def send_cancel_replace_request(self, orig_cl_ord_id, new_price=None, new_order_qty=None):
         with open(self.app.template_file, 'r') as file:
