@@ -1,0 +1,39 @@
+FIX Load Generator
+The FIX Load Generator is a Python script that generates and sends FIX messages to a target FIX server. It can be used for testing and benchmarking purposes, simulating high message load scenarios.
+
+Prerequisites
+Python 3.6 or above
+QuickFIX library
+
+Installation
+Clone the repository or download the fix_load_generator.py script.
+
+Install the QuickFIX library by following the official installation instructions: QuickFIX Installation
+
+Install the required dependencies by running the following command:
+
+
+pip install requirements.txt
+
+Configuration
+Create a configuration file config.ini to specify the generator settings.
+
+Define the following parameters in the config.ini file:
+
+template_file: Path to the FIX message template file.
+connection_config_file: Path to the QuickFIX connection configuration file.
+log_file: Path to the log file where received messages will be written.
+message_rate: Rate at which messages will be sent (messages per second).
+send_duration: Duration in seconds for which messages will be sent.
+Customize the message weights for different message types in the [MessageTypes] section of the config.ini file. Each message type should be specified as a key-value pair, where the key is the message type and the value is the weight of that message type.
+
+Usage
+Ensure that the FIX ports are running and reachable.
+
+Run the fix_load_generator.py script using the following command:
+
+python fix_load_generator.py
+
+The load generator will establish a connection to the FIX port and start sending messages according to the specified configuration.
+
+The script will output logs and status information to the console.
