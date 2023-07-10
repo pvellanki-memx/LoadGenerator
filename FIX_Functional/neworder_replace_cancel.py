@@ -34,6 +34,19 @@ def send_new_order_single(self, order_type, time_in_force, order_qty, symbol, ex
         }
         message = replace_placeholders(template_message, placeholders)
 
+            party_group_fields = [
+                "448=QAX1",
+                "447=D",
+                "452=66"
+            ]
+
+            # Insert the repeating group into the message
+            repeating_group = "|".join(party_group_fields)
+            message = message.replace('<RepeatingGroup>', repeating_group)
+        
+            # Replace the field delimiter from '|' to SOH character
+            message = message.replace('|', chr(0x01))
+
         new_order_message = fix.Message()
         new_order_message.setString(message, False, self.app.message_factory)
 
