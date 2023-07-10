@@ -310,3 +310,18 @@ app.send_duration = send_duration
 
 # Run the FIX application
 app.run()
+
+
+
+
+
+Generated load: []
+Traceback (most recent call last):
+  File "fix_load_generator.py", line 312, in <module>
+    app.run()
+  File "fix_load_generator.py", line 262, in run
+    load = self.generate_load()
+  File "fix_load_generator.py", line 198, in generate_load
+    quotient, remainder = divmod(iterations, load_length)
+ZeroDivisionError: integer division or modulo by zero
+Segmentation fault (core dumped)
