@@ -60,20 +60,18 @@ def send_new_order_single(self, order_type, time_in_force, order_qty, symbol, ex
 
 
 
-2
-Traceback (most recent call last):
-  File "fix_load_generator.py", line 275, in <module>
-    app.run()
-  File "fix_load_generator.py", line 245, in run
-    message = self.generate_message(load[message_count], session_id)
-  File "fix_load_generator.py", line 97, in generate_message
-    party_group = fix.Group(453, 448, 447, 452)
-  File "/usr/local/lib64/python3.6/site-packages/quickfix.py", line 1538, in __init__
-    this = _quickfix.new_Group(*args)
-NotImplementedError: Wrong number or type of arguments for overloaded function 'new_Group'.
-  Possible C/C++ prototypes are:
-    FIX::Group::Group(int,int)
-    FIX::Group::Group(int,int,int const [])
-    FIX::Group::Group(int,int,message_order const &)
-    FIX::Group::Group(FIX::Group const &)
+# Create the repeating group
+party_group = fix.Group(453, 448, [447, 452])
+
+# Set the number of repeating groups
+party_group.setField(453, "1")
+
+# Set the values for the first party group instance
+party_group.setField(448, "PartyID1")
+party_group.setField(447, "PartyIDSource1")
+party_group.setField(452, "PartyRole1")
+
+# Add the repeating group to the message
+message.setField(party_group)
+
 
