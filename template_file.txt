@@ -8,3 +8,22 @@
 8=FIXT.1.1|9=78|35=F|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|11=<ClOrddID>|10=<CheckSum>|
 # Logoff message template
 8=FIXT.1.1|9=49|35=5|49=EXP01_14|56=MEMX|34=<MsgSeqNum>|52=<SendingTime>|10=<CheckSum>|
+
+
+
+
+# Logon message template
+logon_template = "8=FIXT.1.1\x019=69\x0135=A\x0149=EXP01_14\x0156=MEMX\x0134=<MsgSeqNum>\x0152=<SendingTime>\x0198=0\x01108=30\x01141=Y\x011408=1.10\x0110=<CheckSum>"
+
+# Heartbeat message template
+heartbeat_template = "8=FIXT.1.1\x019=49\x0135=0\x0149=EXP01_14\x0156=MEMX\x0134=<MsgSeqNum>\x0152=<SendingTime>\x0110=<CheckSum>"
+
+# NewOrderSingle message template
+new_order_template = "8=FIXT.1.1\x019=80\x0135=D\x0149=EXP01_14\x0155=AMD\x0156=MXOP\x0118=h\x0138=100\x0144=8\x0154=2\x0159=0\x0140=2\x0134=<MsgSeqNum>\x0152=<SendingTime>\x0160=<SendingTime>\x0111=<ClOrdID>\x0121035=A0040001\x01541=230915\x01201=1\x01202=100\x0177=O\x011815=6\x01453=1\x01448=QAX1\x01447=D\x01452=66\x0110=<CheckSum>"
+
+# OrderCancel message template
+order_cancel_template = "8=FIXT.1.1\x019=78\x0135=F\x0149=EXP01_14\x0156=MEMX\x0134=<MsgSeqNum>\x0152=<SendingTime>\x0111=<ClOrdID>\x0110=<CheckSum>"
+
+# Logoff message template
+logoff_template = "8=FIXT.1.1\x019=49\x0135=5\x0149=EXP01_14\x0156=MEMX\x0134=<MsgSeqNum>\x0152=<SendingTime>\x0110=<CheckSum>"
+
