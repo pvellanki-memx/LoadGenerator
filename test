@@ -30,3 +30,15 @@ def generate_message(self, template, session_id):
     message.calculateString()
 
     return message
+
+
+Traceback (most recent call last):
+  File "fix_load_generator.py", line 310, in <module>
+    app.run()
+  File "fix_load_generator.py", line 280, in run
+    message = self.generate_message(load[message_count], session_id)
+  File "fix_load_generator.py", line 82, in generate_message
+    message = fix.Message(template, False)
+  File "/usr/local/lib64/python3.6/site-packages/quickfix.py", line 1395, in __init__
+    this = _quickfix.new_Message(*args)
+quickfix.InvalidMessage: Invalid message: SOH not found at end of field
