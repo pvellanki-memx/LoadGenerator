@@ -37,16 +37,6 @@ def send_new_order_single(self, order_type, time_in_force, order_qty, symbol, ex
         new_order_message = fix.Message()
         new_order_message.setString(message, False, self.app.message_factory)
 
-        # Create the repeating group
-        party_group = fix.Group(453, 448, 447, 452)
-
-        # Add party details to the repeating group
-        party_group.setField(448, "QAX1")
-        party_group.setField(447, "D")
-        party_group.setField(452, "66")
-
-        # Add the repeating group to the message
-        new_order_message.addGroup(party_group)
 
         fix.Session.sendToTarget(new_order_message, self.session_id)
 
