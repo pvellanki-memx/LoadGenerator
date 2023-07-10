@@ -15,6 +15,7 @@ class MyApplication(fix.Application):
         self.message_weights = message_weights
         self.message_rate = message_rate
         self.sessions = {}
+        self.log_file = log_file
 
     def onCreate(self, sessionID):
         print("Session created -", sessionID.toString())
@@ -27,16 +28,25 @@ class MyApplication(fix.Application):
         return True
 
     def toApp(self, message, sessionID):
+        session_id = sessionID.toString()
+        with open(self.log_file, "a") as file:
+                file.write(f"Session: {session_id}\n")
+                file.write(message.toString() + '\n')
         print("sent application message", message.toString())
 
     def fromApp(self, message, sessionID):
-        print("Received application message", message.toString())
+        session_id = sessionID.toString()
+        with open(self.log_file, "a") as file:
+                file.write(f"Session: {session_id}\n")
+                file.write(message.toString() + '\n')
+        print("sent application message", message.toString())
 
     def fromAdmin(self, message, sessionID):
         global sessions
         session_id = sessionID.toString()
         incoming_msg_seq_num = int(message.getHeader().getField(34))
         msg_type = message.getHeader().getField(35)
+        print(message)
 
         if msg_type == 'A':  # Logon message
             if incoming_msg_seq_num == 1:
@@ -45,6 +55,8 @@ class MyApplication(fix.Application):
         elif msg_type == '5':  # Logout message
             print(f"Session disconnected for {session_id}")
             sessions[session_id] = False
+        with open(self.log_file, 'a') as file:
+            file.write(f"Received fromAdmin message:{message.toString()}\n")
 
     def onLogout(self, sessionID):
         print("Logout initiated -", sessionID.toString())
@@ -79,9 +91,23 @@ class MyApplication(fix.Application):
             # Generate the SendingTime in the desired format
             sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
             message = message.replace('<SendingTime>', sending_time)
+
+
+            # Create the repeating group fields
+            party_group_fields = [
+                "453=1",
+                "448=QAX1",
+                "447=D",
+                "452=66"
+            ]
+
+            # Insert the repeating group into the message
+            repeating_group = "|".join(party_group_fields)
+            message = message.replace('<RepeatingGroup>', repeating_group)
         
             # Replace the field delimiter from '|' to SOH character
             message = message.replace('|', chr(0x01))
+
 
             # Calculate the CheckSum
             #message_factory = fix.MessageFactory()
@@ -151,7 +177,8 @@ class MyApplication(fix.Application):
         for field in fields:
             if field.startswith("35="):
                 return field.split("=")[1].lower()
-        return ""
+        return
+    
 
     """
     def run(self):
