@@ -1,0 +1,134 @@
+-- Declare the SBE template IDs
+local TEMPLATE_ID_SBE_HEADER = 1
+local TEMPLATE_ID_NEW_ORDER_SINGLE = 3
+local TEMPLATE_ID_SHORT_TWO_SIDED_BULK_QUOTE = 4
+
+-- Define the field types and lengths
+local FIELD_TYPE_UINT16 = 1
+local FIELD_TYPE_UINT8 = 2
+local FIELD_TYPE_UTCTIMESTAMPNANOS = 3
+local FIELD_TYPE_CHAR = 4
+
+local LENGTH_TEMPLATE_ID = 1
+
+-- Create the Wireshark dissector table
+local sbe_dissector_table = DissectorTable.new("sbe.templateid", "SBE Template ID", ftypes.UINT16)
+
+-- Define the dissector function for the SBE header
+local function dissect_sbe_header(buffer, pinfo, tree)
+    local template_id = buffer(2, LENGTH_TEMPLATE_ID):le_uint()
+    local template_id_item = tree:add_le(f_template_id, buffer(2, LENGTH_TEMPLATE_ID))
+    
+    if template_id == TEMPLATE_ID_NEW_ORDER_SINGLE then
+        template_id_item:append_text(" (NewOrderSingle)")
+        local sending_time = buffer(7, 8)
+        local cl_ord_id = buffer(15, 20)
+        local options_security_id = buffer(8, 35)
+        local side = buffer(43, 1)
+        local order_qty = buffer(44, 4)
+        local ord_type = buffer(48, 1)
+        local price = buffer(49, 8)
+        local time_in_force = buffer(57, 1)
+        local open_or_close = buffer(58, 1)
+        local exec_inst = buffer(59, 2)
+        local trading_capacity = buffer(61, 1)
+        local reprice_frequency = buffer(62, 1)
+        local reprice_behavior = buffer(63, 1)
+        local mtp_group_id = buffer(64, 2)
+        local match_trade_prevention = buffer(66, 1)
+        local cancel_group_id = buffer(67, 2)
+        local risk_group_id = buffer(69, 2)
+        
+        -- Add fields to the tree
+        tree:add_le(f_sending_time, sending_time)
+        tree:add_le(f_cl_ord_id, cl_ord_id)
+        tree:add_le(f_options_security_id, options_security_id)
+        tree:add_le(f_side, side)
+        tree:add_le(f_order_qty, order_qty)
+        tree:add_le(f_ord_type, ord_type)
+        tree:add_le(f_price, price)
+        tree:add_le(f_time_in_force, time_in_force)
+        tree:add_le(f_open_or_close, open_or_close)
+        tree:add_le(f_exec_inst, exec_inst)
+        tree:add_le(f_trading_capacity, trading_capacity)
+        tree:add_le(f_reprice_frequency, reprice_frequency)
+        tree:add_le(f_reprice_behavior, reprice_behavior)
+        tree:add_le(f_mtp_group_id, mtp_group_id)
+        tree:add_le(f_match_trade_prevention, match_trade_prevention)
+        tree:add_le(f_cancel_group_id, cancel_group_id)
+        tree:add_le(f_risk_group_id, risk_group_id)
+    elseif template_id == TEMPLATE_ID_SHORT_TWO_SIDED_BULK_QUOTE then
+        template_id_item:append_text(" (ShortTwoSidedBulkQuote)")
+        local sending_time = buffer(7, 8)
+        local cl_ord_id = buffer(15, 20)
+        local time_in_force = buffer(35, 1)
+        local exec_inst = buffer(36, 2)
+        local trading_capacity = buffer(38, 1)
+        local mtp_group_id = buffer(39, 2)
+        local match_trade_prevention = buffer(41, 1)
+        local cancel_group_id = buffer(42, 2)
+        local risk_group_id = buffer(44, 2)
+        
+        -- Add fields to the tree
+        tree:add_le(f_sending_time, sending_time)
+        tree:add_le(f_cl_ord_id, cl_ord_id)
+        tree:add_le(f_time_in_force, time_in_force)
+        tree:add_le(f_exec_inst, exec_inst)
+        tree:add_le(f_trading_capacity, trading_capacity)
+        tree:add_le(f_mtp_group_id, mtp_group_id)
+        tree:add_le(f_match_trade_prevention, match_trade_prevention)
+        tree:add_le(f_cancel_group_id, cancel_group_id)
+        tree:add_le(f_risk_group_id, risk_group_id)
+    else
+        template_id_item:append_text(" (Unknown Template)")
+    end
+end
+
+-- Create a new Wireshark dissector for the SBE protocol
+local sbe_dissector = Proto("SBE", "Simple Binary Encoding")
+
+-- Create the fields
+local f_template_id = ProtoField.uint16("sbe.templateid", "Template ID", base.DEC)
+local f_sending_time = ProtoField.bytes("sbe.sendingtime", "Sending Time")
+local f_cl_ord_id = ProtoField.bytes("sbe.clordid", "ClOrdID")
+local f_options_security_id = ProtoField.bytes("sbe.optionssecurityid", "OptionsSecurityID")
+local f_side = ProtoField.bytes("sbe.side", "Side")
+local f_order_qty = ProtoField.uint32("sbe.orderqty", "Order Quantity", base.DEC)
+local f_ord_type = ProtoField.bytes("sbe.ordtype", "Order Type")
+local f_price = ProtoField.bytes("sbe.price", "Price")
+local f_time_in_force = ProtoField.bytes("sbe.timeinforce", "Time In Force")
+local f_open_or_close = ProtoField.bytes("sbe.openorclose", "Open or Close")
+local f_exec_inst = ProtoField.bytes("sbe.execinst", "Execution Instructions")
+local f_trading_capacity = ProtoField.bytes("sbe.tradingcapacity", "Trading Capacity")
+local f_reprice_frequency = ProtoField.bytes("sbe.repricefrequency", "Reprice Frequency")
+local f_reprice_behavior = ProtoField.bytes("sbe.repricebehavior", "Reprice Behavior")
+local f_mtp_group_id = ProtoField.bytes("sbe.mtpgroupid", "MTP Group ID")
+local f_match_trade_prevention = ProtoField.bytes("sbe.matchtradeprevention", "Match Trade Prevention")
+local f_cancel_group_id = ProtoField.uint16("sbe.cancelgroupid", "Cancel Group ID", base.DEC)
+local f_risk_group_id = ProtoField.uint16("sbe.riskgroupid", "Risk Group ID", base.DEC)
+
+-- Register the fields
+sbe_dissector.fields = {
+    f_template_id, f_sending_time, f_cl_ord_id, f_options_security_id, f_side, f_order_qty, f_ord_type,
+    f_price, f_time_in_force, f_open_or_close, f_exec_inst, f_trading_capacity, f_reprice_frequency,
+    f_reprice_behavior, f_mtp_group_id, f_match_trade_prevention, f_cancel_group_id, f_risk_group_id
+}
+
+-- Register the SBE dissector
+function sbe_dissector.dissector(buffer, pinfo, tree)
+    local subtree = tree:add(sbe_dissector, buffer(), "Simple Binary Encoding")
+    subtree:add_le(f_template_id, buffer(2, LENGTH_TEMPLATE_ID))
+
+    local template_id = buffer(2, LENGTH_TEMPLATE_ID):le_uint()
+    local template_dissector = sbe_dissector_table:get_dissector(template_id)
+
+    if template_dissector then
+        template_dissector:call(buffer, pinfo, subtree)
+    end
+end
+
+-- Register the SBE header dissector with the SBE dissector
+sbe_dissector_table:add(TEMPLATE_ID_SBE_HEADER, dissect_sbe_header)
+
+-- Register the SBE dissector as a heuristic dissector for TCP
+DissectorTable.get("tcp.port"):add_heuristic("tcp", sbe_dissector)
