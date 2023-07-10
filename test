@@ -58,3 +58,22 @@ def send_new_order_single(self, order_type, time_in_force, order_qty, symbol, ex
         validate_execution_report(exec_report, order_qty=order_qty, symbol=symbol, order_type=order_type, tif=time_in_force)
         self.assertEqual(exec_report.getField(39), '0')
 
+
+
+2
+Traceback (most recent call last):
+  File "fix_load_generator.py", line 275, in <module>
+    app.run()
+  File "fix_load_generator.py", line 245, in run
+    message = self.generate_message(load[message_count], session_id)
+  File "fix_load_generator.py", line 97, in generate_message
+    party_group = fix.Group(453, 448, 447, 452)
+  File "/usr/local/lib64/python3.6/site-packages/quickfix.py", line 1538, in __init__
+    this = _quickfix.new_Group(*args)
+NotImplementedError: Wrong number or type of arguments for overloaded function 'new_Group'.
+  Possible C/C++ prototypes are:
+    FIX::Group::Group(int,int)
+    FIX::Group::Group(int,int,int const [])
+    FIX::Group::Group(int,int,message_order const &)
+    FIX::Group::Group(FIX::Group const &)
+
