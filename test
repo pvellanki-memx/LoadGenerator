@@ -1,1 +1,11 @@
-8=FIXT.1.1^A9=241^A35=D^A34=37^A43=Y^A49=QAXMXE13^A52=20230710-14:47:53.260^A56=MXOP^A122=20230710-14:47:53.257^A11=837852^A18=h^A38=100^A40=2^A44=8^A54=2^A55=AMD^A59=0^A60=20230710-14:47:53.257^A77=O^A201=1^A202=100^A447=D^A448=QAX1^A452=66^A453=1^A541=230915^A1815=6^A21035=A0040001^A10=233^A
+Traceback (most recent call last):
+  File "fix_load_generator.py", line 274, in <module>
+    app.run()
+  File "fix_load_generator.py", line 244, in run
+    message = self.generate_message(load[message_count], session_id)
+  File "fix_load_generator.py", line 107, in generate_message
+    fix_message = fix.Message(message, False)
+  File "/usr/local/lib64/python3.6/site-packages/quickfix.py", line 1395, in __init__
+    this = _quickfix.new_Message(*args)
+quickfix.InvalidMessage: Invalid message: Field tag is invalid: <RepeatingGroup>10
+Segmentation fault (core dumped)
