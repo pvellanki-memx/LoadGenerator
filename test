@@ -1,11 +1,32 @@
-Traceback (most recent call last):
-  File "fix_load_generator.py", line 274, in <module>
-    app.run()
-  File "fix_load_generator.py", line 244, in run
-    message = self.generate_message(load[message_count], session_id)
-  File "fix_load_generator.py", line 107, in generate_message
-    fix_message = fix.Message(message, False)
-  File "/usr/local/lib64/python3.6/site-packages/quickfix.py", line 1395, in __init__
-    this = _quickfix.new_Message(*args)
-quickfix.InvalidMessage: Invalid message: Field tag is invalid: <RepeatingGroup>10
-Segmentation fault (core dumped)
+def generate_message(self, template, session_id):
+    # Create a new message instance based on the template
+    message = fix.Message(template, False)
+
+    # Set the ClOrdID
+    message.setField(fix.ClOrdID(self.generate_clordid()))
+
+    # Get the outgoing sequence number
+    seq_num = self.get_outgoing_seq_num(session_id)
+
+    # Set the MsgSeqNum
+    message.getHeader().setField(fix.MsgSeqNum(seq_num))
+
+    # Generate the SendingTime in the desired format
+    sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
+    message.getHeader().setField(fix.SendingTime(sending_time))
+
+    # Create the repeating group
+    party_group = fix.Group(453, 448, [447, 452])
+
+    # Set the values for the repeating group fields
+    party_group.setField(448, "QAX1")
+    party_group.setField(447, "D")
+    party_group.setField(452, "66")
+
+    # Add the repeating group to the message
+    message.addGroup(party_group)
+
+    # Calculate the CheckSum
+    message.calculateString()
+
+    return message
