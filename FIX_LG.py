@@ -76,44 +76,67 @@ class MyApplication(fix.Application):
             return session.getExpectedSenderNum()
         return 0
 
-    def generate_message(self, message_type, session_id):
-        if message_type.lower() == "logon":
-            message = fix.Message()
-            message.getHeader().setField(fix.MsgType(fix.MsgType_Logon))
-        elif message_type.lower() == "newordersingle":
-            message = fix.Message()
-            message.getHeader().setField(fix.MsgType(fix.MsgType_NewOrderSingle))
-            # Set other required fields for NewOrderSingle message
-        elif message_type.lower() == "orderreplace":
-            message = fix.Message()
-            message.getHeader().setField(fix.MsgType(fix.MsgType_OrderCancelReplaceRequest))
-            # Set other required fields for OrderCancelReplaceRequest message
-        elif message_type.lower() == "ordercancel":
-            message = fix.Message()
-            message.getHeader().setField(fix.MsgType(fix.MsgType_OrderCancelRequest))
-            # Set other required fields for OrderCancelRequest message
-        else:
-            # Unknown message type
-            return None
+def generate_message(self, message_type, session_id):
+    if message_type.lower() == "logon":
+        message = fix.Message()
+        message.getHeader().setField(fix.MsgType(fix.MsgType_Logon))
+    elif message_type.lower() == "newordersingle":
+        message = fix.Message()
+        message.getHeader().setField(fix.MsgType(fix.MsgType_NewOrderSingle))
 
-        # Set the ClOrdID
+        # Set other required fields for NewOrderSingle message
+        message.setField(fix.Symbol("AMD"))
+        message.setField(fix.Side(fix.Side_BUY))
+        message.setField(fix.OrderQty(100))
+        message.setField(fix.Price(8))
+        message.setField(fix.OrdType(fix.OrdType_LIMIT))
+        message.setField(fix.TimeInForce(fix.TimeInForce_DAY))
         message.setField(fix.ClOrdID(self.generate_clordid()))
+        message.setField(fix.HandlInst(fix.HandlInst_MANUAL_ORDER))
+        message.setField(fix.SecurityID("A0040001"))
+        message.setField(fix.SecurityIDSource(fix.SecurityIDSource_CUSIP))
+        message.setField(fix.Account("QAX1"))
+        message.setField(fix.SecurityExchange("MXOP"))
 
-        # Get the outgoing sequence number
-        seq_num = self.get_outgoing_seq_num(session_id)
+        # Create the repeating group fields
+        party_group = fix.Group(453, 448, [447, 452])
 
-        # Set the MsgSeqNum
-        message.getHeader().setField(fix.MsgSeqNum(seq_num))
+        # Set the values for the repeating group fields
+        party_group.setField(448, "QAX1")
+        party_group.setField(447, "D")
+        party_group.setField(452, "66")
 
-        # Generate the SendingTime in the desired format
-        sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
-        message.getHeader().setField(fix.SendingTime(sending_time))
+        # Add the repeating group to the message
+        message.addGroup(party_group)
 
-        # Calculate the CheckSum
-        message.calculateString()
-        message.setField(fix.CheckSum(self.calculate_checksum(message.toString())))
+    elif message_type.lower() == "orderreplace":
+        message = fix.Message()
+        message.getHeader().setField(fix.MsgType(fix.MsgType_OrderCancelReplaceRequest))
+        # Set other required fields for OrderCancelReplaceRequest message
+    elif message_type.lower() == "ordercancel":
+        message = fix.Message()
+        message.getHeader().setField(fix.MsgType(fix.MsgType_OrderCancelRequest))
+        # Set other required fields for OrderCancelRequest message
+    else:
+        # Unknown message type
+        return None
 
-        return message
+    # Get the outgoing sequence number
+    seq_num = self.get_outgoing_seq_num(session_id)
+
+    # Set the MsgSeqNum
+    message.getHeader().setField(fix.MsgSeqNum(seq_num))
+
+    # Generate the SendingTime in the desired format
+    sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
+    message.getHeader().setField(fix.SendingTime(sending_time))
+
+    # Calculate the CheckSum
+    message.calculateString()
+    message.setField(fix.CheckSum(self.calculate_checksum(message.toString())))
+
+    return message
+
 
     def increment_outgoing_seq_num(self, session_id):
         session = fix.Session.lookupSession(fix.SessionID(session_id))
