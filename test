@@ -71,6 +71,26 @@ party_group.setField(448, "PartyID1")
 party_group.setField(447, "PartyIDSource1")
 party_group.setField(452, "PartyRole1")
 
+
+
+
+def generate_message(self, template, session_id):
+    # Replace placeholders in the message template
+    message = template.replace('<ClOrdID>', self.generate_clordid())
+
+    # Generate the SendingTime in the desired format
+    sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
+    message = message.replace('<SendingTime>', sending_time)
+
+    # Create the repeating group string
+    party_group = "453=1|448=PartyID1|447=PartyIDSource1|452=PartyRole1|"
+
+    # Insert the repeating group into the message
+    message = message.replace('<RepeatingGroup>', party_group)
+
+    return message
+
+
 # Add the repeating group to the message
 message.setField(party_group)
 
