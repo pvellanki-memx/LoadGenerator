@@ -1,145 +1,24 @@
-generated_message = "8=FIXT.1.19=21035=D34=6249=QAXMXE1352=20230707-18:03:43.26656=MXOP11=30750718=h38=10040=244=854=255=AMD59=060=20230707-18:03:43.26677=O201=1202=100447=D448=QAX1452=66453=1541=2309151815=621035=A004000110=219"
+def fromApp(self, message, sessionID):
+    formatted_message = self.format_message(message)
+    print("Received application message", formatted_message)
 
-fields = ['453', '448', '447', '452']
-rearranged_fields = []
+def format_message(self, message):
+    # Extract the message fields
+    field_dict = {}
+    for i in range(1, message.getNumFields()):
+        field = fix.Field()
+        message.getField(i, field)
+        field_dict[field.getField()] = field.getString()
 
-for field in fields:
-    start_index = generated_message.find(field + '=')
-    if start_index != -1:
-        end_index = generated_message.find('=', start_index + len(field) + 1)
-        if end_index != -1:
-            value = generated_message[start_index + len(field) + 1: end_index]
-            rearranged_fields.append(field + '=' + value)
+    # Sort the fields by tag number
+    sorted_fields = sorted(field_dict.items(), key=lambda x: int(x[0]))
 
-rearranged_message = ''.join(rearranged_fields)
+    # Create the formatted message string
+    formatted_message = ''
+    for tag, value in sorted_fields:
+        formatted_message += f'{tag}={value}|'
 
-print(rearranged_message)
+    # Remove the trailing delimiter
+    formatted_message = formatted_message[:-1]
 
-
-
-
-def send_new_order_single(self, order_type, time_in_force, order_qty, symbol, exec_inst=''):
-    with open(self.app.template_file, 'r') as file:
-        template_messages = file.readlines()
-
-    for template_message in template_messages:
-        placeholders = {
-            '<ClOrdID>': self.app.generate_clordid(),
-            '<OrderQty>': str(order_qty),
-            '<Symbol>': symbol,
-            '<OrdType>': order_type,
-            '<TimeInForce>': time_in_force,
-            '<ExecInst>': exec_inst
-        }
-        message = replace_placeholders(template_message, placeholders)
-
-        new_order_message = fix.Message()
-        new_order_message.setString(message, False, self.app.message_factory)
-
-        # Create the repeating group
-        party_group = fix.Group(453, 448, 447, 452)
-
-        # Add party details to the repeating group
-        party_group.setField(448, "QAX1")
-        party_group.setField(447, "D")
-        party_group.setField(452, "66")
-
-        # Add the repeating group to the message
-        new_order_message.addGroup(party_group)
-
-        fix.Session.sendToTarget(new_order_message, self.session_id)
-
-        time.sleep(2)
-
-        self.assertTrue(self.app.execution_report_received)
-        exec_report = self.app.last_execution_report
-        cl_ord_id = exec_report.getField(11)
-
-        validate_execution_report(exec_report, order_qty=order_qty, symbol=symbol, order_type=order_type, tif=time_in_force)
-        self.assertEqual(exec_report.getField(39), '0')
-
-
-
-# Create the repeating group
-party_group = fix.Group(453, 448, [447, 452])
-
-# Set the number of repeating groups
-party_group.setField(453, "1")
-
-# Set the values for the first party group instance
-party_group.setField(448, "PartyID1")
-party_group.setField(447, "PartyIDSource1")
-party_group.setField(452, "PartyRole1")
-
-
-
-
-def generate_message(self, template, session_id):
-    # Replace placeholders in the message template
-    message = template.replace('<ClOrdID>', self.generate_clordid())
-
-    # Generate the SendingTime in the desired format
-    sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
-    message = message.replace('<SendingTime>', sending_time)
-
-    # Create the repeating group string
-    party_group = "453=1|448=PartyID1|447=PartyIDSource1|452=PartyRole1|"
-
-    # Insert the repeating group into the message
-    message = message.replace('<RepeatingGroup>', party_group)
-
-    return message
-
-
-# Add the repeating group to the message
-message.setField(party_group)
-
-
-
-
-
-
-
-
-
-
-def generate_message(self, template, session_id):
-    # Replace placeholders in the message template
-    message = template.replace('<ClOrdID>', self.generate_clordid())
-
-    # Get the outgoing sequence number
-    seq_num = str(self.get_outgoing_seq_num(session_id))
-    print(seq_num)
-
-    # Replace the <SeqNum> placeholder with the sequence number
-    message = message.replace('<MsgSeqNum>', seq_num)
-
-    # Generate the SendingTime in the desired format
-    sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
-    message = message.replace('<SendingTime>', sending_time)
-
-    # Create the repeating group fields
-    party_group_fields = [
-        "448=PartyID1",
-        "447=PartyIDSource1",
-        "452=PartyRole1"
-    ]
-
-    # Insert the repeating group into the message
-    repeating_group = "|".join(party_group_fields)
-    message = message.replace('<RepeatingGroup>', repeating_group)
-
-    # Replace the field delimiter from '|' to SOH character
-    message = message.replace('|', chr(0x01))
-
-    # Calculate the CheckSum
-    fix_message = fix.Message(message, False)
-    checksum = self.calculate_checksum(fix_message.toString())
-
-    # Set the CheckSum field
-    fix_message.setField(10, checksum)
-    print("generated_message", fix_message)
-
-    return fix_message
-
-
+    return formatted_message
