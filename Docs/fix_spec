@@ -1,0 +1,1054 @@
+MEMO for US Options - FIX
+•	Overview
+•	Architecture 
+o	Transport Layer
+o	Session Layer
+o	Application Layer 
+	ClOrdID
+	Symbology
+•	Message Field Types 
+o	AllocTransType (FIX tag 71)
+o	CancelRejectReasonCode (FIX tag 102)
+o	CancelReasonCode (MEMX custom FIX tag 21004)
+o	CxlRejResponseToType (FIX tag 434)
+o	ExchangeCode (FIX tag 30)
+o	ExecInst (FIX tag 18)
+o	ExecRestatementType (FIX tag 378)
+o	ExtendedRestatementReasonType (Custom FIX tag 21022)
+o	LastLiquidityIndType (FIX tag 851)
+o	OpenOrCloseType (FIX tag 77)
+o	OrderRejectReasonCode (FIX tag 103)
+o	OrdType (FIX tag 40)
+o	TradingCapacityType (FIX tag 1815)
+o	Parties Group
+o	PartyIDSourceType (FIX tag 447)
+o	PartyRoleType (FIX tag 452)
+o	PutOrCallType (FIX tag 201)
+o	RepriceFrequencyType (MEMX custom FIX tag 21020)
+o	RepriceBehaviorType(MEMX custom FIX tag 21021)
+o	MatchTradePreventionType (MEMX custom FIX tag 21001)
+o	SideType (FIX tag 54)
+o	MtpGroupIDType (FIX tag 2362)
+o	TimeInForceType (FIX tag 59)
+•	Headers and Trailers 
+o	Standard Header
+o	Standard Trailer
+•	Messages 
+o	Session Messages
+o	Heartbeat (Sent by exchange and client)
+o	Logon
+o	Logout
+o	Reject
+o	ResendRequest
+o	SequenceReset
+o	TestRequest
+o	BusinessMessageReject
+•	Session Management
+•	Application Messages From Exchange to Client 
+o	OrderCancelReject
+o	ExecutionReport 
+	New Order Acknowledge
+	Rejected Order
+	Trade
+	Pending Replace
+	Replaced
+	Pending Cancel
+	Canceled
+	Restatement
+	Trade Cancel/Correct
+	UserNotification
+o	AllocationInstructionAck
+o	AllocationReport
+•	Application Messages from Client to Exchange 
+o	NewOrderSingle
+o	OrderCancelReplaceRequest
+o	OrderCancelRequest
+o	AllocationInstruction
+Overview
+The MEMO FIX for Options protocol is the application layer message standard used by members to submit orders to the Options Exchange. MEMO FIX is a text key=value formatted protocol based on the FIX Trading Community FIX 5.0 SP2 specifications.
+Architecture
+Transport Layer
+The MEMO FIX for Options protocol uses the Transmission Control Protocol (TCP) to provide reliable and ordered delivery of messages between clients and MEMO servers.
+Session Layer
+The MEMO FIX for Options protocol uses the FIXT 1.1 specification session messages to establish and maintain a session.
+Application Layer
+MEMO FIX for Options protocol application layer messages are based on the Financial Information Exchange (FIX) Protocol version 5.0 and are key=value text encoded.
+ClOrdID
+All ClOrdIDs can be up to 20 characters. They can contain only ASCII printable characters.
+Symbology
+Upon request via a separate channel, the exchange provides a list of instrument directory messages. Each instrument directory message provides these important fields used to identify a product for order processing:
+•	OptionsSecurityID (custom tag 21035), an 8 CHAR field that uniquely identifies an options security on the exchange,
+•	Symbol (tag 55, OSIRoot), the OSI Root for the options security,
+•	MaturityDate, the date of maturity (a full date) of the Local Market (vs. UTC) in YYYYMMDD format,
+•	PutOrCall, indicates if the option security is a Put or a Call,
+•	StrikePrice, the strike price for the option security.
+The MEMO for Options FIX protocol allows the use of the OptionsSecurityID (custom tag 21035), or the combination of the Symbol (tag 55, OSIRoot), MaturityDate (tag 541), the PutOrCall (tag 201) and the StrikePrice (tags 202) to identify an option security.
+Message Field Types
+AllocTransType (FIX tag 71)
+The AllocTransType Identifies an allocation transaction type.
+AllocTransType is encoded as an int type.
+Value	Name	Description
+0	New	Replace existing trade with allocation. This is the first allocation on a trade and clients should reference ExecID when submitting.
+1	Replace	Replacing existing allocations with new allocations. This is any subsequent allocation and clients should use tag 72 to match a previously reported tag 755 from an AllocationReport message.
+CancelRejectReasonCode (FIX tag 102)
+Identifies the reason why an order cancellation or replace request was rejected.
+Values 0-99 are reserved by the FIX specification. Note that not all of the reserved FIX codes are used.
+Values 100-199 are used to denote issues with specific request fields.
+Values 200-299 are used to denote issues with the request as a whole.
+Values 300-399 are used to denote issues related to risk.
+Also note that some codes in this table may not be sent in FIX but are listed here to maintain consistency with the other order entry specifications, or reserved for future use.
+CancelRejectReasonCode is encoded as an int type.
+Value	Name	Description
+0	TooLateToCancel	A cancel or replace request was received after the exchange has closed.
+1	UnknownOrder	An order with the specified identifer was not found. (OrigClOrdID or OrderID for single orders, or the combination of OrigClOrdID, Side, and ListSeqNo for components of BulkQuote requests).
+3	OrderAlreadyPendingCancelOrReplace	There is a pending request on this order.
+6	DuplicateClOrdID	The supplied ClOrderID was already used on a previous request.
+8	PriceExceedsCurrentPriceBand	The price of the replacement order fell outside execution price collar bands.
+18	InvalidPriceIncrement	Request Limit Price increment is invalid.
+99	Other	This request was rejected for some other reason not listed.
+100	MissingSymbol	The request did not supply a Symbol.
+101	InvalidSymbol	The request supplied an invalid Symbol.
+102	MissingClOrdID	The request did not supply a ClOrdID.
+103	InvalidClOrdID	The request supplied an invalid ClOrdID.
+104	MissingSide	The request did not supply a side.
+105	InvalidSide	The request supplied an invalid side.
+106	MissingOrderQty	The request did not supply a quantity.
+107	InvalidOrderQty	The request supplied a quantity, but it was set to an invalid value (i.e. 0, larger than exchange max, etc).
+108	MissingOrderType	The request did not supply an order type.
+109	InvalidOrderType	The request supplied an invalid order type.
+110	MissingLimitPrice	The request did not supply a LimitPrice field and was required to due to OrderType requested.
+111	InvalidLimitPrice	The request supplied the LimitPrice field but the value was invalid (0, more than the max allowed by the exchange, etc) or not applicable (i.e. the OrderType was set to Market).
+112-113	N/A	
+114	MissingListSeqNo	The request did not supply the ListSeqNo field.
+115	InvalidListSeqNo	The request supplied the ListSeqNo field, but it was set to an invalid value.
+116	MissingOrigClOrdID	The request did not supply the OrigClOrdID field.
+117	InvalidOrigClOrdID	The request supplied the OrigClOrdID field, but it was too large, contained illegal characters, etc.
+118	MissingOrderID	The request did not supply the OrderID field, and was required to (for example, request omitted the OrigClOrdID field and was trying to perform a delegated cancel for an order from another port).
+119	InvalidOrderID	The request supplied the OrderID field, but it was too large, contained illegal characters, etc.
+120-199	N/A	Reserved.
+200	Halted	The symbol supplied in the request is currently halted.
+201	FirmDisabled	The request was rejected because the firm sending the order has been disabled.
+202	EFIDDisabled	The request was rejected because the EFID used in the order has been disabled.
+203	AccountDisabled	The request was rejected because the account sending the order has been disabled.
+204	UnsupportedOrdTypeChange	Change of OrdType in replace request not supported.
+205	UnsupportedSideChange	Change of side in replace request not supported.
+206	SymbolMismatch	Symbol provided on a replace request does not match the Symbol on the original order associated with the provided OrigClOrdID or OrderID.
+207	OrigOrderIDMismatch	OrigClOrdID and OrderID were both provided, but the provided OrderID does not match the actual OrderID associated with the provided OrigClOrdID (or OrigClOrdID, Side, and ListSeqNo for components of BulkQuote requests).
+208-299	N/A	Reserved.
+300	NonTestSymbolsBlocked	The replace was for a non-test symbol and the port is configured in test-only mode (exchange configuration).
+301	NotionalValueExceedsThreshold	The notional value of the replace exceeded an exchange configured maximum.
+302	MaxNotionalValuePerOrder
+RiskRuleViolated	The notional value of the replace violated the firm’s max notional value per order risk rule.
+303	BlockNonTestSymbol
+RiskRuleViolated	The replace violated the firm’s test symbol trading risk rule.
+304	MaxContractsPerOrder
+RiskRuleViolated	The replace breached the firm’s max contracts per order risk rule.
+305	NBBOWidthExceedsThreshold	The width of the NBBO is greater than the exchange specified threshold.
+306	ExchangePriceValueCollar
+RiskRuleViolated	A replace Limit Order to buy with a price that is more than an Exchange specified amount above the NBO or an incoming replace Limit Order to sell with a price that is less than an Exchange specified amount below the NBB
+307	ExecutionPriceHigherThanStrikePrice	Replace Market Order or the remaining portion of a Market Order to buy a put that would execute in whole or in part at a price higher than or equal to the strike price of the option or an incoming Limit Order to buy a put that would execute at a price higher than or equal to the strike price of the option.
+308	MarketBuyWhenNBOIsZero	Replace Market Order to buy in an open series when the NBO is zero.
+309	MarketSellWhenNBBGreaterThanThreshold	Replace Market Order to sell in an open series when the NBB is greater than $0.50.
+310	QuotePriceOutsideExchangeThreshold	Bulk quote replace canceled, bid with a price that is more than an Exchange specified amount above the NBO and cancel an incoming bulk replace offer with a price that is less than an Exchange specified amount below the NBB.
+311	N/A	 
+312	NumContractsExecutedExceedsThreshold	The number of contracts executed exceeds firm specified threshold.
+313	NotionalValueOfExecutionsExceedsThreshold	The notional value of contracts executions exceeds firm specified threshold.
+314	CountOfExecutionsExceedsThreshold	The count of contracts executed exceeds firm specified threshold.
+315	OutstandingPercentageThresholdExceeded	The number of contracts executed as a percentage of the  number of contracts outstanding within an Exchange configurable time period or for the trading day has been exceeded.
+316	TripsThresholdExceeded	The number of times a firm reaches the limits in:
+•	NumContractsExecutedExceedsThreshold
+•	NotionalValueOfExecutionsExceedsThreshold
+•	CountOfExecutionsExceedsThreshold
+•	OutstandingPercentageThresholdExceeded
+exceeds a threshold.
+317	ISOOrdersNotAllowed	ISO marked orders at disabled.
+318	MarketIsCrossed	Order not allowed while market is crossed.
+319	ActiveRiskBreach	Order not allowed because of an active breach.
+320	ManualRiskBreach	Order not allowed because of a manual breach.
+321	GrossNotionalValueExceedsThreshold	Order not allowed because it surpassed the gross notional risk threshold.
+322	NetNotionalValueExceedsThreshold	Order not allowed because it surpassed the net notional risk threshold.
+323	DuplicateOrderThresholdExceeded	Order not allowed because it surpassed the duplicate order risk threshold.
+324	OrderRateThresholdExceeded	Order not allowed because it surpassed the order rate risk threshold.
+325	N/A	
+326	MarketOrderGrossNotionalValueExceedsThreshold	Market Order not allowed because it surpassed the market order gross notional risk threshold.
+327	MarketOrderNetNotionalValueExceedsThreshold	Market Order not allowed because it surpassed the market order net notional risk threshold.
+CancelReasonCode (MEMX custom FIX tag 21004)
+CancelReasonCode represents the reason the order was canceled by the system.
+CancelReasonCode is encoded as an int type.
+Value	Name	Description
+0	Other	This order was canceled for some other reason not listed.
+1	UserRequestedCancel	The client sent a OrderCancelRequest or OrderMassCancelRequest for this order.
+5	ExecutionPriceCollar	The price of the order fell outside execution price collar bands
+6	Halted	The market on the order's security was halted.
+7	ExchangeSupervisory	Operational or supervisory actions taken by the Exchange resulted in the cancellation of this order.
+8	OrderExpired	The order’s supplied expiration time passed.
+10	MatchTradePrevention	This or another associated order's specified match trade prevention behavior triggered the cancellation of this order.
+13	ParticipantDisconnect	The participant directed that their orders should be canceled when the trading system detects a disconnection, and the participant disconnected.
+14	OrderNotBookable	Order is not of bookable type (this may include market orders, IOC, etc)
+17	FirmDisabled	Order was canceled because the firm was disabled
+18	EFIDDisabled	Order was canceled because the EFID was disabled
+19	AccountDisabled	Order was canceled because the Account was disabled
+20-22	N/A	Reserved
+23	ActiveRiskBreach	Canceled because an active risk rule was breached.
+24	ManualRiskBreach	Canceled because of a manual breach.
+25	NumContractsExecutedExceedsThreshold	The number of contracts executed exceeds firm specified threshold.
+26	NotionalValueOfExecutionsExceedsThreshold	The notional value of the order violated the firm’s max notional value per order risk rule.
+27	CountOfExecutionsExceedsThreshold	The count of contracts executed exceeds firm specified threshold.
+28	OutstandingPercentageThresholdExceeded	The number of contracts executed as a percentage of the  number of contracts outstanding within an Exchange configurable time period or for the trading day has been exceeded.
+29	TripsThresholdExceeded	The number of times a firm reaches the limits in:
+•	NumContractsExecutedExceedsThreshold
+•	NotionalValueOfExecutionsExceedsThreshold
+•	CountOfExecutionsExceedsThreshold
+•	OutstandingPercentageThresholdExceeded
+exceeds a threshold.
+30	GrossNotionalValueExceedsThreshold	Order not allowed because it surpassed the gross notional risk threshold.
+31	NetNotionalValueExceedsThreshold	Order not allowed because it surpassed the net notional risk threshold.
+32	DuplicateOrderThresholdExceeded	Order not allowed because it surpassed the duplicate order risk threshold.
+33	OrderRateThresholdExceeded	Order not allowed because it surpassed the order rate risk threshold.
+34	MarketOrderGrossNotionalValueExceedsThreshold	Market Order not allowed because it surpassed the market order gross notional risk threshold.
+35	MarketOrderNetNotionalValueExceedsThreshold	Market Order not allowed because it surpassed the market order net notional risk threshold.
+CxlRejResponseToType (FIX tag 434)
+CxlRejResponseToType identifies the request type that a cancel reject was issued for.
+CxlRejResponseToType is encoded as char type.
+Value	Name	Description
+'1'	OrderCancelRequest	This response is for a cancel request.
+'2'	OrderCancelReplaceRequest	This response is for a replace request.
+ExchangeCode (FIX tag 30)
+ExchangeCode (MIC code) indicates the market of execution for last fill, or an indication of the market where an order was routed. MIC code are maintained here Market identifier codes | ISO20022 .
+ExchangeCode is encoded as string.
+Value	Market Name
+AMXO	NYSE AMEX OPTIONS
+XBOX	BOX OPTIONS EXCHANGE
+XCBO	CBOE GLOBAL MARKETS INC.
+EMLD	MIAX EMERALD, LLC
+EDGO	CBOE EDGX OPTIONS EXCHANGE
+GMNI	ISE GEMINI EXCHANGE
+XISX	INTERNATIONAL SECURITIES EXCHANGE, LLC
+MCRY	ISE MERCURY, LLC
+XMIO	MIAMI INTERNATIONAL SECURITIES EXCHANGE
+ARCO	NYSE ARCA OPTIONS
+MPRL	MIAX PEARL, LLC
+XNDQ	NASDAQ OPTIONS MARKET
+XBXO	NASDAQ OMX BX OPTIONS
+MXOP	MEMX OPTIONS EXCHANGE
+C2OX	CBOE C2 OPTIONS EXCHANGE
+XPHO	PHILADELPHIA OPTIONS EXCHANGE
+BATO	CBOE BZX OPTIONS EXCHANGE
+ExecInst (FIX tag 18)
+The ExecInst field provides instructions for order handling on the exchange.
+ExecInst is encoded as a MultipleCharValue type. Encoded as a string with one or more values below, separated by spaces.
+Value	Name	Description
+'6'	ParticipateDoNotInitiate	Post-Only - order will not attempt to remove liquidity on entry.
+'f' 	IntermarketSweep	IntermarketSweep
+'h' 	ExternalRoutingNotAllowed	The order cannot be routed away.
+ExecRestatementType (FIX tag 378)
+Defines the reason for a restatement.
+ExecRestatementType is encoded as an int type.
+Value	Name	Description
+3	OrderReprice	The order’s booking price was updated.
+5	MatchTradePrevention	The order quantity was reduced to prevent a wash trade.
+99	Other	More information is supplied in tag 21022 ExtendedExecRestatementReason.
+100	PostTradeAllocation	The order details were changed in post trade.
+ExtendedRestatementReasonType (Custom FIX tag 21022)
+Defines the extended reason for a restatement.
+ExtendedRestatementReasonType is is encoded as an int type.
+Value	Name	Description
+0	None	No additional information.
+1,2	Reserved	Reserved for future use.
+3	MatchTrade-CancelNewest	Restatement due to MatchTradePrevention - CancelNewest
+4	MatchTrade-CancelOldest	Restatement due to MatchTradePrevention - CancelOldest
+6	MatchTrade-CancelBoth	Restatement due to MatchTradePrevention - CancelBoth
+LastLiquidityIndType (FIX tag 851)
+Indicates the liquidity code for this execution.
+LastLiquidityIndType is encoded as an int type.
+Value	Name	Description
+1	Added	This fill added displayed liquidity to the MEMX book.
+2	Removed	This fill removed liquidity from the MEMX book.
+OpenOrCloseType (FIX tag 77)
+Indicates whether the resulting position after a trade should be an opening position or closing position.
+OpenOrCloseType is encoded as an char type.
+Value	Name
+'O'	Open
+'C'	Close
+OrderRejectReasonCode (FIX tag 103)
+Identifies the reason why a new order was rejected by the system.
+Values 0-99 are reserved by the FIX specification. Note that not all of the reserved FIX codes are used.
+Values 100-199 are used to denote issues with specific request fields.
+Values 200-299 are used to denote issues with the request as a whole.
+Values 300-399 are used to denote issues related to risk.
+Also note that some codes in this table may not be sent in FIX but are listed here to maintain consistency with the other order entry specifications, or reserved for future use.
+OrderRejectReasonCode is encoded as an int type.
+Value	Name	Description
+1	UnknownSymbol	The order contained a valid symbol identifier, but the symbol is not currently traded on this port or exchange.
+2	ExchangeClosed	The exchange is closed and not accepting orders at this time.
+6	DuplicateOrder	The user entered a duplicate order identifier (ClOrdID for single orders, or the combination of ClOrdID, Side, and ListSeqNo for components of Bulk Quote entry).
+16	PriceExceedsCurrentPriceBand	The price of the order fell outside execution price collar bands.
+18	InvalidPriceIncrement	The order contained an invalid limit price increment.
+27	MaxNotionalValuePerOrderRiskRuleBreach	The order breached the firm’s max notional value per order risk rule.
+99	Other	This order was rejected for some other reason not listed.
+100	MissingSymbol	The order did not supply the Symbol.
+101	InvalidSymbol	The order had an. invalid Symbol.
+102	MissingClOrdID	The order did not supply the ClOrdID.
+103	InvalidClOrdID	A ClOrdID was present but contained illegal characters.
+104	MissingSide	The order did not supply the side.
+105	InvalidSide	The order contained an invalid side.
+106	MissingOrderQty	The order did not supply the quantity.
+107	InvalidOrderQty	The order contained an invalid order quantity.
+108	MissingOrderType	The order did not supply the order type.
+109	InvalidOrderType	The order contained an invalid order type.
+110	MissingTimeInForce	The order did not supply the time in force.
+111	InvalidTimeInForce	The order contained an invalid time in force.
+112	MissingTradingCapacity	The order did not supply the trading capacity.
+113	InvalidTradingCapacity	The order contained an invalid trading capacity.
+114	MissingExecInst	The order did not supply the execution instructions field.
+115	InvalidExecInst	The order contained an invalid execution instruction.
+116-117	N/A	
+118	MissingLimitPrice	The order did not supply the limit price.
+119	InvalidLimitPrice	The order contained an invalid limit price.
+120-123	N/A	 
+124	MissingMatchTradePreventionType	The order supplied the MTPGroupID field but did not supply the MatchTradePreventionType field.
+125	InvalidMatchTradePreventionType	The order contained an invalid MatchTradePreventionType.
+126	MissingCancelGroupID	The order did not supply the CancelGroupID field (used when a port is configured with a fixed set of allowable CancelGroupIDs).
+127	InvalidCancelGroupID	The order contained an invalid CancelGroupID (used when a port is configured with a fixed set of allowable CancelGroupIDs).
+128	MissingMTPGroupID	The order did not supply the MTPGroupID field (used when a port is configured with a fixed set of allowable MTPGroupIDs).
+129	InvalidMTPGroupID	The order contained an invalid MTPGroupID (used when a port is configured with a fixed set of allowable MTPGroupIDs).
+130-133	N/A	Reserved.
+134	MissingRiskGroupID	The order did not supply the RiskGroupID field (used when a port is configured with a fixed set of allowable RiskGroupIDs).
+135	InvalidRiskGroupID	The order contained an invalid RiskGroupID (used when a port is configured with a fixed set of allowable RiskGroupIDs).
+136	MissingEFID	The order did not supply the EFID field.
+137	InvalidEFID	The order contained an invalid EFID.
+138-141	N/A	
+142	MissingOpenOrClose	The order did not supply the OpenOrClose field.
+143	InvalidOpenOrClose	The order contained an invalid OpenOrClose.
+144	MissingRepriceBehaviorType	The order did not supply the RepriceBehaviorType field.
+145	InvalidRepriceBehaviorType	The order contained an invalid RepriceBehaviorType.
+146	MissingRepriceFrequencyType	The order did not supply the RepriceFrequencyType field.
+147	InvalidRepriceFrequencyType	The order contained an invalid RepriceFrequencyType.
+148	MissingPartyRoleType	The order did not supply the PartyRoleType field.
+149	InvalidPartyRoleType	The order contained an invalid PartyRoleType.
+150	MissingPartyID	The order did not supply the PartyRoleType field.
+151	InvalidPartyID	The order contained an invalid PartyRoleType.
+152	MissingPartyIDSource	The order did not supply the PartyRoleType field.
+153	InvalidPartyIDSource	The order contained an invalid PartyRoleType.
+154-199	N/A	Reserved.
+200	Halted	The symbol supplied in the order is currently halted.
+201	FirmDisabled	The order was rejected because the firm sending the order has been disabled.
+202	EFIDDisabled	The order was rejected because the EFID used in the order has been disabled.
+203	AccountDisabled	The order was rejected because the account sending the order has been disabled.
+204	InvalidModifierForOrderType	The order contained one or more modifiers that are not compatible with the order type provided.
+205	InvalidTimeInForceForOrderType	The order contained a time in force that is not compatible with the order type provided.
+206	N/A	Reserved.
+207	PostOnlyNotAllowed	Post-only behavior is not allowed with one or more of the supplied order directives.
+208-299	N/A	Reserved.
+300	NonTestSymbolsBlocked	The order was for a non-test symbol and the port is configured in test-only mode (exchange configuration).
+301	NotionalValueExceedsThreshold	The notional value of the order exceeded an exchange configured maximum.
+302	MaxNotionalValuePerOrder
+RiskRuleViolated	The notional value of the order violated the firm’s max notional value per order risk rule.
+303	BlockNonTestSymbol
+RiskRuleViolated	The order violated the firm’s test symbol trading risk rule.
+304	MaxContractsPerOrder
+RiskRuleViolated	The order breached the firm’s max contracts per order risk rule.
+305	NBBOWidthExceedsThreshold	The width of the NBBO is greater than the exchange specified threshold.
+306	ExchangePriceValueCollar
+RiskRuleViolated	An incoming Limit Order to buy with a price that is more than an Exchange specified amount above the NBO or an incoming Limit Order to sell with a price that is less than an Exchange specified amount below the NBB
+307	ExecutionPriceHigherThanStrikePrice	Market Order or the remaining portion of a Market Order to buy a put that would execute in whole or in part at a price higher than or equal to the strike price of the option or an incoming Limit Order to buy a put that would execute at a price higher than or equal to the strike price of the option.
+308	MarketBuyWhenNBOIsZero	Market Order to buy in an open series when the NBO is zero.
+309	MarketSellWhenNBBGreaterThanThreshold	An incoming Market Order to sell in an open series when the NBB is greater than $0.50.
+310	QuotePriceOutsideExchangeThreshold	Bulk quote canceled, bid with a price that is more than an Exchange specified amount above the NBO and cancel an incoming bulk message offer with a price that is less than an Exchange specified amount below the NBB.
+311	QuoteModifyRejected	Canceled resting bulk quote if an incoming bulk message to modify such quote with the same EFID is rejected or canceled by the Trading System.
+312	NumContractsExecutedExceedsThreshold	The number of contracts executed exceeds firm specified threshold.
+313	NotionalValueOfExecutionsExceedsThreshold	The notional value of contracts executions exceeds firm specified threshold.
+314	CountOfExecutionsExceedsThreshold	The count of contracts executed exceeds firm specified threshold.
+315	OutstandingPercentageThresholdExceeded	The number of contracts executed as a percentage of the  number of contracts outstanding within an Exchange configurable time period or for the trading day has been exceeded.
+316	TripsThresholdExceeded	The number of times a firm reaches the limits in:
+•	NumContractsExecutedExceedsThreshold
+•	NotionalValueOfExecutionsExceedsThreshold 
+•	CountOfExecutionsExceedsThreshold
+•	OutstandingPercentageThresholdExceeded
+exceeds a threshold.
+317	ISOOrdersNotAllowed	ISO marked orders at disabled.
+318	MarketIsCrossed	Order not allowed while market is crossed.
+319	ActiveRiskBreach	Active risk controls were breached for the underlying.
+320	ManualRiskBreach	Order not allowed because of a manual breach.
+321	GrossNotionalValueExceedsThreshold	Order not allowed because it surpassed the gross notional risk threshold.
+322	NetNotionalValueExceedsThreshold	Order not allowed because it surpassed the net notional risk threshold.
+323	DuplicateOrderThresholdExceeded	Order not allowed because it surpassed the duplicate order risk threshold.
+324	OrderRateThresholdExceeded	Order not allowed because it surpassed the order rate risk threshold.
+325	N/A	
+326	MarketOrderGrossNotionalValueExceedsThreshold	Market Order not allowed because it surpassed the market order gross notional risk threshold.
+327	MarketOrderNetNotionalValueExceedsThreshold	Market Order not allowed because it surpassed the market order net notional risk threshold.
+OrdType (FIX tag 40)
+Indicates the type of an order.
+OrdType is encoded as a char type.
+Value	Name
+'1'	Market
+'2'	Limit
+TradingCapacityType (FIX tag 1815)
+Capacity of the order.
+The TradingCapacity is encoded as an int type.
+Value	Name
+1	Customer
+2	Professional Customer
+3	Broker Dealer
+4	Broker Dealer Customer
+5	Firm
+6	Market Maker
+7	Away Market Maker
+Parties Group
+The Parties repeating group is used to identify multiple entities associated with a transaction.
+Tag	Field Name	Req'd	Meaning/Values
+453	NoPartyIDs	Y	The number of parties in the following Parties Group
+→448	PartyID	Y	 Party Identifier
+→447	PartyIDSource	Y	 The source of the PartyID. 
+→452	PartyRole	Y	 Identifies the type or role of the PartyID.
+PartyIDSourceType (FIX tag 447)
+PartyIDSource is encoded as a char type.
+Value	Name
+'D'	Proprietary/Custom Code
+PartyRoleType (FIX tag 452)
+Identifies the type or role of the PartyID in the Parties repeating group. Clients must specify the Execution Firm ID (EFID), and if the capacity is M or N the Market Maker Sub Account, on each order. Clients may optionally specify the Actionable Identifier, Give Up, Optional OCC Data, and CMTA. Clients will receive the Contra EFID and potentially any of the other Contra fields on Trades and Allocation Report messages. 
+PartyRoleType is encoded as a int type.
+Value (Tag 452)	Name (Tag 448)
+1	Execution Firm ID
+3	Actionable Identifier
+14	GiveUp Clearing Number
+17	Contra EFID
+18	Contra GiveUp Clearing Number
+24	OptionalOCCData
+37	Contra MM Sub Account
+40	CMTA
+41	Contra CMTA
+66	Market Maker Sub Account
+PutOrCallType (FIX tag 201)
+Defines the option as a Put or a Call.
+PutOrCallType is encoded as a int type.
+Value	Name
+0	Put
+1	Call
+RepriceFrequencyType (MEMX custom FIX tag 21020)
+Defines the type of reprice used when marking an order for repricing.
+RepriceFrequencyType is encoded as an int type.
+Value	Name	Description
+0	SingleReprice	An order will be repriced upon entry.
+1	ContinuousReprice	An order will continuously be repriced after being booked.
+2	None	No repricing will be done.
+RepriceBehaviorType(MEMX custom FIX tag 21021)
+Defines the market conditions for which to apply repricing for.
+RepriceBehaviorType is encoded as an int type.
+Value	Name	Description
+1	RepriceLockCancelCross	An order will only be repriced if the market is locked, cancel if market is crossed.
+2	RepriceLockRepriceCross	An order will be repriced if the market is locked or crossed.
+MatchTradePreventionType (MEMX custom FIX tag 21001)
+Defines the match trade operation which will be used if the exchange match-trade-prevention functionality is triggered on this order.
+If this order would execute against an opposite side resting interest with the same match-trade prevention identifier, the behavior specified by this value will be triggered.
+MatchTradePreventionType is encoded as an int type.
+Value	Name	Description
+0	CancelNewest	If triggered, this order (the incoming order) will be canceled.
+1	CancelOldest	If triggered, the resting order will be canceled.
+2	N/A	Reserved value.
+3	CancelBoth	If triggered, both the incoming and the resting orders will be canceled.
+SideType (FIX tag 54)
+Defines the side of an order.
+SideType is encoded as a char type.
+Value	Name
+'1'	Buy
+'2'	Sell
+MtpGroupIDType (FIX tag 2362)
+This field uniquely identifies the match trade prevention group. Several of the values are reserved values while other values are treated as custom values and are at the discretion of the client.
+MtpGroupID is encoded as an int type.
+Value	Name	Description
+0	Firm Scope	Prevents orders from the same firm trading with each other
+1	EFID Scope	Prevents orders from the same EFID trading with each other
+2	Account Scope	Prevents orders from the same account trading with each other
+3-65534	Custom Scope	Prevents orders with matching MtpGroupID across the firm from trading with each other
+TimeInForceType (FIX tag 59)
+Defines the time during which an order is eligible for execution.
+TimeInForceType is encoded as a char type.
+Value	Name	Description
+'0'	Day	The order is entered for execution during the open market period.
+'3'	Immediate Or Cancel (IOC)	The order shall be partially or completely executed immediately, or canceled outright.
+ 
+Headers and Trailers
+All messages begin with a Standard Header and must end with a Standard Trailer.
+Standard Header
+The Standard Header must contain the required fields listed and can contain any of the non-required listed fields:
+Tag	Field Name	Req'd	Meaning/Values
+8	BeginString	Y	"FIXT.1.1" This must be the first field in the message.
+9	BodyLength	Y	The length of the FIX message. This must be the second field in the message.
+35	MsgType	Y	The type of message. This must be the third field in the message.
+49	SenderCompID	Y	The sender's id, assigned by at on-boarding time.
+56	TargetCompID	Y	“MXOP”
+34	MsgSeqNum	Y	The message sequence number.
+52	SendingTime	Y	The time of message transmission in Universal Time coordinated. See UTCTimestamp in FIX 5.0 SP2 specification.
+43	PossDupFlag	N	Always required for retransmitted messages, whether prompted by the sending system or as the result of a resend request.
+97	PossResend	N	Required when message may be duplicate of another message sent under a different sequence number.
+122	OrigSendingTime	N	Required for message resent as a result of a ResendRequest. If data is not available set to same value as SendingTime.
+ 
+Standard Trailer
+The Standard Trailer must contain the CheckSum field.
+Tag	Field Name	Req'd	Meaning/Values
+10	CheckSum	Y	The message checksum. This must be the last field in the message.
+ 
+Messages
+This section defines the messages that make up the protocol. For each message, it lists the fields in the message by tag id and name, whether the field is required and acceptable values or description of the field. The FIX Order Entry Port will reject any messages that contain unspecified tags.
+Session Messages
+This section defines the session level messages supported.  
+Heartbeat (Sent by exchange and client)
+The Heartbeat message confirms the status of the communication link.
+Tag	Field Name	Req'd	Meaning/Values
+	Standard Header
+Y	With tag 35 (MsgType) = 0
+112	TestReqID	N	Identifier included in Test Request message to be returned in resulting Heartbeat.
+(Max Length: 64 characters)
+ 	Standard Trailer
+Y	 
+ 
+Logon
+The logon message is sent by the client to establish a connection to the exchange. The logon message must be the first message sent by the application requesting to initiate a FIX session.
+Tag	Field Name	Req'd	Meaning/Values
+	Standard Header
+Y	With tag 35 (MsgType) = A
+98	EncryptMethod	Y	Required to be 0.
+108	HeartBtInt	Y	Heartbeat interval, in seconds. An interval of 0 indicates there are no heartbeats. The maximum supported interval is 90 seconds. 
+141	ResetSeqNumFlag	N	The FIX Order Entry Port will reject logon if this flag is 'Y'. The operations team for the exchange can reset the inbound sequence number on request. 
+1137	DefaultApplVerID	Y	Required to be 9. ("FIX50SP2")
+1408	DefaultCstmApplVerID	Y	The schema version is used to ensure consistency across message formats.
+Required to be set to “1.3”
+ 	Standard Trailer
+Y	 
+ Note: If the DefaultCstmApplVerID (tag 1408) is invalid, the client connection is dropped.
+Logout
+The logout message initiates or confirms the termination of a FIX session. This may be sent by the exchange or the client.
+Tag	Field Name	Req'd	Meaning/Values
+	Standard Header
+Y	With tag 35 (MsgType) = 5
+58	Text	N	Text explaining reason for logout.
+(Max Length: 128 characters)
+ 	Standard Trailer
+Y	 
+ 
+Reject
+The reject message should be issued when a message is received but cannot be properly processed due to a session-level rule violation.
+Tag	Field Name	Req'd	Meaning/Values
+	Standard Header
+Y	With tag 35 (MsgType) = 3
+45	RefSeqNum	Y	Reference message sequence number.
+371	RefTagID	N	The tag number of the FIX field that was rejected.
+372	RefMsgType	N	The MsgType of the FIX message that was rejected.
+58	Text	N	Explanatory reason.
+(Max Length: 128 characters)
+ 	Standard Trailer
+Y	 
+ 
+ResendRequest
+The resend request is sent by the receiving application to initiate the retransmission of messages.
+Tag	Field Name	Req'd	Meaning/Values
+	Standard Header
+Y	With tag 35 (MsgType) = 2
+7	BeginSeqNo	Y	Message sequence number of first message in range to be resent.
+16	EndSeqNo	Y	Message sequence number of last message in range to be resent.
+ 	Standard Trailer
+Y	 
+
+SequenceReset
+The sequence reset message is used to reset the incoming sequence number on the opposing side.
+Tag	Field Name	Req'd	Meaning/Values
+	Standard Header
+Y	With tag 35 (MsgType) = 4
+123	GapFillFlag	N	Indicates that this message is replacing administrative or application messages which will not be resent.
+36	NewSeqNo	Y	New sequence number.
+	Standard Trailer
+Y	
+ 
+TestRequest 
+The test request message forces a heartbeat from the opposing application. The opposite application responds to the Test Request with a Heartbeat containing the TestReqID.
+Tag	Field Name	Req'd	Meaning/Values
+	Standard Header
+Y	With tag 35 (MsgType) = 1
+112	TestReqID	Y	Identifier included in Test Request message to be returned in resulting Heartbeat.
+(Max Length: 64 characters)
+ 	Standard Trailer
+Y	 
+ 
+BusinessMessageReject
+The FIX Order Entry Port will not send any BusinessMessageReject messages. Instead it will send either a Reject for session level issues or the appropriate application reject message. The FIX Order Entry Port does support receiving BusinessMessageReject messages from the client.
+Tag	Field Name	Req'd	Meaning/Values
+	Standard Header
+Y	With tag 35 (MsgType) = j
+45	RefSeqNum	N	Reference message sequence number.
+380	BusinessRejectReason	Y	Code to identify reason for a Business Message Reject message.
+372	RefMsgType	N	The MsgType of the FIX message that was rejected.
+58	Text	N	Explanatory reason.
+(Max Length: 128 characters)
+ 	Standard Trailer
+Y	 
+ 
+Session Management
+The client establishes a session by opening a TCP connection to an exchange MEMO FIX for Options port, (server) and sending a FIX logon message with the appropriate credentials and MsgSeqNum set. Values for SenderCompID and TargetCompID will be provisioned by the exchange and will be verified by the server upon receipt of the Logon message. If the Logon message is accepted, the server will send a Logon response. If the MsgSeqNum on the inbound logon is less than expected by the server, the logon will be rejected.
+If the MsgSeqNum on the inbound logon is greater than expected, the server will reply with a Logon and send a ResendRequest for the missing messages. The client application should gap fill any session level messages and may opt to resend any business level messages with the PossDup flag set (see FIXT 1.1 specification Message Recovery). For example, if a client opts to resend a stale NewOrderSingle during a gap fill, the server will process the message, and that order may become eligible for execution.
+When the client application receives the Logon response it should compare the MsgSeqNum to the expected server sequence number. If a gap is detected, it should send a ResendRequest message to the server. The server will resend any missing business level messages with the PossDup flag set. Instead of resending session-level messages, the server will issue sequence reset messages with the GapFillFlag set.
+If the connection to the MEMO FIX port is lost, and the “cancel on disconnect” feature is enabled for the port, the system will cancel all orders associated with that session. The Canceled execution reports generated by the “cancel on disconnect” event shall be stored by the server, and will be available for resending when the client re-establishes the session. If If the “cancel on disconnect” feature is not enabled for the port, then any orders that were active when the connection was closed shall be eligible for execution. By default, the “cancel on disconnect” feature is enabled. 
+When the client terminates a session it should send a Logout message and wait for the Logout response from the server before closing the connection. This procedure facilitates gap detection and processing before the connection is closed.
+At the end of a logical trading session, the FIX inbound and outbound sequence numbers are set to 1. All inbound FIX messages will be rejected if a FIX session has not been established. If the server receives a message with a MsgSeqNum less than the expected client sequence number, and that message does not have the PossDup flag set, the server will disconnect the client. In the event of a failover to a backup port, the backup port will maintain the sequence numbers of the primary, and it will have the ability to replay any messages that the primary port sent. 
+The server will process any business level messages with the PossResend flag set. The server will reject any messages that it has already seen-- for example, NewOrderSingle or CancelReplace messages with duplicate ClOrdID.
+Application Messages From Exchange to Client
+OrderCancelReject
+The order cancel reject message is used by the exchange to indicate a cancel or a cancel/replace request cannot be honored.
+Tag	Field Name	Req'd	Meaning/Values
+ 	Standard Header
+Y	With tag 35 (MsgType) = 9
+37	OrderID	Y	Unique identifier for an Order as assigned by the exchange. If the ClOrdID on the CancelRequest is unknown this field will contain "NONE".
+11	ClOrdID	Y	Unique identifier of the cancel or cancel/replace request being rejected.
+41	OrigClOrdID	Y	As specified on cancel/replace request. 
+39	OrdStatus	Y	The status of the order after this reject was applied.
+434	CxlRejResponseTo	Y	Identifies the type of request that a Cancel Reject is in response to.
+102	CxlRejReason	Y	Reason for rejection of request.
+21035	OptionsSecurityID	N	As stated in the request.
+55	Symbol	Y	As stated in the order.
+541	MaturityDate	Y	As stated in the order.
+201	PutOrCall	Y	As stated in the order.
+202	StrikePrice	Y	As stated in the order.
+54	Side	Y	As stated in the request.
+ 	Standard Trailer
+Y	 
+ 
+ExecutionReport
+The ExecutionReport message is used to communicate order events and the current state of an order.  
+New Order Acknowledge
+The New Order Acknowledge execution report is a response to the NewOrderSingle message in the event the order was accepted by the exchange. This message echoes the accepted state of the order back to the requester.
+Tag	Field Name	Req'd	Meaning/Values
+ 	Standard Header
+Y	With tag 35 (MsgType) = 8
+37	OrderID	Y	Unique identifier for an Order assigned by the exchange.
+11	ClOrdID	Y	As stated in the order.
+17	ExecID	Y	Unique identifier of execution message as assigned by the exchange. The ExecID can be correlated with the Memoir OrderID value.
+150	ExecType	Y	0 - New
+39	OrdStatus	Y	0 - New
+21035	OptionsSecurityID	N	As stated in the order.
+55	Symbol	Y	As stated in the order.
+541	MaturityDate	Y	As stated in the order.
+201	PutOrCall	Y	As stated in the order.
+202	StrikePrice	Y	As stated in the order.
+54	Side	Y	As stated in the order.
+21020	RepriceFrequency	N	As stated in the order.
+21021	RepriceBehaviorType	N	As stated in the order.
+151	LeavesQty	Y	Quantity open for further execution.
+14	CumQty	Y	0
+44	Price	N	As stated in the order.
+38	OrderQty	Y	As stated in the order.
+40	OrdType	Y	As stated in the order.
+59	TimeInForce	Y	As stated in the order.
+77	OpenOrClose	N	As stated in the order.
+1815	TradingCapacity	Y	As stated in the order.
+18	ExecInst	Y	As stated in the order.
+2362	MtpGroupID	N	As stated in the order.
+21001	MatchTradePrevention	N	As stated in the order. This is a custom FIX tag.
+21005	RiskGroupID	N	As stated in the order. This is a custom FIX tag.
+21000	CancelGroupID	N	As stated in the order.
+60	TransactTime	Y	The time at which the transaction occurred. UTC timestamp since epoch with millisecond precision.
+453	NoPartyIDs	Y	The number of parties in the following Parties Group
+→448	PartyID	Y	
+→447	PartyIDSource	Y	
+→452	PartyRole	Y	
+ 	Standard Trailer
+Y	 
+ 
+Rejected Order
+The Rejected Order execution report is sent in response to a NewOrderSingle message that was rejected by the exchange.
+Tag	Field Name	Req'd	Meaning/Values
+ 	Standard Header
+Y	With tag 35 (MsgType) = 8
+11	ClOrdID	Y	As stated in the order.
+37	OrderID	Y	Unique identifier for an Order assigned by the exchange, if available.
+17	ExecID	Y	Unique identifier of execution message as assigned by the exchange.
+150	ExecType	Y	8 - Rejected
+39	OrdStatus	Y	8 - Rejected
+21035	OptionsSecurityID	N	As stated in the order.
+55	Symbol	Y	As stated in the order.
+541	MaturityDate	Y	As stated in the order.
+201	PutOrCall	Y	As stated in the order.
+202	StrikePrice	Y	As stated in the order.
+54	Side	Y	As stated in the order.
+151	LeavesQty	Y	0 
+14	CumQty	Y	0
+44	Price	N	As stated in the order.
+38	OrderQty	Y	As stated in the order.
+40	OrdType	Y	As stated in the order.
+60	TransactTime	Y	UTC timestamp since epoch with millisecond precision.
+103	OrdRejReason	Y	Reason code for order rejection
+ 	Standard Trailer
+Y	 
+ 
+Trade
+The Trade execution report is sent when a trade occurs.
+Tag	Field Name	Req'd	Meaning/Values
+ 	Standard Header
+Y	With tag 35 (MsgType) = 8
+37	OrderID	Y	Unique identifier for an Order assigned by the exchange.
+11	ClOrdID	Y	Unique identifier for an Order as assigned by the client.
+17	ExecID	Y	Unique identifier of execution message as assigned by the exchange.
+150	ExecType	Y	F - Trade (partial fill or fill).
+39	OrdStatus	Y	1 - Partially filled
+2 - Filled
+21035	OptionsSecurityID	N	As stated in the order.
+55	Symbol	Y	As stated in the order.
+541	MaturityDate	Y	As stated in the order.
+201	PutOrCall	Y	As stated in the order.
+202	StrikePrice	Y	As stated in the order.
+54	Side	Y	As stated in the order.
+32	LastQty	Y	Quantity bought/sold on this (last) fill.
+31	LastPx	Y	Price of this (last) fill.
+151	LeavesQty	Y	Quantity open for execution. 
+14	CumQty	Y	Total quantity filled on the order.
+44	Price	N	As stated in the order.
+38	OrderQty	Y	As stated in the order.
+40	OrdType	Y	As stated in the order.
+60	TransactTime	Y	The time at which the transaction occurred. 
+880	TrdMatchID	Y	Identifier assigned to the Trade by the matching system. In case of executions on orders routed to another exchange, the TrdMatchID field will be filled on a best-effort basis.
+851	LastLiquidityInd	Y	Indicator denoting whether the referenced order removed liquidity from or added liquidity to the MEMX book.
+30	LastMkt	Y	Market of execution for last fill, or an indication of the market where an order was routed. See ExchangeCode (FIX tag 30) 
+
+77	OpenOrClose	N	As stated in the order.
+1815	TradingCapacity	Y	As stated in the order.
+21036	ContraTradingCapacity	Y	TradingCapacity of the contra order.
+453	NoPartyIDs	Y	The number of parties in the following Parties Group
+→448	PartyID	Y	
+→447	PartyIDSource	Y	
+→452	PartyRole	Y	
+ 	Standard Trailer
+Y	 
+ 
+Pending Replace
+The Pending Replace execution report is sent in response to a replace request to indicate the request has been received by the exchange and is being processed.
+Tag	Field Name	Req'd	Meaning/Values
+ 	Standard Header
+Y	With tag 35 (MsgType) = 8
+37	OrderID	Y	Unique identifier for an Order assigned by the exchange.
+11	ClOrdID	Y	As stated in the replace request.
+41	OrigClOrdID	Y	As stated in the replace request.
+17	ExecID	Y	Unique identifier of execution message as assigned by the exchange.
+150	ExecType	Y	E - PendingReplace
+39	OrdStatus	Y	E - PendingReplace
+21035	OptionsSecurityID	N	As stated on the previous order.
+55	Symbol	Y	As stated on the previous order.
+541	MaturityDate	Y	As stated on the previous order.
+201	PutOrCall	Y	As stated on the previous order.
+202	StrikePrice	Y	As stated on the previous order.
+54	Side	Y	As stated on the previous order.
+151	LeavesQty	Y	Quantity open for further execution. 
+14	CumQty	Y	Quantity filled on the order.
+44	Price	N	Limit price of the previous order if applicable.
+38	OrderQty	Y	As stated on the previous order. 
+40	OrdType	Y	As stated on the previous order.
+60	TransactTime	Y	The time at which the transaction occurred. UTC timestamp since epoch with millisecond precision.
+ 	Standard Trailer
+Y	 
+ 
+Replaced
+The Replaced execution report is sent when an order has been replaced. 
+Tag	Field Name	Req'd	Meaning/Values
+ 	Standard Header
+Y	With tag 35 (MsgType) = 8
+37	OrderID	Y	Unique identifier for an Order assigned by the exchange.
+11	ClOrdID	Y	As stated in the replace request. Will be applied as the new ClOrdID for this order going forward.
+41	OrigClOrdID	Y	The ClOrdID associated with the replaced order.
+17	ExecID	Y	Unique identifier of execution message as assigned by the exchange. The ExecID can be correlated with the Memoir OrderID value.
+150	ExecType	Y	5 - Replaced
+39	OrdStatus	Y	0 - New
+1 - PartiallyFilled
+21035	OptionsSecurityID	N	As stated in the replace request.
+55	Symbol	Y	As stated in the replace request.
+541	MaturityDate	Y	As stated in the replace request.
+201	PutOrCall	Y	As stated in the replace request.
+202	StrikePrice	Y	As stated in the replace request.
+54	Side	Y	As stated in the replace request.
+151	LeavesQty	Y	Quantity open for execution.
+14	CumQty	Y	Total quantity filled on the order.
+44	Price	N	As stated in the replace request.
+38	OrderQty	Y	As stated in the replace request.
+40	OrdType	Y	As stated in the replace request.
+60	TransactTime	Y	UTC timestamp since epoch with millisecond precision.
+ 	Standard Trailer
+Y	 
+ 
+Pending Cancel
+The Pending Cancel execution report is sent in response to a cancel request, to indicate that the request has been received by the exchange and is being processed.
+Tag	Field Name	Req'd	Meaning/Values
+ 	Standard Header
+Y	With tag 35 (MsgType) = 8
+37	OrderID	Y	Unique identifier for an Order assigned by the exchange.
+11	ClOrdID	Y	Unique identifier for an Order as assigned by the client.
+41	OrigClOrdID	Y	The ClOrdID associated with the order being canceled.
+17	ExecID	Y	Unique identifier of execution message as assigned by the exchange.
+150	ExecType	Y	6 - PendingCancel
+39	OrdStatus	Y	6 - PendingCancel
+21035	OptionsSecurityID	N	As stated in the order.
+55	Symbol	Y	As stated in the order.
+541	MaturityDate	Y	As stated in the order.
+201	PutOrCall	Y	As stated in the order.
+202	StrikePrice	Y	As stated in the order.
+54	Side	Y	As stated on the order.
+151	LeavesQty	Y	The quantity open for execution on the order.
+14	CumQty	Y	Total quantity filled on the order.
+44	Price	N	As stated on the order.
+38	OrderQty	Y	As stated on the order.
+60	TransactTime	Y	UTC timestamp since epoch with millisecond precision.
+ 	Standard Trailer
+Y	 
+ 
+Canceled
+The Canceled execution report is sent when an order has been canceled. This may be because of a client requested cancel, a replace, or a cancel initiated by the exchange. Orders that are canceled by the exchange because of Time in Force instructions shall have an ExecType and OrdStatus as Expired. All other cases shall have ExecType and OrdStatus as Canceled.
+Tag	Field Name	Req'd	Meaning/Values
+ 	Standard Header
+Y	With tag 35 (MsgType) = 8
+37	OrderID	Y	Unique identifier for an Order assigned by the exchange.
+11	ClOrdID	Y	As stated in the cancel request or the ClOrdID of the order if an unsolicited cancel.
+41	OrigClOrdID	Y	The ClOrdID associated with the canceled order.
+17	ExecID	Y	Unique identifier of execution message as assigned by the exchange.
+150	ExecType	Y	4 - Canceled
+C - Expired
+39	OrdStatus	Y	4 - Canceled
+C - Expired
+21035	OptionsSecurityID	N	As stated in the cancel request.
+55	Symbol	Y	As stated in the cancel request.
+541	MaturityDate	Y	As stated in the cancel request.
+201	PutOrCall	Y	As stated in the cancel request.
+202	StrikePrice	Y	As stated in the cancel request.
+54	Side	Y	As stated in the cancel request.
+151	LeavesQty	Y	0
+14	CumQty	Y	Total quantity filled on the order.
+44	Price	N	As stated on the order.
+38	OrderQty	Y	As stated on the order.
+21004	CancelReason	Y	Reason code for order cancellation. This is a custom FIX tag.
+60	TransactTime	Y	UTC timestamp since epoch with millisecond precision.
+ 	Standard Trailer
+Y	 
+Restatement
+The Restatement is an unsolicited event to notify the client that an open order has been updated by the MEMX system. This message may be sent for orders configured for automatic repricing via the RepriceFrequency instruction. This message can also be sent if the order quantity is partially or fully cancelled because of Match Trade Prevention. 
+Tag	Field Name	Req'd	Meaning/Values
+ 	Standard Header
+Y	With tag 35 (MsgType) = 8
+37	OrderID	Y	Unique identifier for an Order assigned by the exchange.
+11	ClOrdID	Y	The ClOrdID associated with the order.
+17	ExecID	Y	Unique identifier of execution message as assigned by the exchange.
+150	ExecType	Y	D - Restated
+39	OrdStatus	Y	0 - New
+1 - Partially filled
+4 - Canceled
+21035	OptionsSecurityID	N	As stated in the order.
+55	Symbol	Y	As stated in the order.
+541	MaturityDate	Y	As stated in the order.
+201	PutOrCall	Y	As stated in the order.
+202	StrikePrice	Y	As stated in the order.
+54	Side	Y	As stated in the order.
+151	LeavesQty	Y	Quantity open for execution.
+14	CumQty	Y	Total quantity filled on the order.
+44	Price	N	As stated in the order.
+38	OrderQty	Y	The quantity after the restatement.
+31	LastPx	Y	For ExecRestatementReason (3): The updated booked price.
+For ExecRestatementReason (5): The match price if this order had not been prevented from executing due to MTP restrictions.
+32	LastQty	N	For ExecRestatementReason (5): The quantity that would have matched if this order had not been prevented from executing due to MTP restrictions.
+378	ExecRestatementReason	Y	Reason for order restatement.
+21022	ExtendedRestatementReason	N	More restatement information when ExecRestatementReason (378) = 99 Other.
+60	TransactTime	Y	UTC timestamp since epoch with millisecond precision.
+ 	Standard Trailer
+Y	 
+Trade Cancel/Correct
+The Trade Cancel/Correct execution report is sent to indicate that the price or quantity of a trade has been corrected. A trade cancel execution report is sent to bust a previous trade.
+Tag	Field Name	Req'd	Meaning/Values
+ 	Standard Header
+Y	With tag 35 (MsgType) = 8
+37	OrderID	Y	Unique identifier for an Order assigned by the exchange. This is guaranteed to be unique for a trading day.
+11	ClOrdID	Y	The ClOrdID associated with the order.
+17	ExecID	Y	Unique identifier of execution message as assigned by the exchange. Uniqueness is guaranteed within a single trading day.
+19	ExecRefID	Y	The execID of the trade been referenced.
+150	ExecType	Y	G - TradeCorrect
+H - TradeCancel
+39	OrdStatus	Y	1 - Partially filled
+2 - Filled
+21035	OptionsSecurityID	N	As stated in the order.
+55	Symbol	Y	As stated in the order.
+541	MaturityDate	Y	As stated in the order.
+201	PutOrCall	Y	As stated in the order.
+202	StrikePrice	Y	As stated in the order.
+54	Side	Y	As stated in the order.
+151	LeavesQty	Y	Quantity open for execution.
+14	CumQty	Y	Total quantity filled on the order.
+44	Price	N	As stated on the order
+38	OrderQty	Y	As stated in the order.
+31	LastPx	N	The corrected price. Required if Trade Correct.
+32	LastQty	N	The corrected quantity. Required if Trade Correct.
+6	AvgPx	Y	The calculated average price of all fills for the executed order.
+60	TransactTime	Y	UTC timestamp since epoch with millisecond precision.
+ 	Standard Trailer
+Y	 
+UserNotification
+
+The UserNotification message is used to notify the user of an event or information about the exchange. This message will be used to provide a logical session shutdown warning due to an up and coming maintenance window.
+Tag	Field Name	Req'd	Meaning/Values
+ 	Standard Header
+Y	With tag 35 (MsgType) = CB
+926	UserStatus	Y	Reason for notification.
+ 	Standard Trailer
+Y	 
+ AllocationInstructionAck
+The Allocation Instruction Ack message is used to acknowledge the receipt of and provide status for an Allocation Instruction message.
+Tag	Field Name	Req'd	Meaning/Values
+ 	Standard Header
+Y	With tag 35 (MsgType) = P
+755	AllocReportID	Y	Unique identifier for Allocation Report message.
+70	AllocID	Y	Unique identifier for this allocation instruction message.
+87	AllocStatus	Y	Denotes the status of the allocation instruction:
+0 - Accepted (successfully processed)
+1 - Block level reject
+2 - Account level reject
+88	AllocRejCode	N	Required for AllocStatus = 1 ( block level reject) and for AllocStatus 2 (account level reject) if the individual accounts and reject reasons are not provided in this message:
+1 - Incorrect or missing block quantity
+8 - Incorrect or missing allocated quantity
+10 - Unknown or Stale ExecID(17)
+11 - Some data in the new allocation does not match the original trade data
+14 - The AllocID is a duplicate or was missing
+15 - The trade (specified by ExecID or TrdMatchID was unknown
+16 - Trade previously allocated
+17 - Incorrect or missing instrument
+23 - Unknown or missing party
+24 - The side is missing of incorrect
+26 - Incorrect or missing trade date
+99 - Other (the allocation was rejected for some other reason)
+ 	Standard Trailer
+Y	 
+AllocationReport
+Allocation report messages are provided to the requesting party when a post trade edit is made to a trade. These messages will also be sent over drop copy to both the requesting party and the contra. 
+Tag	Field Name	Req'd	Meaning/Values
+ 	Standard Header
+Y	With tag 35 (MsgType) = AS
+755	AllocReportID	Y	Unique identifier for Allocation Report message.
+70	AllocID	Y	Unique identifier for this allocation instruction message.
+71	AllocTransType	Y	Identifies allocation transaction type.
+794	AllocType	Y	Specifies the purpose or type of Allocation message:
+100 - Post Trade Edit 
+87	AllocStatus	Y	Identifies status of allocation.
+0 - Accepted (successfully processed)
+19	ExecRefID	N	ExecID (17) of the trade being modified.
+880	TrdMatchID	N	TrdMatchID for the trade being modified. 
+55	Symbol	Y	The OSI Root for the options security. Can be specified in conjunction with MaturityDate, PutOrCall, and StrikePrice or not specified if OptionSecurityID is used.
+541	MaturityDate	Y	Date of maturity in YYYYMMDD format. Can be specified in conjunction with Symbol, PutOrCall, and StrikePrice or not specified if OptionSecurityID is used.
+201	PutOrCall	Y	Indicates whether the option security is a put or a call. Can be specified in conjunction with Symbol, MaturityDate, and StrikePrice or not specified if OptionSecurityID is used.
+202	StrikePrice	Y 	The Strike Price for the options security. Can be specified in conjunction with Symbol, MaturityDate, PutOrCall or not specified if OptionSecurityID is used.
+54	Side	Y	Side of the order.
+53	Quantity	Y	Total quantity (e.g. number of contracts) of the trade.
+75	TradeDate	Y	Indicates date of trading day. Date of Local Market (vs. UTC) in YYYYMMDD format. Only same day allocations supported.
+78	NoAllocs	Y	The number of Allocations in the report.
+→80	AllocQty	Y	Quantity of trade being reallocated.
+→1815	TradingCapacity	Y	Trade capacity for the trade.
+→77	OpenOrCloseType	N	Opening or closing a position.
+→539	NoNestedPartyIDs	Y	The number of nested parties in the following Nested Parties Group
+→→524	NestedPartyID	Y	
+→→525	NestedPartyIDSource	Y	
+→→538	NestedPartyRole	Y	
+ 	Standard Trailer
+Y	 
+Application Messages from Client to Exchange
+NewOrderSingle
+The new order message type is used by institutions to electronically submit orders to the exchange for execution.
+Tag	Field Name	Req'd	Meaning/Values
+ 	Standard Header
+Y	With tag 35 (MsgType) = D
+11	ClOrdID	Y	Unique identifier of the order as assigned by the client. 
+21035	OptionsSecurityID	C*	The OptionsSecurityID used to identify the options product for the order.
+55	Symbol	C*	The OSI Root used to identify the options product for the order.
+541	MaturityDate	C*	The maturity date used to identify the options product for the order.
+201	PutOrCall	C*	The put or call indicator used to identify the options product for the order.
+202	StrikePrice	C*	The strike price used to identify the options product for the order.
+54	Side	Y	Side of order.
+38	OrderQty	Y	Order quantities are specified as whole numbers of option’s contracts.
+40	OrdType	Y	Type of the order.
+44	Price	N	Price for a single option.
+59	TimeInForce	Y	Defines the time during which an order is eligible for execution.
+77	OpenOrClose	N	The Open or Close type indicator.
+1815	TradingCapacity	Y	Designates the capacity of the firm placing the order.
+18	ExecInst	N	Instructions for order handling on the exchange.
+60	TransactTime	Y	Time this order request was initiated/released by the trader, trading system, or intermediary. UTCTimestamp since epoch with millisecond precision.
+21020	RepriceFrequency	N	Defines the frequency of a reprice.  If this tag is not sent then the order will not be repriced.
+21021	RepriceBehaviorType	N	Defines the reprice behavior when market is locked or crossed.
+2362	MtpGroupID	N	Unique identifier of custom match-trade prevention group.
+21001	MatchTradePrevention	N	Defines the desired behavior in the event of a wash. See MatchTradePreventionType. This is a custom FIX tag.
+21005	RiskGroupID	N	Unique identifier of a custom risk control set to be applied to this order.  This is a custom FIX tag.
+21000	CancelGroupID	N	As stated in the order.
+453	NoPartyIDs	Y	The number of parties in the following Parties Group
+→448	PartyID	Y	
+→447	PartyIDSource	Y	
+→452	PartyRole	Y	
+ 	Standard Trailer
+Y	 
+C* - The instrument can be identified by the OptionsSecurityID (custom tag 21035) or the combination of the Symbol (OSIRoot tag 55), MaturityDate (tag 541), the PutOrCall (tag 201) and the StrikePrice (tag 202).
+OrderCancelReplaceRequest
+The order cancel/replace request is used to change the parameters of an existing order.
+Tag	Field Name	Req'd	Meaning/Values
+ 	Standard Header
+Y	With tag 35 (MsgType) = G
+41	OrigClOrdID	Y	ClOrdID (11) of the previous order (NOT the initial order of the day) as assigned by the client, used to identify the previous order in cancel and cancel/replace requests.
+37	OrderID	N	OrderID as assigned by the exchange.
+11	ClOrdID	Y	Unique identifier for an Order as assigned by the client.
+21035	OptionsSecurityID	C*	This field (if specified in the original order) may not change from the value stated in the original order.
+55	Symbol	C*	This field (if specified in the original order) may not change from the value stated in the original order.
+541	MaturityDate	C*	This field (if specified in the original order) may not change from the value stated in the original order.
+201	PutOrCall	C*	This field (if specified in the original order) may not change from the value stated in the original order.
+202	StrikePrice	C*	This field (if specified in the original order) may not change from the value stated in the original order.
+54	Side	Y	Side may not change from the value stated in the original order.
+38	OrderQty	Y	Order quantities are specified as whole numbers of options contracts. Increasing the Order Quantity will cause the order to lose its priority on the book.
+40	OrdType	Y	OrderType may only change from Limit order to Market order.
+44	Price	N	Price for a single option, if the order type is “Limit.” Changing the price will cause the order to lose its priority on the book.
+60	TransactTime	Y	FIX UTCTimestamp since epoch with millisecond precision.
+ 	Standard Trailer
+Y	 
+C* - The instrument can be identified by the OptionsSecurityID (custom tag 21035) or the combination of the Symbol (OSIRoot tag 55), MaturityDate (tag 541), the PutOrCall (tag 201) and the StrikePrice (tag 202).
+OrderCancelRequest
+The order cancel request message requests the cancellation of all remaining size on an order. 
+Tag	Field Name	Req'd	Meaning/Values
+ 	Standard Header
+Y	With tag 35 (MsgType) = F
+41	OrigClOrdID	Y	ClOrdID (11) of the previous order (NOT the initial order of the day) as assigned by the customer, used to identify the previous order in cancel and cancel/replace requests. 
+37	OrderID	N	Unique identifier for an Order previously assigned by the exchange. If provided, must match the Exchange’s value for the order with the provided OrigClOrdID.
+11	ClOrdID	Y	A Unique identifier for the cancel request.
+21035	OptionsSecurityID	C*	This field (if specified in the original order) must be the same as the original order.
+55	Symbol	C*	This field (if specified in the original order) must be the same as the original order.
+541	MaturityDate	C*	This field (if specified in the original order) must be the same as the original order.
+201	PutOrCall	C*	This field (if specified in the original order) must be the same as the original order.
+202	StrikePrice	C*	This field (if specified in the original order) must be the same as the original order.
+54	Side	Y	Side of order.
+60	TransactTime	Y	UTC timestamp since epoch with millisecond precision.
+ 	Standard Trailer
+Y	 
+C* - The instrument can be identified by the OptionsSecurityID (custom tag 21035) or the combination of the Symbol (OSIRoot tag 55), MaturityDate (tag 541), the PutOrCall (tag 201) and the StrikePrice (tag 202).
+AllocationInstruction
+The allocation instruction message modifies the clearing information on the trade. Supported fields to change are the non-contra fields in the Parties block, the TradingCapacity, and the OpenOrClose fields. Changes requested with this messages are returned in AllocationReport messages. 
+Tag	Field Name	Req'd	Meaning/Values
+ 	Standard Header
+Y	With tag 35 (MsgType) = J
+70	AllocID	Y	Unique identifier for this allocation instruction message.
+71	AllocTransType	Y	Identifies allocation transaction type.
+626	AllocType	Y	Specifies the purpose or type of Allocation message:
+100 - Post Trade Edit
+72	RefAllocReportID	N*	AllocReportID of the trade being modified. Clients use this for additional modifications of a trade that has already been modified.
+19	ExecRefID	N*	ExecID (17) of the trade being modified. Clients can only use this if 71=N, ie. an order that has not had a prior modification.
+880	TrdMatchID	Y	TrdMatchID for the trade being modified
+21035	OptionsSecurityID	N	The MEMX OptionsSecurityID that identifies the options security. Can either use this field or the combination of Symbol, MaturityDate, PutOrCall, and StrikePrice fields.
+55	Symbol	N	The OSI Root for the options security. Can be specified in conjunction with MaturityDate, PutOrCall, and StrikePrice or not specified if OptionSecurityID is used.
+541	MaturityDate	N	Date of maturity in YYYYMMDD format. Can be specified in conjunction with Symbol, PutOrCall, and StrikePrice or not specified if OptionSecurityID is used.
+201	PutOrCall	N	Indicates whether the option security is a put or a call. Can be specified in conjunction with Symbol, MaturityDate, and StrikePrice or not specified if OptionSecurityID is used.
+202	StrikePrice	N 	The Strike Price for the options security. Can be specified in conjunction with Symbol, MaturityDate, PutOrCall or not specified if OptionSecurityID is used.
+54	Side	Y	Side of the order.
+53	Quantity	Y	Total quantity (e.g. number of contracts) of the trade.
+75	TradeDate	Y	Indicates date of trading day. Date of Local Market (vs. UTC) in YYYYMMDD format. Only same day allocations supported.
+78	NoAllocs	Y	Specify 1 to not split a trade or specify a larger number to split the trade accordingly.
+→80	AllocQty	Y	Quantity of child trade. 
+→1815	TradingCapacity	Y	Trade capacity for the trade.
+→77	OpenOrCloseType	N	Opening or closing a position.
+→539	NoNestedPartyIDs	Y	The number of nested parties in the following Nested Parties Group
+→→524	NestedPartyID	Y	
+→→525	NestedPartyIDSource	Y	
+→→538	NestedPartyRole	Y	
+ 	Standard Trailer
+Y	 
+
