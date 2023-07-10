@@ -95,6 +95,51 @@ def generate_message(self, template, session_id):
 message.setField(party_group)
 
 
-sent application message 8=FIXT.1.19=23535=D34=749=QAXMXE1352=20230710-14:03:04.62556=MXOP11=79430018=h38=10040=244=854=255=AMD59=060=20230710-14:03:04.62577=O201=1202=100453=1|448=PartyID1|447=PartyIDSource1|452=PartyRole1|541=2309151815=621035=A004000110=152
-8=FIXT.1.19=9235=334=1349=MXOP52=20230710-14:03:04.62556=QAXMXE1245=758=Invalid Value371=453372=D10=206
+
+
+
+
+
+
+
+
+def generate_message(self, template, session_id):
+    # Replace placeholders in the message template
+    message = template.replace('<ClOrdID>', self.generate_clordid())
+
+    # Get the outgoing sequence number
+    seq_num = str(self.get_outgoing_seq_num(session_id))
+    print(seq_num)
+
+    # Replace the <SeqNum> placeholder with the sequence number
+    message = message.replace('<MsgSeqNum>', seq_num)
+
+    # Generate the SendingTime in the desired format
+    sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
+    message = message.replace('<SendingTime>', sending_time)
+
+    # Create the repeating group fields
+    party_group_fields = [
+        "448=PartyID1",
+        "447=PartyIDSource1",
+        "452=PartyRole1"
+    ]
+
+    # Insert the repeating group into the message
+    repeating_group = "|".join(party_group_fields)
+    message = message.replace('<RepeatingGroup>', repeating_group)
+
+    # Replace the field delimiter from '|' to SOH character
+    message = message.replace('|', chr(0x01))
+
+    # Calculate the CheckSum
+    fix_message = fix.Message(message, False)
+    checksum = self.calculate_checksum(fix_message.toString())
+
+    # Set the CheckSum field
+    fix_message.setField(10, checksum)
+    print("generated_message", fix_message)
+
+    return fix_message
+
 
