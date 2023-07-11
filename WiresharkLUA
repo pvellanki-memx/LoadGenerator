@@ -14,19 +14,17 @@ local FIELD_TYPE_UINT8 = 2
 local FIELD_TYPE_UTCTIMESTAMPNANOS = 3
 local FIELD_TYPE_CHAR = 4
 
-local LENGTH_TEMPLATE_ID = 1
-
 -- Create the Wireshark dissector table
 local sbe_dissector_table = DissectorTable.new("sbe.templateid", "SBE Template ID", ftypes.UINT16)
 
 -- Define the dissector function for the SBE header
 local function dissect_sbe_header(buffer, pinfo, tree)
     -- Extract the template ID from the SBE header
-    local template_id = buffer(0, LENGTH_TEMPLATE_ID):le_uint()
+    local template_id = buffer(0, 1):le_uint()
 
     -- Create the SBE header tree item
     local sbe_header_tree = tree:add(f_sbe_header, buffer(0, 7))
-    sbe_header_tree:set_text("SBE Header (Template ID: " .. template_id .. ")")
+    sbe_header_tree:set_text("SBE Header")
 
     -- Call the appropriate dissector function based on the template ID
     local dissector_func
@@ -34,18 +32,7 @@ local function dissect_sbe_header(buffer, pinfo, tree)
         dissector_func = dissect_new_order_single
     elseif template_id == TEMPLATE_ID_SHORT_TWO_SIDED_BULK_QUOTE then
         dissector_func = dissect_short_two_sided_bulk_quote
-    elseif template_id == TEMPLATE_ID_LONG_TWO_SIDED_BULK_QUOTE then
-        dissector_func = dissect_long_two_sided_bulk_quote
-    elseif template_id == TEMPLATE_ID_SHORT_ONE_SIDED_BULK_QUOTE then
-        dissector_func = dissect_short_one_sided_bulk_quote
-    elseif template_id == TEMPLATE_ID_LONG_ONE_SIDED_BULK_QUOTE then
-        dissector_func = dissect_long_one_sided_bulk_quote
-    elseif template_id == TEMPLATE_ID_MASS_CANCEL_REQUEST then
-        dissector_func = dissect_mass_cancel_request
-    elseif template_id == TEMPLATE_ID_ORDER_CANCEL_REQUEST then
-        dissector_func = dissect_order_cancel_request
-    elseif template_id == TEMPLATE_ID_ORDER_REPLACE_REQUEST then
-        dissector_func = dissect_order_replace_request
+    -- Add more conditions for other template IDs
     else
         -- Unknown template ID, return without further dissection
         return
@@ -57,19 +44,80 @@ end
 
 -- Define the dissector function for the New Order Single template
 local function dissect_new_order_single(buffer, pinfo, tree)
-    -- Dissect New Order Single fields here
+    local subtree = tree:add("New Order Single")
+
+    -- Dissect New Order Single fields
+    subtree:add(f_sending_time, buffer(7, 8))
+    subtree:add(f_cl_ord_id, buffer(15, 20))
+    subtree:add(f_options_security_id, buffer(35, 1))
+    subtree:add(f_side, buffer(43, 1))
+    subtree:add(f_order_qty, buffer(44, 4))
+    subtree:add(f_ord_type, buffer(48, 1))
+    subtree:add(f_price, buffer(49, 8))
+    subtree:add(f_time_in_force, buffer(57, 1))
+    subtree:add(f_open_or_close, buffer(58, 1))
+    subtree:add(f_exec_inst, buffer(59, 2))
+    subtree:add(f_trading_capacity, buffer(61, 1))
+    subtree:add(f_reprice_frequency, buffer(62, 1))
+    subtree:add(f_reprice_behavior, buffer(63, 1))
+    subtree:add(f_mtp_group_id, buffer(64, 2))
+    subtree:add(f_match_trade_prevention, buffer(66, 1))
+    subtree:add(f_cancel_group_id, buffer(67, 2))
+    subtree:add(f_risk_group_id, buffer(69, 2))
+    subtree:add(f_no_party_ids, buffer(0, 1))
+    subtree:add(f_no_quote_entries, buffer(1, 1))
 end
 
 -- Define the dissector function for the Short Two Sided Bulk Quote template
 local function dissect_short_two_sided_bulk_quote(buffer, pinfo, tree)
-    -- Dissect Short Two Sided Bulk Quote fields here
+    local subtree = tree:add("Short Two Sided Bulk Quote")
+
+    -- Dissect Short Two Sided Bulk Quote fields
+    subtree:add(f_sending_time, buffer(7, 8))
+    subtree:add(f_cl_ord_id, buffer(15, 20))
+    subtree:add(f_time_in_force, buffer(35, 1))
+    subtree:add(f_exec_inst, buffer(36, 2))
+    subtree:add(f_trading_capacity, buffer(38, 1))
+    subtree:add(f_mtp_group_id, buffer(39, 2))
+    subtree:add(f_match_trade_prevention, buffer(41, 1))
+    subtree:add(f_cancel_group_id, buffer(42, 2))
+    subtree:add(f_risk_group_id, buffer(44, 2))
+    subtree:add(f_no_party_ids, buffer(0, 1))
+    subtree:add(f_no_quote_entries, buffer(1, 1))
 end
 
--- Define the dissector functions for the remaining SBE message templates
--- ...
+
+-- Define the dissector function for the Mass Cancel Request template
+local function dissect_mass_cancel_request(buffer, pinfo, tree)
+    local subtree = tree:add("Mass Cancel Request")
+
+    -- Dissect Mass Cancel Request fields
+    subtree:add(f_sending_time, buffer(7, 8))
+    subtree:add(f_cl_ord_id, buffer(15, 20))
+    subtree:add(f_efid, buffer(35, 4))
+    subtree:add(f_underlying_or_series, buffer(39, 1))
+    subtree:add(f_underlier, buffer(40, 6))
+    subtree:add(f_options_security_id, buffer(46, 8))
+    subtree:add(f_cancel_group_id, buffer(54, 2))
+    subtree:add(f_mass_cancel_inst, buffer(56, 1))
+end
+
+-- Define the dissector function for the Order Cancel Request template
+local function dissect_order_cancel_request(buffer, pinfo, tree)
+    local subtree = tree:add("Order Cancel Request")
+
+    -- Dissect Order Cancel Request fields
+    subtree:add(f_sending_time, buffer(7, 8))
+    subtree:add(f_order_id, buffer(15, 8))
+    subtree:add(f_cl_ord_id, buffer(23, 20))
+    subtree:add(f_list_seq_no, buffer(43, 1))
+    subtree:add(f_orig_cl_ord_id, buffer(44, 20))
+    subtree:add(f_options_security_id, buffer(64, 8))
+    subtree:add(f_side, buffer(72, 1))
+end
 
 -- Register the SBE header dissector with the SBE dissector
-sbe_dissector_table:add(TEMPLATE_ID_SBE_HEADER, dissect_sbe_header)
+sbe_dissector_table:add(1, dissect_sbe_header)
 
 -- Register the SBE message template dissectors with the SBE dissector
 -- ...
