@@ -3,6 +3,7 @@ import random
 import time
 import datetime
 import quickfix as fix
+import quickfix.fix44 as fix44
 
 # Global variables
 sessions = {}
@@ -23,6 +24,7 @@ class MyApplication(fix.Application):
     def toAdmin(self, message, sessionID):
         if message.getHeader().getField(fix.MsgType()).getString() == fix.MsgType_Logon:
             message.getHeader().setField(1408, "1.3")
+            message.getHeader().setField(43, "Y")
             print("sent admin message", message.toString())
         return True
 
@@ -76,74 +78,86 @@ class MyApplication(fix.Application):
             return session.getExpectedSenderNum()
         return 0
 
-def generate_message(self, message_type, session_id):
-    if message_type.lower() == "logon":
-        message = fix.Message()
-        message.getHeader().setField(fix.MsgType(fix.MsgType_Logon))
-    elif message_type.lower() == "newordersingle":
-        message = fix.Message()
-        message.getHeader().setField(fix.MsgType(fix.MsgType_NewOrderSingle))
+    def generate_message(self, message_type, session_id):
 
-        # Set other required fields for NewOrderSingle message
-        message.setField(fix.Symbol("AMD"))
-        message.setField(fix.Side(fix.Side_BUY))
-        message.setField(fix.OrderQty(100))
-        message.setField(fix.Price(8))
-        message.setField(fix.OrdType(fix.OrdType_LIMIT))
-        message.setField(fix.TimeInForce(fix.TimeInForce_DAY))
-        message.setField(fix.ClOrdID(self.generate_clordid()))
-        message.setField(fix.HandlInst(fix.HandlInst_MANUAL_ORDER))
-        message.setField(fix.SecurityID("A0040001"))
-        message.setField(fix.SecurityIDSource(fix.SecurityIDSource_CUSIP))
-        message.setField(fix.Account("QAX1"))
-        message.setField(fix.SecurityExchange("MXOP"))
+            if message_type.lower() == "logon":
+                message = fix.Message()
+                message.getHeader().setField(fix.BeginString(fix.BeginString_FIXT11))
+                message.getHeader().setField(fix.MsgType(fix.MsgType_Logon))
 
-        # Create the repeating group fields
-        party_group = fix.Group(453, 448, [447, 452])
+                # Set other required fields for Logon message
+                message.setField(fix.EncryptMethod(0))
+                message.setField(fix.HeartBtInt(30))
+                message.setField(fix.ResetSeqNumFlag(False))
+                message.setField(fix.DefaultApplVerID("FIX.5.0SP2"))
+                message.setField(fix.DefaultCstmApplVerID("1.3"))
 
-        # Set the values for the repeating group fields
-        party_group.setField(448, "QAX1")
-        party_group.setField(447, "D")
-        party_group.setField(452, "66")
+            elif message_type.lower() == "newordersingle":
 
-        # Add the repeating group to the message
-        message.addGroup(party_group)
 
-    elif message_type.lower() == "orderreplace":
-        message = fix.Message()
-        message.getHeader().setField(fix.MsgType(fix.MsgType_OrderCancelReplaceRequest))
-        # Set other required fields for OrderCancelReplaceRequest message
-    elif message_type.lower() == "ordercancel":
-        message = fix.Message()
-        message.getHeader().setField(fix.MsgType(fix.MsgType_OrderCancelRequest))
-        # Set other required fields for OrderCancelRequest message
-    else:
-        # Unknown message type
-        return None
+                message = fix.Message()
+                message.getHeader().setField(fix.BeginString(session_id.getBeginString().getString()))
+                message.getHeader().setField(fix.MsgType(fix.MsgType_NewOrderSingle))
+                message.getHeader().setField(fix.SenderCompID(session_id.getSenderCompID().getString()))
+                message.getHeader().setField(fix.TargetCompID(session_id.getTargetCompID().getString()))
 
-    # Get the outgoing sequence number
-    seq_num = self.get_outgoing_seq_num(session_id)
+                # Set other required fields for NewOrderSingle message
+                message.setField(fix.Symbol("AMD"))
+                message.setField(fix.Side(fix.Side_BUY))
+                message.setField(fix.OrderQty(100))
+                message.setField(fix.Price(8))
+                message.setField(fix.OrdType(fix.OrdType_LIMIT))
+                message.setField(fix.TimeInForce(fix.TimeInForce_DAY))
+                message.setField(fix.ClOrdID(self.generate_clordid()))
+                message.setField(fix.SecurityID("A0040001"))
 
-    # Set the MsgSeqNum
-    message.getHeader().setField(fix.MsgSeqNum(seq_num))
+                # Create the repeating group for PartyIDs
+                party_group = fix44.NewOrderSingle.NoPartyIDs()
+                party_group.setField(448, "QAX1")
+                party_group.setField(447, "D")
+                party_group.setField(452, "66")
+                message.addGroup(party_group)
 
-    # Generate the SendingTime in the desired format
-    sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
-    message.getHeader().setField(fix.SendingTime(sending_time))
+            elif message_type.lower() == "orderreplace":
+                pass
+                # ...
+                # Code for other message types
+                # ...
 
-    # Calculate the CheckSum
-    message.calculateString()
-    message.setField(fix.CheckSum(self.calculate_checksum(message.toString())))
+            elif message_type.lower() == "ordercancel":
+                pass
+                #..
+                # Code for other message types
+                # ...
 
-    return message
+            else:
+                # Unknown message type
+                return None
+
+            # Set the standard header fields
+            session = fix.Session.lookupSession(fix.SessionID(session_id))
+            if session is None:
+                return None
+
+            message.getHeader().setField(fix.BeginString(session.getSessionID().getBeginString()))
+            message.getHeader().setField(fix.SenderCompID(session.getSessionID().getSenderCompID()))
+            message.getHeader().setField(fix.TargetCompID(session.getSessionID().getTargetCompID()))
+            message.getHeader().setField(fix.MsgSeqNum(self.get_outgoing_seq_num(session_id)))
+            message.getHeader().setField(fix.SendingTime(datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]))
+
+            # Set the standard trailer field
+            message.setField(fix.CheckSum(self.calculate_checksum(message.toString())))
+
+            return message
+
 
 
     def increment_outgoing_seq_num(self, session_id):
         session = fix.Session.lookupSession(fix.SessionID(session_id))
         if session is not None:
-            session.incrementNextSenderMsgSeqNumContinuation of the `MyApplication` class:
+            session.incrementNextSenderMsgSeqNum()
 
-```python
+
     def send_heartbeats(self, session_id, interval):
         while sessions[session_id]:
             session = fix.Session.lookupSession(fix.SessionID(session_id))
@@ -158,6 +172,7 @@ def generate_message(self, message_type, session_id):
         load = []
         for message_type, weight in self.message_weights.items():
             weight = int(weight)
+            print(weight)
             template = self.generate_template_for_message_type(message_type)
             if template:
                 load.extend([message_type.lower()] * weight)
@@ -230,7 +245,6 @@ config = configparser.ConfigParser()
 config.read("config.ini")
 
 # Load configuration values
-template_file = config.get("LoadGenerator", "template_file")
 connection_config_file = config.get("LoadGenerator", "connection_config_file")
 log_file = config.get("LoadGenerator", "log_file")
 message_rate = float(config.get("LoadGenerator", "message_rate"))
@@ -240,7 +254,6 @@ message_weights = dict(config.items("MessageTypes"))
 
 # Initialize the FIX application
 app = MyApplication(message_weights, message_rate)
-app.template_file = template_file
 app.connection_config_file = connection_config_file
 app.send_duration = send_duration
 
