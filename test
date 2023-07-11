@@ -1,10 +1,10 @@
 Traceback (most recent call last):
-  File "test.py", line 255, in <module>
+  File "test.py", line 259, in <module>
     app.run()
-  File "test.py", line 228, in run
+  File "test.py", line 232, in run
     message = self.generate_message(load[message_count], session_id)
-  File "test.py", line 140, in generate_message
-    message.getHeader().setField(fix.SendingTime(datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]))
+  File "test.py", line 105, in generate_message
+    message.getHeader().setField(fix.SendingTime(sending_time))
   File "/usr/local/lib64/python3.6/site-packages/quickfix.py", line 40116, in __init__
     quickfix.UtcTimeStampField.__init__(self, 52, data)
   File "/usr/local/lib64/python3.6/site-packages/quickfix.py", line 1086, in __init__
