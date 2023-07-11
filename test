@@ -1,104 +1,14 @@
-def generate_message(self, message_type, session_id):
-    if message_type.lower() == "logon":
-        message = fix.Message()
-        message.getHeader().setField(fix.BeginString(fix.BeginString_FIXT11))
-        message.getHeader().setField(fix.MsgType(fix.MsgType_Logon))
-
-        # Set other required fields for Logon message
-        message.setField(fix.EncryptMethod(0))
-        message.setField(fix.HeartBtInt(30))
-        message.setField(fix.ResetSeqNumFlag(False))
-        message.setField(fix.DefaultApplVerID("FIX.5.0SP2"))
-        message.setField(fix.DefaultCstmApplVerID("1.3"))
-
-    elif message_type.lower() == "newordersingle":
-        # ...
-        # Code for other message types
-        # ...
-
-    elif message_type.lower() == "orderreplace":
-        # ...
-        # Code for other message types
-        # ...
-
-    elif message_type.lower() == "ordercancel":
-        # ...
-        # Code for other message types
-        # ...
-
-    else:
-        # Unknown message type
-        return None
-
-    # Set the standard header fields
+  File "test.py", line 265, in <module>
+    app.run()
+  File "test.py", line 238, in run
+    message = self.generate_message(load[message_count], session_id)
+  File "test.py", line 95, in generate_message
     session = fix.Session.lookupSession(fix.SessionID(session_id))
-    if session is None:
-        return None
+  File "/usr/local/lib64/python3.6/site-packages/quickfix.py", line 35193, in __init__
+    this = _quickfix.new_SessionID(*args)
+NotImplementedError: Wrong number or type of arguments for overloaded function 'new_SessionID'.
+  Possible C/C++ prototypes are:
+    FIX::SessionID::SessionID()
+    FIX::SessionID::SessionID(std::string const &,std::string const &,std::string const &,std::string const &)
+    FIX::SessionID::SessionID(std::string const &,std::string const &,std::string const &)
 
-    message.getHeader().setField(fix.BeginString(session.getSessionID().getBeginString()))
-    message.getHeader().setField(fix.SenderCompID(session.getSessionID().getSenderCompID()))
-    message.getHeader().setField(fix.TargetCompID(session.getSessionID().getTargetCompID()))
-    message.getHeader().setField(fix.MsgSeqNum(self.get_outgoing_seq_num(session_id)))
-    message.getHeader().setField(fix.SendingTime(datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]))
-
-    # Set the standard trailer field
-    message.setField(fix.CheckSum(self.calculate_checksum(message.toString())))
-
-    return message
-
-
-
-
-
-
-
-def generate_message(self, message_type, session_id):
-    if message_type.lower() == "logon":
-        message = fix.Message()
-        message.getHeader().setField(fix.BeginString(fix.BeginString_FIXT11))
-        message.getHeader().setField(fix.MsgType(fix.MsgType_Logon))
-    elif message_type.lower() == "newordersingle":
-        session = fix.Session.lookupSession(fix.SessionID(session_id))
-        if session is None:
-            return None
-
-        message = fix.Message()
-        message.getHeader().setField(fix.BeginString(session.getSessionID().getBeginString()))
-        message.getHeader().setField(fix.MsgType(fix.MsgType_NewOrderSingle))
-        message.getHeader().setField(fix.SenderCompID(session.getSessionID().getSenderCompID()))
-        message.getHeader().setField(fix.TargetCompID(session.getSessionID().getTargetCompID()))
-
-        # Set other required fields for NewOrderSingle message
-        message.setField(fix.Symbol("AMD"))
-        message.setField(fix.Side(fix.Side_BUY))
-        message.setField(fix.OrderQty(100))
-        message.setField(fix.Price(8))
-        message.setField(fix.OrdType(fix.OrdType_LIMIT))
-        message.setField(fix.TimeInForce(fix.TimeInForce_DAY))
-        message.setField(fix.ClOrdID(self.generate_clordid()))
-        message.setField(fix.HandlInst(fix.HandlInst_MANUAL_ORDER))
-        message.setField(fix.SecurityID("A0040001"))
-        message.setField(fix.SecurityIDSource(fix.SecurityIDSource_CUSIP))
-        message.setField(fix.Account("QAX1"))
-        message.setField(fix.SecurityExchange("MXOP"))
-
-        # Create the repeating group for PartyIDs
-        party_group = fix.Group(453, 448, [447, 452])
-        party_group.setField(448, "QAX1")
-        party_group.setField(447, "D")
-        party_group.setField(452, "66")
-        message.addGroup(party_group)
-
-    elif message_type.lower() == "orderreplace":
-        message = fix.Message()
-        message.getHeader().setField(fix.BeginString(fix.BeginString_FIXT11))
-        message.getHeader().setField(fix.MsgType(fix.MsgType_OrderCancelReplaceRequest))
-        # Set other required fields for OrderCancelReplaceRequest message
-    elif message_type.lower() == "ordercancel":
-        message = fix.Message()
-        message.getHeader().setField(fix.BeginString(fix.BeginString_FIXT11))
-        message.getHeader().setField(fix.MsgType(fix.MsgType_OrderCancelRequest))
-        # Set other required fields for OrderCancelRequest message
-    else:
-        # Unknown message type
-        return None
