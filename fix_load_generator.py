@@ -2,20 +2,23 @@ import configparser
 import random
 import time
 import datetime
+import os
 import quickfix as fix
+import quickfix44 as fix44
+
+
 
 # Global variables
 sessions = {}
 
 # Class representing the FIX application
 class MyApplication(fix.Application):
-    def __init__(self, template_file, message_weights, message_rate):
+    def __init__(self, message_weights, message_rate):
         super().__init__()
-        self.template_file = template_file
         self.message_weights = message_weights
         self.message_rate = message_rate
         self.sessions = {}
-        self.log_file = log_file
+        self.log_directory = "log"
 
     def onCreate(self, sessionID):
         print("Session created -", sessionID.toString())
@@ -24,22 +27,23 @@ class MyApplication(fix.Application):
     def toAdmin(self, message, sessionID):
         if message.getHeader().getField(fix.MsgType()).getString() == fix.MsgType_Logon:
             message.getHeader().setField(1408, "1.3")
+            message.getHeader().setField(43, "Y")
             print("sent admin message", message.toString())
         return True
 
     def toApp(self, message, sessionID):
         session_id = sessionID.toString()
-        with open(self.log_file, "a") as file:
-                file.write(f"Session: {session_id}\n")
-                file.write(message.toString() + '\n')
+        with open(self.get_log_file(), "a") as file:
+            file.write(f"Session: {session_id}\n")
+            file.write(message.toString() + '\n')
         print("sent application message", message.toString())
 
     def fromApp(self, message, sessionID):
         session_id = sessionID.toString()
-        with open(self.log_file, "a") as file:
-                file.write(f"Session: {session_id}\n")
-                file.write(message.toString() + '\n')
-        print("sent application message", message.toString())
+        with open(self.get_log_file(), "a") as file:
+            file.write(f"Session: {session_id}\n")
+            file.write(message.toString() + '\n')
+        print("received application message", message.toString())
 
     def fromAdmin(self, message, sessionID):
         global sessions
@@ -55,8 +59,9 @@ class MyApplication(fix.Application):
         elif msg_type == '5':  # Logout message
             print(f"Session disconnected for {session_id}")
             sessions[session_id] = False
-        with open(self.log_file, 'a') as file:
+        with open(self.get_log_file(), 'a') as file:
             file.write(f"Received fromAdmin message:{message.toString()}\n")
+
 
     def onLogout(self, sessionID):
         print("Logout initiated -", sessionID.toString())
@@ -77,65 +82,85 @@ class MyApplication(fix.Application):
             return session.getExpectedSenderNum()
         return 0
 
-    def generate_message(self, template, session_id):
-            # Replace placeholders in the message template
-            message = template.replace('<ClOrdID>', self.generate_clordid())
+    def generate_message(self, message_type, session_id):
 
-            # Get the outgoing sequence number
-            seq_num = str(self.get_outgoing_seq_num(session_id))
-            print(seq_num)
+            if message_type.lower() == "logon":
+                message = fix.Message()
+                message.getHeader().setField(fix.BeginString(fix.BeginString_FIXT11))
+                message.getHeader().setField(fix.MsgType(fix.MsgType_Logon))
 
-            # Replace the <SeqNum> placeholder with the sequence number
-            message = message.replace('<MsgSeqNum>', seq_num)
+                # Set other required fields for Logon message
+                message.setField(fix.EncryptMethod(0))
+                message.setField(fix.HeartBtInt(30))
+                message.setField(fix.ResetSeqNumFlag(False))
+                message.setField(fix.DefaultApplVerID("FIX.5.0SP2"))
+                message.setField(fix.DefaultCstmApplVerID("1.3"))
 
-            # Generate the SendingTime in the desired format
-            sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
-            message = message.replace('<SendingTime>', sending_time)
-
-
-            # Create the repeating group fields
-            party_group_fields = [
-                "453=1",
-                "448=QAX1",
-                "447=D",
-                "452=66"
-            ]
-
-            # Insert the repeating group into the message
-            repeating_group = "|".join(party_group_fields)
-            message = message.replace('<RepeatingGroup>', repeating_group)
-        
-            # Replace the field delimiter from '|' to SOH character
-            message = message.replace('|', chr(0x01))
+            elif message_type.lower() == "newordersingle":
 
 
-            # Calculate the CheckSum
-            #message_factory = fix.MessageFactory()
-            fix_message = fix.Message(message, False)
-            #fix_message.setString(message, False, message_factory)
-            checksum = self.calculate_checksum(fix_message.toString())
+                message = fix.Message()
+                message.getHeader().setField(fix.BeginString(session_id.getBeginString().getString()))
+                message.getHeader().setField(fix.MsgType(fix.MsgType_NewOrderSingle))
+                message.getHeader().setField(fix.SenderCompID(session_id.getSenderCompID().getString()))
+                message.getHeader().setField(fix.TargetCompID(session_id.getTargetCompID().getString()))
+                message.getHeader().setField(fix.MsgSeqNum(self.get_outgoing_seq_num(session_id)))
 
-            #fix_message.setField(10, checksum)
-            print("generated_message",fix_message)
 
-            # Calculate the message length (excluding SOH characters)
-            #body_start_index = message.index('9=')
-            #body_end_index = message.index('10=')
-            body_length = fix_message.getHeader().getField(9)
-            #print("generated_message",fix_message)
-            #print(body_length)
+                # Set other required fields for NewOrderSingle message
+                message.setField(fix.Symbol("AMD"))
+                message.setField(fix.Side(fix.Side_BUY))
+                message.setField(fix.OrderQty(100))
+                message.setField(fix.Price(8))
+                message.setField(fix.OrdType(fix.OrdType_LIMIT))
+                message.setField(fix.TimeInForce(fix.TimeInForce_DAY))
+                message.setField(fix.ClOrdID(self.generate_clordid()))
+                message.setField(fix.ExecInst("h"))
+                message.setField(1815,"6")
+                message.setField(21035,"A0040001")
+                sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
+                message.setField(60,sending_time)
+                message.setField(77,"O")
+                message.setField(201,"1")
+                message.setField(202,"100")
+                message.setField(541,"20230915")
 
-            # Replace the placeholders for message length and CheckSum
-            #message = message.replace('<BodyLength>', str(body_length))
-            #message = message.replace('<CheckSum>', checksum)
-            #print(message)
 
-            return fix_message
+                # Create the repeating group for PartyIDs
+                party_group = fix44.NewOrderSingle.NoPartyIDs()
+                party_group.setField(448, "QAX3")
+                party_group.setField(447, "D")
+                party_group.setField(452, "1")
+                message.addGroup(party_group)
+                
+
+
+
+            elif message_type.lower() == "orderreplace":
+                pass
+                # ...
+                # Code for other message types
+                # ...
+
+            elif message_type.lower() == "ordercancel":
+                pass
+                #..
+                # Code for other message types
+                # ...
+
+            else:
+                # Unknown message type
+                return None
+
+            return message
+
+
 
     def increment_outgoing_seq_num(self, session_id):
         session = fix.Session.lookupSession(fix.SessionID(session_id))
         if session is not None:
             session.incrementNextSenderMsgSeqNum()
+
 
     def send_heartbeats(self, session_id, interval):
         while sessions[session_id]:
@@ -148,15 +173,13 @@ class MyApplication(fix.Application):
             time.sleep(interval)
 
     def generate_load(self):
-        with open(self.template_file, "r") as file:
-            templates = file.readlines()
-
         load = []
-        for template in templates:
-            message_type = self.get_message_type(template)
-            if message_type and message_type in self.message_weights:
-                weight = int(self.message_weights[message_type])
-                load.extend([template.strip()] * weight)
+        for message_type, weight in self.message_weights.items():
+            weight = int(weight)
+            print(weight)
+            template = self.generate_template_for_message_type(message_type)
+            if template:
+                load.extend([message_type.lower()] * weight)
 
         print(f"Generated load: {load}")
         random.shuffle(load)
@@ -172,54 +195,25 @@ class MyApplication(fix.Application):
 
         return load
 
-    def get_message_type(self, message):
-        fields = message.split("|")
-        for field in fields:
-            if field.startswith("35="):
-                return field.split("=")[1].lower()
-        return
-    
-
-    """
-    def run(self):
-        settings = fix.SessionSettings(self.connection_config_file)
-        application = fix.SocketInitiator(self, fix.FileStoreFactory(settings), settings)
-        application.start()
-
-        while not all(sessions.values()):
-            time.sleep(1)
-
-        load = self.generate_load()
-
-        start_time = time.time()
-        message_count = 0
-
-        while True:
-            elapsed_time = time.time() - start_time
-
-            if elapsed_time >= self.send_duration:
-                break
-
-            if message_count >= len(load):
-                message_count = 0
-            print(sessions)
-
-            for session_id in sessions:
-                session = fix.Session.lookupSession(session_id)
-                print(session)
-
-                if session is not None and session.isLoggedOn():
-                   message = self.generate_message(load[message_count])
-                   fix.Session.sendToTarget(message, self.session_id)
-
-            message_count += 1
-
-            time.sleep(1)
-
-        application.stop()
-
-    """
+    def generate_template_for_message_type(self, message_type):
+        if message_type.lower() == "logon":
+            return "logon"
+        elif message_type.lower() == "newordersingle":
+            return "new_order_template"
+        elif message_type.lower() == "orderreplace":
+            return "order_replace_template"
+        elif message_type.lower() == "ordercancel":
+            return "order_cancel_template"
+        else:
+            return None
         
+    def get_log_file(self):
+        os.makedirs(self.log_directory, exist_ok=True)
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        log_file_name = f"log_file_{timestamp}.log"
+        print(os.path.join(self.log_directory, log_file_name))
+        return os.path.join(self.log_directory, log_file_name)
+
     def run(self):
         settings = fix.SessionSettings(self.connection_config_file)
         application = fix.SocketInitiator(self, fix.FileStoreFactory(settings), settings)
@@ -245,12 +239,12 @@ class MyApplication(fix.Application):
 
             for session_id in self.sessions:
                 session = self.sessions[session_id]
-                print(session)   
+                print(session)
 
                 if session is not None and session.isLoggedOn():
                     message = self.generate_message(load[message_count], session_id)
                     fix.Session.sendToTarget(message, session_id)
-            message_count += 1
+                message_count += 1
 
             time.sleep(1)
 
@@ -262,7 +256,6 @@ config = configparser.ConfigParser()
 config.read("config.ini")
 
 # Load configuration values
-template_file = config.get("LoadGenerator", "template_file")
 connection_config_file = config.get("LoadGenerator", "connection_config_file")
 log_file = config.get("LoadGenerator", "log_file")
 message_rate = float(config.get("LoadGenerator", "message_rate"))
@@ -270,12 +263,12 @@ send_duration = int(config.get("LoadGenerator", "send_duration"))
 
 message_weights = dict(config.items("MessageTypes"))
 
-
-
 # Initialize the FIX application
-app = MyApplication(template_file, message_weights, message_rate)
+app = MyApplication(message_weights, message_rate)
 app.connection_config_file = connection_config_file
 app.send_duration = send_duration
 
 # Run the FIX application
 app.run()
+
+
