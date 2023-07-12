@@ -1,6 +1,6 @@
-def get_log_file(self):
-    log_dir = os.path.join(self.log_directory, ".log")
-    os.makedirs(log_dir, exist_ok=True)
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    log_file_name = f"log_file_{timestamp}.log"
-    return os.path.join(log_dir, log_file_name)
+   def toApp(self, message, sessionID):
+        session_id = sessionID.toString()
+        with open(self.get_log_file(), "a") as file:
+            file.write(f"Session: {session_id}\n")
+            file.write(message.toString() + '\n')
+        print("sent application message", message.toString())
