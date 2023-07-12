@@ -1,0 +1,44 @@
+[
+  {
+    "recordType" : "OptionInstrumentDefinitionRecord",
+    "optionId" : "A0040001",
+    "underlyingSymbolId" : "AMD",
+    "optionRoot" : "AMD",
+    "putCall" : "Call",
+    "productType" : "EquityUnderlying",
+    "rootIndex" : 1,
+    "expirationDate" : 230915,
+    "strikePrice" : 100.0000,
+    "isTest" : false,
+    "isActive" : true,
+    "isClosingOnly" : false
+  },
+  {
+    "recordType" : "OptionInstrumentDefinitionRecord",
+    "optionId" : "A0040002",
+    "underlyingSymbolId" : "AMD",
+    "optionRoot" : "AMD",
+    "putCall" : "Call",
+    "productType" : "EquityUnderlying",
+    "rootIndex" : 2,
+    "expirationDate" : 230818,
+    "strikePrice" : 100.0000,
+    "isTest" : false,
+    "isActive" : true,
+    "isClosingOnly" : false
+  },
+  {
+    "recordType" : "OptionInstrumentDefinitionRecord",
+    "optionId" : "A0040003",
+    "underlyingSymbolId" : "AMD",
+    "optionRoot" : "AMD",
+    "putCall" : "Call",
+    "productType" : "EquityUnderlying",
+    "rootIndex" : 3,
+    "expirationDate" : 230707,
+    "strikePrice" : 101.0000,
+    "isTest" : false,
+    "isActive" : true,
+    "isClosingOnly" : false
+  },
+]
