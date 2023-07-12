@@ -84,6 +84,19 @@ class MyApplication(fix.Application):
 
     def generate_message(self, message_type, session_id):
 
+        with open('instrument_definitions.json', 'r') as file:
+            json_data = json.load(file)
+
+        # Find the matching optionId based on the symbol
+        option_id = None
+        for item in json_data:
+            if item['underlyingSymbolId'] == symbol:
+                option_id = item['optionId']
+                break
+
+        if not option_id:
+            raise ValueError(f"No optionId found for symbol: {symbol}")
+
             if message_type.lower() == "logon":
                 message = fix.Message()
                 message.getHeader().setField(fix.BeginString(fix.BeginString_FIXT11))
@@ -117,13 +130,13 @@ class MyApplication(fix.Application):
                 message.setField(fix.ClOrdID(self.generate_clordid()))
                 message.setField(fix.ExecInst("h"))
                 message.setField(1815,"6")
-                message.setField(21035,"A0040001")
                 sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
                 message.setField(60,sending_time)
                 message.setField(77,"O")
-                message.setField(201,"1")
-                message.setField(202,"100")
-                message.setField(541,"20230915")
+                message.setField(21035, option_id)
+                message.setField(201, json_data[0]['putCall'])
+                message.setField(202, str(json_data[0]['strikePrice']))
+                message.setField(541, str(json_data[0]['expirationDate']))
 
 
                 # Create the repeating group for PartyIDs
