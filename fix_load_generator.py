@@ -84,68 +84,59 @@ class MyApplication(fix.Application):
 
     def generate_message(self, message_type, session_id):
 
-        with open('instrument_definitions.json', 'r') as file:
-            json_data = json.load(file)
+def generate_message(self, message_type, session_id):
+    with open('instrument_definitions.json', 'r') as file:
+        instrument_definitions = json.load(file)
 
-        # Find the matching optionId based on the symbol
+    if message_type.lower() == "logon":
+        message = fix.Message()
+        message.getHeader().setField(fix.BeginString(fix.BeginString_FIXT11))
+        message.getHeader().setField(fix.MsgType(fix.MsgType_Logon))
+
+        # Set other required fields for Logon message
+        message.setField(fix.EncryptMethod(0))
+        message.setField(fix.HeartBtInt(30))
+        message.setField(fix.ResetSeqNumFlag(False))
+        message.setField(fix.DefaultApplVerID("FIX.5.0SP2"))
+        message.setField(fix.DefaultCstmApplVerID("1.3"))
+
+    elif message_type.lower() == "newordersingle":
+        message = fix.Message()
+        message.getHeader().setField(fix.BeginString(session_id.getBeginString().getString()))
+        message.getHeader().setField(fix.MsgType(fix.MsgType_NewOrderSingle))
+        message.getHeader().setField(fix.SenderCompID(session_id.getSenderCompID().getString()))
+        message.getHeader().setField(fix.TargetCompID(session_id.getTargetCompID().getString()))
+        message.getHeader().setField(fix.MsgSeqNum(self.get_outgoing_seq_num(session_id)))
+
+        # Set other required fields for NewOrderSingle message
+        message.setField(fix.Symbol("AMD"))
+        message.setField(fix.Side(fix.Side_BUY))
+        message.setField(fix.OrderQty(100))
+        message.setField(fix.Price(8))
+        message.setField(fix.OrdType(fix.OrdType_LIMIT))
+        message.setField(fix.TimeInForce(fix.TimeInForce_DAY))
+        message.setField(fix.ClOrdID(self.generate_clordid()))
+        message.setField(fix.ExecInst("h"))
+
         option_id = None
-        for item in json_data:
+        for item in instrument_definitions:
             if item['underlyingSymbolId'] == symbol:
                 option_id = item['optionId']
                 break
 
-        if not option_id:
-            raise ValueError(f"No optionId found for symbol: {symbol}")
-
-            if message_type.lower() == "logon":
-                message = fix.Message()
-                message.getHeader().setField(fix.BeginString(fix.BeginString_FIXT11))
-                message.getHeader().setField(fix.MsgType(fix.MsgType_Logon))
-
-                # Set other required fields for Logon message
-                message.setField(fix.EncryptMethod(0))
-                message.setField(fix.HeartBtInt(30))
-                message.setField(fix.ResetSeqNumFlag(False))
-                message.setField(fix.DefaultApplVerID("FIX.5.0SP2"))
-                message.setField(fix.DefaultCstmApplVerID("1.3"))
-
-            elif message_type.lower() == "newordersingle":
-
-
-                message = fix.Message()
-                message.getHeader().setField(fix.BeginString(session_id.getBeginString().getString()))
-                message.getHeader().setField(fix.MsgType(fix.MsgType_NewOrderSingle))
-                message.getHeader().setField(fix.SenderCompID(session_id.getSenderCompID().getString()))
-                message.getHeader().setField(fix.TargetCompID(session_id.getTargetCompID().getString()))
-                message.getHeader().setField(fix.MsgSeqNum(self.get_outgoing_seq_num(session_id)))
-
-
-                # Set other required fields for NewOrderSingle message
-                message.setField(fix.Symbol("AMD"))
-                message.setField(fix.Side(fix.Side_BUY))
-                message.setField(fix.OrderQty(100))
-                message.setField(fix.Price(8))
-                message.setField(fix.OrdType(fix.OrdType_LIMIT))
-                message.setField(fix.TimeInForce(fix.TimeInForce_DAY))
-                message.setField(fix.ClOrdID(self.generate_clordid()))
-                message.setField(fix.ExecInst("h"))
-                message.setField(1815,"6")
-                sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
-                message.setField(60,sending_time)
-                message.setField(77,"O")
+        if option_id:
+            instrument_definition = next((item for item in instrument_definitions if item["optionId"] == option_id), None)
+            if instrument_definition:
+                message.setField(fix.PutOrCall(instrument_definition["putCall"]))
+                message.setField(fix.StrikePrice(instrument_definition["strikePrice"]))
                 message.setField(21035, option_id)
-                message.setField(201, json_data[0]['putCall'])
-                message.setField(202, str(json_data[0]['strikePrice']))
-                message.setField(541, str(json_data[0]['expirationDate']))
 
-
-                # Create the repeating group for PartyIDs
-                party_group = fix44.NewOrderSingle.NoPartyIDs()
-                party_group.setField(448, "QAX3")
-                party_group.setField(447, "D")
-                party_group.setField(452, "1")
-                message.addGroup(party_group)
-                
+        # Create the repeating group for PartyIDs
+        party_group = fix44.NewOrderSingle.NoPartyIDs()
+        party_group.setField(448, "QAX3")
+        party_group.setField(447, "D")
+        party_group.setField(452, "1")
+        message.addGroup(party_group)
 
 
 
@@ -284,5 +275,71 @@ app.send_duration = send_duration
 
 # Run the FIX application
 app.run()
+
+
+
+
+
+
+
+
+
+
+
+
+def generate_message(self, message_type, session_id):
+    with open('instrument_definitions.json', 'r') as file:
+        instrument_definitions = json.load(file)
+
+    if message_type.lower() == "logon":
+        message = fix.Message()
+        message.getHeader().setField(fix.BeginString(fix.BeginString_FIXT11))
+        message.getHeader().setField(fix.MsgType(fix.MsgType_Logon))
+
+        # Set other required fields for Logon message
+        message.setField(fix.EncryptMethod(0))
+        message.setField(fix.HeartBtInt(30))
+        message.setField(fix.ResetSeqNumFlag(False))
+        message.setField(fix.DefaultApplVerID("FIX.5.0SP2"))
+        message.setField(fix.DefaultCstmApplVerID("1.3"))
+
+    elif message_type.lower() == "newordersingle":
+        message = fix.Message()
+        message.getHeader().setField(fix.BeginString(session_id.getBeginString().getString()))
+        message.getHeader().setField(fix.MsgType(fix.MsgType_NewOrderSingle))
+        message.getHeader().setField(fix.SenderCompID(session_id.getSenderCompID().getString()))
+        message.getHeader().setField(fix.TargetCompID(session_id.getTargetCompID().getString()))
+        message.getHeader().setField(fix.MsgSeqNum(self.get_outgoing_seq_num(session_id)))
+
+        # Set other required fields for NewOrderSingle message
+        message.setField(fix.Symbol("AMD"))
+        message.setField(fix.Side(fix.Side_BUY))
+        message.setField(fix.OrderQty(100))
+        message.setField(fix.Price(8))
+        message.setField(fix.OrdType(fix.OrdType_LIMIT))
+        message.setField(fix.TimeInForce(fix.TimeInForce_DAY))
+        message.setField(fix.ClOrdID(self.generate_clordid()))
+        message.setField(fix.ExecInst("h"))
+
+        option_id = None
+        for item in instrument_definitions:
+            if item['underlyingSymbolId'] == symbol:
+                option_id = item['optionId']
+                break
+
+        if option_id:
+            instrument_definition = next((item for item in instrument_definitions if item["optionId"] == option_id), None)
+            if instrument_definition:
+                message.setField(fix.PutOrCall(instrument_definition["putCall"]))
+                message.setField(fix.StrikePrice(instrument_definition["strikePrice"]))
+                message.setField(21035, option_id)
+
+        # Create the repeating group for PartyIDs
+        party_group = fix44.NewOrderSingle.NoPartyIDs()
+        party_group.setField(448, "QAX3")
+        party_group.setField(447, "D")
+        party_group.setField(452, "1")
+        message.addGroup(party_group)
+
 
 
