@@ -273,6 +273,7 @@ connection_config_file = config.get("LoadGenerator", "connection_config_file")
 log_file = config.get("LoadGenerator", "log_file")
 message_rate = float(config.get("LoadGenerator", "message_rate"))
 send_duration = int(config.get("LoadGenerator", "send_duration"))
+symbol = config.get("LoadGenerator", "symbol")
 
 message_weights = dict(config.items("MessageTypes"))
 
