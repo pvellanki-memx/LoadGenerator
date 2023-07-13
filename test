@@ -1,52 +1,15 @@
-   def toApp(self, message, sessionID):
-        session_id = sessionID.toString()
-        with open(self.get_log_file(), "a") as file:
-            file.write(f"Session: {session_id}\n")
-            file.write(message.toString() + '\n')
-        print("sent application message", message.toString())
+E
+======================================================================
+ERROR: setUpClass (__main__.TestFIXSession)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "fix_test_suite.py", line 27, in setUpClass
+    cls.app = fix.Application()
+  File "/usr/local/lib64/python3.6/site-packages/quickfix.py", line 39589, in __init__
+    this = _quickfix.new_Application(_self, )
+RuntimeError: accessing abstract class or protected constructor
 
+----------------------------------------------------------------------
+Ran 0 tests in 0.005s
 
-
-[
-  {
-    "recordType" : "OptionInstrumentDefinitionRecord",
-    "optionId" : "A0040001",
-    "underlyingSymbolId" : "AMD",
-    "optionRoot" : "AMD",
-    "putCall" : "Call",
-    "productType" : "EquityUnderlying",
-    "rootIndex" : 1,
-    "expirationDate" : 230915,
-    "strikePrice" : 100.0000,
-    "isTest" : false,
-    "isActive" : true,
-    "isClosingOnly" : false
-  },
-  {
-    "recordType" : "OptionInstrumentDefinitionRecord",
-    "optionId" : "A0040002",
-    "underlyingSymbolId" : "AMD",
-    "optionRoot" : "AMD",
-    "putCall" : "Call",
-    "productType" : "EquityUnderlying",
-    "rootIndex" : 2,
-    "expirationDate" : 230818,
-    "strikePrice" : 100.0000,
-    "isTest" : false,
-    "isActive" : true,
-    "isClosingOnly" : false
-  },
-  {
-    "recordType" : "OptionInstrumentDefinitionRecord",
-    "optionId" : "A0040003",
-    "underlyingSymbolId" : "AMD",
-    "optionRoot" : "AMD",
-    "putCall" : "Call",
-    "productType" : "EquityUnderlying",
-    "rootIndex" : 3,
-    "expirationDate" : 230707,
-    "strikePrice" : 101.0000,
-    "isTest" : false,
-    "isActive" : true,
-    "isClosingOnly" : false
-  },
+FAILED (errors=1)
