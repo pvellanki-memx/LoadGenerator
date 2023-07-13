@@ -1,15 +1,41 @@
-E
-======================================================================
-ERROR: setUpClass (__main__.TestFIXSession)
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "fix_test_suite.py", line 27, in setUpClass
-    cls.app = fix.Application()
-  File "/usr/local/lib64/python3.6/site-packages/quickfix.py", line 39589, in __init__
-    this = _quickfix.new_Application(_self, )
-RuntimeError: accessing abstract class or protected constructor
+class MyApplication(fix.Application):
+    def __init__(self):
+        super().__init__()
+        self.execution_report_received = False
+        self.last_execution_report = None
 
-----------------------------------------------------------------------
-Ran 0 tests in 0.005s
+    def onCreate(self, sessionID):
+        pass
 
-FAILED (errors=1)
+    def onLogon(self, sessionID):
+        pass
+
+    def onLogout(self, sessionID):
+        pass
+
+    def toAdmin(self, message, sessionID):
+        pass
+
+    def fromAdmin(self, message, sessionID):
+        pass
+
+    def toApp(self, message, sessionID):
+        pass
+
+    def fromApp(self, message, sessionID):
+        msg_type = fix.MsgType()
+        message.getHeader().getField(msg_type)
+
+        if msg_type.getValue() == fix.MsgType_ExecutionReport:
+            cl_ord_id = fix.ClOrdID()
+            exec_report = fix.ExecutionReport()
+            message.getField(cl_ord_id)
+            message.getField(exec_report)
+            self.last_execution_report = exec_report
+
+            # Check if the execution report matches the conditions
+            if exec_report.getField(39).getString() == '0' or exec_report.getField(39).getString() == '150':
+                self.execution_report_received = True
+
+    def generate_clordid(self):
+        return str(random.randint(100000, 999999))
