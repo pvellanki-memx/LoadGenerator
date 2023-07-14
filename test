@@ -159,3 +159,15 @@ If AR = C and AQ = 2 exists where AG orderID is the same, return corresponding A
 If the above does not exist return corresponding AP value where AQ= 1
 
 Repeat for AR = F and AR = M just to have the full qty to help resolve any potential issues
+
+
+			Executing/Entering Firm Breakdown				
+							
+Customer / Market Maker	Side	Ultimate Clearing Firm (OCC#)	Total Qty	477	534	551	IBCO
+							
+							
+C	Buy	534	1	-	-	-	1
+C	Sell	534	2	2	-	-	-
+MM	Sell	551	1	-	-	1	-
+MM	Buy	L	1	-	-	1	-
+MM	Buy	BLVT	1	-	1	-	-
