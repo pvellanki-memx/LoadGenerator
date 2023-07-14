@@ -177,6 +177,15 @@ BLVT
 <TrdCaptRpt RptID="240150818" PrevlyRpted="N" LastQty="13" LastPx="0" TrdDt="2023-06-01" TxnTm="2023-06-01T05:12:34-05:00" TransTyp="0" RptTyp="2" TrdTyp="3" TrdSubTyp="1" BizDt="2023-06-01" MtchStat="0"><Instrmt Sym="RH" CFI="OCASPS" MMY="20250117" MatDt="2025-01-17" StrkPx="350" StrkCcy="USD" StrkMult="1" StrkValu="100" Mult="100"/><Amt Typ="PREM" Amt="0"/><RptSide Side="2" InptDev="FXML" Ccy="USD" PosEfct="O" Txt="Position Adjustment" ><Pty ID="OCC" R="21" /><Pty ID="00551" R="1" ><Sub ID="C" Typ="26"/></Pty></RptSide><RptSide Side="1" InptDev="FXML" Ccy="USD" PosEfct="O" ><Pty ID="OCC" R="21" /><Pty ID="00551" R="18" ><Sub ID="C" Typ="26"/></Pty></RptSide></TrdCaptRpt>
 <TrdCaptRpt RptID="240150819" PrevlyRpted="N" LastQty="4" LastPx="0" TrdDt="2023-06-01" TxnTm="2023-06-01T05:12:34-05:00" TransTyp="0" RptTyp="2" TrdTyp="3" TrdSubTyp="1" BizDt="2023-06-01" MtchStat="0"><Instrmt Sym="IWM" CFI="OPASPS" MMY="20230616" MatDt="2023-06-16" StrkPx="175" StrkCcy="USD" StrkMult="1" StrkValu="100" Mult="100"/><Amt Typ="PREM" Amt="0"/><RptSide Side="2" InptDev="FXML" Ccy="USD" PosEfct="O" Txt="Position Adjustment" ><Pty ID="OCC" R="21" /><Pty ID="00551" R="1" ><Sub ID="C" Typ="26"/></Pty></RptSide><RptSide Side="1" InptDev="FXML" Ccy="USD" PosEfct="O" ><Pty ID="OCC" R="21" /><Pty ID="00551" R="18" ><Sub ID="C" Typ="26"/></Pty></RptSide></TrdCaptRpt>
 
+
+
+				Executing/Entering Firm Breakdown	
+Customer / Market Maker	Side	Ultimate Clearing Firm (OCC#) Column AQ = 14, Deliver Column AP	Total Qty	Column AQ = 1 or 18, Deliver Column AP as a new column per 3 digit OCC# (i.e. 477)	Column AQ = 2 or 26, Deliver Column AP as a new column per 4 letter EFID (i.e. IBCO)
+C	Buy	534	1	-	-
+C	Sell	534	2	2	-
+MM	Sell	551	1	-	-
+MM	Buy	L	1	-	-
+MM	Buy	BLVT	1	-	1
  
 
  
