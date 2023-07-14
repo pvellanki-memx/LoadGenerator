@@ -68,7 +68,7 @@ class MyApplication(fix.Application):
 class TestFIXSession(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.app = fix.Application()
+        cls.app = MyApplication()
         cls.settings = fix.SessionSettings("config.cfg")
         cls.storeFactory = fix.FileStoreFactory(cls.settings)
         cls.logFactory = fix.ScreenLogFactory(cls.settings)
@@ -181,20 +181,3 @@ if __name__ == '__main__':
     unittest.main()
 
 
-
-[pvellanki@sys0412 functional]$ python3 fix_test_suite.py 
-E
-======================================================================
-ERROR: setUpClass (__main__.TestFIXSession)
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "fix_test_suite.py", line 70, in setUpClass
-    cls.app = fix.Application()
-  File "/usr/local/lib64/python3.6/site-packages/quickfix.py", line 39589, in __init__
-    this = _quickfix.new_Application(_self, )
-RuntimeError: accessing abstract class or protected constructor
-
-----------------------------------------------------------------------
-Ran 0 tests in 0.005s
-
-FAILED (errors=1)
