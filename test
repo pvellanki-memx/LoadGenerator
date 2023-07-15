@@ -1,201 +1,82 @@
-import unittest
-import time
-import random
-import quickfix as fix
-import json
+import xml.etree.ElementTree as ET
+from openpyxl import Workbook
 
-def replace_placeholders(template, placeholders):
-    for placeholder, value in placeholders.items():
-        template = template.replace(placeholder, value)
-    return template
+def parse_xml(xml_file):
+    tree = ET.parse(xml_file)
+    root = tree.getroot()
 
-def validate_execution_report(exec_report, order_qty, symbol, order_type, tif):
-    # Validate OrderQty
-    assert exec_report.getField(32) == str(order_qty), "Execution Report OrderQty mismatch"
+    data = []
 
-    # Validate Symbol
-    assert exec_report.getField(55) == symbol, "Execution Report Symbol mismatch"
+    for trade in root.findall(".//{http://www.fixprotocol.org/FIXML-4-4}TrdCaptRpt"):
+        quantity = trade.get("LastQty")
+        cfi = trade.find(".//{http://www.fixprotocol.org/FIXML-4-4}Instrmt").get("CFI")
+        side = trade.find(".//{http://www.fixprotocol.org/FIXML-4-4}RptSide").get("Side")
+        pty_id = trade.find(".//{http://www.fixprotocol.org/FIXML-4-4}RptSide/{http://www.fixprotocol.org/FIXML-4-4}Pty").get("ID")
+        pty_r = trade.find(".//{http://www.fixprotocol.org/FIXML-4-4}RptSide/{http://www.fixprotocol.org/FIXML-4-4}Pty").get("R")
+        customer_type = trade.find(".//{http://www.fixprotocol.org/FIXML-4-4}RptSide/{http://www.fixprotocol.org/FIXML-4-4}Pty").get("AR")
 
-    # Validate OrdType
-    assert exec_report.getField(40) == order_type, "Execution Report OrdType mismatch"
+        data.append((quantity, cfi, side, pty_id, pty_r, customer_type))
 
-    # Validate TimeInForce
-    assert exec_report.getField(59) == tif, "Execution Report TimeInForce mismatch"
+    return data
 
-class MyApplication(fix.Application):
-    def __init__(self):
-        super().__init__()
-        self.execution_report_received = False
-        self.last_execution_report = None
-        self.cl_ord_ids = []
+def summarize_data(data):
+    summary = {}
 
-    def onCreate(self, sessionID):
-        pass
+    for row in data:
+        quantity, cfi, side, pty_id, pty_r, customer_type = row
 
-    def onLogon(self, sessionID):
-        pass
+        if pty_r == "14":
+            key = (cfi, side, customer_type, "Ultimate Clearing Firm (OCC#)")
+            if key in summary:
+                summary[key].append(pty_id)
+            else:
+                summary[key] = [pty_id]
 
-    def onLogout(self, sessionID):
-        pass
+        if pty_r in ["1", "18"]:
+            occ_number = pty_id[:3]
+            key = (cfi, side, customer_type, "Column AQ = 1 or 18, Deliver Column AP per 3 digit OCC#")
+            if key in summary:
+                if occ_number in summary[key]:
+                    summary[key][occ_number].append(pty_id)
+                else:
+                    summary[key][occ_number] = [pty_id]
+            else:
+                summary[key] = {occ_number: [pty_id]}
 
-    def toAdmin(self, message, sessionID):
-        pass
+        if pty_r in ["2", "26"]:
+            efid = pty_id[:4]
+            key = (cfi, side, customer_type, "Column AQ = 2 or 26, Deliver Column AP per 4 letter EFID")
+            if key in summary:
+                if efid in summary[key]:
+                    summary[key][efid].append(pty_id)
+                else:
+                    summary[key][efid] = [pty_id]
+            else:
+                summary[key] = {efid: [pty_id]}
 
-    def fromAdmin(self, message, sessionID):
-        pass
+    return summary
 
-    def toApp(self, message, sessionID):
-        pass
+def write_to_excel(summary, output_file):
+    wb = Workbook()
+    ws = wb.active
 
-    def fromApp(self, message, sessionID):
-        msg_type = fix.MsgType()
-        message.getHeader().getField(msg_type)
+    headers = ["Customer / Market Maker", "Side", "Ultimate Clearing Firm (OCC#)", "Column AQ = 14, Deliver Column AP", "Total Qty",
+               "Column AQ = 1 or 18, Deliver Column AP per 3 digit OCC#", "Column AQ = 2 or 26, Deliver Column AP per 4 letter EFID"]
+    ws.append(headers)
 
-        if msg_type.getValue() == fix.MsgType_ExecutionReport:
-            cl_ord_id = fix.ClOrdID()
-            exec_report = fix.ExecutionReport()
-            message.getField(cl_ord_id)
-            message.getField(exec_report)
-            self.last_execution_report = exec_report
+    for key, values in summary.items():
+        cfi, side, customer_type, column_type = key
+        total_qty = len(values)
+        row_data = [customer_type, side, values.pop(0), values.get("1", "-"), total_qty, ", ".join(values.values()), values.get("LVT", "-")]
+        ws.append(row_data)
 
-            # Check if the execution report matches the conditions
-            if exec_report.getField(39).getString() == '0' or exec_report.getField(39).getString() == '150':
-                self.execution_report_received = True
+    wb.save(output_file)
+    print("Excel file saved successfully.")
 
-    def generate_clordid(self):
-        return str(random.randint(100000, 999999))
+# Main execution
+xml_file = "input.xml"  # Path to your XML file
+output_file = "output.xlsx"  # Output Excel file path
 
-class TestFIXSession(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.app = MyApplication()
-        cls.settings = fix.SessionSettings("config.cfg")
-        cls.storeFactory = fix.FileStoreFactory(cls.settings)
-        cls.logFactory = fix.ScreenLogFactory(cls.settings)
-        cls.initiator = fix.SocketInitiator(cls.app, cls.storeFactory, cls.settings, cls.logFactory)
-        cls.initiator.start()
-        time.sleep(1)
-        cls.session_id = cls.app.session_id
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.initiator.stop()
-
-    def send_new_order_single(self, order_type, time_in_force, order_qty, symbol, exec_inst=''):
-        # Read the JSON file
-        with open('instrument_definitions.json', 'r') as file:
-            json_data = json.load(file)
-
-        # Find the matching optionId based on the symbol
-        option_id = None
-        for item in json_data:
-            if item['underlyingSymbolId'] == symbol:
-                option_id = item['optionId']
-                break
-
-        if not option_id:
-            raise ValueError(f"No optionId found for symbol: {symbol}")
-
-        message = fix.Message()
-        message.getHeader().setField(fix.BeginString(self.session_id.getBeginString().getString()))
-        message.getHeader().setField(fix.MsgType(fix.MsgType_NewOrderSingle))
-        message.getHeader().setField(fix.SenderCompID(self.session_id.getSenderCompID().getString()))
-        message.getHeader().setField(fix.TargetCompID(self.session_id.getTargetCompID().getString()))
-        message.getHeader().setField(fix.MsgSeqNum(self.app.get_outgoing_seq_num(self.session_id)))
-
-        # Set other required fields for NewOrderSingle message
-        message.setField(fix.Symbol(symbol))
-        message.setField(fix.Side(fix.Side_BUY))
-        message.setField(fix.OrderQty(order_qty))
-        message.setField(fix.Price(8))
-        message.setField(fix.OrdType(fix.OrdType_LIMIT))
-        message.setField(fix.TimeInForce(time_in_force))
-        message.setField(fix.ClOrdID(self.app.generate_clordid()))
-        message.setField(fix.ExecInst(exec_inst))
-        message.setField(1815, "6")
-        message.setField(21035, option_id)
-        message.setField(201, json_data[0]['putCall'])
-        message.setField(202, str(json_data[0]['strikePrice']))
-        message.setField(541, str(json_data[0]['expirationDate']))
-
-        # Create the repeating group for PartyIDs
-        party_group = fix.Group(fix.Tag_NoPartyIDs, fix.Tag_PartyID, [fix.Tag_PartyIDSource, fix.Tag_PartyRole])
-        party_group.setField(fix.PartyID("QAX3"))
-        party_group.setField(fix.PartyIDSource("D"))
-        party_group.setField(fix.PartyRole("1"))
-        message.addGroup(party_group)
-
-        fix.Session.sendToTarget(message, self.session_id)
-
-        time.sleep(2)
-
-        self.assertTrue(self.app.execution_report_received)
-        exec_report = self.app.last_execution_report
-        cl_ord_id = exec_report.getField(11)
-
-        validate_execution_report(exec_report, order_qty=order_qty, symbol=symbol, order_type=order_type, tif=time_in_force)
-        self.assertEqual(exec_report.getField(39), '0')
-
-    def send_cancel_replace_request(self, orig_cl_ord_id, new_price=None, new_order_qty=None):
-        # Implementation for sending cancel/replace request
-        pass
-
-    def send_order_cancel_request(self, orig_cl_ord_id):
-        # Implementation for sending order cancel request
-        pass
-
-    def test_market_order_with_day_tif(self):
-        self.send_new_order_single(order_type='1', time_in_force='0', order_qty=100, symbol='AAPL')
-
-    def test_market_order_with_ioc_tif(self):
-        self.send_new_order_single(order_type='1', time_in_force='3', order_qty=100, symbol='AAPL')
-
-    def test_limit_order_with_day_tif(self):
-        self.send_new_order_single(order_type='2', time_in_force='0', order_qty=100, symbol='AAPL')
-
-    def test_limit_order_with_ioc_tif(self):
-        self.send_new_order_single(order_type='2', time_in_force='3', order_qty=100, symbol='AAPL')
-
-    def test_limit_order_with_iso_modifier(self):
-        self.send_new_order_single(order_type='2', time_in_force='0', order_qty=100, symbol='AAPL', exec_inst='F')
-
-    def test_rejected_market_order_with_iso_modifier(self):
-        self.send_new_order_single(order_type='1', time_in_force='0', order_qty=100, symbol='AAPL', exec_inst='F')
-        self.assertEqual(self.app.last_execution_report.getField(39), '8')
-
-    def test_cancel_replace_price(self):
-        self.send_new_order_single(order_type='2', time_in_force='0', order_qty=100, symbol='AAPL')
-        orig_cl_ord_id = self.app.last_execution_report.getField(11)
-        self.send_cancel_replace_request(orig_cl_ord_id, new_price=150)
-
-    def test_cancel_replace_qty(self):
-        self.send_new_order_single(order_type='2', time_in_force='0', order_qty=100, symbol='AAPL')
-        orig_cl_ord_id = self.app.last_execution_report.getField(11)
-        self.send_cancel_replace_request(orig_cl_ord_id, new_order_qty=50)
-
-    def tearDown(self):
-        orig_cl_ord_id = self.app.last_execution_report.getField(11)
-        self.send_order_cancel_request(orig_cl_ord_id)
-
-if __name__ == '__main__':
-    unittest.main()
-
-
-
-E
-======================================================================
-ERROR: setUpClass (__main__.TestFIXSession)
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "fix_test_suite.py", line 70, in setUpClass
-    cls.app = fix.Application()
-  File "/usr/local/lib64/python3.6/site-packages/quickfix.py", line 39589, in __init__
-    this = _quickfix.new_Application(_self, )
-RuntimeError: accessing abstract class or protected constructor
-
-----------------------------------------------------------------------
-Ran 0 tests in 0.005s
-
-FAILED (errors=1)
-
-
+data = parse_xml(xml_file)
+summary = summarize_data(data)
+write_to_excel(summary, output_file)
