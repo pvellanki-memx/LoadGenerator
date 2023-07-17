@@ -186,6 +186,28 @@ C	Sell	534	2	2	-
 MM	Sell	551	1	-	-
 MM	Buy	L	1	-	-
 MM	Buy	BLVT	1	-	1
- 
+
+
+Pre-Summary output should look like the table at the bottom of this page and the logic is as follows:
+
+Ultimate Clearing Firm 
+
+AQ = 14 exists where AG orderID is the same, return corresponding AP value
+
+Executing/Entering Firm - Column 1
+
+AQ = 18 exists where AG orderID is the same, return corresponding AP value
+
+If AQ = 18 does not exist, return corresponding AP value where AQ= 1
+
+Repeat for AR = F and AR = M just to have the full qty to help resolve any potential issues
+
+Executing/Entering Firm - Column 2
+
+AQ = 2 exists where AG orderID is the same, return corresponding AP value
+
+If AQ = 2 does not exist, return corresponding AP value where AQ= 26
+
+Repeat for AR = F and AR = M just to have the full qty to help resolve any potential issues
 
  
