@@ -1,5 +1,3 @@
-
-
 import xml.etree.ElementTree as ET
 import pandas as pd
 import datetime
@@ -119,7 +117,4 @@ with pd.ExcelWriter(output_file_name) as writer:
     pivoted_trade_data_frame.to_excel(writer, sheet_name='Pivoted Trade Data', index=False)
 
 print(f"Data has been written to {output_file_name}")
-
-
-
 
