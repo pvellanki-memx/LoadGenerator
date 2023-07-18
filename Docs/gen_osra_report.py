@@ -131,7 +131,8 @@ trade_data_frame.fillna('Unknown', inplace=True)
 
 # Group the data by the desired columns and calculate the count for each group
 pivoted_trade_data_frame = trade_data_frame.groupby(['Side', 'Sub ID', 'Ultimate Clearing Firm', 'Entering Firm - Column 1', 'Entering Firm - Column 2'], as_index=False).size()
-pivoted_trade_data_frame = pivoted_trade_data_frame.reset_index(name='Total Qty')
+#pivoted_trade_data_frame = pivoted_trade_data_frame.reset_index(name='Total Qty')
+pivoted_trade_data_frame.rename(columns={'size': 'Total Qty'}, inplace=True)
 
 # Print the grouped trade data DataFrame
 print(pivoted_trade_data_frame)
