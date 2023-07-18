@@ -1,3 +1,5 @@
+
+
 import xml.etree.ElementTree as ET
 import pandas as pd
 import datetime
@@ -24,7 +26,7 @@ def get_ultimate_clearing_firm(sub_id, pty_r, rpt_id):
         return pty_id_list[rpt_id_list.index(rpt_id)]
     else:
         return None
-
+'''
 # Function to determine Entering Firm - Column 1
 def get_entering_firm_col1(sub_id, pty_r, rpt_id):
     if (sub_id in ['C', 'M', 'F']) and (pty_r in ['18', '1']) and (rpt_id in rpt_id_list):
@@ -38,6 +40,24 @@ def get_entering_firm_col2(sub_id, pty_r, rpt_id):
         return pty_id_list[rpt_id_list.index(rpt_id)][:4] if pty_id_list[rpt_id_list.index(rpt_id)] else None
     else:
         return None
+
+'''
+# Function to determine Entering Firm - Column 1
+def get_entering_firm_col1(sub_id, pty_r, rpt_id):
+    if (sub_id in ['C', 'M', 'F']) and (rpt_id in rpt_id_list):
+        for i in range(len(pty_r_list)):
+            if pty_r_list[i] in ['18', '1'] and rpt_id_list[i] == rpt_id:
+                return pty_id_list[i] if pty_id_list[i] else None
+    return None
+
+# Function to determine Entering Firm - Column 2
+def get_entering_firm_col2(sub_id, pty_r, rpt_id):
+    if (sub_id in ['C', 'M', 'F']) and (rpt_id in rpt_id_list):
+        for i in range(len(pty_r_list)):
+            if pty_r_list[i] in ['2', '26'] and rpt_id_list[i] == rpt_id:
+                return pty_id_list[i] if pty_id_list[i] else None
+    return None
+
 
 # Parse the XML data from trade.xml
 for trd_capt_rpt in root_trade.findall('TrdCaptRpt'):
@@ -81,6 +101,9 @@ trade_data_frame = pd.DataFrame({
     'Entering Firm - Column 2': entering_firm_col2_list
 })
 
+
+
+
 # Filter rows where at least one of Ultimate Clearing Firm, Entering Firm - Column 1, or Entering Firm - Column 2 is not None
 filtered_trade_data_frame = trade_data_frame[
     trade_data_frame[['RptID','Sub ID','Side','Ultimate Clearing Firm', 'Entering Firm - Column 1', 'Entering Firm - Column 2']].notna().any(axis=1)
@@ -117,4 +140,7 @@ with pd.ExcelWriter(output_file_name) as writer:
     pivoted_trade_data_frame.to_excel(writer, sheet_name='Pivoted Trade Data', index=False)
 
 print(f"Data has been written to {output_file_name}")
+
+
+
 
