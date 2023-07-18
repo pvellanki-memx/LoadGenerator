@@ -24,7 +24,7 @@ entering_firm_col2_list = []  # List to store Entering Firm - Column 2
 def get_ultimate_clearing_firm(sub_id, pty_r, rpt_id):
     if (sub_id in ['C', 'M', 'F']) and (pty_r == '14') and (rpt_id in rpt_id_list):
        for i in range(len(pty_r_list)):
-            if pty_r_list[i] in ['18', '1'] and rpt_id_list[i] == rpt_id:
+            if pty_r_list[i] in ['14'] and rpt_id_list[i] == rpt_id:
                 return pty_id_list[i] if pty_id_list[i] else None
     return None
 
@@ -49,7 +49,10 @@ def get_entering_firm_col2(sub_id, pty_r, rpt_id):
 def get_entering_firm_col1(sub_id, pty_r, rpt_id):
     if (sub_id in ['C', 'M', 'F']) and (rpt_id in rpt_id_list):
         for i in range(len(pty_r_list)):
-            if pty_r_list[i] in ['18', '1'] and rpt_id_list[i] == rpt_id:
+            if pty_r_list[i] == '18' and rpt_id_list[i] == rpt_id:
+                return pty_id_list[i] if pty_id_list[i] else None
+        for i in range(len(pty_r_list)):
+            if pty_r_list[i] == '1' and rpt_id_list[i] == rpt_id:
                 return pty_id_list[i] if pty_id_list[i] else None
     return None
 
@@ -57,9 +60,13 @@ def get_entering_firm_col1(sub_id, pty_r, rpt_id):
 def get_entering_firm_col2(sub_id, pty_r, rpt_id):
     if (sub_id in ['C', 'M', 'F']) and (rpt_id in rpt_id_list):
         for i in range(len(pty_r_list)):
-            if pty_r_list[i] in ['2', '26'] and rpt_id_list[i] == rpt_id:
+            if pty_r_list[i] == '2' and rpt_id_list[i] == rpt_id:
+                return pty_id_list[i] if pty_id_list[i] else None
+        for i in range(len(pty_r_list)):
+            if pty_r_list[i] == '26' and rpt_id_list[i] == rpt_id:
                 return pty_id_list[i] if pty_id_list[i] else None
     return None
+
 
 
 for trd_capt_rpt in root_trade.findall('TrdCaptRpt'):
@@ -131,8 +138,7 @@ trade_data_frame.fillna('Unknown', inplace=True)
 
 # Group the data by the desired columns and calculate the count for each group
 pivoted_trade_data_frame = trade_data_frame.groupby(['Side', 'Sub ID', 'Ultimate Clearing Firm', 'Entering Firm - Column 1', 'Entering Firm - Column 2'], as_index=False).size()
-#pivoted_trade_data_frame = pivoted_trade_data_frame.reset_index(name='Total Qty')
-pivoted_trade_data_frame.rename(columns={'size': 'Total Qty'}, inplace=True)
+pivoted_trade_data_frame = pivoted_trade_data_frame.reset_index(name='Total Qty')
 
 # Print the grouped trade data DataFrame
 print(pivoted_trade_data_frame)
