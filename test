@@ -290,3 +290,10 @@ class RepeatingGroupDimensions:
         self.block_length,self.num_groups = unpack_from('>BB', buffer)
 
 
+
+def encode(self):
+    encoded_parties = b''.join(party_obj.encode() for nested_list in self.party_ids for party_obj in nested_list)
+    return encoded_parties
+
+
+
