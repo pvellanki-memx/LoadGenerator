@@ -210,3 +210,26 @@ class TestFIXSession(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+
+
+
+
+
+
+
+
+class PartyID:
+    SIZE = 16
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        encoded_value = self.value.encode('utf-8')
+        if len(encoded_value) > self.SIZE:
+            return encoded_value[:self.SIZE]
+        else:
+            return encoded_value.ljust(self.SIZE, b'\x00')
+
