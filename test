@@ -220,19 +220,18 @@ if __name__ == '__main__':
 
 
 
-class PartyID:
-    SIZE = 16
+
+class PartyIDSource:
+    SIZE = 1
 
     def __init__(self, value):
         self.value = value
 
     def encode(self):
-        encoded_value = self.value.encode('utf-8')
-        if len(encoded_value) > self.SIZE:
-            return encoded_value[:self.SIZE]
-        else:
-            return encoded_value.ljust(self.SIZE, b'\x00')
+        return self.value.encode()
 
+    def decode(self, buffer):
+        self.value = buffer.decode()
 
 
 class PartyRoleType:
@@ -248,19 +247,46 @@ class PartyRoleType:
         self.value = unpack_from('>B', buffer)[0]
 
 
+class PartiesGroup:
+    def __init__(self, party_ids=None):
+        self.party_ids = party_ids or []
+        print(party_ids)
+     
 
-None
-Traceback (most recent call last):
-  File "sbe_load_generator.py", line 470, in <module>
-    main()
-  File "sbe_load_generator.py", line 451, in main
-    message = generate_message(message_type,session_name)
-  File "sbe_load_generator.py", line 191, in generate_message
-    encoded_message = new_order_single.encode()
-  File "/home/pvellanki/myworkspace/SBE/sbe_encoder_decoder.py", line 532, in encode
-    encoded_RepeatingGroupDimensions +
-TypeError: can't concat builtin_function_or_method to bytes
-[pvellanki@sys0412 SBE]$ 
+    def encode(self):
+        encoded_parties = b''.join(b''.join(party_obj.encode() for party_obj in nested_list) for nested_list in self.party_ids)
+        return encoded_parties
 
+    def decode(self, buffer):
+        num_party_ids = len(buffer) // (PartyID.SIZE + PartyIDSource.SIZE + PartyRoleType.SIZE)
+        self.party_ids = []
+        for i in range(num_party_ids):
+            offset = i * (PartyID.SIZE + PartyIDSource.SIZE + PartyRoleType.SIZE)
+            party_id = PartyID('')
+            party_id.decode(buffer[offset:offset + PartyID.SIZE])
+            offset += PartyID.SIZE
+            party_id_source = PartyIDSource('')
+            party_id_source.decode(buffer[offset:offset + PartyIDSource.SIZE])
+            offset += PartyIDSource.SIZE
+            party_role = PartyRoleType('')
+            party_role.decode(buffer[offset:offset + PartyRoleType.SIZE])
+            self.party_ids.append([party_id, party_id_source, party_role])
+
+
+
+
+
+class RepeatingGroupDimensions:
+    SIZE = 2
+
+    def __init__(self, block_length,num_groups):
+        self.block_length = block_length
+        self.num_groups = num_groups
+
+    def encode(self):
+        return pack('>BB', self.block_length, self.num_groups)
+
+    def decode(self, buffer):
+        self.block_length,self.num_groups = unpack_from('>BB', buffer)
 
 
