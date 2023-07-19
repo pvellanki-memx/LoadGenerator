@@ -233,3 +233,18 @@ class PartyID:
         else:
             return encoded_value.ljust(self.SIZE, b'\x00')
 
+
+
+class PartyRoleType:
+    SIZE = 1
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('>B', self.value)
+
+    def decode(self, buffer):
+        self.value = unpack_from('>B', buffer)[0]
+
+
