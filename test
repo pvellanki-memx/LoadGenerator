@@ -248,3 +248,19 @@ class PartyRoleType:
         self.value = unpack_from('>B', buffer)[0]
 
 
+
+None
+Traceback (most recent call last):
+  File "sbe_load_generator.py", line 470, in <module>
+    main()
+  File "sbe_load_generator.py", line 451, in main
+    message = generate_message(message_type,session_name)
+  File "sbe_load_generator.py", line 191, in generate_message
+    encoded_message = new_order_single.encode()
+  File "/home/pvellanki/myworkspace/SBE/sbe_encoder_decoder.py", line 532, in encode
+    encoded_RepeatingGroupDimensions +
+TypeError: can't concat builtin_function_or_method to bytes
+[pvellanki@sys0412 SBE]$ 
+
+
+
