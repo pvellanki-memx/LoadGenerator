@@ -308,3 +308,11 @@ Traceback (most recent call last):
 TypeError: can't concat builtin_function_or_method to bytes
 [pvellanki@sys0412 SBE]$ 
 
+
+
+
+Side	Sub ID	RptID	Ultimate Clearing Firm	Entering Clearing Frim/Contra Clearing Firm	Executing Broker/Position Account Type	Quantity
+1	C	240150750		255		141
+2	C	240150750		226		141
+1	C	240150751		255		76
+2	C	240150751		273		76
