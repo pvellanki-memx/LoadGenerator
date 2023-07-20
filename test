@@ -343,3 +343,16 @@ Traceback (most recent call last):
   File "/Users/pvellanki/Library/Python/3.9/lib/python/site-packages/openpyxl/workbook/_writer.py", line 35, in get_active_sheet
     raise IndexError("At least one sheet must be visible")
 IndexError: At least one sheet must be visible
+
+
+
+class PartiesGroup:
+    # ... other methods ...
+
+    def encode(self):
+        encoded_parties = b''
+        for party in self.party_ids:
+            for party_obj in party:
+                encoded_parties += party_obj.encode()
+        return encoded_parties
+
