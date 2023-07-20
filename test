@@ -360,3 +360,12 @@ class PartiesGroup:
 
 pvellanki@qa2434:~/Final/SBE$ pwd
 /home/pvellanki/Final/SBE
+
+
+
+Traceback (most recent call last):
+  File "/Users/pvellanki/orsa/gen_orsa_report_v3.py", line 62, in <module>
+    trade_data_frame = trade_data_frame.append({
+  File "/Users/pvellanki/Library/Python/3.9/lib/python/site-packages/pandas/core/generic.py", line 5989, in __getattr__
+    return object.__getattribute__(self, name)
+AttributeError: 'DataFrame' object has no attribute 'append'
