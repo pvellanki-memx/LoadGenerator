@@ -316,3 +316,30 @@ Side	Sub ID	RptID	Ultimate Clearing Firm	Entering Clearing Frim/Contra Clearing 
 2	C	240150750		226		141
 1	C	240150751		255		76
 2	C	240150751		273		76
+
+
+pvellanki@pvellanki-MacBookPro orsa % python3 gen_orsa_report_v3.py 
+Traceback (most recent call last):
+  File "/Users/pvellanki/orsa/gen_orsa_report_v3.py", line 131, in <module>
+    df.to_excel(writer, sheet_name=f'Chunk_{chunk_num}', index=False)
+  File "/Users/pvellanki/Library/Python/3.9/lib/python/site-packages/pandas/io/excel/_base.py", line 1322, in __exit__
+    self.close()
+  File "/Users/pvellanki/Library/Python/3.9/lib/python/site-packages/pandas/io/excel/_base.py", line 1326, in close
+    self._save()
+  File "/Users/pvellanki/Library/Python/3.9/lib/python/site-packages/pandas/io/excel/_openpyxl.py", line 109, in _save
+    self.book.save(self._handles.handle)
+  File "/Users/pvellanki/Library/Python/3.9/lib/python/site-packages/openpyxl/workbook/workbook.py", line 386, in save
+    save_workbook(self, filename)
+  File "/Users/pvellanki/Library/Python/3.9/lib/python/site-packages/openpyxl/writer/excel.py", line 294, in save_workbook
+    writer.save()
+  File "/Users/pvellanki/Library/Python/3.9/lib/python/site-packages/openpyxl/writer/excel.py", line 275, in save
+    self.write_data()
+  File "/Users/pvellanki/Library/Python/3.9/lib/python/site-packages/openpyxl/writer/excel.py", line 89, in write_data
+    archive.writestr(ARC_WORKBOOK, writer.write())
+  File "/Users/pvellanki/Library/Python/3.9/lib/python/site-packages/openpyxl/workbook/_writer.py", line 150, in write
+    self.write_views()
+  File "/Users/pvellanki/Library/Python/3.9/lib/python/site-packages/openpyxl/workbook/_writer.py", line 137, in write_views
+    active = get_active_sheet(self.wb)
+  File "/Users/pvellanki/Library/Python/3.9/lib/python/site-packages/openpyxl/workbook/_writer.py", line 35, in get_active_sheet
+    raise IndexError("At least one sheet must be visible")
+IndexError: At least one sheet must be visible
