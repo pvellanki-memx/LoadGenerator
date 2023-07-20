@@ -356,3 +356,7 @@ class PartiesGroup:
                 encoded_parties += party_obj.encode()
         return encoded_parties
 
+
+
+pvellanki@qa2434:~/Final/SBE$ pwd
+/home/pvellanki/Final/SBE
