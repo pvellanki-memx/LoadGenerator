@@ -1,78 +1,128 @@
+import xml.etree.ElementTree as ET
 import pandas as pd
 import datetime
-import lxml.etree as ET
-import numpy as np
 
-# Function to determine Ultimate Clearing Firm, Entering Firm - Column 1, and Entering Firm - Column 2
-def get_party_info(rpt_side, rpt_id):
-    ultimate_clearing_firm = None
-    entering_firm_col1 = None
-    entering_firm_col2 = None
+# Function to determine Ultimate Clearing Firm
+def get_ultimate_clearing_firm(sub_id, pty_r, rpt_id):
+    if sub_id in ['C', 'M', 'F']:
+        for i in range(len(pty_r_list)):
+            if pty_r_list[i] == '14' and rpt_id_list[i] == rpt_id:
+                return pty_id_list[i] if pty_id_list[i] else None
+    return None
 
-    for pty in rpt_side.findall('Pty'):
-        pty_id = pty.get('ID')
-        pty_r = pty.get('R')
-        sub_id = pty.find('Sub').get('ID') if pty.find('Sub') is not None else None
+# Function to determine Entering Firm - Column 1
+def get_entering_firm_col1(sub_id, pty_r, rpt_id):
+    if sub_id in ['C', 'M', 'F'] and rpt_id in rpt_id_list:
+        for i in range(len(pty_r_list)):
+            if pty_r_list[i] == '18' and rpt_id_list[i] == rpt_id:
+                return pty_id_list[i] if pty_id_list[i] else None
+        for i in range(len(pty_r_list)):
+            if pty_r_list[i] == '1' and rpt_id_list[i] == rpt_id:
+                return pty_id_list[i] if pty_id_list[i] else None
+    return None
 
-        if sub_id in ['C', 'M', 'F']:
-            if pty_r == '14' and rpt_id == rpt_id:
-                ultimate_clearing_firm = pty_id
-            elif pty_r == '18' and rpt_id == rpt_id:
-                entering_firm_col1 = pty_id
-            elif pty_r == '2' and rpt_id == rpt_id:
-                entering_firm_col2 = pty_id
+# Function to determine Entering Firm - Column 2
+def get_entering_firm_col2(sub_id, pty_r, rpt_id):
+    if sub_id in ['C', 'M', 'F'] and rpt_id in rpt_id_list:
+        for i in range(len(pty_r_list)):
+            if pty_r_list[i] == '2' and rpt_id_list[i] == rpt_id:
+                return pty_id_list[i] if pty_id_list[i] else None
+        for i in range(len(pty_r_list)):
+            if pty_r_list[i] == '26' and rpt_id_list[i] == rpt_id:
+                return pty_id_list[i] if pty_id_list[i] else None
+    return None
 
-    return ultimate_clearing_firm, entering_firm_col1, entering_firm_col2
+# Create an empty DataFrame to store the parsed trade data
+columns = ['Quantity', 'Side', 'Pty ID', 'Pty R', 'Sub ID', 'RptID']
+trade_data_frame = pd.DataFrame(columns=columns)
 
+# Replace 'your_large_file.xml' with the path to your actual large XML file.
+file_path = 'orsa_trades_new.xml'
+batch_size = 10000
 
-# Read the XML data from trade.xml and parse it into a DataFrame (replace 'trade.xml' with the actual file path)
-tree_trade = ET.parse('orsa_trades_new.xml')
-root_trade = tree_trade.getroot()
+# Start the XML file parsing in a streaming manner
+context = ET.iterparse(file_path, events=('start', 'end'))
+context = iter(context)
+event, root = next(context)
 
-# Lists to store parsed trade data
-data = {
-    'Quantity': [],
-    'Side': [],
-    'Pty ID': [],
-    'Pty R': [],
-    'Sub ID': [],
-    'RptID': [],
-    'Ultimate Clearing Firm': [],
-    'Entering Firm - Column 1': [],
-    'Entering Firm - Column 2': []
-}
+for event, elem in context:
+    if event == 'end' and elem.tag == 'TrdCaptRpt':
+        # Process the element and extract relevant data
+        rpt_id = elem.get('RptID')
 
-# Parse the XML data from trade.xml
-for trd_capt_rpt in root_trade.findall('TrdCaptRpt'):
-    rpt_id = trd_capt_rpt.get('RptID')
-    side = trd_capt_rpt.find('RptSide').get('Side')
+        for rpt_side in elem.findall('RptSide'):
+            side = rpt_side.get('Side')
 
-    for rpt_side in trd_capt_rpt.findall('RptSide'):
-        quantity = int(trd_capt_rpt.get('LastQty'))  # Convert quantity to integer
-        side_value = side
-        rpt_id_value = rpt_id
+            for pty in rpt_side.findall('Pty'):
+                pty_id = pty.get('ID')
+                pty_r = pty.get('R')
+                sub_id = pty.find('Sub').get('ID') if pty.find('Sub') is not None else None
 
-        ultimate_clearing_firm, entering_firm_col1, entering_firm_col2 = get_party_info(rpt_side, rpt_id)
+                # Append the parsed data to the DataFrame
+                trade_data_frame = trade_data_frame.append({
+                    'Quantity': int(elem.get('LastQty')),  # Convert quantity to integer
+                    'Side': side,
+                    'Pty ID': pty_id,
+                    'Pty R': pty_r,
+                    'Sub ID': sub_id,
+                    'RptID': rpt_id,
+                }, ignore_index=True)
 
-        # Append data to lists
-        data['Quantity'].append(quantity)
-        data['Side'].append(side_value)
-        data['Pty ID'].append(None)  # Replace with the actual pty_id if available
-        data['Pty R'].append(None)  # Replace with the actual pty_r if available
-        data['Sub ID'].append(None)  # Replace with the actual sub_id if available
-        data['RptID'].append(rpt_id_value)
-        data['Ultimate Clearing Firm'].append(ultimate_clearing_firm)
-        data['Entering Firm - Column 1'].append(entering_firm_col1)
-        data['Entering Firm - Column 2'].append(entering_firm_col2)
+                # Clear the element from memory to free up resources
+                elem.clear()
 
-# Create the DataFrame
-trade_data_frame = pd.DataFrame(data)
+    # As we process the batch, we'll also clear processed elements from memory
+    # to prevent the script from consuming excessive memory.
+
+    # If the batch size is reached, perform the data processing on the batch and clear elements
+    if len(trade_data_frame) >= batch_size:
+        # Determine the Ultimate Clearing Firm
+        trade_data_frame['Ultimate Clearing Firm'] = trade_data_frame.apply(
+            lambda x: get_ultimate_clearing_firm(x['Sub ID'], x['Pty R'], x['RptID']), axis=1
+        )
+
+        # Determine the Entering Firm - Column 1
+        trade_data_frame['Entering Firm - Column 1'] = trade_data_frame.apply(
+            lambda x: get_entering_firm_col1(x['Sub ID'], x['Pty R'], x['RptID']), axis=1
+        )
+
+        # Determine the Entering Firm - Column 2
+        trade_data_frame['Entering Firm - Column 2'] = trade_data_frame.apply(
+            lambda x: get_entering_firm_col2(x['Sub ID'], x['Pty R'], x['RptID']), axis=1
+        )
+
+        # Your additional data processing logic can be performed here if needed.
+
+        # Reset the DataFrame for the next batch
+        trade_data_frame = pd.DataFrame(columns=columns)
+
+# Process the remaining records in the last batch (which may be smaller than the batch_size)
+if not trade_data_frame.empty:
+    # Determine the Ultimate Clearing Firm
+    trade_data_frame['Ultimate Clearing Firm'] = trade_data_frame.apply(
+        lambda x: get_ultimate_clearing_firm(x['Sub ID'], x['Pty R'], x['RptID']), axis=1
+    )
+
+    # Determine the Entering Firm - Column 1
+    trade_data_frame['Entering Firm - Column 1'] = trade_data_frame.apply(
+        lambda x: get_entering_firm_col1(x['Sub ID'], x['Pty R'], x['RptID']), axis=1
+    )
+
+    # Determine the Entering Firm - Column 2
+    trade_data_frame['Entering Firm - Column 2'] = trade_data_frame.apply(
+        lambda x: get_entering_firm_col2(x['Sub ID'], x['Pty R'], x['RptID']), axis=1
+    )
+
+    # Your additional data processing logic can be performed here if needed.
+
+# After processing the entire XML file, continue with the remaining code.
+
+# Replace 'None' with a placeholder value (e.g., 'Unknown')
+# filtered_trade_data_frame = trade_data_frame.fillna('Unknown')
 
 # Filter rows where at least one of Ultimate Clearing Firm, Entering Firm - Column 1, or Entering Firm - Column 2 is not None
 filtered_trade_data_frame = trade_data_frame[
-    trade_data_frame[
-        ['RptID', 'Quantity', 'Sub ID', 'Side', 'Ultimate Clearing Firm', 'Entering Firm - Column 1', 'Entering Firm - Column 2']
-    ].notna().any(axis=1)
+    trade_data_frame[['RptID', 'Quantity', 'Sub ID', 'Side', 'Ultimate Clearing Firm', 'Entering Firm - Column 1', 'Entering Firm - Column 2']].notna().any(axis=1)
 ]
 
 # Group the filtered DataFrame and aggregate the values for Ultimate Clearing Firm, Entering Firm - Column 1, and Entering Firm - Column 2
@@ -83,29 +133,12 @@ grouped_trade_data_frame = filtered_trade_data_frame.groupby(['Side', 'Sub ID', 
     'Quantity': 'sum'
 })
 
-print(grouped_trade_data_frame)
-
 # Generate the timestamp for the file name up to minutes
 timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
 
-# Write the grouped_trade_data_frame to an Excel file
-output_file_name = f'grouped_trade_data_{timestamp}.xlsx'
-grouped_trade_data_frame.to_excel(output_file_name, index=False)
+# Output file name
+output_file_name = f'trade_data_{timestamp}.xlsx'
 
-# Split the DataFrame into 10 equal parts
-split_data_frames = np.array_split(filtered_trade_data_frame, 10)
-
-# Process each chunk and append the output to the final Excel file
-with pd.ExcelWriter(output_file_name, mode='a', engine='openpyxl') as writer:
-    for i, chunk in enumerate(split_data_frames, 1):
-        # Group and aggregate the chunk
-        chunk_grouped = chunk.groupby(['Side', 'Sub ID', 'RptID'], as_index=False).agg({
-            'Ultimate Clearing Firm': 'first',
-            'Entering Firm - Column 1': 'first',
-            'Entering Firm - Column 2': 'first',
-            'Quantity': 'sum'
-        })
-        # Append the chunk to the Excel file
-        chunk_grouped.to_excel(writer, sheet_name=f'Chunk_{i}', index=False)
-
-print(f"Data has been written to {output_file_name}")
+with pd.ExcelWriter(output_file_name) as writer:
+    filtered_trade_data_frame.to_excel(writer, sheet_name='Grouped Trade Data', index=False)
+    grouped_trade_data_frame.to_excel(writer, sheet_name='Pivoted Trade Data', index=False)
