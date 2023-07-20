@@ -131,3 +131,93 @@ with pd.ExcelWriter(final_output_file_name) as writer:
         df.to_excel(writer, sheet_name=f'Chunk_{chunk_num}', index=False)
 
 print(f"Data has been written to {final_output_file_name}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import pandas as pd
+import datetime
+import lxml.etree as ET
+import numpy as np
+
+# Function to determine Ultimate Clearing Firm, Entering Firm - Column 1, and Entering Firm - Column 2
+def get_party_info(rpt_side, rpt_id):
+    # ... (same as before) ...
+
+# Read the XML data from trade.xml and parse it into a DataFrame (replace 'trade.xml' with the actual file path)
+tree_trade = ET.parse('trade_bak.xml')
+root_trade = tree_trade.getroot()
+
+# Lists to store parsed trade data
+data = {
+    'Quantity': [],
+    'Side': [],
+    'Pty ID': [],
+    'Pty R': [],
+    'Sub ID': [],
+    'RptID': [],
+    'Ultimate Clearing Firm': [],
+    'Entering Firm - Column 1': [],
+    'Entering Firm - Column 2': []
+}
+
+# Parse the XML data from trade.xml
+# ... (same as before) ...
+
+# Create the DataFrame
+trade_data_frame = pd.DataFrame(data)
+
+# Filter rows where at least one of Ultimate Clearing Firm, Entering Firm - Column 1, or Entering Firm - Column 2 is not None
+filtered_trade_data_frame = trade_data_frame[
+    trade_data_frame[
+        ['RptID', 'Quantity', 'Sub ID', 'Side', 'Ultimate Clearing Firm', 'Entering Firm - Column 1', 'Entering Firm - Column 2']
+    ].notna().any(axis=1)
+]
+
+# Group the filtered DataFrame and aggregate the values for Ultimate Clearing Firm, Entering Firm - Column 1, and Entering Firm - Column 2
+grouped_trade_data_frame = filtered_trade_data_frame.groupby(['Side', 'Sub ID', 'RptID'], as_index=False).agg({
+    'Ultimate Clearing Firm': 'first',
+    'Entering Firm - Column 1': 'first',
+    'Entering Firm - Column 2': 'first',
+    'Quantity': 'sum'
+})
+
+print(grouped_trade_data_frame)
+
+# Generate the timestamp for the file name up to minutes
+timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
+
+# Write the grouped_trade_data_frame to an Excel file
+output_file_name = f'grouped_trade_data_{timestamp}.xlsx'
+grouped_trade_data_frame.to_excel(output_file_name, index=False)
+
+# Split the DataFrame into 10 equal parts
+split_data_frames = np.array_split(filtered_trade_data_frame, 10)
+
+# Process each chunk and append the output to the final Excel file
+with pd.ExcelWriter(output_file_name, mode='a', engine='openpyxl') as writer:
+    # Create a dummy sheet to make at least one sheet visible
+    pd.DataFrame().to_excel(writer, sheet_name='Dummy', index=False)
+    
+    for i, chunk in enumerate(split_data_frames, 1):
+        # Group and aggregate the chunk
+        chunk_grouped = chunk.groupby(['Side', 'Sub ID', 'RptID'], as_index=False).agg({
+            'Ultimate Clearing Firm': 'first',
+            'Entering Firm - Column 1': 'first',
+            'Entering Firm - Column 2': 'first',
+            'Quantity': 'sum'
+        })
+        # Append the chunk to the Excel file
+        chunk_grouped.to_excel(writer, sheet_name=f'Chunk_{i}', index=False)
+
+print(f"Data has been written to {output_file_name}")
