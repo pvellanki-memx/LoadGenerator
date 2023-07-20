@@ -362,10 +362,42 @@ pvellanki@qa2434:~/Final/SBE$ pwd
 /home/pvellanki/Final/SBE
 
 
+import xml.etree.ElementTree as ET
+import os
 
-Traceback (most recent call last):
-  File "/Users/pvellanki/orsa/gen_orsa_report_v3.py", line 62, in <module>
-    trade_data_frame = trade_data_frame.append({
-  File "/Users/pvellanki/Library/Python/3.9/lib/python/site-packages/pandas/core/generic.py", line 5989, in __getattr__
-    return object.__getattribute__(self, name)
-AttributeError: 'DataFrame' object has no attribute 'append'
+# Function to split the XML tree into chunks
+def split_xml_tree(xml_tree, chunk_size):
+    root = xml_tree.getroot()
+    total_elements = len(root)
+    chunk_elements = total_elements // chunk_size
+    remaining_elements = total_elements % chunk_size
+
+    chunks = []
+    start = 0
+    for i in range(chunk_size):
+        chunk_length = chunk_elements + (1 if i < remaining_elements else 0)
+        chunk = ET.ElementTree(ET.Element('Root'))
+        chunk.getroot().extend(root[start:start + chunk_length])
+        chunks.append(chunk)
+        start += chunk_length
+
+    return chunks
+
+# Read the original XML data from trade.xml and parse it into an ElementTree (replace 'trade.xml' with the actual file path)
+tree_trade = ET.parse('trade_bak.xml')
+
+# Split the XML tree into 4 chunks
+chunked_trees = split_xml_tree(tree_trade, chunk_size=4)
+
+# Create a directory to store the split XML files
+output_directory = 'split_xml'
+if not os.path.exists(output_directory):
+    os.makedirs(output_directory)
+
+# Save each chunk as a separate XML file
+for i, chunk_tree in enumerate(chunked_trees):
+    output_file_name = os.path.join(output_directory, f'part_{i+1}.xml')
+    chunk_tree.write(output_file_name)
+
+print("XML file has been split into 4 parts.")
+
