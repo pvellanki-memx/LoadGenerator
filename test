@@ -401,3 +401,12 @@ for i, chunk_tree in enumerate(chunked_trees):
 
 print("XML file has been split into 4 parts.")
 
+
+Parsing the XML data...
+Filtering the DataFrame...
+Traceback (most recent call last):
+  File "/Users/pvellanki/orsa/gen_orsa_report_v5.py", line 152, in <module>
+    filtered_trade_data_frame = trade_data_frame[
+NameError: name 'trade_data_frame' is not defined
+
+
