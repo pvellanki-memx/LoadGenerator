@@ -127,7 +127,6 @@ print(f"Processing completed. Result saved to '{output_file_name}'.")
 
 
 
-
 import xml.etree.ElementTree as ET
 import pandas as pd
 import numpy as np
@@ -138,6 +137,57 @@ import datetime
 # Function to determine Entering Firm - Column 1 (unchanged)
 
 # Function to determine Entering Firm - Column 2 (unchanged)
+
+# Function to process a batch of XML elements into a DataFrame
+def process_batch(batch_data):
+    quantity_list = []
+    side_list = []
+    pty_id_list = []
+    pty_r_list = []
+    sub_id_list = []
+    rpt_id_list = []
+    ultimate_clearing_firm_list = []
+    entering_firm_col1_list = []
+    entering_firm_col2_list = []
+
+    for trd_capt_rpt in batch_data:
+        rpt_id = trd_capt_rpt.get('RptID')
+        for rpt_side in trd_capt_rpt.findall('RptSide'):
+            side = rpt_side.get('Side')
+            for pty in rpt_side.findall('Pty'):
+                pty_id = pty.get('ID')
+                pty_r = pty.get('R')
+                sub_id = pty.find('Sub').get('ID') if pty.find('Sub') is not None else None
+
+                quantity_list.append(int(trd_capt_rpt.get('LastQty')))
+                side_list.append(side)
+                pty_id_list.append(pty_id)
+                pty_r_list.append(pty_r)
+                sub_id_list.append(sub_id)
+                rpt_id_list.append(rpt_id)
+
+                ultimate_clearing_firm = get_ultimate_clearing_firm(sub_id, pty_r, rpt_id)
+                ultimate_clearing_firm_list.append(ultimate_clearing_firm)
+
+                entering_firm_col1 = get_entering_firm_col1(sub_id, pty_r, rpt_id)
+                entering_firm_col1_list.append(entering_firm_col1)
+
+                entering_firm_col2 = get_entering_firm_col2(sub_id, pty_r, rpt_id)
+                entering_firm_col2_list.append(entering_firm_col2)
+
+    batch_df = {
+        'Quantity': quantity_list,
+        'Side': side_list,
+        'Pty ID': pty_id_list,
+        'Pty R': pty_r_list,
+        'Sub ID': sub_id_list,
+        'RptID': rpt_id_list,
+        'Ultimate Clearing Firm': ultimate_clearing_firm_list,
+        'Entering Firm - Column 1': entering_firm_col1_list,
+        'Entering Firm - Column 2': entering_firm_col2_list
+    }
+
+    return batch_df
 
 # Read the XML data from trade.xml and parse it into NumPy arrays (replace 'trade.xml' with the actual file path)
 print("Parsing the XML data...")
@@ -200,4 +250,5 @@ with pd.ExcelWriter(output_file_name) as writer:
     grouped_trade_data_frame.to_excel(writer, sheet_name='Pivoted Trade Data', index=False)
 
 print(f"Processing completed. Result saved to '{output_file_name}'.")
+
 
