@@ -117,3 +117,87 @@ with pd.ExcelWriter(output_file_name) as writer:
     grouped_trade_data_frame.to_excel(writer, sheet_name='Pivoted Trade Data', index=False)
 
 print(f"Processing completed. Result saved to '{output_file_name}'.")
+
+
+
+
+
+
+
+
+
+
+
+import xml.etree.ElementTree as ET
+import pandas as pd
+import numpy as np
+import datetime
+
+# Function to determine Ultimate Clearing Firm (unchanged)
+
+# Function to determine Entering Firm - Column 1 (unchanged)
+
+# Function to determine Entering Firm - Column 2 (unchanged)
+
+# Read the XML data from trade.xml and parse it into NumPy arrays (replace 'trade.xml' with the actual file path)
+print("Parsing the XML data...")
+tree_trade = ET.iterparse('trade_bak.xml', events=('start', 'end'))
+_, root_trade = next(tree_trade)  # Get the root element
+
+# Create lists to store the parsed trade data
+batch_size = 10000
+batch_data = []
+processed_elements = 0
+
+# Parse the XML data from trade.xml
+for event, element in tree_trade:
+    if event == 'end' and element.tag == 'TrdCaptRpt':
+        batch_data.append(element)
+        processed_elements += 1
+
+        # Process a batch of data
+        if processed_elements % batch_size == 0:
+            print(f"Processing batch {processed_elements // batch_size}")
+            batch_df = process_batch(batch_data)
+            batch_data.clear()
+
+            if processed_elements == batch_size:
+                # Create the DataFrame with the first batch
+                trade_data_frame = pd.DataFrame(batch_df)
+            else:
+                # Append to the DataFrame for subsequent batches
+                trade_data_frame = trade_data_frame.append(pd.DataFrame(batch_df))
+
+            # Clear memory by removing processed elements
+            root_trade.clear()
+
+# Process the remaining data (if any)
+if batch_data:
+    print(f"Processing the last batch {processed_elements // batch_size + 1}")
+    batch_df = process_batch(batch_data)
+    trade_data_frame = trade_data_frame.append(pd.DataFrame(batch_df))
+
+# Filter rows where at least one of Ultimate Clearing Firm, Entering Firm - Column 1, or Entering Firm - Column 2 is not None
+print("Filtering the DataFrame...")
+filtered_trade_data_frame = trade_data_frame[
+    trade_data_frame[['RptID', 'Quantity', 'Sub ID', 'Side', 'Ultimate Clearing Firm', 'Entering Firm - Column 1', 'Entering Firm - Column 2']].notna().any(axis=1)
+]
+
+# Group the filtered DataFrame and aggregate the values for Ultimate Clearing Firm, Entering Firm - Column 1, and Entering Firm - Column 2
+print("Grouping the DataFrame...")
+grouped_trade_data_frame = filtered_trade_data_frame.groupby(['Side', 'Sub ID', 'RptID'], as_index=False).agg({
+    'Ultimate Clearing Firm': 'first',
+    'Entering Firm - Column 1': 'first',
+    'Entering Firm - Column 2': 'first',
+    'Quantity': 'sum'
+})
+
+# Generate the timestamp for the file name up to minutes
+timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
+output_file_name = f'trade_report_{timestamp}.xlsx'
+
+with pd.ExcelWriter(output_file_name) as writer:
+    grouped_trade_data_frame.to_excel(writer, sheet_name='Pivoted Trade Data', index=False)
+
+print(f"Processing completed. Result saved to '{output_file_name}'.")
+
