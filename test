@@ -446,3 +446,42 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+
+
+import xml.etree.ElementTree as ET
+
+def fetch_first_million_records(xml_file_path, max_records=1000000):
+    records = []
+    count = 0
+
+    with open(xml_file_path, 'rb') as file:
+        tree = ET.iterparse(file, events=('start', 'end'))
+        _, root = next(tree)
+
+        for event, element in tree:
+            if event == 'end' and element.tag == 'record':
+                records.append(ET.tostring(element, encoding='utf-8'))
+                count += 1
+
+                if count >= max_records:
+                    break
+
+            # Clear the element from memory to free up space
+            element.clear()
+
+    return records
+
+if __name__ == "__main__":
+    xml_file_path = 'path/to/your/xml_file.xml'
+    records = fetch_first_million_records(xml_file_path)
+
+    # Do whatever you want with the fetched records
+    for record in records:
+        print(record.decode('utf-8'))
+
