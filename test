@@ -592,3 +592,59 @@ If a column has not changed, it does not need to be provided in the “data” o
 
 
 
+
+
+
+
+
+
+
+Development
+User Stories
+As a developer assisting operations, I need to be able to view the complete status for a specific actor, so that I can determine the state of an actor.
+
+As a developer assisting operations, I need to be able to view the list of actors, so that I can understand what was deployed.
+
+Techops
+User Stories
+As an operator, I need to be able to see which actors are in ERROR or WARNING state, so that I can detect and triage system issues.
+
+As an operator, I need to be able to see what system conditions have been triggered, so that I can detect and triage system issues.
+
+As an operator, I need to be able to modify and update probes in an ongoing basis, so that I can reduce  spurious warnings and detect newly discovered issues.
+
+As an operator, I need to be able to filter for actors based on host, so that I can determine impact of issues affecting certain environments or hosts.
+
+As an operator, I need to be able to filter for actors based on their type (e.g: MEMO port, FIX port, republisher, etc.), so that I can locate specific instances whose identifiers might be unknown.
+
+As an operator, I need to know the total number of actors that are successfully returning status to Wheelhouse. This will give me a view if we are missing a subset of actors and/or if a status_collector in a datacenter is having issue connecting. 
+
+Detail
+Adding the most and least used features of wheelhouse from TechOps perspective.
+
+Least used - Explore 
+
+Most used - 
+
+Page displaying actors in a state of ERRORs and/or WARNINGs 
+
+
+2. Page displaying all probes and conditions triggered -
+
+
+3. Ability to add probes and conditions in WH.
+
+4. Filter feature based on the following criteria -
+
+Host (gc0408.ny4.memx.local)
+
+Class of actors
+
+memo, fix, sbe
+
+republisher, serializer
+
+ 
+
+
+
