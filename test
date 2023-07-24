@@ -456,12 +456,12 @@ if __name__ == "__main__":
 
 import xml.etree.ElementTree as ET
 
-def fetch_first_million_records(xml_file_path, max_records=1000000):
+def fetch_and_write_first_million_records(input_file_path, output_file_path, max_records=1000000):
     records = []
     count = 0
 
-    with open(xml_file_path, 'rb') as file:
-        tree = ET.iterparse(file, events=('start', 'end'))
+    with open(input_file_path, 'rb') as input_file, open(output_file_path, 'wb') as output_file:
+        tree = ET.iterparse(input_file, events=('start', 'end'))
         _, root = next(tree)
 
         for event, element in tree:
@@ -472,14 +472,22 @@ def fetch_first_million_records(xml_file_path, max_records=1000000):
                 if count >= max_records:
                     break
 
+                # Write the record to the output file
+                output_file.write(ET.tostring(element, encoding='utf-8'))
+                output_file.write(b'\n')  # Add a new line after each record
+
             # Clear the element from memory to free up space
             element.clear()
 
-    return records
+    return count
 
 if __name__ == "__main__":
-    xml_file_path = 'path/to/your/xml_file.xml'
-    records = fetch_first_million_records(xml_file_path)
+    input_xml_file_path = 'path/to/your/input_xml_file.xml'
+    output_xml_file_path = 'path/to/your/output_xml_file.xml'
+    num_records_fetched = fetch_and_write_first_million_records(input_xml_file_path, output_xml_file_path)
+
+    print(f"{num_records_fetched} records fetched and written to {output_xml_file_path}.")
+
 
     # Do whatever you want with the fetched records
     for record in records:
