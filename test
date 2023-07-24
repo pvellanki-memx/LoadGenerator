@@ -453,50 +453,142 @@ if __name__ == "__main__":
 
 
 
-import xml.etree.ElementTree as ET
 
-def split_xml_file(input_file_path, output_file_prefix, chunk_size=1000000):
-    record_count = 0
-    file_count = 1
-    output_file_path = f"{output_file_prefix}_{file_count}.xml"
-    output_file = open(output_file_path, 'w')
 
-    with open(input_file_path, 'r') as input_file:
-        for line in input_file:
-            if '<FIXML ' in line:  # Check for the namespace declaration
-                if record_count == 0:
-                    output_file.write(line)
 
-            if '<Batch>' in line:  # Check for the <Batch> tag
-                if record_count == 0:
-                    output_file.write(line)
+Summary
+The current implementation of wheelhouse pushes most of the computation onto the client-side javascript. To do this, it pushes all status updates to all connected clients. Status updates are fairly large JSON blocks, and this creates a lot of I/O for the server and client to process. Reduce the amount of IO between the server and client by moving the processing of the table contents to the server side, along with probe and condition checking.
 
-            if '<TrdCaptRpt' in line:
-                record_count += 1
+Client-Server Connection
+The current connection is a websocket connection. This was chosen as opposed to a RESTful API with a polling client to allow the client to be able to display whether it had connectivity to the server and not have to re-pull the entire status list on each poll. The new mechanism should continue to use a websocket for client communication.
 
-            output_file.write(line)
+The backend server should only emit enough information to allow the client to render the table it wants to display (currently, there is only one table, but we will update that in a future enhancement). The server should allow the client to subscribe/unsubscribe for table data, and for individual status updates for specific keys. The client should only subscribe for what it needs to display. 
 
-            if record_count >= chunk_size:
-                output_file.write('</Batch>\n')  # Close the <Batch> tag
-                output_file.write('</FIXML>\n')  # Close the <FIXML> tag
-                output_file.close()
+Modify the protocol between the clients and the backend to be the equivalent of the following operations (NOTE: the message IDs shown below do not have to be sent over the wire as full strings - they are simply defined that way below to identify the operation in this document. These can be sent over the wire, for example, as a single char, a binary value, etc - once that decision is made, we can update this page).
 
-                file_count += 1
-                record_count = 0
-                output_file_path = f"{output_file_prefix}_{file_count}.xml"
-                output_file = open(output_file_path, 'w')
-                output_file.write('<FIXML r="20030618" s="20040109" v="4.4" xr="FIA" xv="1" xmlns="http://www.fixprotocol.org/FIXML-4-4">\n')
-                output_file.write('<Batch>\n')
+Operations from client-to-server:
+“list_tables” - requests a list of all available status tables from the server. The existing table in the current Wheelhouse implementation will be maintained on the backend as table name “default”. Another ticket will be for the ability to create other tables on the backend via config that have custom column sets and filters, but this is out of scope for the initial performance-related change. 
 
-    output_file.write('</Batch>\n')  # Close the <Batch> tag for the last file
-    output_file.write('</FIXML>')  # Write the closing </FIXML> tag for the last file
-    output_file.close()
-    print(f"Split into {file_count} files.")
+“subscribe_table <table_name>” - subscribes to a table being maintained on the backend. Subscription to a table only sends enough information to the client to allow the client to render the table properly and perform the regex filtering on the table contents. DO NOT do regex filtering of the table server-side.
 
-if __name__ == "__main__":
-    input_xml_file_path = 'trade_pv.xml'
-    output_file_prefix = 'output_file'
-    split_xml_file(input_xml_file_path, output_file_prefix)
+“unsubscribe_table <table_name>” - informs the server to stop sending updates on the table name provided. 
+
+“unsubscribe_all_tables” - informs the server to stop sending updates for all currently subscribed tables
+
+“subscribe_status <status_key>” - subscribes to the full status updates for a particular key. Will initially reply with an error (if unknown key, etc) or an accept containing a snapshot of the current status json for the key. Future updates received on that key will be sent as updates. 
+
+“unsubscribe_status <status_key>” - unsubscribes from updates on a particular key. 
+
+“unsubscribe_all_status” - unsubscribes from all existing status subscriptions
+
+Operations from server-to-client:
+“table_subscription_rejected <table_name> <reason>” 
+
+“table_subscription_accepted <table_name> <table_meta_data> <table_data_snapshot>” 
+
+“table_subscription_update <table_name> <table_data_delta>”
+
+“table_subscription_closed <table_name>”
+
+“status_subscription_rejected <key> <reason>”
+
+“status_subscription_accepted <key> <current_status>”
+
+“status_subscription_update <key> <new_status>”
+
+“status_subscription_closed <key> <reason>” - reason can be “requested” or “key deleted”, etc.
+
+ 
+
+Message Payloads
+table_subscription_accepted
+This message is sent when a client is successfully subscribed to a table and has the following format:
+
+
+{
+  "name" : "table_name",
+  "meta_data" : { 
+    //table meta data - see below
+  },
+  "rows" : [
+    //0 or more table row information objects - see below
+  ]
+}
+table_meta_data
+This is used to provide the client with information on how to render the table data for this table. For now this only contains the column headers. Later, other rendering instructions may be included.
+
+
+{
+  "columns" : [
+    { "name" : "Foo" },
+    { "name" : "Bar" },
+    { "name" : "Status" }    
+  ]
+}
+table_data_snapshot
+This contains all of the row information for the table. It should be considered a list of “row add” commands. “Key” is never a rendered column, but rather a unique key identifying a row in the table, and also the key used to subscribe for individual status if needed (when clicking “view status”, etc). All Records in this array are in the “row” object format: 
+
+
+{
+  "key" : "gc1234.app_name_1.ACTOR_NAME_1",
+  "bgcolor" : "green", 
+  "fgcolor" : null,   //null or not present means "default fgcolor, otherwise an html color code
+  "tooltip" : null,
+  "data" : {
+      "Foo" : "foo_value",
+      "Bar" : 1234,
+      "Status" : "OK"
+  },
+  "badges" : {
+      "Status" : [ "Connected", "Active" ]
+  }
+}
+Fields:
+
+”key” - Each row entry in the table has a unique “key”. This key identifies the row in all subsequent updates, and may be used by the client in “subscribe_status”, and “unsubscribe_status” requests to get the full detailed status json for that item. 
+
+“bgcolor” - informs the client what color to make the background for this row. If this value is null or not present, it means use the default background color of the page itself.
+
+“fgcolor” - informs the client what color to make the foreground for this row. If this value is null or not present, it means use the default foreground color of the page itself
+
+“tooltip” - informs the client what to set the text of the tooltip to on the row. If null or not present, it means no tooltip.
+
+“data” - this object’s fields will be named the same as the Columns defined in the Table Meta Data for this table, and their values will be the value to display for that column on the page.
+
+“badges” - this objects fields will be named the same as the Columns defined in the Table Meta Data for the table, and the values will be arrays of “Badge” strings to show in that column after the standard data text.
+
+ 
+
+table_subscription_update
+This is sent when the backend has calculated an update to a particular table’s contents and needs to inform any subscribed client(s).
+
+The structure of this update will be as follows:
+
+
+{
+  "delete" : [
+    //list containing keys of all rows to be deleted
+  ],
+  "add" : [
+    //list of new row objects as provided in the initial snapshot to add to the table
+  ]
+  "updates" : [
+    //list of updated row objects containing only the deltas to the last published values - see below  
+  ]
+}
+The Delete list above is simply a json array of keys. The keys are the keys of the rows that are to be deleted from the table.
+
+The Add list above is a list of row objects, exactly as provided in the original snapshot, of rows to add to the table.
+
+The update list above contains a list of DELTA row objects. The structure of these objects is the same as in the snapshot and add, but the behavior of these objects is slightly different as follows:
+
+All update objects MUST contain a “key” field.
+
+All update objects SHOULD omit any field that has not changed since the last update
+
+All update objects that wish to “clear” a field should explicitly set it to null (for example, clearing a tooltip on a row that was in error but is now no longer in error).
+
+If a column has not changed, it does not need to be provided in the “data” object - only columns that have changed since the last update need to be provided in the “data” object
 
 
 
