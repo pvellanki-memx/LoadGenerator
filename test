@@ -410,9 +410,39 @@ Traceback (most recent call last):
 NameError: name 'trade_data_frame' is not defined
 
 
-<FIXML r="20030618" s="20040109" v="4.4" xr="FIA" xv="1" xmlns="http://www.fixprotocol.org/FIXML-4-4">
-<Batch>
-<TrdCaptRpt RptID="1805972159" PrevlyRpted="N" LastQty="1" LastPx="0.2" TrdDt="2023-06-01" TransTyp="0" RptTyp="2" TrdTyp="0" TrdSubTyp="0" MtchID="0000009" BizDt="2023-06-01" MtchStat="0"><Instrmt Sym="SPXW" CFI="OPEICS" MMY="20230601" MatDt="2023-06-01" StrkPx="4075" StrkCcy="USD" StrkMult="1" StrkValu="100" Mult="100" Exch="XCBO"/><Amt Typ="PREM" Amt="20"/><RptSide Side="1" InptDev="MQ" Ccy="USD" PosEfct="C" ExchSpeclInstr="Y7NFK4D6NT5T" ClOrdID="1473207695" MLegRptTyp="1" TrdID="1Y0006LB4" TrdCode="02"><Pty ID="OCC" R="21" /><Pty ID="00477" R="1" > <Sub ID="C" Typ="26"/></Pty><Pty ID="00534" R="14"/><Pty ID="IBCO" R="2"/><Pty ID="U1664671" R="24"/><TrdRegTS TS="2023-05-31T20:15:00.000" Typ="1"/></RptSide><RptSide Side="2" InptDev="MQ" Ccy="USD" PosEfct="O" ExchSpeclInstr="Y7NFK4D6NFFB" ClOrdID="~Y7NFK4D6NFFB" MLegRptTyp="1" TrdID="1Y0006LB4" TrdCode="01"><Pty ID="OCC" R="21" /><Pty ID="00695" R="18" > <Sub ID="M" Typ="26"/></Pty><Pty ID="AKN" R="38"/><Pty ID="AKUN" R="26"/><TrdRegTS TS="2023-05-31T20:15:00.000" Typ="1"/></RptSide></TrdCaptRpt>
-<TrdCaptRpt RptID="1805972180" PrevlyRpted="N" LastQty="1" LastPx="1" TrdDt="2023-06-01" TransTyp="0" RptTyp="2" TrdTyp="0" TrdSubTyp="0" MtchID="0000030" BizDt="2023-06-01" MtchStat="0"><Instrmt Sym="VIX" CFI="OCEICS" MMY="20230719" MatDt="2023-07-19" StrkPx="30" StrkCcy="USD" StrkMult="1" StrkValu="100" Mult="100" Exch="XCBO"/><Amt Typ="PREM" Amt="100"/><RptSide Side="1" InptDev="MQ" Ccy="USD" PosEfct="O" ExchSpeclInstr="W7NFK4D2OFUG" ClOrdID="1473202338" MLegRptTyp="1" TrdID="1W0005H86" TrdCode="01"><Pty ID="OCC" R="21" /><Pty ID="00477" R="1" > <Sub ID="C" Typ="26"/></Pty><Pty ID="00534" R="14"/><Pty ID="IBCO" R="2"/><Pty ID="U7091551" R="24"/><TrdRegTS TS="2023-05-31T20:15:04.000" Typ="1"/></RptSide><RptSide Side="2" InptDev="MQ" Ccy="USD" PosEfct="O" ExchSpeclInstr="W7NFK4D2QUEM" ClOrdID="291526694" MLegRptTyp="1" TrdID="1W0005H86" TrdCode="02"><Pty ID="XOCC" R="21" /><Pty ID="00519" R="18" > <Sub ID="M" Typ="26"/></Pty><Pty ID="QVZ" R="38"/><Pty ID="CTCL" R="26"/><TrdRegTS TS="2023-05-31T20:15:04.000" Typ="1"/></RptSide></TrdCaptRpt>
-<TrdCaptRpt RptID="1805972155" PrevlyRpted="N" LastQty="1" LastPx="0.05" TrdDt="2023-06-01" TransTyp="0" RptTyp="2" TrdTyp="0" TrdSubTyp="0" MtchID="0000005" BizDt="2023-06-01" MtchStat="0"><Instrmt Sym="SPXW" CFI="OPEICS" MMY="20230601" MatDt="2023-06-01" StrkPx="3900" StrkCcy="USD" StrkMult="1" StrkValu="100" Mult="100" Exch="XCBO"/><Amt Typ="PREM" Amt="5"/><RptSide Side="1" InptDev="MQ" Ccy="USD" PosEfct="C" ExchSpeclInstr="Y7NFK4D6NT5P" ClOrdID="1473207691" MLegRptTyp="1" TrdID="1Y0006LB0" TrdCode="02"><Pty ID="OCC" R="21" /><Pty ID="00477" R="1" > <Sub ID="C" Typ="26"/></Pty><Pty ID="00534" R="14"/><Pty ID="IBCO" R="2"/><Pty ID="U11164278" R="24"/><TrdRegTS TS="2023-05-31T20:15:00.000" Typ="1"/></RptSide><RptSide Side="2" InptDev="MQ" Ccy="USD" PosEfct="O" ExchSpeclInstr="Y7NFK4D6N6QI" ClOrdID="~Y7NFK4D6N6QI" MLegRptTyp="1" TrdID="1Y0006LB0" TrdCode="01"><Pty ID="XCME" R="21" /><Pty ID="00813" R="18" > <Sub ID="M" Typ="26"/></Pty><Pty ID="OPT" R="38"/><Pty ID="OPTI" R="26"/><TrdRegTS TS="2023-05-31T20:15:00.000" Typ="1"/></RptSide></TrdCaptRpt>
-<TrdCaptRpt RptID="1805972162" PrevlyRpted="N" LastQty="2" LastPx="2.05" TrdDt="2023-06-01" TransTyp="0" RptTyp="2" TrdTyp="0" MtchID="0000013" BizDt="2023-06-
+
+import xml.etree.ElementTree as ET
+
+# Function to split a list into approximately equal parts
+def split_list(lst, num_parts):
+    avg = len(lst) / float(num_parts)
+    out = []
+    last = 0.0
+
+    while last < len(lst):
+        out.append(lst[int(last):int(last + avg)])
+        last += avg
+
+    return out
+
+def main():
+    # Load and parse the original XML file
+    tree = ET.parse("original.xml")
+    root = tree.getroot()
+    trd_capt_rpt_elements = root.findall(".//{http://www.fixprotocol.org/FIXML-4-4}TrdCaptRpt")
+
+    # Split the TrdCaptRpt elements into 4 parts
+    num_parts = 4
+    trd_capt_rpt_parts = split_list(trd_capt_rpt_elements, num_parts)
+
+    # Create and write each part into separate XML files
+    for i, part in enumerate(trd_capt_rpt_parts):
+        part_root = ET.Element("FIXML", attrib=root.attrib, nsmap=root.nsmap)
+        batch_element = ET.SubElement(part_root, "Batch")
+        batch_element.extend(part)
+
+        part_tree = ET.ElementTree(part_root)
+        part_tree.write(f"batch_{i + 1}.xml", xml_declaration=True, encoding="utf-8")
+
+if __name__ == "__main__":
+    main()
