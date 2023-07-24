@@ -452,31 +452,51 @@ if __name__ == "__main__":
 
 
 
+
 import xml.etree.ElementTree as ET
-import itertools
 
-def fetch_and_write_first_million_records(input_file_path, output_file_path, max_records=1000000):
-    with open(input_file_path, 'rb') as input_file, open(output_file_path, 'wb') as output_file:
-        tree = ET.iterparse(input_file, events=('start', 'end'))
-        _, root = next(tree)
+def split_xml_file(input_file_path, output_file_prefix, chunk_size=1000000):
+    record_count = 0
+    file_count = 1
+    output_file_path = f"{output_file_prefix}_{file_count}.xml"
+    output_file = open(output_file_path, 'w')
 
-        # Find the "record" elements and fetch and write them using itertools.islice
-        for _, element in itertools.islice(tree, max_records):
-            if element.tag == 'record':
-                output_file.write(ET.tostring(element, encoding='utf-8'))
-                output_file.write(b'\n')  # Add a new line after each record
+    with open(input_file_path, 'r') as input_file:
+        for line in input_file:
+            if '<FIXML ' in line:  # Check for the namespace declaration
+                if record_count == 0:
+                    output_file.write(line)
 
-            # Clear the element from memory to free up space
-            element.clear()
+            if '<Batch>' in line:  # Check for the <Batch> tag
+                if record_count == 0:
+                    output_file.write(line)
 
-    # Detach the root from the tree to free up memory
-    root.clear()
+            if '<TrdCaptRpt' in line:
+                record_count += 1
+
+            output_file.write(line)
+
+            if record_count >= chunk_size:
+                output_file.write('</Batch>\n')  # Close the <Batch> tag
+                output_file.write('</FIXML>\n')  # Close the <FIXML> tag
+                output_file.close()
+
+                file_count += 1
+                record_count = 0
+                output_file_path = f"{output_file_prefix}_{file_count}.xml"
+                output_file = open(output_file_path, 'w')
+                output_file.write('<FIXML r="20030618" s="20040109" v="4.4" xr="FIA" xv="1" xmlns="http://www.fixprotocol.org/FIXML-4-4">\n')
+                output_file.write('<Batch>\n')
+
+    output_file.write('</Batch>\n')  # Close the <Batch> tag for the last file
+    output_file.write('</FIXML>')  # Write the closing </FIXML> tag for the last file
+    output_file.close()
+    print(f"Split into {file_count} files.")
 
 if __name__ == "__main__":
-    input_xml_file_path = 'path/to/your/input_xml_file.xml'
-    output_xml_file_path = 'path/to/your/output_xml_file.xml'
-    fetch_and_write_first_million_records(input_xml_file_path, output_xml_file_path)
+    input_xml_file_path = 'trade_pv.xml'
+    output_file_prefix = 'output_file'
+    split_xml_file(input_xml_file_path, output_file_prefix)
 
-    print(f"First 1 million records fetched and written to {output_xml_file_path}.")
 
 
