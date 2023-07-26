@@ -648,3 +648,67 @@ republisher, serializer
 
 
 
+
+
+
+
+
+PriceType
+Some prices are encoded as a fixed-point scaled decimal, consisting of an unsigned long (UINT64) mantissa and a constant exponent of -8.
+
+Type Name
+
+Length
+
+Type
+
+Description
+
+Mantissa
+
+8
+
+UINT64
+
+The fixed-point decimal representation of the price.
+
+Exponent
+
+N/A
+
+INT8
+
+MEMO uses a constant exponent of -8 for all prices.
+
+For example, a mantissa of 123456789 (0x75BCD15) with the constant exponent of -8 represents the decimal number 1.23456789, and would appear encoded on the wire as the hex value 00000000075BCD15.
+
+ShortPriceType
+To conserve bytes on the wire, some prices are encoded as a fixed-point scaled decimal, consisting of an unsigned short (UINT16) mantissa and a constant exponent of -2.
+
+Type Name
+
+Length
+
+Type
+
+Description
+
+Mantissa
+
+2
+
+UINT16
+
+The fixed-point decimal representation of the price.
+
+Exponent
+
+N/A
+
+INT8
+
+MEMO uses a constant exponent of -2 for all short prices.
+
+For example, a mantissa of 12345 with the constant exponent of -2 represents the decimal number 123.45, and would appear encoded on the wire as the hex value 00003039
+
+
