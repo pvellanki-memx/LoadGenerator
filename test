@@ -28,9 +28,6 @@ class ShortPriceType:
 
 
 
-
-
-
 import xml.etree.ElementTree as ET
 import pandas as pd
 import numpy as np
@@ -39,47 +36,147 @@ from tqdm import tqdm
 from openpyxl import Workbook
 import os
 
-# ... (the rest of the functions and imports)
+# Function to determine Ultimate Clearing Firm
+def get_ultimate_clearing_firm(sub_id, pty_r, rpt_id, sub_id_to_rpt_ids):
+    if sub_id in ['C', 'M', 'F']:
+        for i in range(len(pty_r_list)):
+            if pty_r_list[i] == '14' and rpt_id_list[i] == rpt_id:
+                return pty_id_list[i] if pty_id_list[i] else None
+    return None
 
-# ... (the rest of the script until the loop)
+# Function to determine Entering Firm - Column 1
+def get_entering_firm_col1(sub_id, pty_r, rpt_id, sub_id_to_rpt_ids):
+    if sub_id in ['C', 'M', 'F'] and rpt_id in rpt_id_list:
+        for i in range(len(pty_r_list)):
+            if pty_r_list[i] == '18' and rpt_id_list[i] == rpt_id:
+                return pty_id_list[i] if pty_id_list[i] else None
+        for i in range(len(pty_r_list)):
+            if pty_r_list[i] == '1' and rpt_id_list[i] == rpt_id:
+                return pty_id_list[i] if pty_id_list[i] else None
+    return None
 
-# Create a DataFrame for the parsed data
-trade_data_frame = pd.DataFrame({
-    'Quantity': np.array(quantity_list),
-    'Side': np.array(side_list),
-    'Pty ID': np.array(pty_id_list),
-    'Pty R': np.array(pty_r_list),
-    'Sub ID': np.array(sub_id_list),
-    'RptID': np.array(rpt_id_list),
-})
+# Function to determine Entering Firm - Column 2
+def get_entering_firm_col2(sub_id, pty_r, rpt_id, sub_id_to_rpt_ids):
+    if sub_id in ['C', 'M', 'F'] and rpt_id in rpt_id_list:
+        for i in range(len(pty_r_list)):
+            if pty_r_list[i] == '2' and rpt_id_list[i] == rpt_id:
+                return pty_id_list[i] if pty_id_list[i] else None
+        for i in range(len(pty_r_list)):
+            if pty_r_list[i] == '26' and rpt_id_list[i] == rpt_id:
+                return pty_id_list[i] if pty_id_list[i] else None
+    return None
 
+def process_batch(batch_data, sub_id_to_rpt_ids):
+    quantity_list = batch_data['Quantity']
+    side_list = batch_data['Side']
+    pty_id_list = batch_data['Pty ID']
+    pty_r_list = batch_data['Pty R']
+    sub_id_list = batch_data['Sub ID']
+    rpt_id_list = batch_data['RptID']
+    ultimate_clearing_firm_list = []
+    entering_firm_col1_list = []
+    entering_firm_col2_list = []
+
+    for i in range(len(quantity_list)):
+        rpt_id = rpt_id_list[i]
+        sub_id = sub_id_list[i]
+        pty_r = pty_r_list[i]
+
+        ultimate_clearing_firm = get_ultimate_clearing_firm(sub_id, pty_r, rpt_id, sub_id_to_rpt_ids)
+        ultimate_clearing_firm_list.append(ultimate_clearing_firm)
+
+        entering_firm_col1 = get_entering_firm_col1(sub_id, pty_r, rpt_id, sub_id_to_rpt_ids)
+        entering_firm_col1_list.append(entering_firm_col1)
+
+        entering_firm_col2 = get_entering_firm_col2(sub_id, pty_r, rpt_id, sub_id_to_rpt_ids)
+        entering_firm_col2_list.append(entering_firm_col2)
+
+    batch_df = {
+        'Quantity': np.array(quantity_list),
+        'Side': np.array(side_list),
+        'Pty ID': np.array(pty_id_list),
+        'Pty R': np.array(pty_r_list),
+        'Sub ID': np.array(sub_id_list),
+        'RptID': np.array(rpt_id_list),
+        'Ultimate Clearing Firm': np.array(ultimate_clearing_firm_list),
+        'Entering Firm - Column 1': np.array(entering_firm_col1_list),
+        'Entering Firm - Column 2': np.array(entering_firm_col2_list)
+    }
+
+    return batch_df
+
+# Read the XML data from trade.xml and parse it into NumPy arrays (replace 'trade.xml' with the actual file path)
+print("Parsing the XML data...")
+tree_trade = ET.parse('trade_new.xml')
+root_trade = tree_trade.getroot()
+
+# Assuming you have sub_id_to_rpt_ids as a dictionary mapping sub_id to rpt_id (replace {} with the actual data)
+sub_id_to_rpt_ids = {}
+
+# Create lists to store the parsed trade data
+quantity_list = []
+side_list = []
+pty_id_list = []
+pty_r_list = []
+sub_id_list = []
+rpt_id_list = []
+
+# Batch size
+batch_size = 10
+
+wb = Workbook()
 
 # Generate the timestamp for the file name up to minutes
 timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
 output_file_name = f'trade_report_{timestamp}.xlsx'
 
 # Create a Pandas Excel writer using the 'openpyxl' engine
-if not os.path.exists(output_file_name):
-    # Create a new file with the first batch
-    with pd.ExcelWriter(output_file_name, engine='openpyxl') as writer:
-        writer.book.create_sheet("Sheet1", 0)
-
-# Create a Pandas Excel writer using the 'openpyxl' engine and pass the Workbook object 'wb'
-with pd.ExcelWriter(output_file_name, engine='openpyxl', mode='a') as writer:
-    for batch_start in tqdm(range(0, len(root_trade), batch_size)):
-        batch_end = min(batch_start + batch_size, len(root_trade))
-        batch_data = root_trade[batch_start:batch_end]
-
-        # ... (process_batch and other parts of the loop)
-
-        # Process the batch and write to the Excel sheet
-        processed_batch_data = process_batch(trade_data_frame, sub_id_to_rpt_ids)
-        sheet_name = f'Batch_{batch_start}'
-        pd.DataFrame(processed_batch_data).to_excel(writer, sheet_name=sheet_name, index=False)
-
-print(f"Processing completed. Result saved to '{output_file_name}'.")
+excel_writer = pd.ExcelWriter(output_file_name, engine='openpyxl')
 
 
-# Create a Pandas Excel writer using the 'openpyxl' engine
-excel_writer = pd.ExcelWriter('dummy.xlsx', engine='openpyxl')
-excel_writer.book = wb
+# Loop through the TrdCaptRpt elements and parse the data in batches
+print("Processing the XML data in batches...")
+for batch_start in tqdm(range(0, len(root_trade), batch_size)):
+    batch_end = min(batch_start + batch_size, len(root_trade))
+    batch_data = root_trade[batch_start:batch_end]
+
+    ns = {'fixml': 'http://www.fixprotocol.org/FIXML-4-4'}
+    for trd_capt_rpt in batch_data:
+        rpt_id = trd_capt_rpt.get('RptID')
+        for rpt_side in trd_capt_rpt.findall('fixml:RptSide', ns):
+            side = rpt_side.get('Side')
+            for pty in rpt_side.findall('fixml:Pty', ns):
+                pty_id = pty.get('ID')
+                pty_r = pty.get('R')
+                sub_id = pty.find('fixml:Sub', ns).get('ID') if pty.find('fixml:Sub', ns) is not None else None
+
+                # Append the parsed data to the respective lists
+                quantity_list.append(int(trd_capt_rpt.get('LastQty')))  # Convert quantity to integer
+                side_list.append(side)
+                pty_id_list.append(pty_id)
+                pty_r_list.append(pty_r)
+                sub_id_list.append(sub_id)
+                rpt_id_list.append(rpt_id)
+
+    # Create a DataFrame for the parsed data
+    trade_data_frame = pd.DataFrame({
+        'Quantity': np.array(quantity_list),
+        'Side': np.array(side_list),
+        'Pty ID': np.array(pty_id_list),
+        'Pty R': np.array(pty_r_list),
+        'Sub ID': np.array(sub_id_list),
+        'RptID': np.array(rpt_id_list),
+    })
+
+    # Process the batch and write to the Excel sheet
+    processed_batch_data = process_batch(trade_data_frame, sub_id_to_rpt_ids)
+
+
+    # Generate the timestamp for the file name up to minutes
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
+    output_file_name = f'trade_report_{timestamp}.xlsx'
+
+    with pd.ExcelWriter(output_file_name) as writer:
+        processed_batch_data.to_excel(writer, sheet_name='Pivoted Trade Data', index=False)
+
+    print(f"Processing completed. Result saved to '{output_file_name}'.")
