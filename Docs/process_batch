@@ -96,15 +96,12 @@ batch_size = 500
 
 wb = Workbook()
 
-ws = wb.create_sheet(title='BlankSheet')
-
 # Loop through the TrdCaptRpt elements and parse the data in batches
 print("Processing the XML data in batches...")
 for batch_start in tqdm(range(0, len(root_trade), batch_size)):
     batch_end = min(batch_start + batch_size, len(root_trade))
     batch_data = root_trade[batch_start:batch_end]
 
-    
     ns = {'fixml': 'http://www.fixprotocol.org/FIXML-4-4'}
     for trd_capt_rpt in batch_data:
         rpt_id = trd_capt_rpt.get('RptID')
@@ -133,28 +130,16 @@ for batch_start in tqdm(range(0, len(root_trade), batch_size)):
         'RptID': np.array(rpt_id_list),
     })
 
+    # Process the batch and write to the Excel sheet
+    processed_batch_data = process_batch(trade_data_frame, sub_id_to_rpt_ids)
+    sheet_name = f'Batch_{batch_start}'
+    pd.DataFrame(processed_batch_data).to_excel(wb, sheet_name=sheet_name, index=False)
 
 # Generate the timestamp for the file name up to minutes
 timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
 output_file_name = f'trade_report_{timestamp}.xlsx'
 
-# Create a Pandas Excel writer using the 'openpyxl' engine
-if not os.path.exists(output_file_name):
-    # Create a new file with the first batch
-    with pd.ExcelWriter(output_file_name, engine='openpyxl') as writer:
-        writer.book.create_sheet("Sheet1",0)
-        #writer.book.remove(writer.book["Sheet1"])
-
-# Create a Pandas Excel writer using the 'openpyxl' engine and pass the Workbook object 'wb'
-with pd.ExcelWriter(output_file_name, engine='openpyxl', mode='a') as writer:
-    for batch_start in tqdm(range(0, len(root_trade), batch_size)):
-        batch_end = min(batch_start + batch_size, len(root_trade))
-        batch_data = root_trade[batch_start:batch_end]
-    
-        
-        # Process the batch and write to the Excel sheet
-        processed_batch_data = process_batch(trade_data_frame, sub_id_to_rpt_ids)
-        sheet_name = f'Batch_{batch_start}'
-        pd.DataFrame(processed_batch_data).to_excel(writer, sheet_name=sheet_name, index=False)
+# Save the workbook to the Excel file
+wb.save(output_file_name)
 
 print(f"Processing completed. Result saved to '{output_file_name}'.")
