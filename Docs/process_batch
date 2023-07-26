@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import datetime
 from tqdm import tqdm
+from openpyxl import Workbook
 
 # Function to determine Ultimate Clearing Firm
 def get_ultimate_clearing_firm(sub_id, pty_r, rpt_id, sub_id_to_rpt_ids):
@@ -127,13 +128,16 @@ trade_data_frame = pd.DataFrame({
     'RptID': np.array(rpt_id_list),
 })
 
-# Process and write to Excel in batches
-output_file_name = 'trade_report.xlsx'
-with pd.ExcelWriter(output_file_name) as writer:
-    for batch_start in tqdm(range(0, len(trade_data_frame), batch_size)):
-        batch_end = min(batch_start + batch_size, len(trade_data_frame))
-        batch_data = trade_data_frame.iloc[batch_start:batch_end]
-        processed_batch_data = process_batch(batch_data, sub_id_to_rpt_ids)
-        processed_batch_data.to_excel(writer, sheet_name=f'Batch_{batch_start}', index=False)
+ # Process the batch and write to the Excel sheet
+    processed_batch_data = process_batch(batch_data_frame, sub_id_to_rpt_ids)
+    sheet_name = f'Batch_{batch_start}'
+    pd.DataFrame(processed_batch_data).to_excel(wb, sheet_name=sheet_name, index=False)
+
+# Generate the timestamp for the file name up to minutes
+timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
+output_file_name = f'trade_report_{timestamp}.xlsx'
+
+# Save the workbook to the output file
+wb.save(output_file_name)
 
 print(f"Processing completed. Result saved to '{output_file_name}'.")
