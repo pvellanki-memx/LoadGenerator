@@ -79,3 +79,7 @@ with pd.ExcelWriter(output_file_name, engine='openpyxl', mode='a') as writer:
 
 print(f"Processing completed. Result saved to '{output_file_name}'.")
 
+
+# Create a Pandas Excel writer using the 'openpyxl' engine
+excel_writer = pd.ExcelWriter('dummy.xlsx', engine='openpyxl')
+excel_writer.book = wb
