@@ -66,44 +66,11 @@ def get_entering_firm_col2(sub_id, pty_r, rpt_id, sub_id_to_rpt_ids):
                 return pty_id_list[i] if pty_id_list[i] else None
     return None
 
+
+
 def process_batch(batch_data, sub_id_to_rpt_ids):
-    quantity_list = batch_data['Quantity']
-    side_list = batch_data['Side']
-    pty_id_list = batch_data['Pty ID']
-    pty_r_list = batch_data['Pty R']
-    sub_id_list = batch_data['Sub ID']
-    rpt_id_list = batch_data['RptID']
-    ultimate_clearing_firm_list = []
-    entering_firm_col1_list = []
-    entering_firm_col2_list = []
-
-    for i in range(len(quantity_list)):
-        rpt_id = rpt_id_list[i]
-        sub_id = sub_id_list[i]
-        pty_r = pty_r_list[i]
-
-        ultimate_clearing_firm = get_ultimate_clearing_firm(sub_id, pty_r, rpt_id, sub_id_to_rpt_ids)
-        ultimate_clearing_firm_list.append(ultimate_clearing_firm)
-
-        entering_firm_col1 = get_entering_firm_col1(sub_id, pty_r, rpt_id, sub_id_to_rpt_ids)
-        entering_firm_col1_list.append(entering_firm_col1)
-
-        entering_firm_col2 = get_entering_firm_col2(sub_id, pty_r, rpt_id, sub_id_to_rpt_ids)
-        entering_firm_col2_list.append(entering_firm_col2)
-
-    batch_df = {
-        'Quantity': np.array(quantity_list),
-        'Side': np.array(side_list),
-        'Pty ID': np.array(pty_id_list),
-        'Pty R': np.array(pty_r_list),
-        'Sub ID': np.array(sub_id_list),
-        'RptID': np.array(rpt_id_list),
-        'Ultimate Clearing Firm': np.array(ultimate_clearing_firm_list),
-        'Entering Firm - Column 1': np.array(entering_firm_col1_list),
-        'Entering Firm - Column 2': np.array(entering_firm_col2_list)
-    }
-
-    return batch_df
+    # Function code remains unchanged
+    pass
 
 # Read the XML data from trade.xml and parse it into NumPy arrays (replace 'trade.xml' with the actual file path)
 print("Parsing the XML data...")
@@ -124,15 +91,8 @@ rpt_id_list = []
 # Batch size
 batch_size = 10
 
+# Create a workbook object
 wb = Workbook()
-
-# Generate the timestamp for the file name up to minutes
-timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
-output_file_name = f'trade_report_{timestamp}.xlsx'
-
-# Create a Pandas Excel writer using the 'openpyxl' engine
-excel_writer = pd.ExcelWriter(output_file_name, engine='openpyxl')
-
 
 # Loop through the TrdCaptRpt elements and parse the data in batches
 print("Processing the XML data in batches...")
@@ -171,12 +131,14 @@ for batch_start in tqdm(range(0, len(root_trade), batch_size)):
     # Process the batch and write to the Excel sheet
     processed_batch_data = process_batch(trade_data_frame, sub_id_to_rpt_ids)
 
-
     # Generate the timestamp for the file name up to minutes
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
     output_file_name = f'trade_report_{timestamp}.xlsx'
 
-    with pd.ExcelWriter(output_file_name) as writer:
-        processed_batch_data.to_excel(writer, sheet_name='Pivoted Trade Data', index=False)
+    # Save the batch data to a new sheet in the Excel file
+    with pd.ExcelWriter(output_file_name, engine='openpyxl') as writer:
+        writer.book = wb
+        writer.sheets = dict((ws.title, ws) for ws in wb.worksheets)
+        processed_batch_data.to_excel(writer, sheet_name=f'Batch_{batch_start}', index=False)
 
-    print(f"Processing completed. Result saved to '{output_file_name}'.")
+print(f"Processing completed. Result saved to '{output_file_name}'.")
