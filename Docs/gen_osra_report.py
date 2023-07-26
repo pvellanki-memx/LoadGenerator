@@ -2,6 +2,7 @@ import xml.etree.ElementTree as ET
 import pandas as pd
 import numpy as np
 import datetime
+from tqdm import tqdm
 
 # Function to determine Ultimate Clearing Firm
 def get_ultimate_clearing_firm(sub_id, pty_r, rpt_id, sub_id_to_rpt_ids):
@@ -75,7 +76,7 @@ def process_batch(batch_data, sub_id_to_rpt_ids):
 
 # Read the XML data from trade.xml and parse it into NumPy arrays (replace 'trade.xml' with the actual file path)
 print("Parsing the XML data...")
-tree_trade = ET.parse('trade_pv.xml')
+tree_trade = ET.parse('small_13.xml')
 root_trade = tree_trade.getroot()
 
 # Define the namespace
@@ -94,10 +95,10 @@ rpt_id_list = []
 ultimate_clearing_firm_list = []  # List to store Ultimate Clearing Firm
 entering_firm_col1_list = []  # List to store Entering Firm - Column 1
 entering_firm_col2_list = []  # List to store Entering Firm - Column 2
-
+from tqdm import tqdm
 # Loop through the TrdCaptRpt elements and parse the data
 print("Processing the XML data...")
-for trd_capt_rpt in root_trade.findall('.//fixml:TrdCaptRpt', ns):
+for trd_capt_rpt in tqdm(root_trade.findall('.//fixml:TrdCaptRpt', ns)):
     rpt_id = trd_capt_rpt.get('RptID')
     for rpt_side in trd_capt_rpt.findall('fixml:RptSide', ns):
         side = rpt_side.get('Side')
