@@ -30,9 +30,29 @@ class ShortPriceType:
 
 
 
-# ... (previous parts of the script)
 
+import xml.etree.ElementTree as ET
+import pandas as pd
+import numpy as np
+import datetime
+from tqdm import tqdm
+from openpyxl import Workbook
 import os
+
+# ... (the rest of the functions and imports)
+
+# ... (the rest of the script until the loop)
+
+# Create a DataFrame for the parsed data
+trade_data_frame = pd.DataFrame({
+    'Quantity': np.array(quantity_list),
+    'Side': np.array(side_list),
+    'Pty ID': np.array(pty_id_list),
+    'Pty R': np.array(pty_r_list),
+    'Sub ID': np.array(sub_id_list),
+    'RptID': np.array(rpt_id_list),
+})
+
 
 # Generate the timestamp for the file name up to minutes
 timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
@@ -42,8 +62,9 @@ output_file_name = f'trade_report_{timestamp}.xlsx'
 if not os.path.exists(output_file_name):
     # Create a new file with the first batch
     with pd.ExcelWriter(output_file_name, engine='openpyxl') as writer:
-        pass
+        writer.book.create_sheet("Sheet1", 0)
 
+# Create a Pandas Excel writer using the 'openpyxl' engine and pass the Workbook object 'wb'
 with pd.ExcelWriter(output_file_name, engine='openpyxl', mode='a') as writer:
     for batch_start in tqdm(range(0, len(root_trade), batch_size)):
         batch_end = min(batch_start + batch_size, len(root_trade))
@@ -52,10 +73,9 @@ with pd.ExcelWriter(output_file_name, engine='openpyxl', mode='a') as writer:
         # ... (process_batch and other parts of the loop)
 
         # Process the batch and write to the Excel sheet
-        processed_batch_data = process_batch(batch_data_frame, sub_id_to_rpt_ids)
+        processed_batch_data = process_batch(trade_data_frame, sub_id_to_rpt_ids)
         sheet_name = f'Batch_{batch_start}'
         pd.DataFrame(processed_batch_data).to_excel(writer, sheet_name=sheet_name, index=False)
 
 print(f"Processing completed. Result saved to '{output_file_name}'.")
-
 
