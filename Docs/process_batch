@@ -98,6 +98,8 @@ for batch_start in tqdm(range(0, len(root_trade), batch_size)):
     batch_end = min(batch_start + batch_size, len(root_trade))
     batch_data = root_trade[batch_start:batch_end]
 
+    ns = {'fixml': 'http://www.fixprotocol.org/FIXML-4-4'}
+
     for trd_capt_rpt in batch_data:
         rpt_id = trd_capt_rpt.get('RptID')
         for rpt_side in trd_capt_rpt.findall('fixml:RptSide', ns):
