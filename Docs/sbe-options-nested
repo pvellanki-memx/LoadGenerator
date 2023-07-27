@@ -36,8 +36,6 @@ def get_entering_firm_col2(sub_id, pty_r, rpt_id, sub_id_to_rpt_ids):
 
 
 
-
-
 # Function to extract attribute values from the XML elements
 def extract_attributes(element, attribute_names):
     return [element.get(attr) for attr in attribute_names]
@@ -94,7 +92,14 @@ def fetch_data_in_batches(batch_size):
         # Update the database with the processed data
         for processed_batch in processed_batches:
             # Your logic here to insert the processed batch data back into the database
-            pass
+            # Adjust the following code based on your table structure and data
+            for row in processed_batch:
+                cursor.execute('INSERT INTO new_trade_data (Quantity, Side, Pty_ID, Pty_R, Sub_ID, Rpt_ID, '
+                               'Ultimate_Clearing_Firm, Entering_Firm_Column1, Entering_Firm_Column2) '
+                               'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                               (row['Quantity'], row['Side'], row['Pty_ID'], row['Pty_R'], row['Sub_ID'],
+                                row['Rpt_ID'], row['Ultimate Clearing Firm'], row['Entering Firm - Column 1'],
+                                row['Entering Firm - Column 2']))
 
         progress_bar.update(len(batch_data))
 
