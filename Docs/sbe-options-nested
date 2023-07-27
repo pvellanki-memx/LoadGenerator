@@ -1,209 +1,65 @@
-Overview
-SBE message schema with nested repeating groups
-Encoded SBE message with no repeating groups
-Encoded SBE message with one outer repeating group and one inner repeating group
-Encoded SBE message with multiple outer repeating groups, multiple nested repeating groups
-Overview
-This page gives examples of a SBE xml schema for a message with nested repeating groups. The schema was run thru the SBE Tool to validate it and to generate encoders and decoders for the message with nested repeating groups. Then it shows how to encode a message with nested repeating groups and what the message looks like on the wire.
+import sqlite3
+import xml.etree.ElementTree as ET
+from multiprocessing import Pool, cpu_count
 
-SBE message schema with nested repeating groups
-This discussion uses this sample message with nested repeating groups as the source for all samples that follow.
+# Function to determine Sub ID
+def extract_sub_id(element):
+    sub_id_element = element.find('.//fixml:Sub', ns)
+    return sub_id_element.get('ID') if sub_id_element is not None else None
 
+# Function to extract attribute values from the XML elements
+def extract_attributes(element, attribute_names):
+    return [element.get(attr) for attr in attribute_names]
 
-    <composite name="RepeatingGroupDimensions">
-        <type name="blockLength" primitiveType="uint8"/>
-        <type name="numInGroup" primitiveType="uint8"/>
-    </composite>
-    
-    ...
-    
-    <sbe:message name="NestedSample" id="27">
-        <field id="1" name="SendingTime" type="uint64"/>
-        <field id="2" name="ClOrdID" type="NewOrderSingleClOrdID"/>
-        <field id="3" name="PriorToOuterRGMarker" type="uint16"/>
-        <group name="allocations" id="78" dimensionType="RepeatingGroupDimensions">
-            <field name="allocAccountID" id="79" type="uint32"/>
-            <field name="allocQty" id="80" type="uint16"/>
-            <field id="81" name="PriorToInnerRGMarker" type="uint16"/>
-            <group blockLength="18" dimensionType="RepeatingGroupDimensions" id="12" name="Parties">
-                <field id="13" name="PartyID" type="LongTwoSidedBulkQuotePartyID"/>
-                <field id="14" name="PartyIDSource" type="char"/>
-                <field id="15" name="PartyRole" type="uint8"/>
-            </group>
-        </group>
-    </sbe:message>
-Encoded SBE message with no repeating groups
-The follow code snippet creates and encodes a NestedSample message that has no outer repeating groups and no inner repeating groups.
+# Function to insert data into the database
+def insert_data(records):
+    conn = sqlite3.connect('trades.db')
+    cursor = conn.cursor()
+    cursor.executemany('INSERT INTO trades VALUES (?, ?, ?, ?, ?, ?)', records)
+    conn.commit()
+    conn.close()
 
+# Connect to the SQLite database and create the table
+conn = sqlite3.connect('trades.db')
+cursor = conn.cursor()
+cursor.execute('''CREATE TABLE IF NOT EXISTS trades (
+                    Quantity INTEGER,
+                    Side TEXT,
+                    Pty_ID TEXT,
+                    Pty_R TEXT,
+                    Sub_ID TEXT,
+                    Rpt_ID TEXT
+                 )''')
+conn.close()
 
-        ByteBuffer msgBuf = ByteBuffer.allocate(1024);
-        UnsafeBuffer wrapper = new UnsafeBuffer(msgBuf);
-        nestedRepeatingGroupSample.wrapAndApplyHeader(wrapper, 0, header);
-        
-        // Why  do we need to do this? Is there a bug in the our version of the SBE tool?
-        header.numGroups((short)MessageHeaderEncoder.numGroupsEncodingLength());
-        
-        nestedRepeatingGroupSample.sendingTime(0x0102030405060708L);
-        nestedRepeatingGroupSample.clOrdID("OID0123456789AB");
-        nestedRepeatingGroupSample.priorToOuterRGMarker(0xDEAD);
+# Define the namespace
+ns = {'fixml': 'http://www.fixprotocol.org/FIXML-4-4'}
 
-        msgBuf.position(0).limit(header.encodedLength() + nestedRepeatingGroupSample.encodedLength());
+# Parse the XML data and extract the required attributes
+print("Parsing the XML data...")
+tree_trade = ET.parse('path_to_your_large_xml.xml')
+root_trade = tree_trade.getroot()
 
-        builder.setLength(0);
-        builder.append("\nnestedRepeatingGroupSample, no repeating groups:\n");
-        builder.append("TemplateId: ").append(nestedRepeatingGroupSample.sbeTemplateId()).append("\nBlockLength: ").append(nestedRepeatingGroupSample.sbeBlockLength()).append("\n");
-        HexDumper.toHex(builder, msgBuf);
-        System.out.println(builder);
-Note that the code puts the value 0xdead in the field priorToOuterRGMarker which is just prior to the outer repeating group as a marker to identify where the outer repeating group starts in the bytes on the wire. This encoded message appears on the wire as:
+# Number of CPU cores to use for parallel processing (adjust this as needed)
+num_cores = min(cpu_count(), 29)
 
+# Function to process a batch of TrdCaptRpt elements
+def process_batch(trade_batch):
+    records = []
+    for trd_capt_rpt in trade_batch:
+        quantity, side, rpt_id = extract_attributes(trd_capt_rpt, ['LastQty', 'Side', 'RptID'])
+        for rpt_side in trd_capt_rpt.findall('fixml:RptSide', ns):
+            for pty in rpt_side.findall('fixml:Pty', ns):
+                pty_id, pty_r, sub_id = extract_attributes(pty, ['ID', 'R']), extract_sub_id(pty)
+                records.append((quantity, side, pty_id, pty_r, sub_id, rpt_id))
 
-nestedRepeatingGroupSample, no repeating groups:
-TemplateId: 27
-BlockLength: 26
-00000000: 001a1b09 00010101 02030405 0607084f   |...............O|
-00000010: 49443031 32333435 36373839 414200de   |ID0123456789AB..|
-00000020: ad                                   |.|
-Encoded SBE message with one outer repeating group and one inner repeating group
-The follow code snippet creates and encodes a NestedSample message that has one outer group, and one nested group.
+    insert_data(records)
 
+# Split the TrdCaptRpt elements into batches
+trade_batches = [list(root_trade[i:i + 1000]) for i in range(0, len(root_trade), 1000)]
 
-        ByteBuffer msgBuf = ByteBuffer.allocate(1024);
-        UnsafeBuffer wrapper = new UnsafeBuffer(msgBuf);
-        nestedRepeatingGroupSample.wrapAndApplyHeader(wrapper, 0, header);
-        // Why  do we need to do this? Is there a bug in the our version of the SBE tool?
-        header.numGroups((short)MessageHeaderEncoder.numGroupsEncodingLength());
-        
-        estedRepeatingGroupSample.sendingTime(0x0102030405060708L);
-        nestedRepeatingGroupSample.clOrdID("OID0123456789AB");
-        nestedRepeatingGroupSample.priorToOuterRGMarker(0xDEAD);
+# Create a pool of worker processes
+with Pool(processes=num_cores) as pool:
+    pool.map(process_batch, trade_batches)
 
-        AllocationsEncoder allocationsEncoder = nestedRepeatingGroupSample.allocationsCount(1);
-        allocationsEncoder.next();
-        allocationsEncoder.allocAccountID(0x12345678).allocQty(0xEEFF);
-        allocationsEncoder.priorToInnerRGMarker(0xBEEF);
-
-        PartiesEncoder partiesEncoder = allocationsEncoder.partiesCount(1);
-        partiesEncoder.next();
-        partiesEncoder.partyID("ABCDEFGHIJKLMNOP").partyIDSource((byte)'a').partyRole((short)0x44);
-
-        msgBuf.position(0).limit(header.encodedLength() + nestedRepeatingGroupSample.encodedLength());
-
-        builder.setLength(0);
-        builder.append("\nnestedRepeatingGroupSample one outer group, one nested group:\n");
-        builder.append("TemplateId: ").append(nestedRepeatingGroupSample.sbeTemplateId()).append("\nBlockLength: ").append(nestedRepeatingGroupSample.sbeBlockLength()).append("\n");
-        HexDumper.toHex(builder, msgBuf);
-        System.out.println(builder);
-Note that the code puts the value 0xdead in the field priorToOuterRGMarker which is just prior to the outer repeating group as a marker to identify where the outer repeating group starts in the bytes on the wire. It also put the value 0xbeaf in the field priorToInnerRGMarker which is just prior to the inner repeating group as a marker to identify where the inner repeating group starts in the bytes on the wire.
-
-This encoded message appears on the wire as:
-
-
-nestedRepeatingGroupSample one outer group, one nested group:
-TemplateId: 27
-BlockLength: 26
-00000000: 001a1b09 00010101 02030405 0607084f   |...............O|
-00000010: 49443031 32333435 36373839 414200de   |ID0123456789AB..|
-00000020: ad080112 345678ee ffbeef12 01414243   |....4Vx......ABC|
-00000030: 44454647 48494a4b 4c4d4e4f 506144     |DEFGHIJKLMNOPaD|
-Encoded SBE message with multiple outer repeating groups, multiple nested repeating groups
-The follow code snippet creates and encodes a NestedSample message that has multiple outer groups, and multiple nested groups.
-
-
-        ByteBuffer msgBuf = ByteBuffer.allocate(1024);
-        UnsafeBuffer wrapper = new UnsafeBuffer(msgBuf);
-        nestedRepeatingGroupSample.wrapAndApplyHeader(wrapper, 0, header);
-        // Why  do we need to do this? Is there a bug in the our version of the SBE tool?
-        header.numGroups((short)MessageHeaderEncoder.numGroupsEncodingLength());
-        
-        nestedRepeatingGroupSample.sendingTime(0x0102030405060708L);
-        nestedRepeatingGroupSample.clOrdID("OID0123456789AB");
-        nestedRepeatingGroupSample.priorToOuterRGMarker(0xDEAD);
-
-        AllocationsEncoder allocationsEncoder = nestedRepeatingGroupSample.allocationsCount(3);
-        allocationsEncoder.next();
-        allocationsEncoder.allocAccountID(0x12345678).allocQty(0xEEFF).priorToInnerRGMarker(0xBEEF);
-        PartiesEncoder partiesEncoder = allocationsEncoder.partiesCount(3);
-        partiesEncoder.next();
-        partiesEncoder.partyID("ABCDEFGHIJKLMNOP").partyIDSource((byte)'a').partyRole((short)0x44);
-        partiesEncoder.next();
-        partiesEncoder.partyID("0123456789ABCDEF").partyIDSource((byte)'b').partyRole((short)0x45);
-        partiesEncoder.next();
-        partiesEncoder.partyID("PartyID012131415").partyIDSource((byte)'c').partyRole((short)0x46);
-
-
-        allocationsEncoder.next();
-        allocationsEncoder.allocAccountID(0xFEDCBA98).allocQty(0x4466).priorToInnerRGMarker(0xBEEF);
-        partiesEncoder = allocationsEncoder.partiesCount(2);
-        partiesEncoder.next();
-        partiesEncoder.partyID("PONMLKJIHGFEDCBA").partyIDSource((byte)'d').partyRole((short)0x47);
-        partiesEncoder.next();
-        partiesEncoder.partyID("PartyID012345678").partyIDSource((byte)'e').partyRole((short)0x48);
-
-
-        allocationsEncoder.next();
-        allocationsEncoder.allocAccountID(0x55667755).allocQty(0x1122).priorToInnerRGMarker(0xBEEF);
-        partiesEncoder = allocationsEncoder.partiesCount(1);
-        partiesEncoder.next();
-        partiesEncoder.partyID("ABCDEFGHIJKLMNOP").partyIDSource((byte)'a').partyRole((short)0x44);
-
-        msgBuf.position(0).limit(header.encodedLength() + nestedRepeatingGroupSample.encodedLength());
-
-        builder.setLength(0);
-        builder.append("\nnestedRepeatingGroupSample multiple outer groups, multiple nested groups:\n");
-        builder.append("TemplateId: ").append(nestedRepeatingGroupSample.sbeTemplateId()).append("\nBlockLength: ").append(nestedRepeatingGroupSample.sbeBlockLength()).append("\n");
-        HexDumper.toHex(builder, msgBuf);
-        System.out.println(builder);
-Note that the code puts the value 0xdead in the field priorToOuterRGMarker which is just prior to the outer repeating group as a marker to identify where the outer repeating group starts in the bytes on the wire. It also put the value 0xbeaf in the field priorToInnerRGMarker which is just prior to the inner repeating group as a marker to identify where the inner repeating group starts in the bytes on the wire.
-
-This encoded message appears on the wire as:
-
-
-nestedRepeatingGroupSample multiple outer groups, multiple nested groups:
-TemplateId: 27
-BlockLength: 26
-00000000: 001a1b09 00010101 02030405 0607084f   |...............O|
-00000010: 49443031 32333435 36373839 414200de   |ID0123456789AB..|
-00000020: ad080312 345678ee ffbeef12 03414243   |....4Vx......ABC|
-00000030: 44454647 48494a4b 4c4d4e4f 50614430   |DEFGHIJKLMNOPaD0|
-00000040: 31323334 35363738 39414243 44454662   |123456789ABCDEFb|
-00000050: 45506172 74794944 30313231 33313431   |EPartyID01213141|
-00000060: 356346fe dcba9844 66beef12 02504f4e   |5cF....Df....PON|
-00000070: 4d4c4b4a 49484746 45444342 41644750   |MLKJIHGFEDCBAdGP|
-00000080: 61727479 49443031 32333435 36373865   |artyID012345678e|
-00000090: 48556677 551122be ef120141 42434445   |HUfwU."....ABCDE|
-000000a0: 46474849 4a4b4c4d 4e4f5061 44         |FGHIJKLMNOPaD|
-
-
-
-
-
-
-
-
-
-NewOrderSIngle:
-
-SBEHeader
-SendingTime (Offset:3, Length:8, TYpe UTCTimeStampNanos)
-ClOrdID (Offset:15, Length:20, Type:Char)
-OptionsSecurityID(Offset:35, Length:8, Type:Char)
-Side( Offset:43, Length:1, TYpe:SideType)
-OrderQty( Offset:44, Length:4, Type: UINT32)
-OrderType( Offset:48, Length:1. Type:ordType)
-Price( Offset:49, Length: 8, Type:priceType)
-TimeinForce (Offset:57, Length:1)
-OpenOrClose (Offset:58, Length :1)
-ExecInst (Offset: 59, Length:2)
-TradingCapcity (Offset: 61, Length:1)
-RepriceFrequency( Offset:62, Length:1)
-RepriceBehavior (Offset:63, Length:1)
-MtpGroupID(Offset:64, Length:2)
-MatchTradePrevention(Offset:66, Length:1)
-CancelGroupID(Offset:67, Length:2 Type:UINT16)
-RiskGroupID(Offset:69, Length:2 Type:UINT16)
-
-Repeating group: {NoPartyIDS, Parties]
-
-NoPartyIDS as one field that defines the dimensions of repeating group and inside parties group, we have 3 fields partyID(Offset:0, Length:16, Type:Char) , PartyIDSource(Offset:17, Length:1, Type: Char), PartyRole,(Offset:18, Length:1, Type:UINT8)
-
-
+print("Data has been successfully stored in the SQLite database.")
