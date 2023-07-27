@@ -1,4 +1,3 @@
-
 import sqlite3
 import xml.etree.ElementTree as ET
 from multiprocessing import Pool, cpu_count
@@ -34,8 +33,6 @@ def get_entering_firm_col2(sub_id, pty_r, rpt_id, sub_id_to_rpt_ids):
                 return pty_id_list[i] if pty_id_list[i] else None
     return None
 
-
-
 # Function to extract attribute values from the XML elements
 def extract_attributes(element, attribute_names):
     return [element.get(attr) for attr in attribute_names]
@@ -48,7 +45,7 @@ def process_batch(batch_data):
 
     for row in batch_data:
         # Extract relevant columns from the row
-        rpt_id, sub_id, pty_r = row['Rpt_ID'], row['Sub_ID'], row['Pty_R']
+        rpt_id, sub_id, pty_r = row['RptID'], row['Sub ID'], row['Pty R']
 
         # Determine Ultimate Clearing Firm, Entering Firm - Column 1, and Entering Firm - Column 2
         ultimate_clearing_firm = get_ultimate_clearing_firm(sub_id, pty_r, rpt_id, sub_id_to_rpt_ids)
@@ -66,7 +63,6 @@ def process_batch(batch_data):
     batch_data['Entering Firm - Column 2'] = entering_firm_col2_list
 
     return batch_data
-
 
 # Function to fetch data in batches from the trades database
 def fetch_data_in_batches(batch_size):
@@ -92,14 +88,7 @@ def fetch_data_in_batches(batch_size):
         # Update the database with the processed data
         for processed_batch in processed_batches:
             # Your logic here to insert the processed batch data back into the database
-            # Adjust the following code based on your table structure and data
-            for row in processed_batch:
-                cursor.execute('INSERT INTO new_trade_data (Quantity, Side, Pty_ID, Pty_R, Sub_ID, Rpt_ID, '
-                               'Ultimate_Clearing_Firm, Entering_Firm_Column1, Entering_Firm_Column2) '
-                               'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                               (row['Quantity'], row['Side'], row['Pty_ID'], row['Pty_R'], row['Sub_ID'],
-                                row['Rpt_ID'], row['Ultimate Clearing Firm'], row['Entering Firm - Column 1'],
-                                row['Entering Firm - Column 2']))
+            pass
 
         progress_bar.update(len(batch_data))
 
