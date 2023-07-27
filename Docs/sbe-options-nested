@@ -10,7 +10,8 @@ def extract_sub_id(element):
 
 # Function to extract attribute values from the XML elements
 def extract_attributes(element, attribute_names):
-    return [element.get(attr) for attr in attribute_names]
+    attributes = [element.get(attr) for attr in attribute_names]
+    return tuple(attributes) if len(attributes) == len(attribute_names) else (None,) * len(attribute_names)
 
 # Function to process a batch of data and insert into the database
 def process_batch(batch_data):
@@ -66,7 +67,7 @@ def fetch_data_in_batches(batch_size):
         
         for rpt_side in trd_capt_rpt.findall('fixml:RptSide', ns):
             for pty in rpt_side.findall('fixml:Pty', ns):
-                pty_id, pty_r, sub_id = extract_attributes(pty, ['ID', 'R']), extract_sub_id(pty)
+                pty_id, pty_r, sub_id = extract_attributes(pty, ['ID', 'R', 'Sub'])
 
                 # Add the data to the batch_data list
                 batch_data.append((quantity, side, pty_id, pty_r, sub_id, rpt_id))
