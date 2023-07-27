@@ -142,3 +142,17 @@ for batch_start in tqdm(range(0, len(root_trade), batch_size)):
         processed_batch_data.to_excel(writer, sheet_name=f'Batch_{batch_start}', index=False)
 
 print(f"Processing completed. Result saved to '{output_file_name}'.")
+
+
+
+
+
+
+Parsing the XML data...
+Inserting:   0%|                                                                                                                                                                                               | 0/8575713 [00:00<?, ?rows/s]Extracting data from the XML...
+Traceback (most recent call last):
+  File "/home/pvellanki/orsa/trades_db.py", line 101, in <module>
+    fetch_data_in_batches(batch_size)
+  File "/home/pvellanki/orsa/trades_db.py", line 71, in fetch_data_in_batches
+    pty_id, pty_r, sub_id = extract_attributes(pty, ['ID', 'R']), extract_sub_id(pty)
+ValueError: not enough values to unpack (expected 3, got 2)
