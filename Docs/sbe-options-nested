@@ -1,66 +1,109 @@
+
 import sqlite3
 import xml.etree.ElementTree as ET
 from multiprocessing import Pool, cpu_count
-from tqdm import tqdm
+from tqdm import tqdm  # Import tqdm for the progress bar
 
-# Function to determine Sub ID
-def extract_sub_id(element):
-    sub_id_element = element.find('.//fixml:Sub', ns)
-    return sub_id_element.get('ID') if sub_id_element is not None else None
+# Function to determine Ultimate Clearing Firm
+def get_ultimate_clearing_firm(sub_id, pty_r, rpt_id, sub_id_to_rpt_ids):
+    if sub_id in ['C', 'M', 'F']:
+        for i in range(len(pty_r_list)):
+            if pty_r_list[i] == '14' and rpt_id_list[i] == rpt_id:
+                return pty_id_list[i] if pty_id_list[i] else None
+    return None
+
+# Function to determine Entering Firm - Column 1
+def get_entering_firm_col1(sub_id, pty_r, rpt_id, sub_id_to_rpt_ids):
+    if sub_id in ['C', 'M', 'F'] and rpt_id in rpt_id_list:
+        for i in range(len(pty_r_list)):
+            if pty_r_list[i] == '18' and rpt_id_list[i] == rpt_id:
+                return pty_id_list[i] if pty_id_list[i] else None
+        for i in range(len(pty_r_list)):
+            if pty_r_list[i] == '1' and rpt_id_list[i] == rpt_id:
+                return pty_id_list[i] if pty_id_list[i] else None
+    return None
+
+# Function to determine Entering Firm - Column 2
+def get_entering_firm_col2(sub_id, pty_r, rpt_id, sub_id_to_rpt_ids):
+    if sub_id in ['C', 'M', 'F'] and rpt_id in rpt_id_list:
+        for i in range(len(pty_r_list)):
+            if pty_r_list[i] == '2' and rpt_id_list[i] == rpt_id:
+                return pty_id_list[i] if pty_id_list[i] else None
+        for i in range(len(pty_r_list)):
+            if pty_r_list[i] == '26' and rpt_id_list[i] == rpt_id:
+                return pty_id_list[i] if pty_id_list[i] else None
+    return None
+
+
+
+
 
 # Function to extract attribute values from the XML elements
 def extract_attributes(element, attribute_names):
     return [element.get(attr) for attr in attribute_names]
 
-# Function to process a batch of TrdCaptRpt elements
-def process_batch(trade_elements):
-    for trd_capt_rpt in trade_elements:
-        quantity, side, rpt_id = extract_attributes(trd_capt_rpt, ['LastQty', 'Side', 'RptID'])
+# Function to process a batch of data and add additional columns
+def process_batch(batch_data):
+    ultimate_clearing_firm_list = []
+    entering_firm_col1_list = []
+    entering_firm_col2_list = []
 
-        for rpt_side in trd_capt_rpt.findall('fixml:RptSide', ns):
-            for pty in rpt_side.findall('fixml:Pty', ns):
-                pty_id, pty_r, sub_id = extract_attributes(pty, ['ID', 'R']), extract_sub_id(pty)
+    for row in batch_data:
+        # Extract relevant columns from the row
+        rpt_id, sub_id, pty_r = row['Rpt_ID'], row['Sub_ID'], row['Pty_R']
 
-                # Insert the extracted data into the SQLite table
-                cursor.execute('INSERT INTO trades VALUES (?, ?, ?, ?, ?, ?)',
-                               (quantity, side, pty_id, pty_r, sub_id, rpt_id))
+        # Determine Ultimate Clearing Firm, Entering Firm - Column 1, and Entering Firm - Column 2
+        ultimate_clearing_firm = get_ultimate_clearing_firm(sub_id, pty_r, rpt_id, sub_id_to_rpt_ids)
+        entering_firm_col1 = get_entering_firm_col1(sub_id, pty_r, rpt_id, sub_id_to_rpt_ids)
+        entering_firm_col2 = get_entering_firm_col2(sub_id, pty_r, rpt_id, sub_id_to_rpt_ids)
 
-# Connect to the SQLite database
-conn = sqlite3.connect('trades.db')
-cursor = conn.cursor()
+        # Append the results to the corresponding lists
+        ultimate_clearing_firm_list.append(ultimate_clearing_firm)
+        entering_firm_col1_list.append(entering_firm_col1)
+        entering_firm_col2_list.append(entering_firm_col2)
 
-# Create the table for storing the trade data
-cursor.execute('''CREATE TABLE IF NOT EXISTS trades (
-                    Quantity INTEGER,
-                    Side TEXT,
-                    Pty_ID TEXT,
-                    Pty_R TEXT,
-                    Sub_ID TEXT,
-                    Rpt_ID TEXT
-                 )''')
+    # Add the new columns to the batch_data dictionary
+    batch_data['Ultimate Clearing Firm'] = ultimate_clearing_firm_list
+    batch_data['Entering Firm - Column 1'] = entering_firm_col1_list
+    batch_data['Entering Firm - Column 2'] = entering_firm_col2_list
 
-# Define the namespace
-ns = {'fixml': 'http://www.fixprotocol.org/FIXML-4-4'}
+    return batch_data
 
-# Parse the XML data and extract the required attributes
-print("Parsing the XML data...")
-tree_trade = ET.parse('path_to_your_large_xml.xml')
-root_trade = tree_trade.getroot()
-trade_elements = root_trade.findall('.//fixml:TrdCaptRpt', ns)
 
-# Split the data into batches based on the number of CPU cores
-num_cores = cpu_count()
-batch_size = len(trade_elements) // num_cores
-trade_batches = [trade_elements[i:i + batch_size] for i in range(0, len(trade_elements), batch_size)]
+# Function to fetch data in batches from the trades database
+def fetch_data_in_batches(batch_size):
+    # Connect to the SQLite database
+    conn = sqlite3.connect('trades.db')
+    cursor = conn.cursor()
 
-# Use parallel processing to insert data
-print("Extracting data from the XML and inserting into the database...")
-with Pool(processes=num_cores) as pool, tqdm(total=len(trade_elements)) as pbar:
-    for _ in pool.imap_unordered(process_batch, trade_batches):
-        pbar.update(batch_size)
+    # Execute the SELECT query to fetch data in batches
+    cursor.execute('SELECT * FROM trade_data')
 
-# Commit the changes and close the connection
-conn.commit()
-conn.close()
+    total_rows = cursor.rowcount
+    progress_bar = tqdm(total=total_rows, desc="Processing", unit="rows")
 
-print("Data has been successfully stored in the SQLite database.")
+    while True:
+        batch_data = cursor.fetchmany(batch_size)
+        if not batch_data:
+            break
+
+        # Process the batch in parallel using multiprocessing
+        with Pool(processes=cpu_count()) as pool:
+            processed_batches = list(tqdm(pool.imap_unordered(process_batch, batch_data), total=len(batch_data), desc="Batch", unit="rows"))
+
+        # Update the database with the processed data
+        for processed_batch in processed_batches:
+            # Your logic here to insert the processed batch data back into the database
+            pass
+
+        progress_bar.update(len(batch_data))
+
+    # Close the cursor and connection
+    cursor.close()
+    conn.commit()
+    conn.close()
+    progress_bar.close()
+
+# Call the function to fetch data in batches and process them
+batch_size = 1000  # Adjust the batch size as per your requirement
+fetch_data_in_batches(batch_size)
