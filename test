@@ -73,3 +73,41 @@ def process_batch(batch_data):
 
 # Rest of the script...
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import sqlite3
+
+# Connect to the SQLite database
+conn = sqlite3.connect('trades.db')
+cursor = conn.cursor()
+
+# Execute the SQL query to get distinct rpt_id and quantity
+cursor.execute('SELECT DISTINCT rpt_id, quantity FROM trades')
+
+# Fetch all the rows
+rows = cursor.fetchall()
+
+# Close the cursor and connection
+cursor.close()
+conn.close()
+
+# Calculate the total sum of quantity
+total_quantity = sum(row[1] for row in rows)
+
+# Print the total sum
+print("Total Quantity:", total_quantity)
+
+
