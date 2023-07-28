@@ -39,34 +39,17 @@ query = """
     WHERE rn = 1
 """
 
-# Fetch the data in chunks and create the DataFrame
+# Fetch the data in chunks and create the Excel file with multiple sheets
+output_file = 'grouped_trades.xlsx'
 chunk_size = 1000  # Adjust the chunk size as per your requirement
-grouped_trade_data_frames = []
 
-for chunk in pd.read_sql_query(query, conn, chunksize=chunk_size):
-    grouped_trade_data_frames.append(chunk)
-    progress_bar.update(len(chunk))
-
-# Concatenate all chunks into the final DataFrame
-grouped_trade_data_frame = pd.concat(grouped_trade_data_frames)
+# Create an ExcelWriter object
+with pd.ExcelWriter(output_file) as writer:
+    for i, chunk in enumerate(pd.read_sql_query(query, conn, chunksize=chunk_size)):
+        chunk.to_excel(writer, sheet_name=f'Sheet{i+1}', index=False)
+        progress_bar.update(len(chunk))
 
 # Close the database connection
 conn.close()
 
-# Dump the DataFrame into an Excel file
-output_file = 'grouped_trades.xlsx'
-grouped_trade_data_frame.to_excel(output_file, index=False)
-
 print(f"Data has been successfully dumped to '{output_file}'.")
-
-
-
-pvellanki@qa2434:~/orsa$ python3 dumptoxls.py 
-Traceback (most recent call last):
-  File "/home/pvellanki/orsa/dumptoxls.py", line 43, in <module>
-    grouped_trade_data_frame.to_excel(output_file, index=False)
-  File "/home/pvellanki/.local/lib/python3.10/site-packages/pandas/core/generic.py", line 2252, in to_excel
-    formatter.write(
-  File "/home/pvellanki/.local/lib/python3.10/site-packages/pandas/io/formats/excel.py", line 923, in write
-    raise ValueError(
-ValueError: This sheet is too large! Your sheet size is: 12680268, 7 Max sheet size is: 1048576, 16384
