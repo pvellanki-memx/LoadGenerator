@@ -1,162 +1,44 @@
-class PriceType:
-    MANTISSA_SIZE = 16
-    EXPONENT = -8
-
-    def __init__(self, mantissa):
-        self.mantissa = mantissa
-
-    def encode(self):
-        return pack('>Q', self.mantissa).rjust(self.MANTISSA_SIZE, b'\x00')
-
-    def decode(self, buffer):
-        self.mantissa = unpack_from('>Q', buffer)[0]
-
-
-
-class ShortPriceType:
-    MANTISSA_SIZE = 2
-    EXPONENT = -2
-
-    def __init__(self, mantissa):
-        self.mantissa = mantissa
-
-    def encode(self):
-        return pack('>Q', self.mantissa << 48)  # Pad the mantissa to eight bytes with leading zeros
-
-    def decode(self, buffer):
-        self.mantissa = unpack_from('>Q', buffer)[0] >> 48  # Shift the mantissa back to its original position
-
-
-
+import sqlite3
 import xml.etree.ElementTree as ET
-import pandas as pd
-import numpy as np
-import datetime
+from multiprocessing import Pool, cpu_count
 from tqdm import tqdm
-from openpyxl import Workbook
-import os
 
-# Function to determine Ultimate Clearing Firm
-def get_ultimate_clearing_firm(sub_id, pty_r, rpt_id, sub_id_to_rpt_ids):
-    if sub_id in ['C', 'M', 'F']:
-        for i in range(len(pty_r_list)):
-            if pty_r_list[i] == '14' and rpt_id_list[i] == rpt_id:
-                return pty_id_list[i] if pty_id_list[i] else None
-    return None
+# Rest of the script remains the same as you provided...
 
-# Function to determine Entering Firm - Column 1
-def get_entering_firm_col1(sub_id, pty_r, rpt_id, sub_id_to_rpt_ids):
-    if sub_id in ['C', 'M', 'F'] and rpt_id in rpt_id_list:
-        for i in range(len(pty_r_list)):
-            if pty_r_list[i] == '18' and rpt_id_list[i] == rpt_id:
-                return pty_id_list[i] if pty_id_list[i] else None
-        for i in range(len(pty_r_list)):
-            if pty_r_list[i] == '1' and rpt_id_list[i] == rpt_id:
-                return pty_id_list[i] if pty_id_list[i] else None
-    return None
+def create_table():
+    conn = sqlite3.connect('trades.db')
+    cursor = conn.cursor()
 
-# Function to determine Entering Firm - Column 2
-def get_entering_firm_col2(sub_id, pty_r, rpt_id, sub_id_to_rpt_ids):
-    if sub_id in ['C', 'M', 'F'] and rpt_id in rpt_id_list:
-        for i in range(len(pty_r_list)):
-            if pty_r_list[i] == '2' and rpt_id_list[i] == rpt_id:
-                return pty_id_list[i] if pty_id_list[i] else None
-        for i in range(len(pty_r_list)):
-            if pty_r_list[i] == '26' and rpt_id_list[i] == rpt_id:
-                return pty_id_list[i] if pty_id_list[i] else None
-    return None
+    # Create the table for storing the trade data
+    cursor.execute('''CREATE TABLE IF NOT EXISTS trades (
+                        Quantity INTEGER,
+                        Side TEXT,
+                        Pty_ID TEXT,
+                        Pty_R TEXT,
+                        Sub_ID TEXT,
+                        Rpt_ID TEXT,
+                        Ultimate_Clearing_Firm TEXT,
+                        Entering_Firm_Col1 TEXT,
+                        Entering_Firm_Col2 TEXT
+                     )''')
 
+    conn.commit()
+    conn.close()
 
+# Rest of the script remains the same as you provided...
 
-def process_batch(batch_data, sub_id_to_rpt_ids):
-    # Function code remains unchanged
-    pass
+# Function to fetch data in batches from the trades database
+def fetch_data_in_batches(batch_size):
+    # Create the table for storing the trade data
+    create_table()
 
-# Read the XML data from trade.xml and parse it into NumPy arrays (replace 'trade.xml' with the actual file path)
-print("Parsing the XML data...")
-tree_trade = ET.parse('trade_new.xml')
-root_trade = tree_trade.getroot()
+    conn = sqlite3.connect('trades.db')
+    cursor = conn.cursor()
 
-# Assuming you have sub_id_to_rpt_ids as a dictionary mapping sub_id to rpt_id (replace {} with the actual data)
-sub_id_to_rpt_ids = {}
+    # Rest of the script remains the same as you provided...
 
-# Create lists to store the parsed trade data
-quantity_list = []
-side_list = []
-pty_id_list = []
-pty_r_list = []
-sub_id_list = []
-rpt_id_list = []
+# Rest of the script remains the same as you provided...
 
-# Batch size
-batch_size = 10
-
-# Create a workbook object
-wb = Workbook()
-
-# Loop through the TrdCaptRpt elements and parse the data in batches
-print("Processing the XML data in batches...")
-for batch_start in tqdm(range(0, len(root_trade), batch_size)):
-    batch_end = min(batch_start + batch_size, len(root_trade))
-    batch_data = root_trade[batch_start:batch_end]
-
-    ns = {'fixml': 'http://www.fixprotocol.org/FIXML-4-4'}
-    for trd_capt_rpt in batch_data:
-        rpt_id = trd_capt_rpt.get('RptID')
-        for rpt_side in trd_capt_rpt.findall('fixml:RptSide', ns):
-            side = rpt_side.get('Side')
-            for pty in rpt_side.findall('fixml:Pty', ns):
-                pty_id = pty.get('ID')
-                pty_r = pty.get('R')
-                sub_id = pty.find('fixml:Sub', ns).get('ID') if pty.find('fixml:Sub', ns) is not None else None
-
-                # Append the parsed data to the respective lists
-                quantity_list.append(int(trd_capt_rpt.get('LastQty')))  # Convert quantity to integer
-                side_list.append(side)
-                pty_id_list.append(pty_id)
-                pty_r_list.append(pty_r)
-                sub_id_list.append(sub_id)
-                rpt_id_list.append(rpt_id)
-
-    # Create a DataFrame for the parsed data
-    trade_data_frame = pd.DataFrame({
-        'Quantity': np.array(quantity_list),
-        'Side': np.array(side_list),
-        'Pty ID': np.array(pty_id_list),
-        'Pty R': np.array(pty_r_list),
-        'Sub ID': np.array(sub_id_list),
-        'RptID': np.array(rpt_id_list),
-    })
-
-    # Process the batch and write to the Excel sheet
-    processed_batch_data = process_batch(trade_data_frame, sub_id_to_rpt_ids)
-
-    # Generate the timestamp for the file name up to minutes
-    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
-    output_file_name = f'trade_report_{timestamp}.xlsx'
-
-    # Save the batch data to a new sheet in the Excel file
-    with pd.ExcelWriter(output_file_name, engine='openpyxl') as writer:
-        writer.book = wb
-        writer.sheets = dict((ws.title, ws) for ws in wb.worksheets)
-        processed_batch_data.to_excel(writer, sheet_name=f'Batch_{batch_start}', index=False)
-
-print(f"Processing completed. Result saved to '{output_file_name}'.")
-
-
-
-
-
-
-CREATE TABLE IF NOT EXISTS trades (
-    Quantity INTEGER,
-    Side TEXT,
-    Pty_ID TEXT,
-    Pty_R TEXT,
-    Sub_ID TEXT,
-    Rpt_ID TEXT,
-    Ultimate_Clearing_Firm TEXT,
-    Entering_Firm_Col1 TEXT,
-    Entering_Firm_Col2 TEXT
-);
-
+if __name__ == '__main__':
+    batch_size = 10  # Adjust the batch size as per your requirement
+    fetch_data_in_batches(batch_size)
