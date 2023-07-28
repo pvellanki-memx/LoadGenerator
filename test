@@ -1,8 +1,15 @@
 import pandas as pd
 import sqlite3
+from tqdm import tqdm  # Import tqdm for the progress bar
 
 # Connect to the SQLite database
 conn = sqlite3.connect('trades.db')
+
+# Count the total number of rows to set the progress bar's maximum value
+total_rows = pd.read_sql_query('SELECT COUNT(*) FROM trades WHERE Sub_ID IS NOT NULL AND Sub_ID != ""', conn)['COUNT(*)'].values[0]
+
+# Initialize tqdm with the total number of rows
+progress_bar = tqdm(total=total_rows, desc="Fetching Data")
 
 # Query the data from the database with grouping and aggregation
 query = """
@@ -32,8 +39,16 @@ query = """
     WHERE rn = 1
 """
 
-# Fetch the data and create the DataFrame
-grouped_trade_data_frame = pd.read_sql_query(query, conn)
+# Fetch the data in chunks and create the DataFrame
+chunk_size = 1000  # Adjust the chunk size as per your requirement
+grouped_trade_data_frames = []
+
+for chunk in pd.read_sql_query(query, conn, chunksize=chunk_size):
+    grouped_trade_data_frames.append(chunk)
+    progress_bar.update(len(chunk))
+
+# Concatenate all chunks into the final DataFrame
+grouped_trade_data_frame = pd.concat(grouped_trade_data_frames)
 
 # Close the database connection
 conn.close()
