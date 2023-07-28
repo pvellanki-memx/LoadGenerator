@@ -1,18 +1,2 @@
-import sys
-
-def fetch_data_in_batches(xml_file, batch_size):
-    # ... (rest of the function code)
-    # Parse the XML data and extract the required attributes
-    print("Parsing the XML data...")
-    tree_trade = ET.parse(xml_file)  # Use the provided XML file name
-    # ... (rest of the function code)
-
-
-if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print("Usage: python your_script.py <xml_file>")
-        sys.exit(1)
-
-    xml_file = sys.argv[1]  # Get the XML file name from command-line arguments
-    batch_size = 10  # Adjust the batch size as per your requirement
-    fetch_data_in_batches(xml_file, batch_size)
+    total_batches = len(batch_data)
+    with tqdm(total=total_batches, desc='Inserting data') as pbar:
