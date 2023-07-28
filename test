@@ -28,3 +28,48 @@ if __name__ == '__main__':
     database_name = 'your_database.db'
     table_name = 'your_table_name'
     dump_sqlite_table_to_excel(database_name, table_name)
+
+
+
+
+
+
+
+
+
+
+
+
+
+import time
+
+def process_batch(batch_data):
+    conn = None
+    cursor = None
+    retries = 3
+
+    while retries > 0:
+        try:
+            conn = sqlite3.connect('trades.db')
+            cursor = conn.cursor()
+
+            # ... (rest of the processing logic)
+
+            conn.commit()
+            conn.close()
+            break  # Success, break the loop
+        except sqlite3.OperationalError as e:
+            if 'database is locked' in str(e):
+                retries -= 1
+                if retries > 0:
+                    print("Database locked. Retrying in 1 second...")
+                    time.sleep(1)
+            else:
+                # If the error is not related to locking, raise it.
+                raise
+        finally:
+            if conn:
+                conn.close()
+
+# Rest of the script...
+
