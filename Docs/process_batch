@@ -1,10 +1,9 @@
-
-
-
 import sqlite3
 import xml.etree.ElementTree as ET
 from multiprocessing import Pool, cpu_count
 from tqdm import tqdm
+import sys
+import time
 
 ns = {'fixml': 'http://www.fixprotocol.org/FIXML-4-4'}
 
@@ -37,29 +36,8 @@ def get_entering_firm_col2(sub_id, pty_r, rpt_id, pty_id):
         return pty_id
     return None
 
-# Function to process a batch of data and insert into the database
-def process_batch(batch_data):
-    conn = sqlite3.connect('trades.db')
-    cursor = conn.cursor()
-
-    # Insert the batch data into the database
-    for data in batch_data:
-        quantity, side, rpt_id = data[0:3]
-        pty_id, pty_r, sub_id = data[3:6]  # Extract pty_id, pty_r, sub_id from the data tuple
-        ultimate_clearing_firm = get_ultimate_clearing_firm(sub_id, pty_r, rpt_id, pty_id)
-        entering_firm_col1 = get_entering_firm_col1(sub_id, pty_r, rpt_id, pty_id)
-        entering_firm_col2 = get_entering_firm_col2(sub_id, pty_r, rpt_id, pty_id)
-
-        cursor.execute('INSERT INTO trades VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                       (quantity, side, pty_id, pty_r, sub_id, rpt_id,
-                        ultimate_clearing_firm, entering_firm_col1, entering_firm_col2))
-
-    conn.commit()
-    conn.close()
-
-# Function to fetch data in batches from the trades database
-def fetch_data_in_batches(batch_size):
-    conn = sqlite3.connect('trades.db')
+def create_table():
+    conn = sqlite3.connect('trades_new.db')
     cursor = conn.cursor()
 
     # Create the table for storing the trade data
@@ -75,9 +53,67 @@ def fetch_data_in_batches(batch_size):
                         Entering_Firm_Col2 TEXT
                      )''')
 
+    conn.commit()
+    conn.close()
+
+# Function to process a batch of data and insert into the database
+
+
+def process_batch(batch_data):
+    conn = None
+    cursor = None
+    retries = 5
+
+    while retries > 0:
+        try:
+            conn = sqlite3.connect('trades_new.db')
+            cursor = conn.cursor()
+
+            total_batches = len(batch_data)
+            with tqdm(total=total_batches, desc='Inserting data') as pbar:
+
+                # Insert the batch data into the database
+                for data in batch_data:
+                    quantity, side, rpt_id = data[0:3]
+                    pty_id, pty_r, sub_id = data[3:6]  # Extract pty_id, pty_r, sub_id from the data tuple
+                    ultimate_clearing_firm = get_ultimate_clearing_firm(sub_id, pty_r, rpt_id, pty_id)
+                    entering_firm_col1 = get_entering_firm_col1(sub_id, pty_r, rpt_id, pty_id)
+                    entering_firm_col2 = get_entering_firm_col2(sub_id, pty_r, rpt_id, pty_id)
+
+                    cursor.execute('INSERT INTO trades VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                                (quantity, side, pty_id, pty_r, sub_id, rpt_id,
+                                    ultimate_clearing_firm, entering_firm_col1, entering_firm_col2))
+                    
+                    #pbar.update(1)
+
+
+            conn.commit()
+            conn.close()
+            break  # Success, break the loop
+        except sqlite3.OperationalError as e:
+            if 'database is locked' in str(e):
+                retries -= 1
+                if retries > 0:
+                    print("Database locked. Retrying in 1 second...")
+                    time.sleep(2)
+            else:
+                # If the error is not related to locking, raise it.
+                raise
+        finally:
+            if conn:
+                conn.close()
+
+
+# Function to fetch data in batches from the trades database
+def fetch_data_in_batches(xml_file, batch_size):
+    conn = sqlite3.connect('trades.db')
+    cursor = conn.cursor()
+
+    create_table()
+
     # Parse the XML data and extract the required attributes
     print("Parsing the XML data...")
-    tree_trade = ET.parse('big.xml')
+    tree_trade = ET.parse(xml_file)
     root_trade = tree_trade.getroot()
 
     # Initialize batch_data list
@@ -120,6 +156,10 @@ def fetch_data_in_batches(batch_size):
     print("Data has been successfully stored in the SQLite database.")
 
 if __name__ == '__main__':
-    batch_size = 10  # Adjust the batch size as per your requirement
-    fetch_data_in_batches(batch_size)
+    if len(sys.argv) < 2:
+        print("Usage: python your_script.py <xml_file>")
+        sys.exit(1)
 
+    xml_file = sys.argv[1]  # Get the XML file name from command-line arguments
+    batch_size = 100  # Adjust the batch size as per your requirement
+    fetch_data_in_batches(xml_file, batch_size)
