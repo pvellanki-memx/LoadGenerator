@@ -50,7 +50,8 @@ def create_table():
                         Rpt_ID TEXT,
                         Ultimate_Clearing_Firm TEXT,
                         Entering_Firm_Col1 TEXT,
-                        Entering_Firm_Col2 TEXT
+                        EXCH,
+                        TRANS_TYPE
                      )''')
 
     conn.commit()
@@ -76,13 +77,14 @@ def process_batch(batch_data):
                 for data in batch_data:
                     quantity, side, rpt_id = data[0:3]
                     pty_id, pty_r, sub_id = data[3:6]  # Extract pty_id, pty_r, sub_id from the data tuple
+                    trans_type, exch = data[6:8]
                     ultimate_clearing_firm = get_ultimate_clearing_firm(sub_id, pty_r, rpt_id, pty_id)
                     entering_firm_col1 = get_entering_firm_col1(sub_id, pty_r, rpt_id, pty_id)
-                    entering_firm_col2 = get_entering_firm_col2(sub_id, pty_r, rpt_id, pty_id)
+                    
 
-                    cursor.execute('INSERT INTO trades VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    cursor.execute('INSERT INTO trades VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                                 (quantity, side, pty_id, pty_r, sub_id, rpt_id,
-                                    ultimate_clearing_firm, entering_firm_col1, entering_firm_col2))
+                                    ultimate_clearing_firm, entering_firm_col1,exch,trans_type ))
                     
                     #pbar.update(1)
 
@@ -106,7 +108,7 @@ def process_batch(batch_data):
 
 # Function to fetch data in batches from the trades database
 def fetch_data_in_batches(xml_file, batch_size):
-    conn = sqlite3.connect('trades.db')
+    conn = sqlite3.connect('trades1.db')
     cursor = conn.cursor()
 
     create_table()
@@ -124,6 +126,8 @@ def fetch_data_in_batches(xml_file, batch_size):
     data_to_process = []
     for trd_capt_rpt in tqdm(root_trade.findall('.//fixml:TrdCaptRpt', ns)):
         rpt_id = trd_capt_rpt.get('RptID')
+        trans_type = trd_capt_rpt.get('TransTyp')
+        exch = trd_capt_rpt.find('fixml:Instrmt', ns).get('Exch')
 
         for rpt_side in trd_capt_rpt.findall('fixml:RptSide', ns):
             side = rpt_side.get('Side')
@@ -135,7 +139,7 @@ def fetch_data_in_batches(xml_file, batch_size):
                 sub_id = sub_element.get('ID') if sub_element is not None else None
 
                 # Append the parsed data to the batch_data list
-                batch_data.append((int(trd_capt_rpt.get('LastQty')), side, rpt_id, pty_id, pty_r, sub_id))
+                batch_data.append((int(trd_capt_rpt.get('LastQty')), side, rpt_id, pty_id, pty_r, sub_id,trans_type,exch))
 
                 if len(batch_data) >= batch_size:
                     data_to_process.append(batch_data)
