@@ -1,113 +1,30 @@
-import sqlite3
 import pandas as pd
-import datetime
-
-# Function to dump SQLite table to Excel
-def dump_sqlite_table_to_excel(database_name, table_name):
-    # Connect to the SQLite database
-    conn = sqlite3.connect(database_name)
-
-    # Query the data from the table
-    query = f'SELECT * FROM {table_name};'
-    df = pd.read_sql_query(query, conn)
-
-    # Close the connection
-    conn.close()
-
-    # Create the Excel file name with timestamp
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
-    output_file = f"output_file_{timestamp}.xlsx"
-
-    # Export the DataFrame to Excel
-    df.to_excel(output_file, index=False)
-
-    print(f"Data from table {table_name} has been dumped to {output_file} successfully.")
-
-# Example usage
-if __name__ == '__main__':
-    database_name = 'your_database.db'
-    table_name = 'your_table_name'
-    dump_sqlite_table_to_excel(database_name, table_name)
-
-
-
-
-
-
-
-
-
-
-
-
-
-import time
-
-def process_batch(batch_data):
-    conn = None
-    cursor = None
-    retries = 3
-
-    while retries > 0:
-        try:
-            conn = sqlite3.connect('trades.db')
-            cursor = conn.cursor()
-
-            # ... (rest of the processing logic)
-
-            conn.commit()
-            conn.close()
-            break  # Success, break the loop
-        except sqlite3.OperationalError as e:
-            if 'database is locked' in str(e):
-                retries -= 1
-                if retries > 0:
-                    print("Database locked. Retrying in 1 second...")
-                    time.sleep(1)
-            else:
-                # If the error is not related to locking, raise it.
-                raise
-        finally:
-            if conn:
-                conn.close()
-
-# Rest of the script...
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import sqlite3
 
 # Connect to the SQLite database
 conn = sqlite3.connect('trades.db')
-cursor = conn.cursor()
 
-# Execute the SQL query to get distinct rpt_id and quantity
-cursor.execute('SELECT DISTINCT rpt_id, quantity FROM trades')
+# Query the data from the database with grouping and aggregation
+query = """
+    SELECT 
+        Side,
+        Sub_ID,
+        Rpt_ID,
+        FIRST_VALUE(Ultimate_Clearing_Firm) AS Ultimate_Clearing_Firm,
+        FIRST_VALUE(Entering_Firm_Col1) AS Entering_Firm_Col1,
+        FIRST_VALUE(Entering_Firm_Col2) AS Entering_Firm_Col2
+    FROM trades
+    GROUP BY Side, Sub_ID, Rpt_ID
+"""
 
-# Fetch all the rows
-rows = cursor.fetchall()
+# Fetch the data and create the DataFrame
+grouped_trade_data_frame = pd.read_sql_query(query, conn)
 
-# Close the cursor and connection
-cursor.close()
+# Close the database connection
 conn.close()
 
-# Calculate the total sum of quantity
-total_quantity = sum(row[1] for row in rows)
+# Dump the DataFrame into an Excel file
+output_file = 'grouped_trades.xlsx'
+grouped_trade_data_frame.to_excel(output_file, index=False)
 
-# Print the total sum
-print("Total Quantity:", total_quantity)
-
-
+print(f"Data has been successfully dumped to '{output_file}'.")
