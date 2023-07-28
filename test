@@ -10,11 +10,26 @@ query = """
         Side,
         Sub_ID,
         Rpt_ID,
-        FIRST_VALUE(Ultimate_Clearing_Firm) AS Ultimate_Clearing_Firm,
-        FIRST_VALUE(Entering_Firm_Col1) AS Entering_Firm_Col1,
-        FIRST_VALUE(Entering_Firm_Col2) AS Entering_Firm_Col2
-    FROM trades
-    GROUP BY Side, Sub_ID, Rpt_ID
+        Ultimate_Clearing_Firm,
+        Entering_Firm_Col1,
+        EXCH,
+        TRANS_TYPE
+    FROM (
+        SELECT 
+            Side,
+            Sub_ID,
+            Rpt_ID,
+            Ultimate_Clearing_Firm,
+            Entering_Firm_Col1,
+            EXCH,
+            TRANS_TYPE,
+            ROW_NUMBER() OVER (PARTITION BY Side, Sub_ID, Rpt_ID ORDER BY
+                               (CASE WHEN Ultimate_Clearing_Firm IS NOT NULL THEN 1 ELSE 0 END +
+                                CASE WHEN Entering_Firm_Col1 IS NOT NULL THEN 1 ELSE 0 END) DESC) AS rn
+        FROM trades
+        WHERE Sub_ID IS NOT NULL AND Sub_ID != ''
+    )
+    WHERE rn = 1
 """
 
 # Fetch the data and create the DataFrame
