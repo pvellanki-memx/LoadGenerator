@@ -58,3 +58,15 @@ output_file = 'grouped_trades.xlsx'
 grouped_trade_data_frame.to_excel(output_file, index=False)
 
 print(f"Data has been successfully dumped to '{output_file}'.")
+
+
+
+pvellanki@qa2434:~/orsa$ python3 dumptoxls.py 
+Traceback (most recent call last):
+  File "/home/pvellanki/orsa/dumptoxls.py", line 43, in <module>
+    grouped_trade_data_frame.to_excel(output_file, index=False)
+  File "/home/pvellanki/.local/lib/python3.10/site-packages/pandas/core/generic.py", line 2252, in to_excel
+    formatter.write(
+  File "/home/pvellanki/.local/lib/python3.10/site-packages/pandas/io/formats/excel.py", line 923, in write
+    raise ValueError(
+ValueError: This sheet is too large! Your sheet size is: 12680268, 7 Max sheet size is: 1048576, 16384
