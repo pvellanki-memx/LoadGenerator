@@ -1,2 +1,30 @@
-    total_batches = len(batch_data)
-    with tqdm(total=total_batches, desc='Inserting data') as pbar:
+import sqlite3
+import pandas as pd
+import datetime
+
+# Function to dump SQLite table to Excel
+def dump_sqlite_table_to_excel(database_name, table_name):
+    # Connect to the SQLite database
+    conn = sqlite3.connect(database_name)
+
+    # Query the data from the table
+    query = f'SELECT * FROM {table_name};'
+    df = pd.read_sql_query(query, conn)
+
+    # Close the connection
+    conn.close()
+
+    # Create the Excel file name with timestamp
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
+    output_file = f"output_file_{timestamp}.xlsx"
+
+    # Export the DataFrame to Excel
+    df.to_excel(output_file, index=False)
+
+    print(f"Data from table {table_name} has been dumped to {output_file} successfully.")
+
+# Example usage
+if __name__ == '__main__':
+    database_name = 'your_database.db'
+    table_name = 'your_table_name'
+    dump_sqlite_table_to_excel(database_name, table_name)
