@@ -1,27 +1,39 @@
 import pandas as pd
 import sqlite3
-from tqdm import tqdm  # Import tqdm for the progress bar
+from tqdm import tqdm
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
-# Connect to the SQLite database
-conn = sqlite3.connect('trades.db')
+# Function to fetch data from the database in chunks
+def fetch_data_in_chunks(query, chunk_size):
+    conn = sqlite3.connect('trades.db')
+    offset = 0
+    while True:
+        query_chunk = query + f" LIMIT {chunk_size} OFFSET {offset}"
+        chunk = pd.read_sql_query(query_chunk, conn)
+        if chunk.empty:
+            break
+        yield chunk
+        offset += chunk_size
+    conn.close()
 
-# Count the total number of rows to set the progress bar's maximum value
-total_rows = pd.read_sql_query('SELECT COUNT(*) FROM trades WHERE Sub_ID IS NOT NULL AND Sub_ID != ""', conn)['COUNT(*)'].values[0]
+# Function to process a chunk of data and create an Excel sheet
+def process_chunk(chunk, output_file, sheet_name, progress_bar):
+    with pd.ExcelWriter(output_file, engine='openpyxl', mode='a') as writer:
+        chunk.to_excel(writer, sheet_name=sheet_name, index=False)
+    progress_bar.update(len(chunk))
 
-# Initialize tqdm with the total number of rows
-progress_bar = tqdm(total=total_rows, desc="Fetching Data")
+if __name__ == '__main__':
+    # Connect to the SQLite database
+    conn = sqlite3.connect('trades.db')
 
-# Query the data from the database with grouping and aggregation
-query = """
-    SELECT 
-        Side,
-        Sub_ID,
-        Rpt_ID,
-        Ultimate_Clearing_Firm,
-        Entering_Firm_Col1,
-        EXCH,
-        TRANS_TYPE
-    FROM (
+    # Count the total number of rows to set the progress bar's maximum value
+    total_rows = pd.read_sql_query('SELECT COUNT(*) FROM trades WHERE Sub_ID IS NOT NULL AND Sub_ID != ""', conn)['COUNT(*)'].values[0]
+
+    # Initialize tqdm with the total number of rows
+    progress_bar = tqdm(total=total_rows, desc="Fetching Data")
+
+    # Query the data from the database with grouping and aggregation
+    query = """
         SELECT 
             Side,
             Sub_ID,
@@ -29,27 +41,40 @@ query = """
             Ultimate_Clearing_Firm,
             Entering_Firm_Col1,
             EXCH,
-            TRANS_TYPE,
-            ROW_NUMBER() OVER (PARTITION BY Side, Sub_ID, Rpt_ID ORDER BY
-                               (CASE WHEN Ultimate_Clearing_Firm IS NOT NULL THEN 1 ELSE 0 END +
-                                CASE WHEN Entering_Firm_Col1 IS NOT NULL THEN 1 ELSE 0 END) DESC) AS rn
-        FROM trades
-        WHERE Sub_ID IS NOT NULL AND Sub_ID != ''
-    )
-    WHERE rn = 1
-"""
+            TRANS_TYPE
+        FROM (
+            SELECT 
+                Side,
+                Sub_ID,
+                Rpt_ID,
+                Ultimate_Clearing_Firm,
+                Entering_Firm_Col1,
+                EXCH,
+                TRANS_TYPE,
+                ROW_NUMBER() OVER (PARTITION BY Side, Sub_ID, Rpt_ID ORDER BY
+                                   (CASE WHEN Ultimate_Clearing_Firm IS NOT NULL THEN 1 ELSE 0 END +
+                                    CASE WHEN Entering_Firm_Col1 IS NOT NULL THEN 1 ELSE 0 END) DESC) AS rn
+            FROM trades
+            WHERE Sub_ID IS NOT NULL AND Sub_ID != ''
+        )
+        WHERE rn = 1
+    """
 
-# Fetch the data in chunks and create the Excel file with multiple sheets
-output_file = 'grouped_trades.xlsx'
-chunk_size = 1000  # Adjust the chunk size as per your requirement
+    # Fetch the data in chunks and create the Excel file with multiple sheets
+    output_file = 'grouped_trades.xlsx'
+    chunk_size = 1000  # Adjust the chunk size as per your requirement
 
-# Create an ExcelWriter object
-with pd.ExcelWriter(output_file) as writer:
-    for i, chunk in enumerate(pd.read_sql_query(query, conn, chunksize=chunk_size)):
-        chunk.to_excel(writer, sheet_name=f'Sheet{i+1}', index=False)
-        progress_bar.update(len(chunk))
+    # Create an ExcelWriter object
+    with pd.ExcelWriter(output_file, engine='openpyxl') as writer:
+        with ProcessPoolExecutor() as executor:
+            futures = []
+            for i, chunk in enumerate(fetch_data_in_chunks(query, chunk_size)):
+                sheet_name = f'Sheet{i+1}'
+                future = executor.submit(process_chunk, chunk, output_file, sheet_name, progress_bar)
+                futures.append(future)
+            
+            # Wait for all tasks to complete
+            for future in as_completed(futures):
+                future.result()
 
-# Close the database connection
-conn.close()
-
-print(f"Data has been successfully dumped to '{output_file}'.")
+    print(f"Data has been successfully dumped to '{output_file}'.")
