@@ -148,11 +148,15 @@ print(f"Processing completed. Result saved to '{output_file_name}'.")
 
 
 
-Parsing the XML data...
-Inserting:   0%|                                                                                                                                                                                               | 0/8575713 [00:00<?, ?rows/s]Extracting data from the XML...
-Traceback (most recent call last):
-  File "/home/pvellanki/orsa/trades_db.py", line 101, in <module>
-    fetch_data_in_batches(batch_size)
-  File "/home/pvellanki/orsa/trades_db.py", line 71, in fetch_data_in_batches
-    pty_id, pty_r, sub_id = extract_attributes(pty, ['ID', 'R']), extract_sub_id(pty)
-ValueError: not enough values to unpack (expected 3, got 2)
+CREATE TABLE IF NOT EXISTS trades (
+    Quantity INTEGER,
+    Side TEXT,
+    Pty_ID TEXT,
+    Pty_R TEXT,
+    Sub_ID TEXT,
+    Rpt_ID TEXT,
+    Ultimate_Clearing_Firm TEXT,
+    Entering_Firm_Col1 TEXT,
+    Entering_Firm_Col2 TEXT
+);
+
