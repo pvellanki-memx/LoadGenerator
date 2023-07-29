@@ -1,126 +1,1045 @@
--- Declare the SBE template IDs
-local TEMPLATE_ID_NEW_ORDER_SINGLE = 1
-local TEMPLATE_ID_SHORT_TWO_SIDED_BULK_QUOTE = 2
-local TEMPLATE_ID_LONG_TWO_SIDED_BULK_QUOTE = 3
-local TEMPLATE_ID_SHORT_ONE_SIDED_BULK_QUOTE = 4
-local TEMPLATE_ID_LONG_ONE_SIDED_BULK_QUOTE = 5
-local TEMPLATE_ID_MASS_CANCEL_REQUEST = 8
-local TEMPLATE_ID_ORDER_CANCEL_REQUEST = 7
-local TEMPLATE_ID_ORDER_REPLACE_REQUEST = 6
+-- Custom Lua Dissector for the SBE (Simple Binary Encoding) Protocol
 
--- Define the field types and lengths
-local FIELD_TYPE_UINT16 = 1
-local FIELD_TYPE_UINT8 = 2
-local FIELD_TYPE_UTCTIMESTAMPNANOS = 3
-local FIELD_TYPE_CHAR = 4
+-- Define field types
+local fieldTypes = {
+    UTCTimestampNanos = ProtoField.uint64("sbe.timestamp", "UTCTimestampNanos", base.DEC),
+    NewOrderSingleClOrdID = ProtoField.string("sbe.clordid", "ClOrdID"),
+    NewOrderSingleOptionsSecurityID = ProtoField.uint64("sbe.securityid", "OptionsSecurityID", base.HEX),
+    SideType = ProtoField.string("sbe.side", "Side"),
+    uint32 = ProtoField.uint32("sbe.uint32", "Uint32", base.DEC),
+    OrdType = ProtoField.string("sbe.ordtype", "OrdType"),
+    PriceType = ProtoField.double("sbe.price", "Price"),
+    TimeInForceType = ProtoField.string("sbe.timeinforce", "TimeInForce"),
+    OpenOrCloseType = ProtoField.string("sbe.openorclose", "OpenOrClose"),
+    ExecInstType = ProtoField.string("sbe.execinst", "ExecInst"),
+    TradingCapacityType = ProtoField.string("sbe.tradingcapacity", "TradingCapacity"),
+    RepriceFrequencyType = ProtoField.string("sbe.repricefrequency", "RepriceFrequency"),
+    RepriceBehaviorType = ProtoField.string("sbe.repricebehavior", "RepriceBehavior"),
+    MatchTradePreventionType = ProtoField.string("sbe.matchtradeprevention", "MatchTradePrevention"),
+    uint16 = ProtoField.uint16("sbe.uint16", "Uint16", base.DEC),
+    char = ProtoField.string("sbe.char", "Char"),
+    NewOrderSinglePartyID = ProtoField.string("sbe.partyid", "PartyID"),
+    uint8 = ProtoField.uint8("sbe.uint8", "Uint8", base.DEC),
+    ShortTwoSidedBulkQuoteClOrdID = ProtoField.string("sbe.clordid", "ClOrdID"),
+    ShortTwoSidedBulkQuotePartyID = ProtoField.string("sbe.partyid", "PartyID"),
+    ShortTwoSidedBulkQuoteOptionsSecurityID = ProtoField.uint64("sbe.securityid", "OptionsSecurityID", base.HEX),
+    ShortPriceType = ProtoField.double("sbe.price", "Price"),
+    LongTwoSidedBulkQuoteClOrdID = ProtoField.string("sbe.clordid", "ClOrdID"),
+    LongTwoSidedBulkQuotePartyID = ProtoField.string("sbe.partyid", "PartyID"),
+    LongTwoSidedBulkQuoteOptionsSecurityID = ProtoField.uint64("sbe.securityid", "OptionsSecurityID", base.HEX),
+    uint32 = ProtoField.uint32("sbe.uint32", "Uint32", base.DEC),
+    PriceType = ProtoField.double("sbe.price", "Price"),
+    ShortOneSidedBulkQuoteClOrdID = ProtoField.string("sbe.clordid", "ClOrdID"),
+    ShortOneSidedBulkQuotePartyID = ProtoField.string("sbe.partyid", "PartyID"),
+    ShortOneSidedBulkQuoteOptionsSecurityID = ProtoField.uint64("sbe.securityid", "OptionsSecurityID", base.HEX),
+    SideType = ProtoField.string("sbe.side", "Side"),
+    uint16 = ProtoField.uint16("sbe.uint16", "Uint16", base.DEC),
+    NewOrderSinglePartyID = ProtoField.string("sbe.partyid", "PartyID"),
+    uint8 = ProtoField.uint8("sbe.uint8", "Uint8", base.DEC),
+    OrderCancelReplaceRequestClOrdID = ProtoField.string("sbe.clordid", "ClOrdID"),
+    uint8 = ProtoField.uint8("sbe.uint8", "Uint8", base.DEC),
+    uint64 = ProtoField.uint64("sbe.uint64", "Uint64", base.DEC),
+    uint8 = ProtoField.uint8("sbe.uint8", "Uint8", base.DEC),
+    ExecutionReport_NewPartyID = ProtoField.string("sbe.partyid", "PartyID"),
+    uint8 = ProtoField.uint8("sbe.uint8", "Uint8", base.DEC),
+    ExecutionReport_BulkQuote_PendingNewClOrdID = ProtoField.string("sbe.clordid", "ClOrdID"),
+    OrdType = ProtoField.string("sbe.ordtype", "OrdType"),
+    ExecutionReport_BulkQuote_PendingNewSymbol = ProtoField.string("sbe.symbol", "Symbol"),
+    TimeInForceType = ProtoField.string("sbe.timeinforce", "TimeInForce"),
+    ExecInstType = ProtoField.string("sbe.execinst", "ExecInst"),
+    ExecutionReport_BulkQuote_PendingNewPartyID = ProtoField.string("sbe.partyid", "PartyID"),
+    uint64 = ProtoField.uint64("sbe.uint64", "Uint64", base.DEC),
+    ExecutionReport_BulkQuote_ComponentNewClOrdID = ProtoField.string("sbe.clordid", "ClOrdID"),
+    OrdType = ProtoField.string("sbe.ordtype", "OrdType"),
+    ExecutionReport_BulkQuote_ComponentNewSymbol = ProtoField.string("sbe.symbol", "Symbol"),
+    TimeInForceType = ProtoField.string("sbe.timeinforce", "TimeInForce"),
+    ExecInstType = ProtoField.string("sbe.execinst", "ExecInst"),
+    ExecutionReport_BulkQuote_ComponentNewPartyID = ProtoField.string("sbe.partyid", "PartyID"),
+    uint8 = ProtoField.uint8("sbe.uint8", "Uint8", base.DEC),
+    ExecutionReport_RejectedPartyID = ProtoField.string("sbe.partyid", "PartyID"),
+    uint8 = ProtoField.uint8("sbe.uint8", "Uint8", base.DEC),
+    ExecutionReport_TradePartyID = ProtoField.string("sbe.partyid", "PartyID"),
+    uint8 = ProtoField.uint8("sbe.uint8", "Uint8", base.DEC),
+    ExecutionReport_PendingCancelPartyID = ProtoField.string("sbe.partyid", "PartyID"),
+    uint64 = ProtoField.uint64("sbe.uint64", "Uint64", base.DEC),
+    ExecutionReport_CanceledPartyID = ProtoField.string("sbe.partyid", "PartyID"),
+    uint64 = ProtoField.uint64("sbe.uint64", "Uint64", base.DEC),
+    ExecutionReport_PendingReplacePartyID = ProtoField.string("sbe.partyid", "PartyID"),
+    uint8 = ProtoField.uint8("sbe.uint8", "Uint8", base.DEC),
+    ExecutionReport_ReplacedPartyID = ProtoField.string("sbe.partyid", "PartyID"),
+    uint8 = ProtoField.uint8("sbe.uint8", "Uint8", base.DEC),
+    ExecutionReport_TradeCorrectionPartyID = ProtoField.string("sbe.partyid", "PartyID"),
+    uint8 = ProtoField.uint8("sbe.uint8", "Uint8", base.DEC),
+}
 
--- Create the Wireshark dissector table
-local sbe_dissector_table = DissectorTable.new("sbe.templateid", "SBE Template ID", ftypes.UINT16)
+-- Define message types
+local messageTypes = {
+    [1] = "NewOrderSingle",
+    [2] = "ShortTwoSidedBulkQuote",
+    [3] = "LongTwoSidedBulkQuote",
+    [4] = "ShortOneSidedBulkQuote",
+    [5] = "LongOneSidedBulkQuote",
+    [6] = "OrderCancelReplaceRequest",
+    [7] = "OrderCancelRequest",
+    [8] = "MassCancelRequest",
+    [9] = "MassCancelClearLockoutRequest",
+    [10] = "AllocationInstruction",
+    [11] = "ExecutionReport_New",
+    [12] = "ExecutionReport_BulkQuote_PendingNew",
+    [13] = "ExecutionReport_BulkQuote_ComponentNew",
+    [14] = "ExecutionReport_Rejected",
+    [15] = "ExecutionReport_Trade",
+    [16] = "ExecutionReport_PendingCancel",
+    [17] = "ExecutionReport_Canceled",
+    [18] = "ExecutionReport_PendingReplace",
+    [19] = "ExecutionReport_Replaced",
+    [20] = "ExecutionReport_TradeCorrection",
+    [21] = "ExecutionReport_TradeBreak",
+    [22] = "ExecutionReport_Restatement",
+    [23] = "PendingMassCancel",
+    [24] = "MassCancelReject",
+    [25] = "MassCancelDone",
+    [26] = "OrderCancelReject",
+    [27] = "AllocationInstructionAck",
+    [28]= "AllocationReport",
+}
 
--- Define the dissector function for the SBE header
-local function dissect_sbe_header(buffer, pinfo, tree)
-    -- Extract the template ID from the SBE header
-    local template_id = buffer(0, 1):le_uint()
+-- Define your protocol
+local myproto = Proto("myproto", "MXOPSBE")
 
-    -- Create the SBE header tree item
-    local sbe_header_tree = tree:add(f_sbe_header, buffer(0, 7))
-    sbe_header_tree:set_text("SBE Header")
+-- Add fields to your protocol
+myproto.fields = fieldTypes
 
-    -- Call the appropriate dissector function based on the template ID
-    local dissector_func
-    if template_id == TEMPLATE_ID_NEW_ORDER_SINGLE then
-        dissector_func = dissect_new_order_single
-    elseif template_id == TEMPLATE_ID_SHORT_TWO_SIDED_BULK_QUOTE then
-        dissector_func = dissect_short_two_sided_bulk_quote
-    -- Add more conditions for other template IDs
-    else
-        -- Unknown template ID, return without further dissection
-        return
+local sbeHeader = Proto("SBEHeader", "SBE Header")
+local f = sbeHeader.fields
+
+f.blockLength = ProtoField.uint16("SBEHeader.blockLength", "Block Length", base.DEC)
+f.templateId = ProtoField.uint8("SBEHeader.templateId", "Template ID", base.DEC)
+f.schemaId = ProtoField.uint8("SBEHeader.schemaId", "Schema ID", base.DEC)
+f.version = ProtoField.uint16("SBEHeader.version", "Version", base.DEC)
+f.numGroups = ProtoField.uint8("SBEHeader.numGroups", "Number of Groups", base.DEC)
+
+sbeHeader.fields = {
+    f.blockLength, f.templateId, f.schemaId, f.version, f.numGroups
+}
+
+function myproto.dissector(buffer, pinfo, tree)
+    pinfo.cols.protocol = myproto.name
+
+    -- Create a subtree for the protocol
+    local subtree = tree:add(myproto, buffer(), "My Protocol Data")
+
+    -- Parse the SBE header
+    local sbeHeaderSubtree = subtree:add(sbeHeader, buffer(), "SBE Header")
+    sbeHeaderSubtree:add(f.blockLength, buffer(0, 2))
+    sbeHeaderSubtree:add(f.templateId, buffer(2, 1))
+    sbeHeaderSubtree:add(f.schemaId, buffer(3, 1))
+    sbeHeaderSubtree:add(f.version, buffer(4, 2))
+    sbeHeaderSubtree:add(f.numGroups, buffer(6, 1))
+
+    -- Extract message type based on the templateId field
+    local templateId = buffer(2, 1):uint()
+    local msgTypeName = messageTypeLookup[templateId]
+
+    -- Parse the message based on its type
+    if msgTypeName == "NewOrderSingle" then
+        -- Dissect NewOrderSingle message fields
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(1, 8):uint64())
+        subtree:add(fieldTypes.NewOrderSingleClOrdID, buffer(9, 20):string())
+        subtree:add(fieldTypes.NewOrderSingleOptionsSecurityID, buffer(29, 8):uint64())
+        subtree:add(fieldTypes.SideType, buffer(37, 1):uint())
+        subtree:add(fieldTypes.uint32, buffer(38, 4):uint())
+        subtree:add(fieldTypes.OrdType, buffer(42, 1):uint())
+        if buffer(43, 1):len() == 8 then
+            -- Check if Price field is present (optional)
+            subtree:add(fieldTypes.PriceType, buffer(43, 8):uint64())
+            subtree:add(fieldTypes.TimeInForceType, buffer(51, 1):uint())
+        else
+            subtree:add(fieldTypes.TimeInForceType, buffer(43, 1):uint())
+        end
+        if buffer(52, 1):len() == 1 then
+            -- Check if OpenOrClose field is present (optional)
+            subtree:add(fieldTypes.OpenOrCloseType, buffer(52, 1):uint())
+        end
+        subtree:add(fieldTypes.ExecInstType, buffer(53, 1):uint())
+        subtree:add(fieldTypes.TradingCapacityType, buffer(54, 1):uint())
+        if buffer(55, 1):len() == 1 then
+            -- Check if RepriceFrequency field is present (optional)
+            subtree:add(fieldTypes.RepriceFrequencyType, buffer(55, 1):uint())
+        end
+        if buffer(56, 1):len() == 1 then
+            -- Check if RepriceBehavior field is present (optional)
+            subtree:add(fieldTypes.RepriceBehaviorType, buffer(56, 1):uint())
+        end
+        if buffer(57, 2):len() == 2 then
+            -- Check if MtpGroupID field is present (optional)
+            subtree:add(fieldTypes.uint16, buffer(57, 2):uint())
+        end
+        if buffer(59, 1):len() == 1 then
+            -- Check if MatchTradePrevention field is present (optional)
+            subtree:add(fieldTypes.MatchTradePreventionType, buffer(59, 1):uint())
+        end
+        if buffer(60, 2):len() == 2 then
+            -- Check if CancelGroupID field is present (optional)
+            subtree:add(fieldTypes.uint16, buffer(60, 2):uint())
+        end
+        if buffer(62, 2):len() == 2 then
+            -- Check if RiskGroupID field is present (optional)
+            subtree:add(fieldTypes.uint16, buffer(62, 2):uint())
+        end
+
+        -- Handle the repeating group "Parties"
+        local numEntries = buffer(64, 2):uint()
+        local offset = 66
+        for i = 1, numEntries do
+            local partySubtree = subtree:add(fieldTypes.Parties)
+            partySubtree:add(fieldTypes.NewOrderSinglePartyID, buffer(offset, 20):string())
+            partySubtree:add(fieldTypes.char, buffer(offset + 20, 1):string())
+            partySubtree:add(fieldTypes.uint8, buffer(offset + 21, 1):uint())
+            offset = offset + 22
+        end
+
+        -- Continue parsing other fields if any...
     end
 
-    -- Call the dissector function for the specific template
-    dissector_func(buffer, pinfo, tree)
+
+    elseif msgTypeName == "ShortTwoSidedBulkQuote" then
+        -- Dissect ShortTwoSidedBulkQuote message fields
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(1, 8):uint64())
+        subtree:add(fieldTypes.ShortTwoSidedBulkQuoteClOrdID, buffer(9, 20):string())
+        subtree:add(fieldTypes.TimeInForceType, buffer(29, 1):uint())
+        subtree:add(fieldTypes.ExecInstType, buffer(30, 1):uint())
+        subtree:add(fieldTypes.TradingCapacityType, buffer(31, 1):uint())
+        subtree:add(fieldTypes.uint16, buffer(32, 2):uint())
+    
+        local partiesGroup = subtree:add(buffer(34, 18), "Parties")
+        local numParties = buffer(34, 1):uint()
+        local offset = 35
+        for i = 1, numParties do
+            partiesGroup:add(fieldTypes.ShortTwoSidedBulkQuotePartyID, buffer(offset, 20):string())
+            partiesGroup:add(fieldTypes.char, buffer(offset + 20, 1):string())
+            partiesGroup:add(fieldTypes.uint8, buffer(offset + 21, 1):uint())
+            offset = offset + 22
+        end
+    
+        local quotesGroup = subtree:add(buffer(offset, buffer:len() - offset), "Quotes")
+        local numQuotes = (buffer:len() - offset) / 17
+        for i = 1, numQuotes do
+            quotesGroup:add(fieldTypes.uint8, buffer(offset, 1):uint())
+            quotesGroup:add(fieldTypes.ShortTwoSidedBulkQuoteOptionsSecurityID, buffer(offset + 1, 8):uint64())
+            quotesGroup:add(fieldTypes.uint16, buffer(offset + 9, 2):uint())
+            quotesGroup:add(fieldTypes.ShortPriceType, buffer(offset + 11, 8):uint64())
+            quotesGroup:add(fieldTypes.uint16, buffer(offset + 19, 2):uint())
+            quotesGroup:add(fieldTypes.ShortPriceType, buffer(offset + 21, 8):uint64())
+            offset = offset + 17
+        end
+    end
+    
+
+    elseif msgTypeName == "LongTwoSidedBulkQuote" then
+
+        -- Dissect LongTwoSidedBulkQuote message fields
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(1, 8):uint64())
+        subtree:add(fieldTypes.LongTwoSidedBulkQuoteClOrdID, buffer(9, 20):string())
+        subtree:add(fieldTypes.TimeInForceType, buffer(29, 1):uint())
+        subtree:add(fieldTypes.ExecInstType, buffer(30, 1):uint())
+        subtree:add(fieldTypes.TradingCapacityType, buffer(31, 1):uint())
+        subtree:add(fieldTypes.uint16, buffer(32, 2):uint())
+    
+        local partiesGroup = subtree:add(buffer(34, 18), "Parties")
+        local numParties = buffer(34, 1):uint()
+        local offset = 35
+        for i = 1, numParties do
+            partiesGroup:add(fieldTypes.LongTwoSidedBulkQuotePartyID, buffer(offset, 20):string())
+            partiesGroup:add(fieldTypes.char, buffer(offset + 20, 1):string())
+            partiesGroup:add(fieldTypes.uint8, buffer(offset + 21, 1):uint())
+            offset = offset + 22
+        end
+    
+        local quotesGroup = subtree:add(buffer(offset, buffer:len() - offset), "Quotes")
+        local numQuotes = (buffer:len() - offset) / 33
+        for i = 1, numQuotes do
+            quotesGroup:add(fieldTypes.uint8, buffer(offset, 1):uint())
+            quotesGroup:add(fieldTypes.LongTwoSidedBulkQuoteOptionsSecurityID, buffer(offset + 1, 8):uint64())
+            quotesGroup:add(fieldTypes.uint32, buffer(offset + 9, 4):uint())
+            quotesGroup:add(fieldTypes.PriceType, buffer(offset + 13, 8):uint64())
+            quotesGroup:add(fieldTypes.uint32, buffer(offset + 21, 4):uint())
+            quotesGroup:add(fieldTypes.PriceType, buffer(offset + 25, 8):uint64())
+            offset = offset + 33
+        end
+    end
+        
+
+   
+    if msgTypeName == "ShortOneSidedBulkQuote" then
+        -- Dissect ShortOneSidedBulkQuote message fields
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(1, 8):uint64())
+        subtree:add(fieldTypes.ShortOneSidedBulkQuoteClOrdID, buffer(9, 20):string())
+        subtree:add(fieldTypes.TimeInForceType, buffer(29, 1):uint())
+        subtree:add(fieldTypes.ExecInstType, buffer(30, 1):uint())
+        subtree:add(fieldTypes.TradingCapacityType, buffer(31, 1):uint())
+        subtree:add(fieldTypes.uint16, buffer(32, 2):uint())
+    
+        local partiesGroup = subtree:add(buffer(34, 18), "Parties")
+        local numParties = buffer(34, 1):uint()
+        local offset = 35
+        for i = 1, numParties do
+            partiesGroup:add(fieldTypes.ShortOneSidedBulkQuotePartyID, buffer(offset, 20):string())
+            partiesGroup:add(fieldTypes.char, buffer(offset + 20, 1):string())
+            partiesGroup:add(fieldTypes.uint8, buffer(offset + 21, 1):uint())
+            offset = offset + 22
+        end
+    
+        local quotesGroup = subtree:add(buffer(offset, buffer:len() - offset), "Quotes")
+        local numQuotes = (buffer:len() - offset) / 25
+        for i = 1, numQuotes do
+            quotesGroup:add(fieldTypes.uint8, buffer(offset, 1):uint())
+            quotesGroup:add(fieldTypes.ShortOneSidedBulkQuoteOptionsSecurityID, buffer(offset + 1, 8):uint64())
+            quotesGroup:add(fieldTypes.uint16, buffer(offset + 9, 2):uint())
+            offset = offset + 11
+        end
+    end
+        
+
+    elseif msgTypeName == "LongOneSidedBulkQuote" then
+        -- Dissect LongOneSidedBulkQuote message fields
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(1, 8):uint64())
+        subtree:add(fieldTypes.LongOneSidedBulkQuoteClOrdID, buffer(9, 20):string())
+        subtree:add(fieldTypes.TimeInForceType, buffer(29, 1):uint())
+        subtree:add(fieldTypes.ExecInstType, buffer(30, 1):uint())
+        subtree:add(fieldTypes.TradingCapacityType, buffer(31, 1):uint())
+        subtree:add(fieldTypes.uint16, buffer(32, 2):uint())
+    
+        local partiesGroup = subtree:add(buffer(34, 18), "Parties")
+        local numParties = buffer(34, 1):uint()
+        local offset = 35
+        for i = 1, numParties do
+            partiesGroup:add(fieldTypes.LongOneSidedBulkQuotePartyID, buffer(offset, 20):string())
+            partiesGroup:add(fieldTypes.char, buffer(offset + 20, 1):string())
+            partiesGroup:add(fieldTypes.uint8, buffer(offset + 21, 1):uint())
+            offset = offset + 22
+        end
+    
+        local quotesGroup = subtree:add(buffer(offset, buffer:len() - offset), "Quotes")
+        local numQuotes = (buffer:len() - offset) / 25
+        for i = 1, numQuotes do
+            quotesGroup:add(fieldTypes.uint8, buffer(offset, 1):uint())
+            quotesGroup:add(fieldTypes.LongOneSidedBulkQuoteOptionsSecurityID, buffer(offset + 1, 8):uint64())
+            quotesGroup:add(fieldTypes.uint32, buffer(offset + 9, 4):uint())
+            offset = offset + 13
+        end
+    end
+    
+
+    elseif msgTypeName == "OrderCancelReplaceRequest" then
+        -- Dissect OrderCancelReplaceRequest message fields
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(1, 8):uint64())
+        subtree:add(fieldTypes.OrderID, buffer(9, 20):string())
+        subtree:add(fieldTypes.OrderRequestID, buffer(29, 20):string())
+        subtree:add(fieldTypes.OrigClOrdID, buffer(49, 20):string())
+        subtree:add(fieldTypes.PriceType, buffer(69, 8):uint64())
+        subtree:add(fieldTypes.OrderQtyType, buffer(77, 1):uint())
+        subtree:add(fieldTypes.OrderQty, buffer(78, 4):uint())
+        subtree:add(fieldTypes.MinQty, buffer(82, 4):uint())
+        subtree:add(fieldTypes.DisplayQty, buffer(86, 4):uint())
+        subtree:add(fieldTypes.TimeInForceType, buffer(90, 1):uint())
+        subtree:add(fieldTypes.ExecInstType, buffer(91, 1):uint())
+        subtree:add(fieldTypes.uint16, buffer(92, 2):uint())
+    
+        local partiesGroup = subtree:add(buffer(94, 18), "Parties")
+        local numParties = buffer(94, 1):uint()
+        local offset = 95
+        for i = 1, numParties do
+            partiesGroup:add(fieldTypes.OrderCancelReplaceRequestPartyID, buffer(offset, 20):string())
+            partiesGroup:add(fieldTypes.char, buffer(offset + 20, 1):string())
+            partiesGroup:add(fieldTypes.uint8, buffer(offset + 21, 1):uint())
+            offset = offset + 22
+        end
+    end
+    
+
+    elseif msgTypeName == "OrderCancelRequest" then
+        -- Dissect OrderCancelRequest message fields
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(1, 8):uint64())
+        subtree:add(fieldTypes.OrigClOrdID, buffer(9, 20):string())
+        subtree:add(fieldTypes.OrderID, buffer(29, 20):string())
+        subtree:add(fieldTypes.OrderRequestID, buffer(49, 20):string())
+        subtree:add(fieldTypes.SecurityID, buffer(69, 8):uint64())
+        subtree:add(fieldTypes.Side, buffer(77, 1):uint())
+        subtree:add(fieldTypes.OrderQty, buffer(78, 4):uint())
+        subtree:add(fieldTypes.TimeInForceType, buffer(82, 1):uint())
+        subtree:add(fieldTypes.uint16, buffer(83, 2):uint())
+    
+        local partiesGroup = subtree:add(buffer(85, 18), "Parties")
+        local numParties = buffer(85, 1):uint()
+        local offset = 86
+        for i = 1, numParties do
+            partiesGroup:add(fieldTypes.OrderCancelRequestPartyID, buffer(offset, 20):string())
+            partiesGroup:add(fieldTypes.char, buffer(offset + 20, 1):string())
+            partiesGroup:add(fieldTypes.uint8, buffer(offset + 21, 1):uint())
+            offset = offset + 22
+        end
+    end
+    
+    elseif msgTypeName == "MassCancelRequest" then
+        -- Dissect MassCancelRequest message fields
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(1, 8):uint64())
+        subtree:add(fieldTypes.MassCancelRequestID, buffer(9, 20):string())
+        subtree:add(fieldTypes.SecurityID, buffer(29, 8):uint64())
+        subtree:add(fieldTypes.MassCancelType, buffer(37, 1):uint())
+        subtree:add(fieldTypes.Side, buffer(38, 1):uint())
+        subtree:add(fieldTypes.OrderQty, buffer(39, 4):uint())
+        subtree:add(fieldTypes.TimeInForceType, buffer(43, 1):uint())
+        subtree:add(fieldTypes.uint16, buffer(44, 2):uint())
+    
+        local partiesGroup = subtree:add(buffer(46, 18), "Parties")
+        local numParties = buffer(46, 1):uint()
+        local offset = 47
+        for i = 1, numParties do
+            partiesGroup:add(fieldTypes.MassCancelRequestPartyID, buffer(offset, 20):string())
+            partiesGroup:add(fieldTypes.char, buffer(offset + 20, 1):string())
+            partiesGroup:add(fieldTypes.uint8, buffer(offset + 21, 1):uint())
+            offset = offset + 22
+        end
+    
+        local quotesGroup = subtree:add(buffer(offset, 33), "Quotes")
+        local numQuotes = buffer(offset, 1):uint()
+        offset = offset + 1
+        for i = 1, numQuotes do
+            quotesGroup:add(fieldTypes.uint8, buffer(offset, 1):uint())
+            quotesGroup:add(fieldTypes.MassCancelRequestOptionsSecurityID, buffer(offset + 1, 8):uint64())
+            quotesGroup:add(fieldTypes.uint16, buffer(offset + 9, 2):uint())
+            quotesGroup:add(fieldTypes.PriceType, buffer(offset + 11, 8):uint64())
+            quotesGroup:add(fieldTypes.uint16, buffer(offset + 19, 2):uint())
+            offset = offset + 21
+        end
+    end
+    
+    
+    elseif msgTypeName == "MassCancelClearLockoutRequest" then
+        -- Dissect MassCancelClearLockoutRequest message fields
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(1, 8):uint64())
+        subtree:add(fieldTypes.SecurityID, buffer(9, 8):uint64())
+        subtree:add(fieldTypes.MassCancelType, buffer(17, 1):uint())
+        subtree:add(fieldTypes.Side, buffer(18, 1):uint())
+        subtree:add(fieldTypes.OrderQty, buffer(19, 4):uint())
+        subtree:add(fieldTypes.TimeInForceType, buffer(23, 1):uint())
+        subtree:add(fieldTypes.uint16, buffer(24, 2):uint())
+    
+        local partiesGroup = subtree:add(buffer(26, 18), "Parties")
+        local numParties = buffer(26, 1):uint()
+        local offset = 27
+        for i = 1, numParties do
+            partiesGroup:add(fieldTypes.MassCancelClearLockoutRequestPartyID, buffer(offset, 20):string())
+            partiesGroup:add(fieldTypes.char, buffer(offset + 20, 1):string())
+            partiesGroup:add(fieldTypes.uint8, buffer(offset + 21, 1):uint())
+            offset = offset + 22
+        end
+    
+        local quotesGroup = subtree:add(buffer(offset, 33), "Quotes")
+        local numQuotes = buffer(offset, 1):uint()
+        offset = offset + 1
+        for i = 1, numQuotes do
+            quotesGroup:add(fieldTypes.uint8, buffer(offset, 1):uint())
+            quotesGroup:add(fieldTypes.MassCancelClearLockoutRequestOptionsSecurityID, buffer(offset + 1, 8):uint64())
+            quotesGroup:add(fieldTypes.uint16, buffer(offset + 9, 2):uint())
+            quotesGroup:add(fieldTypes.PriceType, buffer(offset + 11, 8):uint64())
+            quotesGroup:add(fieldTypes.uint16, buffer(offset + 19, 2):uint())
+            offset = offset + 21
+        end
+    end
+    
+
+    elseif msgTypeName == "ExecutionReport_New" then
+        -- Dissect ExecutionReport_New message fields
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(1, 8):uint64())
+        subtree:add(fieldTypes.OrderID, buffer(9, 20):string())
+        subtree:add(fieldTypes.OrderRequestID, buffer(29, 20):string())
+        subtree:add(fieldTypes.SecurityID, buffer(49, 8):uint64())
+        subtree:add(fieldTypes.Side, buffer(57, 1):uint())
+        subtree:add(fieldTypes.OrderQty, buffer(58, 4):uint())
+        subtree:add(fieldTypes.PriceType, buffer(62, 8):uint64())
+        subtree:add(fieldTypes.OrdType, buffer(70, 1):uint())
+        subtree:add(fieldTypes.LeavesQty, buffer(71, 4):uint())
+        subtree:add(fieldTypes.CumQty, buffer(75, 4):uint())
+        subtree:add(fieldTypes.AvgPx, buffer(79, 8):uint64())
+        subtree:add(fieldTypes.LastShares, buffer(87, 4):uint())
+        subtree:add(fieldTypes.LastPx, buffer(91, 8):uint64())
+        subtree:add(fieldTypes.ExecType, buffer(99, 1):uint())
+        subtree:add(fieldTypes.ExecID, buffer(100, 20):string())
+        subtree:add(fieldTypes.OrdStatus, buffer(120, 1):uint())
+        subtree:add(fieldTypes.TimeInForceType, buffer(121, 1):uint())
+        subtree:add(fieldTypes.uint16, buffer(122, 2):uint())
+    
+        local partiesGroup = subtree:add(buffer(124, 18), "Parties")
+        local numParties = buffer(124, 1):uint()
+        local offset = 125
+        for i = 1, numParties do
+            partiesGroup:add(fieldTypes.ExecutionReport_NewPartyID, buffer(offset, 20):string())
+            partiesGroup:add(fieldTypes.char, buffer(offset + 20, 1):string())
+            partiesGroup:add(fieldTypes.uint8, buffer(offset + 21, 1):uint())
+            offset = offset + 22
+        end
+    end
+
+    elseif msgTypeName == "ExecutionReport_BulkQuote_PendingNew" then
+        -- Dissect ExecutionReport_BulkQuote_PendingNew message fields
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(1, 8):uint64())
+        subtree:add(fieldTypes.QuoteReqID, buffer(9, 20):string())
+        subtree:add(fieldTypes.QuoteID, buffer(29, 20):string())
+        subtree:add(fieldTypes.SecurityID, buffer(49, 8):uint64())
+        subtree:add(fieldTypes.Side, buffer(57, 1):uint())
+        subtree:add(fieldTypes.OrderQty, buffer(58, 4):uint())
+        subtree:add(fieldTypes.OrdType, buffer(62, 1):uint())
+        subtree:add(fieldTypes.PriceType, buffer(63, 8):uint64())
+        subtree:add(fieldTypes.TimeInForceType, buffer(71, 1):uint())
+        subtree:add(fieldTypes.uint16, buffer(72, 2):uint())
+    
+        local partiesGroup = subtree:add(buffer(74, 18), "Parties")
+        local numParties = buffer(74, 1):uint()
+        local offset = 75
+        for i = 1, numParties do
+            partiesGroup:add(fieldTypes.ExecutionReport_BulkQuote_PendingNewPartyID, buffer(offset, 20):string())
+            partiesGroup:add(fieldTypes.char, buffer(offset + 20, 1):string())
+            partiesGroup:add(fieldTypes.uint8, buffer(offset + 21, 1):uint())
+            offset = offset + 22
+        end
+    
+        local quotesGroup = subtree:add(buffer(offset, 17), "Quotes")
+        local numQuotes = buffer(offset, 1):uint()
+        offset = offset + 1
+        for i = 1, numQuotes do
+            quotesGroup:add(fieldTypes.uint8, buffer(offset, 1):uint())
+            quotesGroup:add(fieldTypes.ExecutionReport_BulkQuote_PendingNewOptionsSecurityID, buffer(offset + 1, 8):uint64())
+            quotesGroup:add(fieldTypes.uint16, buffer(offset + 9, 2):uint())
+            offset = offset + 11
+        end
+    end
+
+  
+    elseif msgTypeName == "ExecutionReport_BulkQuote_ComponentNew" then
+        -- Dissect ExecutionReport_BulkQuote_ComponentNew message fields
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(1, 8):uint64())
+        subtree:add(fieldTypes.QuoteReqID, buffer(9, 20):string())
+        subtree:add(fieldTypes.SecurityID, buffer(29, 8):uint64())
+        subtree:add(fieldTypes.Side, buffer(37, 1):uint())
+        subtree:add(fieldTypes.OrderQty, buffer(38, 4):uint())
+        subtree:add(fieldTypes.PriceType, buffer(42, 8):uint64())
+        subtree:add(fieldTypes.TimeInForceType, buffer(50, 1):uint())
+        subtree:add(fieldTypes.uint16, buffer(51, 2):uint())
+    
+        local partiesGroup = subtree:add(buffer(53, 18), "Parties")
+        local numParties = buffer(53, 1):uint()
+        local offset = 54
+        for i = 1, numParties do
+            partiesGroup:add(fieldTypes.ExecutionReport_BulkQuote_ComponentNewPartyID, buffer(offset, 20):string())
+            partiesGroup:add(fieldTypes.char, buffer(offset + 20, 1):string())
+            partiesGroup:add(fieldTypes.uint8, buffer(offset + 21, 1):uint())
+            offset = offset + 22
+        end
+    
+        local quotesGroup = subtree:add(buffer(offset, 17), "Quotes")
+        local numQuotes = buffer(offset, 1):uint()
+        offset = offset + 1
+        for i = 1, numQuotes do
+            quotesGroup:add(fieldTypes.uint8, buffer(offset, 1):uint())
+            quotesGroup:add(fieldTypes.ExecutionReport_BulkQuote_ComponentNewOptionsSecurityID, buffer(offset + 1, 8):uint64())
+            quotesGroup:add(fieldTypes.uint16, buffer(offset + 9, 2):uint())
+            offset = offset + 11
+        end
+    end
+    
+
+    elseif msgTypeName == "ExecutionReport_Rejected" then
+        -- Dissect ExecutionReport_Rejected message fields
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(1, 8):uint64())
+        subtree:add(fieldTypes.QuoteReqID, buffer(9, 20):string())
+        subtree:add(fieldTypes.SecurityID, buffer(29, 8):uint64())
+        subtree:add(fieldTypes.Side, buffer(37, 1):uint())
+        subtree:add(fieldTypes.OrderQty, buffer(38, 4):uint())
+        subtree:add(fieldTypes.PriceType, buffer(42, 8):uint64())
+        subtree:add(fieldTypes.TimeInForceType, buffer(50, 1):uint())
+        subtree:add(fieldTypes.uint16, buffer(51, 2):uint())
+        subtree:add(fieldTypes.ExecutionReport_RejectedReason, buffer(53, 1):uint())
+        subtree:add(fieldTypes.ExecutionReport_RejectedMessage, buffer(54, -1):string())
+    end
+
+    elseif msgTypeName == "ExecutionReport_Trade" then
+        -- Dissect ExecutionReport_Trade message fields
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(1, 8):uint64())
+        subtree:add(fieldTypes.TradeReportID, buffer(9, 20):string())
+        subtree:add(fieldTypes.OriginalTradeReportID, buffer(29, 20):string())
+        subtree:add(fieldTypes.SecurityID, buffer(49, 8):uint64())
+        subtree:add(fieldTypes.Side, buffer(57, 1):uint())
+        subtree:add(fieldTypes.LastQty, buffer(58, 4):uint())
+        subtree:add(fieldTypes.LastPx, buffer(62, 8):uint64())
+        subtree:add(fieldTypes.TradeReportType, buffer(70, 1):uint())
+        subtree:add(fieldTypes.TradeReportStatus, buffer(71, 1):uint())
+        subtree:add(fieldTypes.ExecType, buffer(72, 1):uint())
+        subtree:add(fieldTypes.TradeID, buffer(73, 20):string())
+        subtree:add(fieldTypes.TradeDate, buffer(93, 2):uint())
+        subtree:add(fieldTypes.uint32, buffer(95, 4):uint())
+        subtree:add(fieldTypes.OrdStatus, buffer(99, 1):uint())
+        subtree:add(fieldTypes.LeavesQty, buffer(100, 4):uint())
+        subtree:add(fieldTypes.CumQty, buffer(104, 4):uint())
+        subtree:add(fieldTypes.MarketSegmentID, buffer(108, 4):uint())
+    end
+
+
+    elseif msgTypeName == "ExecutionReport_PendingCancel" then
+        -- Dissect ExecutionReport_PendingCancel message fields
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(1, 8):uint64())
+        subtree:add(fieldTypes.OrigTradeReportID, buffer(9, 20):string())
+        subtree:add(fieldTypes.SecurityID, buffer(29, 8):uint64())
+        subtree:add(fieldTypes.Side, buffer(37, 1):uint())
+        subtree:add(fieldTypes.OrderQty, buffer(38, 4):uint())
+        subtree:add(fieldTypes.OrdStatus, buffer(42, 1):uint())
+        subtree:add(fieldTypes.CxlRejReason, buffer(43, 1):uint())
+        subtree:add(fieldTypes.CxlRejResponseTo, buffer(44, 1):uint())
+        subtree:add(fieldTypes.CxlQty, buffer(45, 4):uint())
+        subtree:add(fieldTypes.LeavesQty, buffer(49, 4):uint())
+        subtree:add(fieldTypes.CumQty, buffer(53, 4):uint())
+        subtree:add(fieldTypes.TradeID, buffer(57, 20):string())
+        subtree:add(fieldTypes.OrderID, buffer(77, 20):string())
+        subtree:add(fieldTypes.Price, buffer(97, 8):uint64())
+        subtree:add(fieldTypes.StopPx, buffer(105, 8):uint64())
+        subtree:add(fieldTypes.MarketSegmentID, buffer(113, 4):uint())
+    end
+
+    elseif msgTypeName == "ExecutionReport_Canceled" then
+        -- Dissect ExecutionReport_Canceled message fields
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(1, 8):uint64())
+        subtree:add(fieldTypes.OrigTradeReportID, buffer(9, 20):string())
+        subtree:add(fieldTypes.SecurityID, buffer(29, 8):uint64())
+        subtree:add(fieldTypes.Side, buffer(37, 1):uint())
+        subtree:add(fieldTypes.OrderQty, buffer(38, 4):uint())
+        subtree:add(fieldTypes.OrdStatus, buffer(42, 1):uint())
+        subtree:add(fieldTypes.CxlRejReason, buffer(43, 1):uint())
+        subtree:add(fieldTypes.CxlRejResponseTo, buffer(44, 1):uint())
+        subtree:add(fieldTypes.CxlQty, buffer(45, 4):uint())
+        subtree:add(fieldTypes.LeavesQty, buffer(49, 4):uint())
+        subtree:add(fieldTypes.CumQty, buffer(53, 4):uint())
+        subtree:add(fieldTypes.TradeID, buffer(57, 20):string())
+        subtree:add(fieldTypes.OrderID, buffer(77, 20):string())
+        subtree:add(fieldTypes.Price, buffer(97, 8):uint64())
+        subtree:add(fieldTypes.StopPx, buffer(105, 8):uint64())
+        subtree:add(fieldTypes.MarketSegmentID, buffer(113, 4):uint())
+    end
+
+    elseif msgTypeName == "ExecutionReport_PendingReplace" then
+        -- Dissect ExecutionReport_PendingReplace message fields
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(1, 8):uint64())
+        subtree:add(fieldTypes.OrderID, buffer(9, 20):string())
+        subtree:add(fieldTypes.OrderRequestID, buffer(29, 20):string())
+        subtree:add(fieldTypes.SecurityID, buffer(49, 8):uint64())
+        subtree:add(fieldTypes.Side, buffer(57, 1):uint())
+        subtree:add(fieldTypes.OrderQty, buffer(58, 4):uint())
+        subtree:add(fieldTypes.Price, buffer(62, 8):uint64())
+        subtree:add(fieldTypes.StopPx, buffer(70, 8):uint64())
+        subtree:add(fieldTypes.OrdType, buffer(78, 1):uint())
+        subtree:add(fieldTypes.TimeInForceType, buffer(79, 1):uint())
+        subtree:add(fieldTypes.ExecInstType, buffer(80, 1):uint())
+        subtree:add(fieldTypes.TradeDate, buffer(81, 2):uint())
+        subtree:add(fieldTypes.Memo, buffer(83, 20):string())
+    end
+    
+    
+    elseif msgTypeName == "ExecutionReport_PendingReplace" then
+        -- Dissect ExecutionReport_PendingReplace message fields
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(1, 8):uint64())
+        subtree:add(fieldTypes.OrderID, buffer(9, 20):string())
+        subtree:add(fieldTypes.OrderRequestID, buffer(29, 20):string())
+        subtree:add(fieldTypes.SecurityID, buffer(49, 8):uint64())
+        subtree:add(fieldTypes.Side, buffer(57, 1):uint())
+        subtree:add(fieldTypes.OrderQty, buffer(58, 4):uint())
+        subtree:add(fieldTypes.Price, buffer(62, 8):uint64())
+        subtree:add(fieldTypes.StopPx, buffer(70, 8):uint64())
+        subtree:add(fieldTypes.OrdType, buffer(78, 1):uint())
+        subtree:add(fieldTypes.TimeInForceType, buffer(79, 1):uint())
+        subtree:add(fieldTypes.ExecInstType, buffer(80, 1):uint())
+        subtree:add(fieldTypes.TradeDate, buffer(81, 2):uint())
+        subtree:add(fieldTypes.Memo, buffer(83, 20):string())
+    end
+    
+    elseif msgTypeName == "ExecutionReport_TradeCorrection" then
+        -- Dissect ExecutionReport_TradeCorrection message fields
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(1, 8):uint64())
+        subtree:add(fieldTypes.OrderID, buffer(9, 20):string())
+        subtree:add(fieldTypes.TradeID, buffer(29, 20):string())
+        subtree:add(fieldTypes.OriginalTradeID, buffer(49, 20):string())
+        subtree:add(fieldTypes.SecurityID, buffer(69, 8):uint64())
+        subtree:add(fieldTypes.Side, buffer(77, 1):uint())
+        subtree:add(fieldTypes.OrderQty, buffer(78, 4):uint())
+        subtree:add(fieldTypes.LastQty, buffer(82, 4):uint())
+        subtree:add(fieldTypes.LastPx, buffer(86, 8):uint64())
+        subtree:add(fieldTypes.TradeDate, buffer(94, 2):uint())
+        subtree:add(fieldTypes.TradeTime, buffer(96, 8):uint64())
+        subtree:add(fieldTypes.TradeType, buffer(104, 1):uint())
+        subtree:add(fieldTypes.TradeReportID, buffer(105, 20):string())
+        subtree:add(fieldTypes.Memo, buffer(125, 20):string())
+    end
+
+    elseif msgTypeName == "AllocationInstruction" then
+        -- Dissect AllocationInstruction message fields
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(1, 8):uint64())
+        subtree:add(fieldTypes.AllocID, buffer(9, 20):string())
+        subtree:add(fieldTypes.AllocTransType, buffer(29, 1):uint())
+        subtree:add(fieldTypes.AllocType, buffer(30, 1):uint())
+        subtree:add(fieldTypes.RefAllocReportID, buffer(31, 8):uint64())
+        subtree:add(fieldTypes.ExecRefID, buffer(39, 8):uint64())
+        subtree:add(fieldTypes.TrdMatchID, buffer(47, 8):uint64())
+        subtree:add(fieldTypes.OptionsSecurityID, buffer(55, 8):uint64())
+        subtree:add(fieldTypes.Side, buffer(63, 1):uint())
+        subtree:add(fieldTypes.Quantity, buffer(64, 4):uint())
+        subtree:add(fieldTypes.TradeDate, buffer(68, 2):uint())
+        
+        -- Dissect Allocations group
+        local allocationsGroup = subtree:add(fieldTypes.Allocations)
+        local allocationsCount = buffer(70, 1):uint()
+        local allocationsOffset = 71
+        for i = 1, allocationsCount do
+            local allocationItem = allocationsGroup:add(fieldTypes.Allocations)
+            allocationItem:add(fieldTypes.AllocQty, buffer(allocationsOffset, 4):uint())
+            allocationItem:add(fieldTypes.TradingCapacity, buffer(allocationsOffset + 4, 1):uint())
+            allocationItem:add(fieldTypes.OpenOrClose, buffer(allocationsOffset + 5, 1):uint())
+            
+            -- Dissect Parties group within Allocations group
+            local partiesGroup = allocationItem:add(fieldTypes.Parties)
+            local partiesCount = buffer(allocationsOffset + 6, 1):uint()
+            local partiesOffset = allocationsOffset + 7
+            for j = 1, partiesCount do
+                local partyItem = partiesGroup:add(fieldTypes.Parties)
+                partyItem:add(fieldTypes.PartyID, buffer(partiesOffset, 20):string())
+                partyItem:add(fieldTypes.PartyIDSource, buffer(partiesOffset + 20, 1):string())
+                partyItem:add(fieldTypes.PartyRole, buffer(partiesOffset + 21, 1):uint())
+                partiesOffset = partiesOffset + 22
+            end
+            
+            allocationsOffset = partiesOffset
+        end
+    end
+
+    elseif msgTypeName == "ExecutionReport_TradeCorrection" then
+        -- Dissect ExecutionReport_TradeCorrection message fields
+        subtree:add(fieldTypes.uint64, buffer(0, 8), "OrderID: " .. buffer(0, 8):uint64())
+        subtree:add(fieldTypes.ExecutionReport_TradeCorrectionClOrdID, buffer(8, 20))
+        subtree:add(fieldTypes.uint64, buffer(28, 8), "TrdMatchID: " .. buffer(28, 8):uint64())
+        subtree:add(fieldTypes.uint64, buffer(36, 8), "ExecID: " .. buffer(36, 8):uint64())
+        subtree:add(fieldTypes.uint64, buffer(44, 8), "ExecRefID: " .. buffer(44, 8):uint64())
+        subtree:add(fieldTypes.OrdStatusType, buffer(52, 1))
+        subtree:add(fieldTypes.ExecutionReport_TradeCorrectionOptionsSecurityID, buffer(53, 8))
+        subtree:add(fieldTypes.uint32, buffer(61, 4), "LastQty: " .. buffer(61, 4):uint())
+        subtree:add(fieldTypes.PriceType, buffer(65, 8), "LastPx: " .. buffer(65, 8):le_float())
+        subtree:add(fieldTypes.uint32, buffer(73, 4), "LeavesQty: " .. buffer(73, 4):uint())
+        subtree:add(fieldTypes.uint32, buffer(77, 4), "CumQty: " .. buffer(77, 4):uint())
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(81, 8), "SendingTime: " .. buffer(81, 8):uint64())
+    
+        -- Dissect Parties group
+        local partiesGroup = subtree:add("Parties")
+        local partiesCount = buffer(89, 1):uint()
+        local partiesOffset = 90
+        for i = 1, partiesCount do
+            local partyItem = partiesGroup:add("Party[" .. i .. "]")
+            partyItem:add(fieldTypes.ExecutionReport_TradeCorrectionPartyID, buffer(partiesOffset, 20))
+            partyItem:add(fieldTypes.char, buffer(partiesOffset + 20, 1))
+            partyItem:add(fieldTypes.uint8, buffer(partiesOffset + 21, 1))
+            partiesOffset = partiesOffset + 22
+        end
+    end
+    
+    
+    elseif msgTypeName == "ExecutionReport_TradeBreak" then
+        -- Dissect ExecutionReport_TradeBreak message fields
+        subtree:add(fieldTypes.uint64, buffer(0, 8), "OrderID: " .. buffer(0, 8):uint64())
+        subtree:add(fieldTypes.ExecutionReport_TradeBreakClOrdID, buffer(8, 20))
+        subtree:add(fieldTypes.uint64, buffer(28, 8), "TrdMatchID: " .. buffer(28, 8):uint64())
+        subtree:add(fieldTypes.uint64, buffer(36, 8), "ExecID: " .. buffer(36, 8):uint64())
+        subtree:add(fieldTypes.uint64, buffer(44, 8), "ExecRefID: " .. buffer(44, 8):uint64())
+        subtree:add(fieldTypes.OrdStatusType, buffer(52, 1))
+        subtree:add(fieldTypes.uint32, buffer(53, 4), "LeavesQty: " .. buffer(53, 4):uint())
+        subtree:add(fieldTypes.uint32, buffer(57, 4), "CumQty: " .. buffer(57, 4):uint())
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(61, 8), "SendingTime: " .. buffer(61, 8):uint64())
+    
+        -- Dissect Parties group
+        local partiesGroup = subtree:add("Parties")
+        local partiesCount = buffer(69, 1):uint()
+        local partiesOffset = 70
+        for i = 1, partiesCount do
+            local partyItem = partiesGroup:add("Party[" .. i .. "]")
+            partyItem:add(fieldTypes.ExecutionReport_TradeBreakPartyID, buffer(partiesOffset, 20))
+            partyItem:add(fieldTypes.char, buffer(partiesOffset + 20, 1))
+            partyItem:add(fieldTypes.uint8, buffer(partiesOffset + 21, 1))
+            partiesOffset = partiesOffset + 22
+        end
+    end
+
+    elseif msgTypeName == "ExecutionReport_Restatement" then
+        -- Dissect ExecutionReport_Restatement message fields
+        subtree:add(fieldTypes.uint64, buffer(0, 8), "OrderID: " .. buffer(0, 8):uint64())
+        subtree:add(fieldTypes.ExecutionReport_RestatementClOrdID, buffer(8, 20))
+        subtree:add(fieldTypes.uint8, buffer(28, 1), "ListSeqNo: " .. buffer(28, 1):uint())
+        subtree:add(fieldTypes.uint64, buffer(29, 8), "ExecID: " .. buffer(29, 8):uint64())
+        subtree:add(fieldTypes.OrdStatusType, buffer(37, 1))
+        subtree:add(fieldTypes.ExecutionReport_RestatementOptionsSecurityID, buffer(38, 8))
+        subtree:add(fieldTypes.ExecRestatementType, buffer(46, 2))
+        
+        local extRestatementReason = buffer(48, 2):uint()
+        if extRestatementReason > 0 then
+            subtree:add(fieldTypes.ExtendedRestatementReasonType, buffer(48, 2))
+            -- Offset for the optional field "ExtendedRestatementReason" is 2 bytes
+            local offset = 50
+            -- Add additional offset for the optional field "LastQty" if it is present
+            if buffer(offset, 1):uint() == 1 then
+                subtree:add(fieldTypes.uint32, buffer(offset + 1, 4), "LastQty: " .. buffer(offset + 1, 4):uint())
+                offset = offset + 5
+            end
+        else
+            -- Offset for the optional field "LastQty" if "ExtendedRestatementReason" is not present
+            local offset = 48
+            -- Add additional offset for the optional field "LastQty" if it is present
+            if buffer(offset, 1):uint() == 1 then
+                subtree:add(fieldTypes.uint32, buffer(offset + 1, 4), "LastQty: " .. buffer(offset + 1, 4):uint())
+                offset = offset + 5
+            end
+        end
+    
+        subtree:add(fieldTypes.uint32, buffer(offset, 4), "LeavesQty: " .. buffer(offset, 4):uint())
+        subtree:add(fieldTypes.uint32, buffer(offset + 4, 4), "CumQty: " .. buffer(offset + 4, 4):uint())
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(offset + 8, 8), "SendingTime: " .. buffer(offset + 8, 8):uint64())
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(offset + 16, 8), "TransactTime: " .. buffer(offset + 16, 8):uint64())
+    
+        -- Dissect Parties group
+        local partiesGroup = subtree:add("Parties")
+        local partiesCount = buffer(offset + 24, 1):uint()
+        local partiesOffset = offset + 25
+        for i = 1, partiesCount do
+            local partyItem = partiesGroup:add("Party[" .. i .. "]")
+            partyItem:add(fieldTypes.ExecutionReport_RestatementPartyID, buffer(partiesOffset, 20))
+            partyItem:add(fieldTypes.char, buffer(partiesOffset + 20, 1))
+            partyItem:add(fieldTypes.uint8, buffer(partiesOffset + 21, 1))
+            partiesOffset = partiesOffset + 22
+        end
+    end
+
+    elseif msgTypeName == "PendingMassCancel" then
+        -- Dissect PendingMassCancel message fields
+        subtree:add(fieldTypes.PendingMassCancelClOrdID, buffer(0, 20))
+        
+        local origClOrdIDLen = buffer(20, 1):uint()
+        if origClOrdIDLen > 0 then
+            subtree:add(fieldTypes.PendingMassCancelOrigClOrdID, buffer(21, origClOrdIDLen))
+            -- Offset for the field "MassCancelInst" after "OrigClOrdID" is present
+            local offset = 21 + origClOrdIDLen
+            subtree:add(fieldTypes.MassCancelInstType, buffer(offset, 1))
+        else
+            -- Offset for the field "MassCancelInst" if "OrigClOrdID" is not present
+            local offset = 20
+            subtree:add(fieldTypes.MassCancelInstType, buffer(offset, 1))
+        end
+    
+        -- Check if "LockoutID" is present
+        if buffer(offset + 1, 1):uint() == 1 then
+            subtree:add(fieldTypes.uint64, buffer(offset + 2, 8), "LockoutID: " .. buffer(offset + 2, 8):uint64())
+            -- Offset for the optional field "EFID" if "LockoutID" is present
+            offset = offset + 10
+        else
+            -- Offset for the optional field "EFID" if "LockoutID" is not present
+            offset = offset + 1
+        end
+    
+        -- Check if "EFID" is present
+        if buffer(offset, 1):uint() == 1 then
+            subtree:add(fieldTypes.PendingMassCancelEFID, buffer(offset + 1, 1))
+            -- Offset for the optional field "UnderlyingOrSeries" if "EFID" is present
+            offset = offset + 2
+        else
+            -- Offset for the optional field "UnderlyingOrSeries" if "EFID" is not present
+            offset = offset + 1
+        end
+    
+        -- Check if "UnderlyingOrSeries" is present
+        if buffer(offset, 1):uint() == 1 then
+            subtree:add(fieldTypes.UnderlyingOrSeriesType, buffer(offset + 1, 1))
+            -- Offset for the optional field "Underlier" if "UnderlyingOrSeries" is present
+            offset = offset + 2
+        else
+            -- Offset for the optional field "Underlier" if "UnderlyingOrSeries" is not present
+            offset = offset + 1
+        end
+    
+        -- Check if "Underlier" is present
+        if buffer(offset, 1):uint() == 1 then
+            subtree:add(fieldTypes.PendingMassCancelUnderlier, buffer(offset + 1, 1))
+            -- Offset for the optional field "OptionsSecurityID" if "Underlier" is present
+            offset = offset + 2
+        else
+            -- Offset for the optional field "OptionsSecurityID" if "Underlier" is not present
+            offset = offset + 1
+        end
+    
+        -- Check if "OptionsSecurityID" is present
+        if buffer(offset, 1):uint() == 1 then
+            subtree:add(fieldTypes.PendingMassCancelOptionsSecurityID, buffer(offset + 1, 8))
+            -- Offset for the optional field "CancelGroupID" if "OptionsSecurityID" is present
+            offset = offset + 9
+        else
+            -- Offset for the optional field "CancelGroupID" if "OptionsSecurityID" is not present
+            offset = offset + 1
+        end
+    
+        subtree:add(fieldTypes.uint16, buffer(offset, 2), "CancelGroupID: " .. buffer(offset, 2):uint())
+    
+        -- Offset for the field "SendingTime"
+        offset = offset + 2
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(offset, 8))
+    end
+    
+    elseif msgTypeName == "MassCancelReject" then
+        -- Dissect MassCancelReject message fields
+        subtree:add(fieldTypes.MassCancelRejectClOrdID, buffer(0, 20))
+        
+        local origClOrdIDLen = buffer(20, 1):uint()
+        if origClOrdIDLen > 0 then
+            subtree:add(fieldTypes.MassCancelRejectOrigClOrdID, buffer(21, origClOrdIDLen))
+            -- Offset for the field "RejectReason" after "OrigClOrdID" is present
+            local offset = 21 + origClOrdIDLen
+            subtree:add(fieldTypes.MassCxlRejReasonCode, buffer(offset, 1))
+        else
+            -- Offset for the field "RejectReason" if "OrigClOrdID" is not present
+            local offset = 20
+            subtree:add(fieldTypes.MassCxlRejReasonCode, buffer(offset, 1))
+        end
+
+        -- Check if "EFID" is present
+        if buffer(offset + 1, 1):uint() == 1 then
+            subtree:add(fieldTypes.MassCancelRejectEFID, buffer(offset + 2, 1))
+            -- Offset for the optional field "UnderlyingOrSeries" if "EFID" is present
+            offset = offset + 3
+        else
+            -- Offset for the optional field "UnderlyingOrSeries" if "EFID" is not present
+            offset = offset + 1
+        end
+
+        -- Check if "UnderlyingOrSeries" is present
+        if buffer(offset, 1):uint() == 1 then
+            subtree:add(fieldTypes.UnderlyingOrSeriesType, buffer(offset + 1, 1))
+            -- Offset for the optional field "Underlier" if "UnderlyingOrSeries" is present
+            offset = offset + 2
+        else
+            -- Offset for the optional field "Underlier" if "UnderlyingOrSeries" is not present
+            offset = offset + 1
+        end
+
+        -- Check if "Underlier" is present
+        if buffer(offset, 1):uint() == 1 then
+            subtree:add(fieldTypes.MassCancelRejectUnderlier, buffer(offset + 1, 1))
+            -- Offset for the optional field "OptionsSecurityID" if "Underlier" is present
+            offset = offset + 2
+        else
+            -- Offset for the optional field "OptionsSecurityID" if "Underlier" is not present
+            offset = offset + 1
+        end
+
+        -- Check if "OptionsSecurityID" is present
+        if buffer(offset, 1):uint() == 1 then
+            subtree:add(fieldTypes.MassCancelRejectOptionsSecurityID, buffer(offset + 1, 8))
+            -- Offset for the optional field "CancelGroupID" if "OptionsSecurityID" is present
+            offset = offset + 9
+        else
+            -- Offset for the optional field "CancelGroupID" if "OptionsSecurityID" is not present
+            offset = offset + 1
+        end
+
+        subtree:add(fieldTypes.uint16, buffer(offset, 2), "CancelGroupID: " .. buffer(offset, 2):uint())
+
+        -- Offset for the field "MassCancelInst"
+        offset = offset + 2
+        subtree:add(fieldTypes.MassCancelInstType, buffer(offset, 1))
+        
+        -- Offset for the field "SendingTime"
+        offset = offset + 1
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(offset, 8))
+    end
+
+    elseif msgTypeName == "MassCancelDone" then
+        -- Dissect MassCancelDone message fields
+        subtree:add(fieldTypes.MassCancelDoneClOrdID, buffer(0, 20))
+        subtree:add(fieldTypes.uint32, buffer(20, 4), "TotalAffectedOrders: " .. buffer(20, 4):uint())
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(24, 8))
+    end
+
+    elseif msgTypeName == "OrderCancelReject" then
+        -- Dissect OrderCancelReject message fields
+        subtree:add(fieldTypes.OrderCancelRejectClOrdID, buffer(0, 20))
+        subtree:add(fieldTypes.uint8, buffer(20, 1), "ListSeqNo: " .. buffer(20, 1):uint())
+        subtree:add(fieldTypes.CxlRejResponseTo, buffer(21, 1))
+        subtree:add(fieldTypes.CxlRejReason, buffer(22, 1))
+        if buffer(23, 1):len() == 8 then
+            -- Optional fields are present
+            subtree:add(fieldTypes.OrderCancelRejectOptionsSecurityID, buffer(23, 8))
+            subtree:add(fieldTypes.SideType, buffer(31, 1))
+            subtree:add(fieldTypes.UTCTimestampNanos, buffer(32, 8))
+        else
+            -- Optional fields are absent
+            subtree:add(fieldTypes.UTCTimestampNanos, buffer(23, 8))
+        end
+    end
+    
+    elseif msgTypeName == "AllocationInstructionAck" then
+        -- Dissect AllocationInstructionAck message fields
+        subtree:add(fieldTypes.uint64, buffer(0, 8), "AllocReportID: " .. buffer(0, 8):uint64())
+        subtree:add(fieldTypes.AllocationInstructionAckAllocID, buffer(8, 20))
+        subtree:add(fieldTypes.AllocStatusType, buffer(28, 1))
+        subtree:add(fieldTypes.AllocRejCode, buffer(29, 1))
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(30, 8))
+    end
+    
+
+    elseif msgTypeName == "AllocationReport" then
+        -- Dissect AllocationReport message fields
+        subtree:add(fieldTypes.uint64, buffer(0, 8), "AllocReportID: " .. buffer(0, 8):uint64())
+        subtree:add(fieldTypes.AllocationReportAllocID, buffer(8, 20))
+        subtree:add(fieldTypes.AllocTransType, buffer(28, 1))
+        subtree:add(fieldTypes.AllocType, buffer(29, 1))
+        subtree:add(fieldTypes.AllocStatusType, buffer(30, 1))
+        subtree:add(fieldTypes.uint64, buffer(31, 8), "ExecRefID: " .. buffer(31, 8):uint64())
+        subtree:add(fieldTypes.uint64, buffer(39, 8), "TrdMatchID: " .. buffer(39, 8):uint64())
+        subtree:add(fieldTypes.AllocationReportOptionsSecurityID, buffer(47, 8))
+        subtree:add(fieldTypes.SideType, buffer(55, 1))
+        subtree:add(fieldTypes.uint32, buffer(56, 4))
+        subtree:add(fieldTypes.AllocationReportTradeDate, buffer(60, 2))
+        subtree:add(fieldTypes.UTCTimestampNanos, buffer(62, 8))
+    
+        -- Dissect Allocations group
+        local allocationsGroup = subtree:add(fieldTypes.Allocations)
+        local allocationsCount = buffer(70, 1):uint()
+        local allocationsOffset = 71
+        for i = 1, allocationsCount do
+            local allocationItem = allocationsGroup:add(fieldTypes.Allocations)
+            allocationItem:add(fieldTypes.uint32, buffer(allocationsOffset, 4))
+            allocationItem:add(fieldTypes.TradingCapacityType, buffer(allocationsOffset + 4, 1))
+            allocationItem:add(fieldTypes.OpenOrCloseType, buffer(allocationsOffset + 5, 1))
+    
+            -- Dissect Parties group within Allocations group
+            local partiesGroup = allocationItem:add(fieldTypes.Parties)
+            local partiesCount = buffer(allocationsOffset + 6, 1):uint()
+            local partiesOffset = allocationsOffset + 7
+            for j = 1, partiesCount do
+                local partyItem = partiesGroup:add(fieldTypes.Parties)
+                partyItem:add(fieldTypes.ExecutionReport_NewPartyID, buffer(partiesOffset, 20))
+                partyItem:add(fieldTypes.char, buffer(partiesOffset + 20, 1))
+                partyItem:add(fieldTypes.uint8, buffer(partiesOffset + 21, 1))
+                partiesOffset = partiesOffset + 22
+            end
+    
+            allocationsOffset = partiesOffset
+        end
+    end   
+
+    else
+        -- Unknown message type, just add the raw data to the tree
+        subtree:add(buffer(), "Unknown Message Data")
+    end
 end
 
--- Define the dissector function for the New Order Single template
-local function dissect_new_order_single(buffer, pinfo, tree)
-    local subtree = tree:add("New Order Single")
 
-    -- Dissect New Order Single fields
-    subtree:add(f_sending_time, buffer(7, 8))
-    subtree:add(f_cl_ord_id, buffer(15, 20))
-    subtree:add(f_options_security_id, buffer(35, 1))
-    subtree:add(f_side, buffer(43, 1))
-    subtree:add(f_order_qty, buffer(44, 4))
-    subtree:add(f_ord_type, buffer(48, 1))
-    subtree:add(f_price, buffer(49, 8))
-    subtree:add(f_time_in_force, buffer(57, 1))
-    subtree:add(f_open_or_close, buffer(58, 1))
-    subtree:add(f_exec_inst, buffer(59, 2))
-    subtree:add(f_trading_capacity, buffer(61, 1))
-    subtree:add(f_reprice_frequency, buffer(62, 1))
-    subtree:add(f_reprice_behavior, buffer(63, 1))
-    subtree:add(f_mtp_group_id, buffer(64, 2))
-    subtree:add(f_match_trade_prevention, buffer(66, 1))
-    subtree:add(f_cancel_group_id, buffer(67, 2))
-    subtree:add(f_risk_group_id, buffer(69, 2))
-    subtree:add(f_no_party_ids, buffer(0, 1))
-    subtree:add(f_no_quote_entries, buffer(1, 1))
-end
-
--- Define the dissector function for the Short Two Sided Bulk Quote template
-local function dissect_short_two_sided_bulk_quote(buffer, pinfo, tree)
-    local subtree = tree:add("Short Two Sided Bulk Quote")
-
-    -- Dissect Short Two Sided Bulk Quote fields
-    subtree:add(f_sending_time, buffer(7, 8))
-    subtree:add(f_cl_ord_id, buffer(15, 20))
-    subtree:add(f_time_in_force, buffer(35, 1))
-    subtree:add(f_exec_inst, buffer(36, 2))
-    subtree:add(f_trading_capacity, buffer(38, 1))
-    subtree:add(f_mtp_group_id, buffer(39, 2))
-    subtree:add(f_match_trade_prevention, buffer(41, 1))
-    subtree:add(f_cancel_group_id, buffer(42, 2))
-    subtree:add(f_risk_group_id, buffer(44, 2))
-    subtree:add(f_no_party_ids, buffer(0, 1))
-    subtree:add(f_no_quote_entries, buffer(1, 1))
-end
-
-
--- Define the dissector function for the Mass Cancel Request template
-local function dissect_mass_cancel_request(buffer, pinfo, tree)
-    local subtree = tree:add("Mass Cancel Request")
-
-    -- Dissect Mass Cancel Request fields
-    subtree:add(f_sending_time, buffer(7, 8))
-    subtree:add(f_cl_ord_id, buffer(15, 20))
-    subtree:add(f_efid, buffer(35, 4))
-    subtree:add(f_underlying_or_series, buffer(39, 1))
-    subtree:add(f_underlier, buffer(40, 6))
-    subtree:add(f_options_security_id, buffer(46, 8))
-    subtree:add(f_cancel_group_id, buffer(54, 2))
-    subtree:add(f_mass_cancel_inst, buffer(56, 1))
-end
-
--- Define the dissector function for the Order Cancel Request template
-local function dissect_order_cancel_request(buffer, pinfo, tree)
-    local subtree = tree:add("Order Cancel Request")
-
-    -- Dissect Order Cancel Request fields
-    subtree:add(f_sending_time, buffer(7, 8))
-    subtree:add(f_order_id, buffer(15, 8))
-    subtree:add(f_cl_ord_id, buffer(23, 20))
-    subtree:add(f_list_seq_no, buffer(43, 1))
-    subtree:add(f_orig_cl_ord_id, buffer(44, 20))
-    subtree:add(f_options_security_id, buffer(64, 8))
-    subtree:add(f_side, buffer(72, 1))
-end
-
--- Register the SBE header dissector with the SBE dissector
-sbe_dissector_table:add(1, dissect_sbe_header)
-
--- Register the SBE message template dissectors with the SBE dissector
--- ...
-
--- Register the SBE dissector as a heuristic dissector for TCP
-DissectorTable.get("tcp.port"):add_heuristic("tcp", sbe_dissector_table)
