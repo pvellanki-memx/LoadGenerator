@@ -1,4 +1,4 @@
--- Custom Lua Dissector for the SBE (Simple Binary Encoding) Protocol
+-- Custom Lua Dissector for the Options SBE (Simple Binary Encoding) Protocol
 
 -- Define field types
 local fieldTypes = {
@@ -105,12 +105,12 @@ local messageTypes = {
 }
 
 -- Define your protocol
-local myproto = Proto("myproto", "MXOPSBE")
+local memooptions = Proto("MEMOSBEOptions", "Options MEMO SBE Protocol")
 
 -- Add fields to your protocol
-myproto.fields = fieldTypes
+memooptions.fields = fieldTypes
 
-local sbeHeader = Proto("SBEHeader", "SBE Header")
+local sbeHeader = Proto("SBEHeaderOptions", "Options SBE Header")
 local f = sbeHeader.fields
 
 f.blockLength = ProtoField.uint16("SBEHeader.blockLength", "Block Length", base.DEC)
@@ -123,11 +123,11 @@ sbeHeader.fields = {
     f.blockLength, f.templateId, f.schemaId, f.version, f.numGroups
 }
 
-function myproto.dissector(buffer, pinfo, tree)
-    pinfo.cols.protocol = myproto.name
+function memooptions.dissector(buffer, pinfo, tree)
+    pinfo.cols.protocol = memooptions.name
 
     -- Create a subtree for the protocol
-    local subtree = tree:add(myproto, buffer(), "My Protocol Data")
+    local subtree = tree:add(memooptions, buffer(), "My Protocol Data")
 
     -- Parse the SBE header
     local sbeHeaderSubtree = subtree:add(sbeHeader, buffer(), "SBE Header")
@@ -199,12 +199,10 @@ function myproto.dissector(buffer, pinfo, tree)
             offset = offset + 22
         end
 
-        -- Continue parsing other fields if any...
-    end
+    
 
 
     elseif msgTypeName == "ShortTwoSidedBulkQuote" then
-        -- Dissect ShortTwoSidedBulkQuote message fields
         subtree:add(fieldTypes.UTCTimestampNanos, buffer(1, 8):uint64())
         subtree:add(fieldTypes.ShortTwoSidedBulkQuoteClOrdID, buffer(9, 20):string())
         subtree:add(fieldTypes.TimeInForceType, buffer(29, 1):uint())
@@ -233,7 +231,8 @@ function myproto.dissector(buffer, pinfo, tree)
             quotesGroup:add(fieldTypes.ShortPriceType, buffer(offset + 21, 8):uint64())
             offset = offset + 17
         end
-    end
+    
+
     
 
     elseif msgTypeName == "LongTwoSidedBulkQuote" then
@@ -267,11 +266,10 @@ function myproto.dissector(buffer, pinfo, tree)
             quotesGroup:add(fieldTypes.PriceType, buffer(offset + 25, 8):uint64())
             offset = offset + 33
         end
-    end
+    
         
-
    
-    if msgTypeName == "ShortOneSidedBulkQuote" then
+    elseif msgTypeName == "ShortOneSidedBulkQuote" then
         -- Dissect ShortOneSidedBulkQuote message fields
         subtree:add(fieldTypes.UTCTimestampNanos, buffer(1, 8):uint64())
         subtree:add(fieldTypes.ShortOneSidedBulkQuoteClOrdID, buffer(9, 20):string())
@@ -298,7 +296,7 @@ function myproto.dissector(buffer, pinfo, tree)
             quotesGroup:add(fieldTypes.uint16, buffer(offset + 9, 2):uint())
             offset = offset + 11
         end
-    end
+    
         
 
     elseif msgTypeName == "LongOneSidedBulkQuote" then
@@ -328,7 +326,7 @@ function myproto.dissector(buffer, pinfo, tree)
             quotesGroup:add(fieldTypes.uint32, buffer(offset + 9, 4):uint())
             offset = offset + 13
         end
-    end
+    
     
 
     elseif msgTypeName == "OrderCancelReplaceRequest" then
@@ -355,7 +353,7 @@ function myproto.dissector(buffer, pinfo, tree)
             partiesGroup:add(fieldTypes.uint8, buffer(offset + 21, 1):uint())
             offset = offset + 22
         end
-    end
+    
     
 
     elseif msgTypeName == "OrderCancelRequest" then
@@ -379,7 +377,7 @@ function myproto.dissector(buffer, pinfo, tree)
             partiesGroup:add(fieldTypes.uint8, buffer(offset + 21, 1):uint())
             offset = offset + 22
         end
-    end
+    
     
     elseif msgTypeName == "MassCancelRequest" then
         -- Dissect MassCancelRequest message fields
@@ -413,7 +411,7 @@ function myproto.dissector(buffer, pinfo, tree)
             quotesGroup:add(fieldTypes.uint16, buffer(offset + 19, 2):uint())
             offset = offset + 21
         end
-    end
+    
     
     
     elseif msgTypeName == "MassCancelClearLockoutRequest" then
@@ -447,7 +445,7 @@ function myproto.dissector(buffer, pinfo, tree)
             quotesGroup:add(fieldTypes.uint16, buffer(offset + 19, 2):uint())
             offset = offset + 21
         end
-    end
+    
     
 
     elseif msgTypeName == "ExecutionReport_New" then
@@ -480,7 +478,7 @@ function myproto.dissector(buffer, pinfo, tree)
             partiesGroup:add(fieldTypes.uint8, buffer(offset + 21, 1):uint())
             offset = offset + 22
         end
-    end
+    
 
     elseif msgTypeName == "ExecutionReport_BulkQuote_PendingNew" then
         -- Dissect ExecutionReport_BulkQuote_PendingNew message fields
@@ -514,7 +512,7 @@ function myproto.dissector(buffer, pinfo, tree)
             quotesGroup:add(fieldTypes.uint16, buffer(offset + 9, 2):uint())
             offset = offset + 11
         end
-    end
+    
 
   
     elseif msgTypeName == "ExecutionReport_BulkQuote_ComponentNew" then
@@ -547,7 +545,7 @@ function myproto.dissector(buffer, pinfo, tree)
             quotesGroup:add(fieldTypes.uint16, buffer(offset + 9, 2):uint())
             offset = offset + 11
         end
-    end
+    
     
 
     elseif msgTypeName == "ExecutionReport_Rejected" then
@@ -562,7 +560,7 @@ function myproto.dissector(buffer, pinfo, tree)
         subtree:add(fieldTypes.uint16, buffer(51, 2):uint())
         subtree:add(fieldTypes.ExecutionReport_RejectedReason, buffer(53, 1):uint())
         subtree:add(fieldTypes.ExecutionReport_RejectedMessage, buffer(54, -1):string())
-    end
+    
 
     elseif msgTypeName == "ExecutionReport_Trade" then
         -- Dissect ExecutionReport_Trade message fields
@@ -583,7 +581,7 @@ function myproto.dissector(buffer, pinfo, tree)
         subtree:add(fieldTypes.LeavesQty, buffer(100, 4):uint())
         subtree:add(fieldTypes.CumQty, buffer(104, 4):uint())
         subtree:add(fieldTypes.MarketSegmentID, buffer(108, 4):uint())
-    end
+    
 
 
     elseif msgTypeName == "ExecutionReport_PendingCancel" then
@@ -604,7 +602,7 @@ function myproto.dissector(buffer, pinfo, tree)
         subtree:add(fieldTypes.Price, buffer(97, 8):uint64())
         subtree:add(fieldTypes.StopPx, buffer(105, 8):uint64())
         subtree:add(fieldTypes.MarketSegmentID, buffer(113, 4):uint())
-    end
+    
 
     elseif msgTypeName == "ExecutionReport_Canceled" then
         -- Dissect ExecutionReport_Canceled message fields
@@ -624,7 +622,7 @@ function myproto.dissector(buffer, pinfo, tree)
         subtree:add(fieldTypes.Price, buffer(97, 8):uint64())
         subtree:add(fieldTypes.StopPx, buffer(105, 8):uint64())
         subtree:add(fieldTypes.MarketSegmentID, buffer(113, 4):uint())
-    end
+    
 
     elseif msgTypeName == "ExecutionReport_PendingReplace" then
         -- Dissect ExecutionReport_PendingReplace message fields
@@ -641,7 +639,7 @@ function myproto.dissector(buffer, pinfo, tree)
         subtree:add(fieldTypes.ExecInstType, buffer(80, 1):uint())
         subtree:add(fieldTypes.TradeDate, buffer(81, 2):uint())
         subtree:add(fieldTypes.Memo, buffer(83, 20):string())
-    end
+    
     
     
     elseif msgTypeName == "ExecutionReport_PendingReplace" then
@@ -659,7 +657,7 @@ function myproto.dissector(buffer, pinfo, tree)
         subtree:add(fieldTypes.ExecInstType, buffer(80, 1):uint())
         subtree:add(fieldTypes.TradeDate, buffer(81, 2):uint())
         subtree:add(fieldTypes.Memo, buffer(83, 20):string())
-    end
+    
     
     elseif msgTypeName == "ExecutionReport_TradeCorrection" then
         -- Dissect ExecutionReport_TradeCorrection message fields
@@ -677,7 +675,7 @@ function myproto.dissector(buffer, pinfo, tree)
         subtree:add(fieldTypes.TradeType, buffer(104, 1):uint())
         subtree:add(fieldTypes.TradeReportID, buffer(105, 20):string())
         subtree:add(fieldTypes.Memo, buffer(125, 20):string())
-    end
+    
 
     elseif msgTypeName == "AllocationInstruction" then
         -- Dissect AllocationInstruction message fields
@@ -717,7 +715,7 @@ function myproto.dissector(buffer, pinfo, tree)
             
             allocationsOffset = partiesOffset
         end
-    end
+    
 
     elseif msgTypeName == "ExecutionReport_TradeCorrection" then
         -- Dissect ExecutionReport_TradeCorrection message fields
@@ -745,7 +743,7 @@ function myproto.dissector(buffer, pinfo, tree)
             partyItem:add(fieldTypes.uint8, buffer(partiesOffset + 21, 1))
             partiesOffset = partiesOffset + 22
         end
-    end
+    
     
     
     elseif msgTypeName == "ExecutionReport_TradeBreak" then
@@ -771,7 +769,7 @@ function myproto.dissector(buffer, pinfo, tree)
             partyItem:add(fieldTypes.uint8, buffer(partiesOffset + 21, 1))
             partiesOffset = partiesOffset + 22
         end
-    end
+    
 
     elseif msgTypeName == "ExecutionReport_Restatement" then
         -- Dissect ExecutionReport_Restatement message fields
@@ -819,7 +817,7 @@ function myproto.dissector(buffer, pinfo, tree)
             partyItem:add(fieldTypes.uint8, buffer(partiesOffset + 21, 1))
             partiesOffset = partiesOffset + 22
         end
-    end
+    
 
     elseif msgTypeName == "PendingMassCancel" then
         -- Dissect PendingMassCancel message fields
@@ -892,7 +890,7 @@ function myproto.dissector(buffer, pinfo, tree)
         -- Offset for the field "SendingTime"
         offset = offset + 2
         subtree:add(fieldTypes.UTCTimestampNanos, buffer(offset, 8))
-    end
+    
     
     elseif msgTypeName == "MassCancelReject" then
         -- Dissect MassCancelReject message fields
@@ -959,14 +957,14 @@ function myproto.dissector(buffer, pinfo, tree)
         -- Offset for the field "SendingTime"
         offset = offset + 1
         subtree:add(fieldTypes.UTCTimestampNanos, buffer(offset, 8))
-    end
+    
 
     elseif msgTypeName == "MassCancelDone" then
         -- Dissect MassCancelDone message fields
         subtree:add(fieldTypes.MassCancelDoneClOrdID, buffer(0, 20))
         subtree:add(fieldTypes.uint32, buffer(20, 4), "TotalAffectedOrders: " .. buffer(20, 4):uint())
         subtree:add(fieldTypes.UTCTimestampNanos, buffer(24, 8))
-    end
+    
 
     elseif msgTypeName == "OrderCancelReject" then
         -- Dissect OrderCancelReject message fields
@@ -983,7 +981,7 @@ function myproto.dissector(buffer, pinfo, tree)
             -- Optional fields are absent
             subtree:add(fieldTypes.UTCTimestampNanos, buffer(23, 8))
         end
-    end
+    
     
     elseif msgTypeName == "AllocationInstructionAck" then
         -- Dissect AllocationInstructionAck message fields
@@ -992,7 +990,7 @@ function myproto.dissector(buffer, pinfo, tree)
         subtree:add(fieldTypes.AllocStatusType, buffer(28, 1))
         subtree:add(fieldTypes.AllocRejCode, buffer(29, 1))
         subtree:add(fieldTypes.UTCTimestampNanos, buffer(30, 8))
-    end
+    
     
 
     elseif msgTypeName == "AllocationReport" then
@@ -1034,12 +1032,10 @@ function myproto.dissector(buffer, pinfo, tree)
     
             allocationsOffset = partiesOffset
         end
-    end   
+      
 
     else
         -- Unknown message type, just add the raw data to the tree
         subtree:add(buffer(), "Unknown Message Data")
     end
 end
-
-
