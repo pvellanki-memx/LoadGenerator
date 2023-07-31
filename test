@@ -6,52 +6,19 @@ conn = sqlite3.connect('trades.db')
 # Drop the 'grouped_trades' table if it exists
 conn.execute('DROP TABLE IF EXISTS grouped_trades')
 
-# Create temporary tables to store the intermediate results
-conn.execute('''CREATE TEMPORARY TABLE IF NOT EXISTS temp_ultimate_clearing_firm AS
-                 SELECT Side, Rpt_ID, 
-                        MIN(CASE WHEN Ultimate_Clearing_Firm IS NOT NULL AND Ultimate_Clearing_Firm != '' THEN Ultimate_Clearing_Firm END) AS Ultimate_Clearing_Firm
-                 FROM trades
-                 WHERE Sub_ID IS NOT NULL AND Sub_ID != ''
-                 GROUP BY Side, Rpt_ID''')
-
-conn.execute('''CREATE TEMPORARY TABLE IF NOT EXISTS temp_entering_firm_col1 AS
-                 SELECT Side, Rpt_ID, 
-                        MIN(CASE WHEN Entering_Firm_Col1 IS NOT NULL AND Entering_Firm_Col1 != '' THEN Entering_Firm_Col1 END) AS Entering_Firm_Col1
-                 FROM trades
-                 WHERE Sub_ID IS NOT NULL AND Sub_ID != ''
-                 GROUP BY Side, Rpt_ID''')
-
 # Create a new table to store the query results
-conn.execute('''CREATE TABLE grouped_trades (
-                    Side TEXT,
-                    Rpt_ID TEXT,
-                    Ultimate_Clearing_Firm TEXT,
-                    Entering_Firm_Col1 TEXT,
-                    EXCH TEXT,
-                    TRANS_TYPE TEXT,
-                    Quantity INTEGER  -- Add the Quantity column
-                 )''')
-
-# Query the data from the original table with grouping and aggregation, and insert it into the new table
-query = """
-    INSERT INTO grouped_trades (Side, Rpt_ID, Ultimate_Clearing_Firm, Entering_Firm_Col1, EXCH, TRANS_TYPE, Quantity)
-    SELECT 
-        t.Side,
-        t.Rpt_ID,
-        COALESCE(ucf.Ultimate_Clearing_Firm, '') AS Ultimate_Clearing_Firm,
-        COALESCE(efc.Entering_Firm_Col1, '') AS Entering_Firm_Col1,
-        t.EXCH,
-        t.TRANS_TYPE,
-        t.Quantity
-    FROM trades t
-    LEFT JOIN temp_ultimate_clearing_firm ucf ON t.Side = ucf.Side AND t.Rpt_ID = ucf.Rpt_ID
-    LEFT JOIN temp_entering_firm_col1 efc ON t.Side = efc.Side AND t.Rpt_ID = efc.Rpt_ID
-    WHERE t.Sub_ID IS NOT NULL AND t.Sub_ID != ''
-    GROUP BY t.Side, t.Rpt_ID, t.EXCH, t.TRANS_TYPE, t.Quantity
-"""
-
-# Execute the query to insert the data into the new table
-conn.execute(query)
+conn.execute('''CREATE TABLE grouped_trades AS
+                 SELECT 
+                     Side,
+                     Rpt_ID,
+                     Quantity,
+                     MIN(CASE WHEN Ultimate_Clearing_Firm IS NOT NULL AND Ultimate_Clearing_Firm != '' THEN Ultimate_Clearing_Firm END) AS Ultimate_Clearing_Firm,
+                     MIN(CASE WHEN Entering_Firm_Col1 IS NOT NULL AND Entering_Firm_Col1 != '' THEN Entering_Firm_Col1 END) AS Entering_Firm_Col1,
+                     EXCH,
+                     TRANS_TYPE
+                 FROM trades
+                 WHERE Sub_ID IS NOT NULL AND Sub_ID != ''
+                 GROUP BY Side, Rpt_ID, Quantity, EXCH, TRANS_TYPE''')
 
 # Commit the changes and close the connection to the original database
 conn.commit()
