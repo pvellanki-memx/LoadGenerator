@@ -11,22 +11,13 @@ conn.execute('''CREATE TABLE grouped_trades AS
                  SELECT 
                      Side,
                      Rpt_ID,
-                     Quantity,
-                     Ultimate_Clearing_Firm,
-                     Entering_Firm_Col1,
-                     Sub_ID
-                 FROM (
-                     SELECT 
-                         Side,
-                         Rpt_ID,
-                         Quantity,
-                         Ultimate_Clearing_Firm,
-                         Entering_Firm_Col1,
-                         Sub_ID,
-                         ROW_NUMBER() OVER (PARTITION BY Side, Rpt_ID ORDER BY Quantity) AS rn
-                     FROM trades
-                 )
-                 WHERE rn = 1''')
+                     FIRST_VALUE(Quantity) AS Quantity,
+                     FIRST_VALUE(Ultimate_Clearing_Firm) AS Ultimate_Clearing_Firm,
+                     FIRST_VALUE(Entering_Firm_Col1) AS Entering_Firm_Col1,
+                     FIRST_VALUE(Sub_ID) AS Sub_ID
+                 FROM trades
+                 WHERE Sub_ID IS NOT NULL AND Sub_ID != ''
+                 GROUP BY Side, Rpt_ID''')
 
 # Commit the changes and close the connection to the original database
 conn.commit()
