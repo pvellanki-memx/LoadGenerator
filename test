@@ -9,14 +9,14 @@ conn.execute('DROP TABLE IF EXISTS grouped_trades')
 # Create temporary tables to store the intermediate results
 conn.execute('''CREATE TEMPORARY TABLE IF NOT EXISTS temp_ultimate_clearing_firm AS
                  SELECT Side, Rpt_ID, 
-                        COALESCE(MIN(Ultimate_Clearing_Firm), '') AS Ultimate_Clearing_Firm
+                        MIN(CASE WHEN Ultimate_Clearing_Firm IS NOT NULL AND Ultimate_Clearing_Firm != '' THEN Ultimate_Clearing_Firm END) AS Ultimate_Clearing_Firm
                  FROM trades
                  WHERE Sub_ID IS NOT NULL AND Sub_ID != ''
                  GROUP BY Side, Rpt_ID''')
 
 conn.execute('''CREATE TEMPORARY TABLE IF NOT EXISTS temp_entering_firm_col1 AS
                  SELECT Side, Rpt_ID, 
-                        COALESCE(MIN(Entering_Firm_Col1), '') AS Entering_Firm_Col1
+                        MIN(CASE WHEN Entering_Firm_Col1 IS NOT NULL AND Entering_Firm_Col1 != '' THEN Entering_Firm_Col1 END) AS Entering_Firm_Col1
                  FROM trades
                  WHERE Sub_ID IS NOT NULL AND Sub_ID != ''
                  GROUP BY Side, Rpt_ID''')
