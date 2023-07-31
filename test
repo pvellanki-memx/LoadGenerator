@@ -18,3 +18,24 @@ output_file = 'grouped_trades_new.xlsx'
 grouped_trade_data_frame.to_excel(output_file, index=False)
 
 print(f"Data from grouped_trades_new has been successfully dumped to '{output_file}'.")
+
+
+
+
+
+
+
+query = """
+    INSERT INTO grouped_trades (Side, Rpt_ID, Ultimate_Clearing_Firm, Entering_Firm_Col1, EXCH, TRANS_TYPE, Quantity)
+    SELECT 
+        Side,
+        Rpt_ID,
+        MAX(Ultimate_Clearing_Firm) as Ultimate_Clearing_Firm,  -- Use MAX() to get the first non-null value
+        MAX(Entering_Firm_Col1) as Entering_Firm_Col1,  -- Use MAX() to get the first non-null value
+        EXCH,
+        TRANS_TYPE,
+        SUM(Quantity) as Quantity  -- Include the Quantity column and sum it up
+    FROM trades
+    WHERE Sub_ID IS NOT NULL AND Sub_ID != ''
+    GROUP BY Side, Rpt_ID, EXCH, TRANS_TYPE  -- Group by the required columns
+"""
