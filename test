@@ -24,7 +24,6 @@ print(f"Data from grouped_trades_new has been successfully dumped to '{output_fi
 
 
 
-
 query = """
     INSERT INTO grouped_trades (Side, Rpt_ID, Ultimate_Clearing_Firm, Entering_Firm_Col1, EXCH, TRANS_TYPE, Quantity)
     SELECT 
@@ -34,8 +33,8 @@ query = """
         MAX(Entering_Firm_Col1) as Entering_Firm_Col1,  -- Use MAX() to get the first non-null value
         EXCH,
         TRANS_TYPE,
-        SUM(Quantity) as Quantity  -- Include the Quantity column and sum it up
+        Quantity  -- Include the Quantity column as it is
     FROM trades
     WHERE Sub_ID IS NOT NULL AND Sub_ID != ''
-    GROUP BY Side, Rpt_ID, EXCH, TRANS_TYPE  -- Group by the required columns
+    GROUP BY Side, Rpt_ID, EXCH, TRANS_TYPE, Quantity  -- Group by the required columns, including Quantity
 """
