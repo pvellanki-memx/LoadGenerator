@@ -1,33 +1,26 @@
-import pandas as pd
 import sqlite3
-
-# Connect to the SQLite database
-conn = sqlite3.connect('trades.db')
-
-# Query the data from the grouped_trades_new table
-query = "SELECT * FROM grouped_trades_new"
-
-# Fetch the data into a pandas DataFrame
-grouped_trade_data_frame = pd.read_sql_query(query, conn)
-
-# Close the database connection
-conn.close()
-
-# Dump the DataFrame into an Excel file
-output_file = 'grouped_trades_new.xlsx'
-grouped_trade_data_frame.to_excel(output_file, index=False)
-
-print(f"Data from grouped_trades_new has been successfully dumped to '{output_file}'.")
-
-
-
-
 
 # Connect to the original SQLite database
 conn = sqlite3.connect('trades.db')
 
+# Drop the 'grouped_trades' table if it exists
+conn.execute('DROP TABLE IF EXISTS grouped_trades')
+
+# Create temporary tables to store the intermediate results
+conn.execute('''CREATE TEMPORARY TABLE IF NOT EXISTS temp_ultimate_clearing_firm AS
+                 SELECT Side, Rpt_ID, MIN(Ultimate_Clearing_Firm) AS Ultimate_Clearing_Firm
+                 FROM trades
+                 WHERE Ultimate_Clearing_Firm IS NOT NULL AND Sub_ID IS NOT NULL AND Sub_ID != ''
+                 GROUP BY Side, Rpt_ID''')
+
+conn.execute('''CREATE TEMPORARY TABLE IF NOT EXISTS temp_entering_firm_col1 AS
+                 SELECT Side, Rpt_ID, MIN(Entering_Firm_Col1) AS Entering_Firm_Col1
+                 FROM trades
+                 WHERE Entering_Firm_Col1 IS NOT NULL AND Sub_ID IS NOT NULL AND Sub_ID != ''
+                 GROUP BY Side, Rpt_ID''')
+
 # Create a new table to store the query results
-conn.execute('''CREATE TABLE IF NOT EXISTS grouped_trades (
+conn.execute('''CREATE TABLE grouped_trades (
                     Side TEXT,
                     Rpt_ID TEXT,
                     Ultimate_Clearing_Firm TEXT,
@@ -41,16 +34,18 @@ conn.execute('''CREATE TABLE IF NOT EXISTS grouped_trades (
 query = """
     INSERT INTO grouped_trades (Side, Rpt_ID, Ultimate_Clearing_Firm, Entering_Firm_Col1, EXCH, TRANS_TYPE, Quantity)
     SELECT 
-        Side,
-        Rpt_ID,
-        (SELECT Ultimate_Clearing_Firm FROM trades t1 WHERE t1.Side = t.Side AND t1.Rpt_ID = t.Rpt_ID AND t1.Ultimate_Clearing_Firm IS NOT NULL ORDER BY ROWID LIMIT 1) as Ultimate_Clearing_Firm,
-        (SELECT Entering_Firm_Col1 FROM trades t2 WHERE t2.Side = t.Side AND t2.Rpt_ID = t.Rpt_ID AND t2.Entering_Firm_Col1 IS NOT NULL ORDER BY ROWID LIMIT 1) as Entering_Firm_Col1,
-        EXCH,
-        TRANS_TYPE,
-        Quantity
+        t.Side,
+        t.Rpt_ID,
+        ucf.Ultimate_Clearing_Firm,
+        efc.Entering_Firm_Col1,
+        t.EXCH,
+        t.TRANS_TYPE,
+        t.Quantity
     FROM trades t
-    WHERE Sub_ID IS NOT NULL AND Sub_ID != ''
-    GROUP BY Side, Rpt_ID, EXCH, TRANS_TYPE, Quantity
+    LEFT JOIN temp_ultimate_clearing_firm ucf ON t.Side = ucf.Side AND t.Rpt_ID = ucf.Rpt_ID
+    LEFT JOIN temp_entering_firm_col1 efc ON t.Side = efc.Side AND t.Rpt_ID = efc.Rpt_ID
+    WHERE t.Sub_ID IS NOT NULL AND t.Sub_ID != ''
+    GROUP BY t.Side, t.Rpt_ID, t.EXCH, t.TRANS_TYPE, t.Quantity
 """
 
 # Execute the query to insert the data into the new table
