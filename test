@@ -8,19 +8,15 @@ conn.execute('DROP TABLE IF EXISTS grouped_trades')
 
 # Create a new table to store the query results
 conn.execute('''CREATE TABLE grouped_trades AS
-                 SELECT t.*
-                 FROM trades t
-                 JOIN (
-                     SELECT 
-                         Side,
-                         Rpt_ID,
-                         Quantity,
-                         MIN(CASE WHEN Ultimate_Clearing_Firm IS NOT NULL AND Ultimate_Clearing_Firm != '' THEN Ultimate_Clearing_Firm END) AS Ultimate_Clearing_Firm,
-                         MIN(CASE WHEN Entering_Firm_Col1 IS NOT NULL AND Entering_Firm_Col1 != '' THEN Entering_Firm_Col1 END) AS Entering_Firm_Col1,
-                         MIN(CASE WHEN Sub_ID IS NOT NULL AND Sub_ID != '' THEN Sub_ID END) AS Sub_ID
-                     FROM trades
-                     GROUP BY Side, Rpt_ID, Quantity
-                 ) g ON t.Side = g.Side AND t.Rpt_ID = g.Rpt_ID AND t.Quantity = g.Quantity''')
+                 SELECT 
+                     Side,
+                     Rpt_ID,
+                     Quantity,
+                     MIN(CASE WHEN Ultimate_Clearing_Firm IS NOT NULL AND Ultimate_Clearing_Firm != '' THEN Ultimate_Clearing_Firm END) AS Ultimate_Clearing_Firm,
+                     MIN(CASE WHEN Entering_Firm_Col1 IS NOT NULL AND Entering_Firm_Col1 != '' THEN Entering_Firm_Col1 END) AS Entering_Firm_Col1,
+                     MIN(CASE WHEN Sub_ID IS NOT NULL AND Sub_ID != '' THEN Sub_ID END) AS Sub_ID
+                 FROM trades
+                 GROUP BY Side, Rpt_ID''')
 
 # Commit the changes and close the connection to the original database
 conn.commit()
