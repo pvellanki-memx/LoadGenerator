@@ -8,15 +8,17 @@ conn.execute('DROP TABLE IF EXISTS grouped_trades')
 
 # Create temporary tables to store the intermediate results
 conn.execute('''CREATE TEMPORARY TABLE IF NOT EXISTS temp_ultimate_clearing_firm AS
-                 SELECT Side, Rpt_ID, MIN(Ultimate_Clearing_Firm) AS Ultimate_Clearing_Firm
+                 SELECT Side, Rpt_ID, 
+                        COALESCE(MAX(Ultimate_Clearing_Firm), '') AS Ultimate_Clearing_Firm
                  FROM trades
-                 WHERE Ultimate_Clearing_Firm IS NOT NULL AND Sub_ID IS NOT NULL AND Sub_ID != ''
+                 WHERE Sub_ID IS NOT NULL AND Sub_ID != ''
                  GROUP BY Side, Rpt_ID''')
 
 conn.execute('''CREATE TEMPORARY TABLE IF NOT EXISTS temp_entering_firm_col1 AS
-                 SELECT Side, Rpt_ID, MIN(Entering_Firm_Col1) AS Entering_Firm_Col1
+                 SELECT Side, Rpt_ID, 
+                        COALESCE(MAX(Entering_Firm_Col1), '') AS Entering_Firm_Col1
                  FROM trades
-                 WHERE Entering_Firm_Col1 IS NOT NULL AND Sub_ID IS NOT NULL AND Sub_ID != ''
+                 WHERE Sub_ID IS NOT NULL AND Sub_ID != ''
                  GROUP BY Side, Rpt_ID''')
 
 # Create a new table to store the query results
@@ -56,4 +58,3 @@ conn.commit()
 conn.close()
 
 print("Data has been successfully inserted into the 'grouped_trades' table.")
-
