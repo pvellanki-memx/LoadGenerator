@@ -16,9 +16,9 @@ conn.execute('''CREATE TABLE grouped_trades AS
                          Rpt_ID,
                          Quantity,
                          MIN(CASE WHEN Ultimate_Clearing_Firm IS NOT NULL AND Ultimate_Clearing_Firm != '' THEN Ultimate_Clearing_Firm END) AS Ultimate_Clearing_Firm,
-                         MIN(CASE WHEN Entering_Firm_Col1 IS NOT NULL AND Entering_Firm_Col1 != '' THEN Entering_Firm_Col1 END) AS Entering_Firm_Col1
+                         MIN(CASE WHEN Entering_Firm_Col1 IS NOT NULL AND Entering_Firm_Col1 != '' THEN Entering_Firm_Col1 END) AS Entering_Firm_Col1,
+                         MIN(CASE WHEN Sub_ID IS NOT NULL AND Sub_ID != '' THEN Sub_ID END) AS Sub_ID
                      FROM trades
-                     WHERE Sub_ID IS NOT NULL AND Sub_ID != ''
                      GROUP BY Side, Rpt_ID, Quantity
                  ) g ON t.Side = g.Side AND t.Rpt_ID = g.Rpt_ID AND t.Quantity = g.Quantity''')
 
