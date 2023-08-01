@@ -1,109 +1,564 @@
-Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
-SBE Header 	0	7	SBE Header 	N/A	Y	SBE Header with templateID = 11
-OrderID	7	8	UINT64	37	Y	OrderID as assigned by the exchange.
-ClOrdID	15	20	CHAR	11	Y	As stated in the order.
-ListSeqNo	35	1	UINT8	67	Y	As stated in a Bulk Quote request or 0 for NewOrderSingle request
-ExecID	36	8	UINT64	17	Y	Identifier of execution message as assigned by the exchange. The ExecID can be correlated with the Memoir OrderID value.
-OrdStatus	44	1	OrdStatusType	39	Y	The status of the order.
-OptionsSecurityID	45	8	CHAR	21035	Y	As stated in the order.
-Side	53	1	SideType	54	Y	As stated in the order.
-OrderQty	54	4	UINT32	38	Y	As stated in the order.
-OrdType	58	1	OrdType	40	Y	As stated in the order.
-Price	59	8	PriceType	44	N	As stated in the order.
-TimeInForce	67	1	TimeInForceType	59	Y	As stated in the order.
-OpenOrClose	68	1	OpenOrCloseType	77	N	As stated in the order.
-ExecInst	69	2	ExecInstType	18	Y	As stated in the order.
-TradingCapacity	71	1	TradingCapacityType	1815	Y	As stated in the order.
-RepriceFrequency	72	1	RepriceFrequencyType	21020	N	As stated in the order.
-RepriceBehavior	73	1	RepriceBehaviorType	21021	N	As stated in the order.
-LeavesQty	74	4	UINT32	151	Y	Quantity open for further execution.
-CumQty	78	4	UINT32	14	Y	Total quantity (e.g. number of contracts) filled.
-SendingTime	82	8	UTCTimestampNanos	52	Y	The time the ExecutionReport was sent. UTC timestamp since unix epoch with nanosecond precision.
-TransactTime	90	8	UTCTimestampNanos	60	Y	The time at which the transaction occurred. UTC timestamp since epoch with nanosecond precision.
-MtpGroupID	98	2	MtpGroupIDType	2362	N	As stated in the order.
-MatchTradePrevention	100	1	MatchTradePreventionType	21001	N	As stated in the order.
-CancelGroupID	101	2	UINT16	21000	N	As stated in the order.
-RiskGroupID	103	2	UINT16	21005	N	As stated in the order.
-NoPartyIDs	-	-	RepeatingGroupDimensions	453	Y	The dimensions of the Repeating Group.
-Parties	-	-	Parties Group	N/A	Y	The parties associated with the quotes.
+class ExecutionReportNew:
+    TEMPLATE_ID = 11
+    num_groups = 1
+    schema_id = 1
+    version = 0
+    BLOCK_LENGTH = 105
+
+    def __init__(self):
+        self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups)
+        self.order_id = UINT64(0)
+        self.cl_ord_id = Char('')
+        self.list_seq_no = UINT8(0)
+        self.exec_id = UINT64(0)
+        self.ord_status = OrdStatusType('')
+        self.options_security_id = CHAR('')
+        self.side = SideType('')
+        self.order_qty = UINT32(0)
+        self.ord_type = OrdType('')
+        self.price = PriceType(0, 0)
+        self.time_in_force = TimeInForceType(0)
+        self.open_or_close = OpenOrCloseType('')
+        self.exec_inst = ExecInstType(0)
+        self.trading_capacity = TradingCapacityType('')
+        self.reprice_frequency = RepriceFrequencyType(0)
+        self.reprice_behavior = RepriceBehaviorType(0)
+        self.leaves_qty = UINT32(0)
+        self.cum_qty = UINT32(0)
+        self.sending_time = UTCTimestampNanos(0)
+        self.transact_time = UTCTimestampNanos(0)
+        self.mtp_group_id = MtpGroupIDType(0)
+        self.match_trade_prevention = MatchTradePreventionType(0)
+        self.cancel_group_id = UINT16(0)
+        self.risk_group_id = UINT16(0)
+        self.RepeatingGroupDimensions = RepeatingGroupDimensions(18, 3)
+        self.parties_group = PartiesGroup()
+
+    def decode(self, buffer):
+        offset = 0
+
+        block_length, template_id = self.sbe_header.decode(buffer[offset:offset + SBEHeader.BLOCK_LENGTH])
+        offset += SBEHeader.BLOCK_LENGTH
+
+        self.order_id = UINT64(0)
+        self.order_id.decode(buffer[offset:])
+        offset += UINT64.SIZE
+
+        self.cl_ord_id = Char('')
+        self.cl_ord_id.decode(buffer[offset:])
+        offset += Char.SIZE
+
+        self.list_seq_no = UINT8(0)
+        self.list_seq_no.decode(buffer[offset:])
+        offset += UINT8.SIZE
+
+        self.exec_id = UINT64(0)
+        self.exec_id.decode(buffer[offset:])
+        offset += UINT64.SIZE
+
+        self.ord_status = OrdStatusType('')
+        self.ord_status.decode(buffer[offset:])
+        offset += OrdStatusType.SIZE
+
+        self.options_security_id = CHAR('')
+        self.options_security_id.decode(buffer[offset:])
+        offset += CHAR.SIZE
+
+        self.side = SideType('')
+        self.side.decode(buffer[offset:])
+        offset += SideType.SIZE
+
+        self.order_qty = UINT32(0)
+        self.order_qty.decode(buffer[offset:])
+        offset += UINT32.SIZE
+
+        self.ord_type = OrdType('')
+        self.ord_type.decode(buffer[offset:])
+        offset += OrdType.SIZE
+
+        self.price = PriceType(0, 0)
+        self.price.decode(buffer[offset:])
+        offset += PriceType.SIZE
+
+        self.time_in_force = TimeInForceType(0)
+        self.time_in_force.decode(buffer[offset:])
+        offset += TimeInForceType.SIZE
+
+        self.open_or_close = OpenOrCloseType('')
+        self.open_or_close.decode(buffer[offset:])
+        offset += OpenOrCloseType.SIZE
+
+        self.exec_inst = ExecInstType(0)
+        self.exec_inst.decode(buffer[offset:])
+        offset += ExecInstType.SIZE
+
+        self.trading_capacity = TradingCapacityType('')
+        self.trading_capacity.decode(buffer[offset:])
+        offset += TradingCapacityType.SIZE
+
+        self.reprice_frequency = RepriceFrequencyType(0)
+        self.reprice_frequency.decode(buffer[offset:])
+        offset += RepriceFrequencyType.SIZE
+
+        self.reprice_behavior = RepriceBehaviorType(0)
+        self.reprice_behavior.decode(buffer[offset:])
+        offset += RepriceBehaviorType.SIZE
+
+        self.leaves_qty = UINT32(0)
+        self.leaves_qty.decode(buffer[offset:])
+        offset += UINT32.SIZE
+
+        self.cum_qty = UINT32(0)
+        self.cum_qty.decode(buffer[offset:])
+        offset += UINT32.SIZE
+
+        self.sending_time = UTCTimestampNanos(0)
+        self.sending_time.decode(buffer[offset:])
+        offset += UTCTimestampNanos.SIZE
+
+        self.transact_time = UTCTimestampNanos(0)
+        self.transact_time.decode(buffer[offset:])
+        offset += UTCTimestampNanos.SIZE
+
+        self.mtp_group_id = MtpGroupIDType(0)
+        self.mtp_group_id.decode(buffer[offset:])
+        offset += MtpGroupIDType.SIZE
+
+        self.match_trade_prevention = MatchTradePreventionType(0)
+        self.match_trade_prevention.decode(buffer[offset:])
+        offset += MatchTradePreventionType.SIZE
+
+        self.cancel_group_id = UINT16(0)
+        self.cancel_group_id.decode(buffer[offset:])
+        offset += UINT16.SIZE
+
+        self.risk_group_id = UINT16(0)
+        self.risk_group_id.decode(buffer[offset:])
+        offset += UINT16.SIZE
+
+        self.RepeatingGroupDimensions = RepeatingGroupDimensions(0, 0)
+        self.RepeatingGroupDimensions.decode(buffer[offset:])
+        offset += RepeatingGroupDimensions.SIZE
+
+        self.parties_group = PartiesGroup()
+        self.parties_group.decode(buffer[offset:])
+        offset += len(buffer) - offset
+
+    def __str__(self):
+        return (
+            f"OrderID: {self.order_id.value}, ClOrdID: {self.cl_ord_id.value}, ListSeqNo: {self.list_seq_no.value}, "
+            f"ExecID: {self.exec_id.value}, OrdStatus: {self.ord_status.value}, OptionsSecurityID: {self.options_security_id.value}, "
+            f"Side: {self.side.value}, OrderQty: {self.order_qty.value}, OrdType: {self.ord_type.value}, Price: {self.price.mantissa}, "
+            f"TimeInForce: {self.time_in_force.value}, OpenOrClose: {self.open_or_close.value}, ExecInst: {self.exec_inst.value}, "
+            f"TradingCapacity: {self.trading_capacity.value}, RepriceFrequency: {self.reprice_frequency.value}, "
+            f"RepriceBehavior: {self.reprice_behavior.value}, LeavesQty: {self.leaves_qty.value}, CumQty: {self.cum_qty.value}, "
+            f"SendingTime: {self.sending_time.value}, TransactTime: {self.transact_time.value}, "
+            f"MtpGroupID: {self.mtp_group_id.value}, MatchTradePrevention: {self.match_trade_prevention.value}, "
+            f"CancelGroupID: {self.cancel_group_id.value}, RiskGroupID: {self.risk_group_id.value}, "
+            f"RepeatingGroupDimensions: BlockLength={self.RepeatingGroupDimensions.block_length}, NumGroups={self.RepeatingGroupDimensions.num_groups}, "
+            f"Parties: {self.parties_group.party_ids}"
+        )
 
 
 
 
+ER_BulkQuoyeNew:
 
 
-Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
-SBE Header	0	7	SBE Header	N/A	Y	SBE Header with templateID = 12
-ClOrdID	7	20	CHAR	11	Y	As stated in the request.
-Symbol (Underlier)	27	6	CHAR	55	Y	As stated in the request.
-TimeInForce	33	1	TimeInForceType	59	Y	As stated in the request.
-ExecInst	34	2	ExecInstType	18	Y	As stated in the request.
-TradingCapacity	36	1	TradingCapacityType	1815	Y	As stated in the request.
-SendingTime	37	8	UTCTimestampNanos	52	Y	The time the ExecutionReport was sent. UTC timestamp since unix epoch with nanosecond precision.
-TransactTime	45	8	UTCTimestampNanos	60	Y	The time at which the transaction occurred. UTC timestamp since epoch with nanosecond precision.
-MtpGroupID	53	2	MtpGroupIDType	2362	N	As stated in the request.
-MatchTradePrevention	55	1	MatchTradePreventionType	21001	N	As stated in the request.
-CancelGroupID	56	2	UINT16	21000	N	As stated in the request.
-RiskGroupID	58	2	UINT16	21005	N	As stated in the request.
-NumberOfOrders	60	1	UINT8	346	Y	The number of orders/quote entries in the request.
-NoPartyIDs	-	-	RepeatingGroupDimensions	453	Y	The dimensions of the Repeating Group.
-Parties	-	-	Parties Group	N/A	Y	The parties associated with the quotes.
+class ExecutionReportBulkQuoteNew:
+    TEMPLATE_ID = 12
+    num_groups = 1
+    schema_id = 1
+    version = 0
+    BLOCK_LENGTH = 68
+
+    def __init__(self):
+        self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups)
+        self.cl_ord_id = Char('')
+        self.symbol = Char('')
+        self.time_in_force = TimeInForceType(0)
+        self.exec_inst = ExecInstType(0)
+        self.trading_capacity = TradingCapacityType('')
+        self.sending_time = UTCTimestampNanos(0)
+        self.transact_time = UTCTimestampNanos(0)
+        self.mtp_group_id = MtpGroupIDType(0)
+        self.match_trade_prevention = MatchTradePreventionType(0)
+        self.cancel_group_id = UINT16(0)
+        self.risk_group_id = UINT16(0)
+        self.number_of_orders = UINT8(0)
+        self.RepeatingGroupDimensions = RepeatingGroupDimensions(0, 0)
+        self.parties_group = PartiesGroup()
+
+    def decode(self, buffer):
+        offset = 0
+
+        block_length, template_id = self.sbe_header.decode(buffer[offset:offset + SBEHeader.BLOCK_LENGTH])
+        offset += SBEHeader.BLOCK_LENGTH
+
+        self.cl_ord_id = Char('')
+        self.cl_ord_id.decode(buffer[offset:])
+        offset += Char.SIZE
+
+        self.symbol = Char('')
+        self.symbol.decode(buffer[offset:])
+        offset += Char.SIZE
+
+        self.time_in_force = TimeInForceType(0)
+        self.time_in_force.decode(buffer[offset:])
+        offset += TimeInForceType.SIZE
+
+        self.exec_inst = ExecInstType(0)
+        self.exec_inst.decode(buffer[offset:])
+        offset += ExecInstType.SIZE
+
+        self.trading_capacity = TradingCapacityType('')
+        self.trading_capacity.decode(buffer[offset:])
+        offset += TradingCapacityType.SIZE
+
+        self.sending_time = UTCTimestampNanos(0)
+        self.sending_time.decode(buffer[offset:])
+        offset += UTCTimestampNanos.SIZE
+
+        self.transact_time = UTCTimestampNanos(0)
+        self.transact_time.decode(buffer[offset:])
+        offset += UTCTimestampNanos.SIZE
+
+        self.mtp_group_id = MtpGroupIDType(0)
+        self.mtp_group_id.decode(buffer[offset:])
+        offset += MtpGroupIDType.SIZE
+
+        self.match_trade_prevention = MatchTradePreventionType(0)
+        self.match_trade_prevention.decode(buffer[offset:])
+        offset += MatchTradePreventionType.SIZE
+
+        self.cancel_group_id = UINT16(0)
+        self.cancel_group_id.decode(buffer[offset:])
+        offset += UINT16.SIZE
+
+        self.risk_group_id = UINT16(0)
+        self.risk_group_id.decode(buffer[offset:])
+        offset += UINT16.SIZE
+
+        self.number_of_orders = UINT8(0)
+        self.number_of_orders.decode(buffer[offset:])
+        offset += UINT8.SIZE
+
+        self.RepeatingGroupDimensions = RepeatingGroupDimensions(0, 0)
+        self.RepeatingGroupDimensions.decode(buffer[offset:])
+        offset += RepeatingGroupDimensions.SIZE
+
+        self.parties_group = PartiesGroup()
+        self.parties_group.decode(buffer[offset:])
+        offset += len(buffer) - offset
+
+    def __str__(self):
+        return (
+            f"ClOrdID: {self.cl_ord_id.value}, Symbol: {self.symbol.value}, TimeInForce: {self.time_in_force.value}, "
+            f"ExecInst: {self.exec_inst.value}, TradingCapacity: {self.trading_capacity.value}, SendingTime: {self.sending_time.value}, "
+            f"TransactTime: {self.transact_time.value}, MtpGroupID: {self.mtp_group_id.value}, MatchTradePrevention: {self.match_trade_prevention.value}, "
+            f"CancelGroupID: {self.cancel_group_id.value}, RiskGroupID: {self.risk_group_id.value}, NumberOfOrders: {self.number_of_orders.value}, "
+            f"RepeatingGroupDimensions: BlockLength={self.RepeatingGroupDimensions.block_length}, NumGroups={self.RepeatingGroupDimensions.num_groups}, "
+            f"Parties: {self.parties_group.party_ids}"
+        )
 
 
-Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
-SBE Header	0	7	SBE Header	N/A	Y	SBE Header with templateID = 13
-OrderID	7	8	UINT64	37	Y	OrderID as assigned by the exchange.
-ClOrdID	15	20	CHAR	11	Y	As stated in the request.
-ListSeqNo	35	1	UINT8	67	Y	As stated in the request.
-ExecID	36	8	UINT64	17	Y	Unique identifier of execution message as assigned by the exchange. Uniqueness is guaranteed within a single trading day. The ExecID can be correlated with the Memoir OrderID value.
-OrdStatus	44	1	OrdStatusType	39	Y	The status of the request.
-OptionsSecurityID	45	8	CHAR	21035	Y	As stated in the request.
-Side	53	1	SideType	54	Y	As stated in the request.
-OrderQty	54	4	UINT32	38	Y	As stated in the request.
-Price	58	8	PriceType	44	N	As stated in the request.
-LeavesQty	66	4	UINT32	151	Y	Quantity open for further execution.
-CumQty	70	4	UINT32	14	Y	Total quantity (e.g. number of contracts) filled.
-SendingTime	74	8	UTCTimestampNanos	52	Y	The time the ExecutionReport was sent. UTC timestamp since unix epoch with nanosecond precision.
-TransactTime	82	8	UTCTimestampNanos	60	Y	The time at which the transaction occurred. UTC timestamp since epoch with nanosecond precision.
+
+ER_ComponentNew:
+
+
+class ExecutionReportBulkQuoteNew:
+    TEMPLATE_ID = 12
+    num_groups = 1
+    schema_id = 1
+    version = 0
+    BLOCK_LENGTH = 68
+
+    def __init__(self):
+        self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups)
+        self.cl_ord_id = Char('')
+        self.symbol = Char('')
+        self.time_in_force = TimeInForceType(0)
+        self.exec_inst = ExecInstType(0)
+        self.trading_capacity = TradingCapacityType('')
+        self.sending_time = UTCTimestampNanos(0)
+        self.transact_time = UTCTimestampNanos(0)
+        self.mtp_group_id = MtpGroupIDType(0)
+        self.match_trade_prevention = MatchTradePreventionType(0)
+        self.cancel_group_id = UINT16(0)
+        self.risk_group_id = UINT16(0)
+        self.number_of_orders = UINT8(0)
+        self.RepeatingGroupDimensions = RepeatingGroupDimensions(0, 0)
+        self.parties_group = PartiesGroup()
+
+    def decode(self, buffer):
+        offset = 0
+
+        block_length, template_id = self.sbe_header.decode(buffer[offset:offset + SBEHeader.BLOCK_LENGTH])
+        offset += SBEHeader.BLOCK_LENGTH
+
+        self.cl_ord_id = Char('')
+        self.cl_ord_id.decode(buffer[offset:])
+        offset += Char.SIZE
+
+        self.symbol = Char('')
+        self.symbol.decode(buffer[offset:])
+        offset += Char.SIZE
+
+        self.time_in_force = TimeInForceType(0)
+        self.time_in_force.decode(buffer[offset:])
+        offset += TimeInForceType.SIZE
+
+        self.exec_inst = ExecInstType(0)
+        self.exec_inst.decode(buffer[offset:])
+        offset += ExecInstType.SIZE
+
+        self.trading_capacity = TradingCapacityType('')
+        self.trading_capacity.decode(buffer[offset:])
+        offset += TradingCapacityType.SIZE
+
+        self.sending_time = UTCTimestampNanos(0)
+        self.sending_time.decode(buffer[offset:])
+        offset += UTCTimestampNanos.SIZE
+
+        self.transact_time = UTCTimestampNanos(0)
+        self.transact_time.decode(buffer[offset:])
+        offset += UTCTimestampNanos.SIZE
+
+        self.mtp_group_id = MtpGroupIDType(0)
+        self.mtp_group_id.decode(buffer[offset:])
+        offset += MtpGroupIDType.SIZE
+
+        self.match_trade_prevention = MatchTradePreventionType(0)
+        self.match_trade_prevention.decode(buffer[offset:])
+        offset += MatchTradePreventionType.SIZE
+
+        self.cancel_group_id = UINT16(0)
+        self.cancel_group_id.decode(buffer[offset:])
+        offset += UINT16.SIZE
+
+        self.risk_group_id = UINT16(0)
+        self.risk_group_id.decode(buffer[offset:])
+        offset += UINT16.SIZE
+
+        self.number_of_orders = UINT8(0)
+        self.number_of_orders.decode(buffer[offset:])
+        offset += UINT8.SIZE
+
+        self.RepeatingGroupDimensions = RepeatingGroupDimensions(0, 0)
+        self.RepeatingGroupDimensions.decode(buffer[offset:])
+        offset += RepeatingGroupDimensions.SIZE
+
+        self.parties_group = PartiesGroup()
+        self.parties_group.decode(buffer[offset:])
+        offset += len(buffer) - offset
+
+    def __str__(self):
+        return (
+            f"ClOrdID: {self.cl_ord_id.value}, Symbol: {self.symbol.value}, TimeInForce: {self.time_in_force.value}, "
+            f"ExecInst: {self.exec_inst.value}, TradingCapacity: {self.trading_capacity.value}, SendingTime: {self.sending_time.value}, "
+            f"TransactTime: {self.transact_time.value}, MtpGroupID: {self.mtp_group_id.value}, MatchTradePrevention: {self.match_trade_prevention.value}, "
+            f"CancelGroupID: {self.cancel_group_id.value}, RiskGroupID: {self.risk_group_id.value}, NumberOfOrders: {self.number_of_orders.value}, "
+            f"RepeatingGroupDimensions: BlockLength={self.RepeatingGroupDimensions.block_length}, NumGroups={self.RepeatingGroupDimensions.num_groups}, "
+            f"Parties: {self.parties_group.party_ids}"
+        )
+
+
+ER_Rejected:
+
+class ExecutionReportRejected:
+    TEMPLATE_ID = 14
+    num_groups = 1
+    schema_id = 1
+    version = 0
+    BLOCK_LENGTH = 64
+
+    def __init__(self):
+        self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups)
+        self.cl_ord_id = Char('')
+        self.list_seq_no = UINT8(0)
+        self.exec_id = UINT64(0)
+        self.ord_status = OrdStatusType(0)
+        self.reject_reason = OrderRejectReasonCode(0)
+        self.options_security_id = OptionsSecurityID('')
+        self.side = SideType('')
+        self.leaves_qty = UINT32(0)
+        self.cum_qty = UINT32(0)
+        self.sending_time = UTCTimestampNanos(0)
+
+    def decode(self, buffer):
+        offset = 0
+
+        block_length, template_id = self.sbe_header.decode(buffer[offset:offset + SBEHeader.BLOCK_LENGTH])
+        offset += SBEHeader.BLOCK_LENGTH
+
+        self.cl_ord_id = Char('')
+        self.cl_ord_id.decode(buffer[offset:])
+        offset += Char.SIZE
+
+        self.list_seq_no = UINT8(0)
+        self.list_seq_no.decode(buffer[offset:])
+        offset += UINT8.SIZE
+
+        self.exec_id = UINT64(0)
+        self.exec_id.decode(buffer[offset:])
+        offset += UINT64.SIZE
+
+        self.ord_status = OrdStatusType(0)
+        self.ord_status.decode(buffer[offset:])
+        offset += OrdStatusType.SIZE
+
+        self.reject_reason = OrderRejectReasonCode(0)
+        self.reject_reason.decode(buffer[offset:])
+        offset += OrderRejectReasonCode.SIZE
+
+        self.options_security_id = OptionsSecurityID('')
+        self.options_security_id.decode(buffer[offset:])
+        offset += OptionsSecurityID.SIZE
+
+        self.side = SideType('')
+        self.side.decode(buffer[offset:])
+        offset += SideType.SIZE
+
+        self.leaves_qty = UINT32(0)
+        self.leaves_qty.decode(buffer[offset:])
+        offset += UINT32.SIZE
+
+        self.cum_qty = UINT32(0)
+        self.cum_qty.decode(buffer[offset:])
+        offset += UINT32.SIZE
+
+        self.sending_time = UTCTimestampNanos(0)
+        self.sending_time.decode(buffer[offset:])
+        offset += UTCTimestampNanos.SIZE
+
+    def __str__(self):
+        return (
+            f"ClOrdID: {self.cl_ord_id.value}, ListSeqNo: {self.list_seq_no.value}, ExecID: {self.exec_id.value}, "
+            f"OrdStatus: {self.ord_status.value}, RejectReason: {self.reject_reason.value}, OptionsSecurityID: {self.options_security_id.value}, "
+            f"Side: {self.side.value}, LeavesQty: {self.leaves_qty.value}, CumQty: {self.cum_qty.value}, SendingTime: {self.sending_time.value}"
+        )
 
 
 
+ER_Trade:
 
-Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
-SBE Header 	0	7	SBE Header	N/A	Y	SBE Header with templateID = 14
-ClOrdID	7	20	CHAR	11	Y	As stated in the order.
-ListSeqNo	27	1	UINT8	67	Y	As stated in the Bulk Quote request or 0 for NewOrderSingle request
-ExecID	28	8	UINT64	17	Y	Unique identifier of execution message as assigned by the exchange. Uniqueness is guaranteed within a single trading day. The ExecID can be correlated with the Memoir OrderID value.
-OrdStatus	36	1	OrdStatusType	39	Y	The status of the order.
-RejectReason	37	2	OrderRejectReasonCode	103	Y	Reason code for order rejection.
-OptionsSecurityID	39	8	CHAR	21035	Y	As stated in the order.
-Side	47	1	SideType	54	Y	As stated in the order. If the order was a Bulk Quote this field will have the value 'B' = “As Defined”.
-LeavesQty	48	4	UINT32	151	Y	Quantity open for further execution.
-CumQty	52	4	UINT32	14	Y	Total quantity (e.g. number of contracts) filled.
-SendingTime	56	8	UTCTimestampNanos	52	Y	The time the ExecutionReport was sent. UTC timestamp since unix epoch with nanosecond precision.
+class ExecutionReportTrade:
+    TEMPLATE_ID = 15
+    num_groups = 1
+    schema_id = 1
+    version = 0
+    BLOCK_LENGTH = 106
 
+    def __init__(self):
+        self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups)
+        self.order_id = UINT64(0)
+        self.cl_ord_id = Char('')
+        self.list_seq_no = UINT8(0)
+        self.trd_match_id = UINT64(0)
+        self.exec_id = UINT64(0)
+        self.ord_status = OrdStatusType(0)
+        self.options_security_id = OptionsSecurityID('')
+        self.side = SideType('')
+        self.last_qty = UINT32(0)
+        self.last_px = PriceType(0)
+        self.leaves_qty = UINT32(0)
+        self.cum_qty = UINT32(0)
+        self.sending_time = UTCTimestampNanos(0)
+        self.transact_time = UTCTimestampNanos(0)
+        self.last_liquidity_ind = LastLiquidityIndType(0)
+        self.last_mkt = ExchangeCode(0)
+        self.open_or_close = OpenOrCloseType('O')
+        self.trading_capacity = TradingCapacityType(0)
+        self.contra_trading_capacity = TradingCapacityType(0)
 
+    def decode(self, buffer):
+        offset = 0
 
-Field	Offset	Length	Type	Tag Ref Num	Req'd	Description
-SBE Header 	0	7	SBE Header	N/A	Y	SBE Header with templateID = 15
-OrderID	7	8	UINT64	37	Y	OrderID as assigned by the exchange.
-ClOrdID	15	20	CHAR	11	Y	The unique identifier as specified by the client.
-ListSeqNo	35	1	UINT8	67	Y	As stated in Bulk Quote request or 0 for NewOrderSingle request
-TrdMatchID	36	8	UINT64	880	Y	Identifier assigned to the Trade by the matching system. In case of executions on orders routed to another exchange, the TrdMatchID field will be filled on a best-effort basis.
-ExecID	44	8	UINT64	17	Y	Unique identifier of execution message as assigned by the exchange. Uniqueness is guaranteed within a single trading day. The ExecID can be correlated with the Memoir OrderID value.
-OrdStatus	52	1	OrdStatusType	39	Y	The status of the order.
-OptionsSecurityID	53	8	CHAR	21035	Y	As stated in the order.
-Side	61	1	SideType	54	Y	As stated in the order
-LastQty	62	4	UINT32	32	Y	Quantity (e.g. contracts) bought/sold on this (last) fill.
-LastPx	66	8	PriceType	31	Y	Price of this (last) fill.
-LeavesQty	74	4	UINT32	151	Y	Quantity open for further execution.
-CumQty	78	4	UINT32	14	Y	Total quantity (e.g. number of contracts) filled.
-SendingTime	82	8	UTCTimestampNanos	52	Y	The time the ExecutionReport was sent. UTC timestamp since unix epoch with nanosecond precision.
-TransactTime	90	8	UTCTimestampNanos	60	Y	The time at which the transaction occurred. UTC timestamp since epoch with nanosecond precision.
-LastLiquidityInd	98	1	LastLiquidityIndType	851	Y	Indicator denoting whether the referenced order removed liquidity from or added liquidity to the MEMX book.
-LastMkt	99	4	ExchangeCode	30	Y	Market of execution for last fill, or an indication of the market where an order was routed.
-OpenOrClose	103	1	OpenOrCloseType	77	Y	As stated in the order.
-TradingCapacity	104	1	TradingCapacityType	1815	Y	As stated in the order.
-ContraTradingCapacity	105	1	TradingCapacityType	21036	Y	TradingCapacity of the contra order.
-NoPartyIDs	-	-	RepeatingGroupDimensions	453	Y	The dimensions of the Repeating Group.
-Parties	-	-	Parties Group	N/A	N	The parties associated with the quotes.
+        block_length, template_id = self.sbe_header.decode(buffer[offset:offset + SBEHeader.BLOCK_LENGTH])
+        offset += SBEHeader.BLOCK_LENGTH
+
+        self.order_id = UINT64(0)
+        self.order_id.decode(buffer[offset:])
+        offset += UINT64.SIZE
+
+        self.cl_ord_id = Char('')
+        self.cl_ord_id.decode(buffer[offset:])
+        offset += Char.SIZE
+
+        self.list_seq_no = UINT8(0)
+        self.list_seq_no.decode(buffer[offset:])
+        offset += UINT8.SIZE
+
+        self.trd_match_id = UINT64(0)
+        self.trd_match_id.decode(buffer[offset:])
+        offset += UINT64.SIZE
+
+        self.exec_id = UINT64(0)
+        self.exec_id.decode(buffer[offset:])
+        offset += UINT64.SIZE
+
+        self.ord_status = OrdStatusType(0)
+        self.ord_status.decode(buffer[offset:])
+        offset += OrdStatusType.SIZE
+
+        self.options_security_id = OptionsSecurityID('')
+        self.options_security_id.decode(buffer[offset:])
+        offset += OptionsSecurityID.SIZE
+
+        self.side = SideType('')
+        self.side.decode(buffer[offset:])
+        offset += SideType.SIZE
+
+        self.last_qty = UINT32(0)
+        self.last_qty.decode(buffer[offset:])
+        offset += UINT32.SIZE
+
+        self.last_px = PriceType(0)
+        self.last_px.decode(buffer[offset:])
+        offset += PriceType.MANTISSA_SIZE
+
+        self.leaves_qty = UINT32(0)
+        self.leaves_qty.decode(buffer[offset:])
+        offset += UINT32.SIZE
+
+        self.cum_qty = UINT32(0)
+        self.cum_qty.decode(buffer[offset:])
+        offset += UINT32.SIZE
+
+        self.sending_time = UTCTimestampNanos(0)
+        self.sending_time.decode(buffer[offset:])
+        offset += UTCTimestampNanos.SIZE
+
+        self.transact_time = UTCTimestampNanos(0)
+        self.transact_time.decode(buffer[offset:])
+        offset += UTCTimestampNanos.SIZE
+
+        self.last_liquidity_ind = LastLiquidityIndType(0)
+        self.last_liquidity_ind.decode(buffer[offset:])
+        offset += LastLiquidityIndType.SIZE
+
+        self.last_mkt = ExchangeCode(0)
+        self.last_mkt.decode(buffer[offset:])
+        offset += ExchangeCode.SIZE
+
+        self.open_or_close = OpenOrCloseType('O')
+        self.open_or_close.decode(buffer[offset:])
+        offset += OpenOrCloseType.SIZE
+
+        self.trading_capacity = TradingCapacityType(0)
+        self.trading_capacity.decode(buffer[offset:])
+        offset += TradingCapacityType.SIZE
+
+        self.contra_trading_capacity = TradingCapacityType(0)
+        self.contra_trading_capacity.decode(buffer[offset:])
+        offset += TradingCapacityType.SIZE
+
+    def __str__(self):
+        return (
+            f"OrderID: {self.order_id.value}, ClOrdID: {self.cl_ord_id.value}, ListSeqNo: {self.list_seq_no.value}, "
+            f"TrdMatchID: {self.trd_match_id.value}, ExecID: {self.exec_id.value}, OrdStatus: {self.ord_status.value}, "
+            f"OptionsSecurityID: {self.options_security_id.value}, Side: {self.side.value}, LastQty: {self.last_qty.value}, "
+            f"LastPx: {self.last_px.value}, LeavesQty: {self.leaves_qty.value}, CumQty: {self.cum_qty.value}, SendingTime: {self.sending_time.value}, "
+            f"TransactTime: {self.transact_time.value}, LastLiquidityInd: {self.last_liquidity_ind.value}, LastMkt: {self.last_mkt.value}, "
+            f"OpenOrClose: {self.open_or_close.value}, TradingCapacity: {self.trading_capacity.value}, ContraTradingCapacity: {self.contra_trading_capacity.value}"
+        )
