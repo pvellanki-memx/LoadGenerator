@@ -1,57 +1,62 @@
 OrdStatusType (FIX tag 39)	
 	
-Indicates the status of an order.	
-	
-OrdStatusType is a 1-byte CHAR value.	
-	
-Value	Name
-'0'	New
-'1'	PartialFilled
-'2'	Filled
-'4'	Canceled
-'6'	PendingCancel
-'8'	Rejected
-'E'	PendingReplace
-'C'	Expired
+class OrdStatusType:
+    SIZE = 1
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return self.value.encode()
+
+    def decode(self, buffer):
+        self.value = buffer.decode()
+
 
 
 LastLiquidityIndType (FIX tag 851)		
 		
-Indicates the liquidity code for this execution.		
-		
-LastLiquidityIndType is a 1-byte UINT8 value.		
-		
-Value	Name	Description
-1	Added	The order added displayed liquidity to the Exchange book.
-2	Removed	The order removed liquidity from the Exchange book.
+class LastLiquidityIndType:
+    SIZE = 1
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('>B', self.value)
+
+    def decode(self, buffer):
+        self.value = unpack_from('>B', buffer)[0]
 
 
 
 OrdRejReason is a 2-byte UINT16 value.
 
+class OrdRejReason:
+    SIZE = 2
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('>H', self.value)
+
+    def decode(self, buffer):
+        self.value = unpack_from('>H', buffer)[0]
+
+
+
+
 ExchangeCode (used in FIX tag 30)	
-	
-ExchangeCode (MIC code) indicates the market of execution for last fill, or an indication of the market where an order was routed. MIC code are maintained here 	
-Market identifier codes | ISO20022 .	
-	
-ExchangeCode is a 4-byte CHAR value.	
-	
-Value	Market Name
-Value	Market Name
-AMXO	NYSE AMEX OPTIONS
-XBOX	BOX OPTIONS EXCHANGE
-XCBO	CBOE GLOBAL MARKETS INC.
-EMLD	MIAX EMERALD, LLC
-EDGO	CBOE EDGX OPTIONS EXCHANGE
-GMNI	ISE GEMINI EXCHANGE
-XISX	INTERNATIONAL SECURITIES EXCHANGE, LLC
-MCRY	ISE MERCURY, LLC
-XMIO	MIAMI INTERNATIONAL SECURITIES EXCHANGE
-ARCO	NYSE ARCA OPTIONS
-MPRL	MIAX PEARL, LLC
-XNDQ	NASDAQ OPTIONS MARKET
-XBXO	NASDAQ OMX BX OPTIONS
-MXOP	MEMX OPTIONS EXCHANGE
-C2OX	CBOE C2 OPTIONS EXCHANGE
-XPHO	PHILADELPHIA OPTIONS EXCHANGE
-BATO	CBOE BZX OPTIONS EXCHANGE
+class ExchangeCode:
+    SIZE = 4
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return self.value.encode()
+
+    def decode(self, buffer):
+        self.value = buffer.decode()
+
