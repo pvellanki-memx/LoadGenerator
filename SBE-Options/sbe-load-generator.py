@@ -164,11 +164,11 @@ def generate_message(message_type,session_name):
         price = PriceType(112,0)  # Set the order type to "Limit"
         time_in_force = TimeInForceType(value=TimeInForceType.DAY)  # Set the time in force to "Day"
         exec_inst = ExecInstType(value=ExecInstType.ParticipateDoNotInitiate)  # Set the execution instructions
-        trading_capacity = TradingCapacityType(value=TradingCapacityType.CUSTOMER)  # Set the trading capacity
+        trading_capacity = TradingCapacityType(value=TradingCapacityType.MARKET_MAKER)  # Set the trading capacity
         efid = connection_config[session_name]['EFID']
         party_id = PartyID(efid)
         party_id_source = PartyIDSource('D')
-        party_role = PartyRoleType('CUSTOMER')
+        party_role = PartyRoleType(1)
         parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role]])]
 
         # Create an instance of NewOrderSingle and set the field values
@@ -179,13 +179,14 @@ def generate_message(message_type,session_name):
             side=side,
             order_qty=order_qty,
             ord_type=ord_type,
+            price=price,
             time_in_force=time_in_force,
             exec_inst=exec_inst,
             trading_capacity=trading_capacity,
-            parties=parties
+            parties_group=parties
         )
 
-        unsequenced_message = struct.pack('!BH', 104, 102)  # MessageType=104, MessageLength=6, TCP Header Length=102
+        unsequenced_message = struct.pack('!BH', 104, 91)  # MessageType=104, MessageLength=6, TCP Header Length=102
         # Encode the NewOrderSingle instance
         encoded_message = new_order_single.encode()
         message = unsequenced_message + encoded_message
@@ -201,9 +202,9 @@ def generate_message(message_type,session_name):
         # Generate ShortTwoSideBulkQuote message
         sending_time = UTCTimestampNanos(int(time.time() * 10**9))
         cl_ord_id = ''.join(choices(string.ascii_uppercase + string.digits, k=20))
-        time_in_force = TimeInForceType(1)
-        exec_inst = ExecInstType(0)
-        trading_capacity = TradingCapacityType(1)
+        time_in_force = TimeInForceType(value=TimeInForceType.DAY)
+        exec_inst = ExecInstType(value=ExecInstType.ParticipateDoNotInitiate)
+        trading_capacity = TradingCapacityType(value=TradingCapacityType.MARKET_MAKER)
         mtp_group_id = MtpGroupIDType(1)
         match_trade_prevention = MatchTradePreventionType(1)
         cancel_group_id = UINT16(1)
@@ -211,10 +212,10 @@ def generate_message(message_type,session_name):
         efid = connection_config[session_name]['EFID']
         party_id = PartyID(efid)
         party_id_source = PartyIDSource('D')
-        party_role = PartyRoleType('CUSTOMER')
+        party_role = PartyRoleType(1)
         parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role]])]
-        quote1 = ShortTwoSidedQuote(list_seq_no=1, options_security_id='AAPL', bid_size=10, bid_mantissa=100,offer_size=20,offer_mantissa=150)
-        quote2 = ShortTwoSidedQuote(list_seq_no=2, options_security_id='TSLA123', bid_size=15,bid_mantissa=200, offer_size=25, offer_mantissa=250)
+        quote1 = ShortTwoSidedQuote(list_seq_no=1, options_security_id='C0110002', bid_size=10, bid_mantissa=100,offer_size=20,offer_mantissa=150)
+        quote2 = ShortTwoSidedQuote(list_seq_no=2, options_security_id='C0110003', bid_size=15,bid_mantissa=200, offer_size=25, offer_mantissa=250)
 
         quotes = [quote1, quote2]
         
@@ -235,7 +236,7 @@ def generate_message(message_type,session_name):
 
         # Encode the ShortTwoSideBulkQuote instance
         encoded_message = short_two_side_bulk_quote.encode()
-        unsequenced_message = struct.pack('!BH', 104, 102)  # MessageType=104, MessageLength=6, TCP Header Length=102
+        unsequenced_message = struct.pack('!BH', 104, 126)  # MessageType=104, MessageLength=6, TCP Header Length=102
         message = unsequenced_message + encoded_message
 
         # Print the encoded message
@@ -248,9 +249,9 @@ def generate_message(message_type,session_name):
         # Generate LongTwoSideBulkQuote message
         sending_time = UTCTimestampNanos(int(time.time() * 10**9))
         cl_ord_id = ''.join(choices(string.ascii_uppercase + string.digits, k=20))
-        time_in_force = TimeInForceType(0)
-        exec_inst = ExecInstType(0)
-        trading_capacity = TradingCapacityType(0)
+        time_in_force = TimeInForceType(value=TimeInForceType.DAY)
+        exec_inst = ExecInstType(value=ExecInstType.ParticipateDoNotInitiate)
+        trading_capacity = TradingCapacityType(value=TradingCapacityType.MARKET_MAKER)
         mtp_group_id = MtpGroupIDType(0)
         match_trade_prevention = MatchTradePreventionType(0)
         cancel_group_id = UINT16(0)
@@ -258,10 +259,10 @@ def generate_message(message_type,session_name):
         efid = connection_config[session_name]['EFID']
         party_id = PartyID(efid)
         party_id_source = PartyIDSource('D')
-        party_role = PartyRoleType('CUSTOMER')
+        party_role = PartyRoleType(1)
         parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role]])]
-        quote1 = LongTwoSidedQuote(list_seq_no=1, options_security_id='AAPL', bid_size=10, bid_px=100,offer_size=20,offer_px=150)
-        quote2 = LongTwoSidedQuote(list_seq_no=2, options_security_id='TSLA123',bid_size=15,bid_px=200, offer_size=25, offer_px=250)
+        quote1 = LongTwoSidedQuote(list_seq_no=1, options_security_id='C0110002', bid_size=10, bid_px=100,offer_size=20,offer_px=150)
+        quote2 = LongTwoSidedQuote(list_seq_no=2, options_security_id='C0110003',bid_size=15,bid_px=200, offer_size=25, offer_px=250)
 
         quotes = [quote1, quote2]
         
@@ -282,7 +283,7 @@ def generate_message(message_type,session_name):
 
         # Encode the LongTwoSideBulkQuote instance
         encoded_message = long_two_side_bulk_quote.encode()
-        unsequenced_message = struct.pack('!BH', 104, 102)  # MessageType=104, MessageLength=6, TCP Header Length=102
+        unsequenced_message = struct.pack('!BH', 104, 101)  # MessageType=104, MessageLength=6, TCP Header Length=102
         message = unsequenced_message + encoded_message
 
         # Print the encoded messag´
@@ -294,9 +295,9 @@ def generate_message(message_type,session_name):
     elif message_type == 'ShortOneSideBulkQuote':
         sending_time = UTCTimestampNanos(int(time.time() * 10**9))
         cl_ord_id = ''.join(choices(string.ascii_uppercase + string.digits, k=20))
-        time_in_force = TimeInForceType(0)
-        exec_inst = ExecInstType(0)
-        trading_capacity = TradingCapacityType(0)
+        time_in_force = TimeInForceType(value=TimeInForceType.DAY)
+        exec_inst = ExecInstType(value=ExecInstType.ParticipateDoNotInitiate)
+        trading_capacity = TradingCapacityType(value=TradingCapacityType.MARKET_MAKER)
         mtp_group_id = MtpGroupIDType(0)
         match_trade_prevention = MatchTradePreventionType(0)
         cancel_group_id = UINT16(0)
@@ -304,10 +305,10 @@ def generate_message(message_type,session_name):
         efid = connection_config[session_name]['EFID']
         party_id = PartyID(efid)
         party_id_source = PartyIDSource('D')
-        party_role = PartyRoleType('CUSTOMER')
+        party_role = PartyRoleType(1)
         parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role]])]
-        quote1 = ShortOneSideQuote(list_seq_no=1, options_security_id='AAPL', side = 1,quantity=10, price=100)
-        quote2 = ShortOneSideQuote(list_seq_no=2, options_security_id='TSLA123',side=2, quantity=15, price=200)
+        quote1 = ShortOneSideQuote(list_seq_no=1, options_security_id='C0110002', side = SideType(value=SideType.BUY),quantity=10, price=100)
+        quote2 = ShortOneSideQuote(list_seq_no=2, options_security_id='C0110003',side=SideType(value=SideType.SELL), quantity=15, price=200)
 
         quotes = [quote1, quote2]
         
@@ -328,7 +329,7 @@ def generate_message(message_type,session_name):
 
         # Encode the ShortTwoSideBulkQuote instance
         encoded_message = short_one_side_bulk_quote.encode()
-        unsequenced_message = struct.pack('!BH', 104, 102)  # MessageType=104, MessageLength=6, TCP Header Length=102
+        unsequenced_message = struct.pack('!BH', 104, 88)  # MessageType=104, MessageLength=6, TCP Header Length=102
         message = unsequenced_message + encoded_message
 
         # Print the encoded message
@@ -340,9 +341,9 @@ def generate_message(message_type,session_name):
         # Generate LongOneSideBulkQuote message
         sending_time = UTCTimestampNanos(int(time.time() * 10**9))
         cl_ord_id = ''.join(choices(string.ascii_uppercase + string.digits, k=20))
-        time_in_force = TimeInForceType(0)
-        exec_inst = ExecInstType(0)
-        trading_capacity = TradingCapacityType(0)
+        time_in_force = TimeInForceType(value=TimeInForceType.DAY)
+        exec_inst = ExecInstType(value=ExecInstType.ParticipateDoNotInitiate)
+        trading_capacity = TradingCapacityType(value=TradingCapacityType.MARKET_MAKER)
         mtp_group_id = MtpGroupIDType(0)
         match_trade_prevention = MatchTradePreventionType(0)
         cancel_group_id = UINT16(0)
@@ -350,10 +351,10 @@ def generate_message(message_type,session_name):
         efid = connection_config[session_name]['EFID']
         party_id = PartyID(efid)
         party_id_source = PartyIDSource('D')
-        party_role = PartyRoleType('CUSTOMER')
+        party_role = PartyRoleType(1)
         parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role]])]
-        quote1 = LongOneSideQuote(list_seq_no=1, options_security_id='AAPL', side=1,quantity=10, price=100)
-        quote2 = LongOneSideQuote(list_seq_no=2, options_security_id='TSLA123', side=2,quantity=15, price=200)
+        quote1 = LongOneSideQuote(list_seq_no=1, options_security_id='C0110002', side=SideType(value=SideType.BUY),quantity=10, price=100)
+        quote2 = LongOneSideQuote(list_seq_no=2, options_security_id='C0110003', side=SideType(value=SideType.SELL),quantity=15, price=200)
 
         quotes = [quote1, quote2]
         
@@ -374,7 +375,7 @@ def generate_message(message_type,session_name):
 
        
         encoded_message = long_one_side_bulk_quote.encode()
-        unsequenced_message = struct.pack('!BH', 104, 102)  # MessageType=104, MessageLength=6, TCP Header Length=102
+        unsequenced_message = struct.pack('!BH', 104, 90)  # MessageType=104, MessageLength=6, TCP Header Length=102
         message = unsequenced_message + encoded_message
 
         # Print the encoded message
@@ -441,16 +442,3 @@ def main():
 # Start the main execution
 if __name__ == '__main__':
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
