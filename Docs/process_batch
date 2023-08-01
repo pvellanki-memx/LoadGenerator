@@ -1,31 +1,35 @@
 import sqlite3
-import pandas as pd
 
 # Connect to the SQLite database
 conn = sqlite3.connect('trades.db')
 
-# Create a new table to store the query results
+# Drop the 'grouped_trades_summary' table if it exists
+conn.execute('DROP TABLE IF EXISTS grouped_trades_summary')
+
+# Create a new table to store the summarized data
 conn.execute('''CREATE TABLE IF NOT EXISTS grouped_trades_summary (
                     Side TEXT,
                     Sub_ID TEXT,
                     Ultimate_Clearing_Firm TEXT,
+                    Entering_Firm_Col1 TEXT,
                     EXCH TEXT,
                     TRANS_TYPE TEXT,
                     Total_Quantity INTEGER
                  )''')
 
-# Query the data from the grouped_trades table with grouping and summing the quantities
+# Query the data from the 'grouped_trades' table with grouping and summing the quantities
 query_grouped = """
-    INSERT INTO grouped_trades_summary (Side, Sub_ID, Ultimate_Clearing_Firm, EXCH, TRANS_TYPE, Total_Quantity)
+    INSERT INTO grouped_trades_summary (Side, Sub_ID, Ultimate_Clearing_Firm, Entering_Firm_Col1, EXCH, TRANS_TYPE, Total_Quantity)
     SELECT 
         Side,
         Sub_ID,
         Ultimate_Clearing_Firm,
+        Entering_Firm_Col1,
         EXCH,
         TRANS_TYPE,
         SUM(Quantity) AS Total_Quantity
     FROM grouped_trades
-    GROUP BY Side, Sub_ID, Ultimate_Clearing_Firm, EXCH, TRANS_TYPE
+    GROUP BY Side, Sub_ID, Ultimate_Clearing_Firm, Entering_Firm_Col1, EXCH, TRANS_TYPE
 """
 
 # Execute the query to insert the data into the new table
