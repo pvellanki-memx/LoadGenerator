@@ -19,28 +19,16 @@ class SBEHeader:
         return block_length, template_id, schema_id, version, num_groups
 
 
-class PriceType:
-    def __init__(self, mantissa, exponent=None):
-        self.mantissa = mantissa
-        self.exponent = exponent
-
-    def encode(self):
-        buffer = pack('>Q',self.mantissa)
-        return buffer
-
-    def decode(self, buffer):
-        self.exponent, _, self.mantissa = unpack_from('>Q', buffer)
-
 class OrdType:
-    MARKET = 1
-    LIMIT = 2
+    MARKET = '1'
+    LIMIT = '2'
 
     SIZE = 1
     def __init__(self, value):
         self.value = value
 
     def encode(self):
-        buffer = pack('>B', self.value)
+        buffer = pack('s', self.value.encode())
         return buffer
 
     def decode(self, buffer):
@@ -63,14 +51,15 @@ class BooleanType:
 
 
 class SideType:
-    BUY = 1
-    SELL = 2
-    SIZE = 1
+    BUY = '1'
+    SELL = '2'
+    SIZE = '1'
     def __init__(self, value):
         self.value = value
+        print()
 
     def encode(self):
-        buffer = pack('>B', self.value)
+        buffer = pack('s', self.value.encode())
         return buffer
 
     def decode(self, buffer):
@@ -102,21 +91,33 @@ class UINT8:
 
 
     
+class PriceType:
+    MANTISSA_SIZE = 8
+    EXPONENT = -8
 
-class ShortPriceType:
-    def __init__(self, mantissa, exponent):
+    def __init__(self, mantissa, exponent=None):
         self.mantissa = mantissa
-        self.exponent = exponent
 
     def encode(self):
-        buffer = pack('>H',self.mantissa)
-        return buffer
+        return pack('>Q', self.mantissa).rjust(self.MANTISSA_SIZE, b'\x00')
 
     def decode(self, buffer):
-        self.exponent, _, self.mantissa = unpack_from('>H', buffer)
+        self.mantissa = unpack_from('>Q', buffer)[0]
 
-    def __str__(self):
-        return f"Exponent: {self.exponent}, Mantissa: {self.mantissa}"
+
+
+class ShortPriceType:
+    MANTISSA_SIZE = 2
+    EXPONENT = -2
+
+    def __init__(self, mantissa, exponent):
+        self.mantissa = mantissa
+
+    def encode(self):
+        return pack('>Q', self.mantissa).rjust(self.MANTISSA_SIZE, b'\x00')
+
+    def decode(self, buffer):
+        self.mantissa = unpack_from('>Q', buffer)[0] >> 48  # Shift the mantissa back to its original position
 
 
 
@@ -200,8 +201,8 @@ class OpenOrCloseType:
 
 
 class TimeInForceType:
-    DAY = 0
-    IMMEDIATE_OR_CANCEL = 3
+    DAY = '0'
+    IMMEDIATE_OR_CANCEL = '3'
 
 
     SIZE = 1
@@ -210,10 +211,10 @@ class TimeInForceType:
         self.value = value
 
     def encode(self):
-        return pack('B', self.value)
+        return pack('s', self.value.encode())
 
     def decode(self, buffer):
-        self.value, = unpack_from('B', buffer)
+        self.value, = unpack_from('s', buffer)
 
 
 class ExecInstType:
@@ -381,10 +382,11 @@ class PartyRoleType:
         self.value = value
 
     def encode(self):
-        return self.value.encode()
+        buffer = pack('>B', self.value)
+        return buffer
 
     def decode(self, buffer):
-        self.value = buffer.decode()
+        self.value = unpack_from('>B', buffer)[0]
 
 
 class PartiesGroup:
@@ -413,13 +415,57 @@ class PartiesGroup:
             self.party_ids.append([party_id, party_id_source, party_role])
 
 
+class MassCancelInstType:
+    Lockout = 0
+    SendCancels = 1
+    CancelOrdersFromThisPortOnly = 2
+    SIZE = 1
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('B', self.value)
+
+    def decode(self, buffer):
+        self.value, = unpack_from('B', buffer)
+
+
+class UnderlyingOrSeriesType:
+    CancelAllOnUnderlying = 0
+    CancelAllOnSeries = 1
+    SIZE = 1
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('B', self.value)
+
+    def decode(self, buffer):
+        self.value, = unpack_from('B', buffer)
+
+class UINT64:
+    SIZE = 8
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('>Q', self.value)
+
+    def decode(self, buffer):
+        self.value, = unpack_from('>Q', buffer)
+
+
+
 
 class NewOrderSingle:
     TEMPLATE_ID = 1
     num_groups = 1
-    schema_id = 1
-    version = 266
-    BLOCK_LENGTH = 54
+    schema_id = 9
+    version = 259
+    BLOCK_LENGTH = 64
 
     def __init__(self, **kwargs):
         self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups )
@@ -440,7 +486,7 @@ class NewOrderSingle:
         self.match_trade_prevention = kwargs.get('match_trade_prevention', MatchTradePreventionType(0))
         self.cancel_group_id = kwargs.get('cancel_group_id', UINT16(0))
         self.risk_group_id = kwargs.get('risk_group_id', UINT16(0))
-        self.RepeatingGroupDimensions = kwargs.get('repeating_group_dimensions', RepeatingGroupDimensions(18,3))
+        self.RepeatingGroupDimensions = kwargs.get('repeating_group_dimensions', RepeatingGroupDimensions(18,1))
         self.parties_group = kwargs.get('parties_group',PartiesGroup())
         
 
@@ -465,7 +511,7 @@ class NewOrderSingle:
         encoded_risk_group_id = self.risk_group_id.encode()
         encoded_RepeatingGroupDimensions = self.RepeatingGroupDimensions.encode()
         encoded_parties = b''
-        for party in self.parties:
+        for party in self.parties_group:
                 encoded_parties += party.encode()
 
         encoded_message = (
@@ -626,8 +672,9 @@ class ShortTwoSidedQuote:
 class ShortTwoSideBulkQuote:
     TEMPLATE_ID = 2
     num_groups = 2
-    schema_id = 1
-    version = 266
+    schema_id = 9
+    version = 259
+    #BLOCK_LENGTH = 39
     BLOCK_LENGTH = 39
 
     def __init__(self, **kwargs):
@@ -645,7 +692,7 @@ class ShortTwoSideBulkQuote:
         party_entries = len(kwargs.get('parties', []))
         self.no_party_ids = kwargs.get('repeating_group_dimensions', RepeatingGroupDimensions(18, party_entries))
         self.parties = kwargs.get('parties', PartiesGroup())
-        self.no_quote_entries = kwargs.get('no_quote_entries', RepeatingGroupDimensions(15, quote_entries))
+        self.no_quote_entries = kwargs.get('no_quote_entries', RepeatingGroupDimensions(17, quote_entries))
         self.quotes = kwargs.get('quotes',ShortTwoSidedQuote())
 
     def encode(self):
@@ -812,8 +859,8 @@ class LongTwoSidedQuote:
 class LongTwoSideBulkQuote:
     TEMPLATE_ID = 3
     num_groups = 2
-    schema_id = 1
-    version = 266
+    schema_id = 9
+    version = 259
     BLOCK_LENGTH = 39
 
     def __init__(self, **kwargs):
@@ -992,8 +1039,8 @@ class ShortOneSideQuote:
 class ShortOneSideBulkQuote:
     TEMPLATE_ID = 4
     num_groups = 2
-    schema_id = 1
-    version = 266
+    schema_id = 9
+    version = 259
     BLOCK_LENGTH = 39
 
     def __init__(self, **kwargs):
@@ -1156,8 +1203,8 @@ class LongOneSideQuote:
 class LongOneSideBulkQuote:
     TEMPLATE_ID = 5
     num_groups = 2
-    schema_id = 1
-    version = 266
+    schema_id = 9
+    version = 259
     BLOCK_LENGTH = 39
 
     def __init__(self, **kwargs):
@@ -1287,3 +1334,229 @@ class LongOneSideBulkQuote:
             quote.decode(buffer[offset:])
             self.quotes.append(quote)
             offset += LongOneSideQuote.SIZE
+
+
+class MassCancelRequest:
+    TEMPLATE_ID = 8
+    num_groups = 0
+    schema_id = 9
+    version = 259
+    BLOCK_LENGTH = 57
+
+    def __init__(self, **kwargs):
+        self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups)
+        self.sending_time = kwargs.get('sending_time', UTCTimestampNanos(0))
+        self.cl_ord_id = kwargs.get('cl_ord_id', Char(''))
+        self.efid = kwargs.get('efid', Char(''))
+        self.underlying_or_series = kwargs.get('underlying_or_series', UnderlyingOrSeriesType(0))
+        self.underlier = kwargs.get('underlier', Char(''))
+        self.options_security_id = kwargs.get('options_security_id', Char(''))
+        self.cancel_group_id = kwargs.get('cancel_group_id', UINT16(0))
+        self.mass_cancel_inst = kwargs.get('mass_cancel_inst', MassCancelInstType(0))
+
+    def encode(self):
+        encoded_header = self.sbe_header.encode()
+        encoded_sending_time = self.sending_time.encode()
+        encoded_cl_ord_id = self.cl_ord_id.encode()
+        encoded_efid = self.efid.encode()
+        encoded_underlying_or_series = self.underlying_or_series.encode()
+        encoded_underlier = self.underlier.encode()
+        encoded_options_security_id = self.options_security_id.encode()
+        encoded_cancel_group_id = self.cancel_group_id.encode()
+        encoded_mass_cancel_inst = self.mass_cancel_inst.encode()
+
+        encoded_message = (
+            encoded_header +
+            encoded_sending_time +
+            encoded_cl_ord_id +
+            encoded_efid +
+            encoded_underlying_or_series +
+            encoded_underlier +
+            encoded_options_security_id +
+            encoded_cancel_group_id +
+            encoded_mass_cancel_inst
+        )
+
+        return encoded_message
+
+    @classmethod
+    def decode(cls, buffer):
+        sbe_header = SBEHeader.decode(buffer[0:8])
+        sending_time = UTCTimestampNanos.decode(buffer[8:16])
+        cl_ord_id = Char.decode(buffer[16:36])
+        efid = Char.decode(buffer[36:40])
+        underlying_or_series = UnderlyingOrSeriesType.decode(buffer[40:41])
+        underlier = Char.decode(buffer[41:47])
+        options_security_id = Char.decode(buffer[47:55])
+        cancel_group_id = UINT16.decode(buffer[55:57])
+        mass_cancel_inst = MassCancelInstType.decode(buffer[57:58])
+
+        return cls(
+            sbe_header=sbe_header,
+            sending_time=sending_time,
+            cl_ord_id=cl_ord_id,
+            efid=efid,
+            underlying_or_series=underlying_or_series,
+            underlier=underlier,
+            options_security_id=options_security_id,
+            cancel_group_id=cancel_group_id,
+            mass_cancel_inst=mass_cancel_inst
+        )
+
+
+
+class OrderCancelRequest:
+    TEMPLATE_ID = 2
+    num_groups = 0
+    schema_id = 9
+    version = 259
+    BLOCK_LENGTH = 73
+
+    def __init__(self, **kwargs):
+        self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups)
+        self.sending_time = kwargs.get('sending_time', UTCTimestampNanos(0))
+        self.order_id = kwargs.get('order_id', UINT64(0))
+        self.cl_ord_id = kwargs.get('cl_ord_id', Char(''))
+        self.list_seq_no = kwargs.get('list_seq_no', UINT8(0))
+        self.orig_cl_ord_id = kwargs.get('orig_cl_ord_id', Char(''))
+        self.options_security_id = kwargs.get('options_security_id', Char(''))
+        self.side = kwargs.get('side', SideType(0))
+
+    def encode(self):
+        encoded_header = self.sbe_header.encode()
+        encoded_sending_time = self.sending_time.encode()
+        encoded_order_id = self.order_id.encode()
+        encoded_cl_ord_id = self.cl_ord_id.encode()
+        encoded_list_seq_no = self.list_seq_no.encode()
+        encoded_orig_cl_ord_id = self.orig_cl_ord_id.encode()
+        encoded_options_security_id = self.options_security_id.encode()
+        encoded_side = self.side.encode()
+
+        encoded_message = (
+            encoded_header +
+            encoded_sending_time +
+            encoded_order_id +
+            encoded_cl_ord_id +
+            encoded_list_seq_no +
+            encoded_orig_cl_ord_id +
+            encoded_options_security_id +
+            encoded_side
+        )
+
+        return encoded_message
+
+    @classmethod
+    def decode(cls, buffer):
+        sbe_header = SBEHeader.decode(buffer[0:8])
+        sending_time = UTCTimestampNanos.decode(buffer[8:16])
+        order_id = UINT64.decode(buffer[16:24])
+        cl_ord_id = Char.decode(buffer[24:44])
+        list_seq_no = UINT8.decode(buffer[44:45])
+        orig_cl_ord_id = Char.decode(buffer[45:65])
+        options_security_id = Char.decode(buffer[65:73])
+        side = SideType.decode(buffer[73:74])
+
+        return cls(
+            sbe_header=sbe_header,
+            sending_time=sending_time,
+            order_id=order_id,
+            cl_ord_id=cl_ord_id,
+            list_seq_no=list_seq_no,
+            orig_cl_ord_id=orig_cl_ord_id,
+            options_security_id=options_security_id,
+            side=side
+        )
+    
+class OrderReplaceRequest:
+    TEMPLATE_ID = 6
+    num_groups = 1
+    schema_id = 9
+    version = 259
+    BLOCK_LENGTH = 86
+
+    def __init__(self, **kwargs):
+        self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups)
+        self.sending_time = kwargs.get('sending_time', UTCTimestampNanos(0))
+        self.order_id = kwargs.get('order_id', UINT64(0))
+        self.cl_ord_id = kwargs.get('cl_ord_id', Char(''))
+        self.list_seq_no = kwargs.get('list_seq_no', UINT8(0))
+        self.orig_cl_ord_id = kwargs.get('orig_cl_ord_id', Char(''))
+        self.options_security_id = kwargs.get('options_security_id', OptionsSecurityID(''))
+        self.side = kwargs.get('side', SideType(''))
+        self.order_qty = kwargs.get('order_qty', UINT32(0))
+        self.ord_type = kwargs.get('ord_type', OrdType(0))
+        self.price = kwargs.get('price', PriceType(0, 0))
+
+    def encode(self):
+        encoded_header = self.sbe_header.encode()
+        encoded_sending_time = self.sending_time.encode()
+        encoded_order_id = self.order_id.encode()
+        encoded_cl_ord_id = self.cl_ord_id.encode()
+        encoded_list_seq_no = self.list_seq_no.encode()
+        encoded_orig_cl_ord_id = self.orig_cl_ord_id.encode()
+        encoded_options_security_id = self.options_security_id.encode()
+        encoded_side = self.side.encode()
+        encoded_order_qty = self.order_qty.encode()
+        encoded_ord_type = self.ord_type.encode()
+        encoded_price = self.price.encode()
+
+        encoded_message = (
+            encoded_header +
+            encoded_sending_time +
+            encoded_order_id +
+            encoded_cl_ord_id +
+            encoded_list_seq_no +
+            encoded_orig_cl_ord_id +
+            encoded_options_security_id +
+            encoded_side +
+            encoded_order_qty +
+            encoded_ord_type +
+            encoded_price
+        )
+
+        return encoded_message
+
+    def decode(self, buffer):
+        offset = 0
+        block_length, template_id, schema_id, version, num_groups = SBEHeader.decode(buffer)
+        self.sbe_header = SBEHeader(block_length, template_id, schema_id, version, num_groups)
+        offset += SBEHeader.SIZE
+
+        self.sending_time = UTCTimestampNanos(0)
+        self.sending_time.decode(buffer[offset:offset + UTCTimestampNanos.SIZE])
+        offset += UTCTimestampNanos.SIZE
+
+        self.order_id = UINT64(0)
+        self.order_id.decode(buffer[offset:offset + UINT64.SIZE])
+        offset += UINT64.SIZE
+
+        self.cl_ord_id = Char('')
+        self.cl_ord_id.decode(buffer[offset:offset + Char.SIZE])
+        offset += Char.SIZE
+
+        self.list_seq_no = UINT8(0)
+        self.list_seq_no.decode(buffer[offset:offset + UINT8.SIZE])
+        offset += UINT8.SIZE
+
+        self.orig_cl_ord_id = Char('')
+        self.orig_cl_ord_id.decode(buffer[offset:offset + Char.SIZE])
+        offset += Char.SIZE
+
+        self.options_security_id = OptionsSecurityID('')
+        self.options_security_id.decode(buffer[offset:offset + OptionsSecurityID.SIZE])
+        offset += OptionsSecurityID.SIZE
+
+        self.side = SideType('')
+        self.side.decode(buffer[offset:offset + SideType.SIZE])
+        offset += SideType.SIZE
+
+        self.order_qty = UINT32(0)
+        self.order_qty.decode(buffer[offset:offset + UINT32.SIZE])
+        offset += UINT32.SIZE
+
+        self.ord_type = OrdType(0)
+        self.ord_type.decode(buffer[offset:offset + OrdType.SIZE])
+        offset += OrdType.SIZE
+
+        self.price = PriceType(0, 0)
+        self.price.decode(buffer[offset:offset + PriceType.SIZE])
