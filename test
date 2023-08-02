@@ -1,6 +1,12 @@
-# Generate the timestamp for the file name up to minutes
-timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
+import string
 
-# Write the grouped_trade_data_frame and pivoted_trade_data_frame to an Excel file with separate sheets
-output_file_name = f'grouped_and_pivoted_trade_data_{timestamp}.xlsx'
+# ... Other code ...
 
+def generate_message(message_type, session_name):
+    if message_type == 'NewOrderSingle':
+        # ... Rest of the code ...
+
+        # Generate a random cl_ord_id with only ASCII printable characters
+        cl_ord_id = ''.join(choices(string.ascii_letters + string.digits + string.punctuation, k=20))
+
+        # ... Rest of the code ...
