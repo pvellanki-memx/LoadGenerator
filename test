@@ -1,62 +1,6 @@
-OrdStatusType (FIX tag 39)	
-	
-class OrdStatusType:
-    SIZE = 1
+# Generate the timestamp for the file name up to minutes
+timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
 
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return self.value.encode()
-
-    def decode(self, buffer):
-        self.value = buffer.decode()
-
-
-
-LastLiquidityIndType (FIX tag 851)		
-		
-class LastLiquidityIndType:
-    SIZE = 1
-
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return pack('>B', self.value)
-
-    def decode(self, buffer):
-        self.value = unpack_from('>B', buffer)[0]
-
-
-
-OrdRejReason is a 2-byte UINT16 value.
-
-class OrdRejReason:
-    SIZE = 2
-
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return pack('>H', self.value)
-
-    def decode(self, buffer):
-        self.value = unpack_from('>H', buffer)[0]
-
-
-
-
-ExchangeCode (used in FIX tag 30)	
-class ExchangeCode:
-    SIZE = 4
-
-    def __init__(self, value):
-        self.value = value
-
-    def encode(self):
-        return self.value.encode()
-
-    def decode(self, buffer):
-        self.value = buffer.decode()
+# Write the grouped_trade_data_frame and pivoted_trade_data_frame to an Excel file with separate sheets
+output_file_name = f'grouped_and_pivoted_trade_data_{timestamp}.xlsx'
 
