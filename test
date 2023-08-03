@@ -1,12 +1,34 @@
-import string
+import struct
 
-# ... Other code ...
+class PriceType:
+    MANTISSA_SIZE = 8
+    EXPONENT = -8
 
-def generate_message(message_type, session_name):
-    if message_type == 'NewOrderSingle':
-        # ... Rest of the code ...
+    def __init__(self, mantissa, exponent=None):
+        self.mantissa = mantissa
 
-        # Generate a random cl_ord_id with only ASCII printable characters
-        cl_ord_id = ''.join(choices(string.ascii_letters + string.digits + string.punctuation, k=20))
+    def encode(self):
+        price_value = self.mantissa * (10 ** self.EXPONENT)
+        return struct.pack('>Q', int(price_value))
 
-        # ... Rest of the code ...
+    def decode(self, buffer):
+        self.mantissa = struct.unpack_from('>Q', buffer)[0]
+
+
+
+
+import struct
+
+class ShortPriceType:
+    MANTISSA_SIZE = 2
+    EXPONENT = -2
+
+    def __init__(self, mantissa, exponent=None):
+        self.mantissa = mantissa
+
+    def encode(self):
+        price_value = self.mantissa * (10 ** self.EXPONENT)
+        return struct.pack('>I', int(price_value))
+
+    def decode(self, buffer):
+        self.mantissa = struct.unpack_from('>I', buffer)[0]
