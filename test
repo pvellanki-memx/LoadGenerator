@@ -1,2 +1,14 @@
-for session_name in session_names:
-    print(f"Processing session: {session_name}")
+pvellanki@qa2434:~/work/SBE$ cat connections.cfg 
+[Session1]
+host = 10.3.0.5
+port = 30989
+user = meopt3
+password = sbemeops6
+EFID = MT03
+
+[Session2]
+host = 10.3.0.5
+port = 30967
+user = meopt2
+password = sbemeops4
+EFID = MT02
