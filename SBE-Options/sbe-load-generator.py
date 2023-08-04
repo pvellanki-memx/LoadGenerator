@@ -156,12 +156,57 @@ def generate_message(message_type,session_name):
   
         # Generate values for the fields
         sending_time = UTCTimestampNanos(int(time.time() * 10**9))
-        cl_ord_id = ''.join(choices(string.ascii_uppercase + string.digits, k=20))
+        cl_ord_id = ''.join(choices(string.ascii_letters + string.digits, k=20))
         options_security_id = OptionsSecurityID(choices(security_ids)[0])
         side = SideType(value=SideType.BUY)  # Set the side to "Buy"
-        order_qty = UINT32(value=randint(1, 100))
+        order_qty = UINT32(value=randint(1, 10))
         ord_type = OrdType(value=OrdType.LIMIT)
-        price = PriceType(112,0)  # Set the order type to "Limit"
+        price = PriceType(500000000,0)  # Set the price with 10^8 multiplier
+        time_in_force = TimeInForceType(value=TimeInForceType.DAY)  # Set the time in force to "Day"
+        exec_inst = ExecInstType(value=ExecInstType.ParticipateDoNotInitiate)  # Set the execution instructions
+        trading_capacity = TradingCapacityType(value=TradingCapacityType.MARKET_MAKER)  # Set the trading capacity
+        efid = connection_config[session_name]['EFID']
+        party_id = PartyID(efid)
+        party_id_source = PartyIDSource('D')
+        party_role = PartyRoleType(1)
+        parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role]])]
+
+        # Create an instance of NewOrderSingle and set the field values
+        new_order_single = NewOrderSingle(
+            sending_time=sending_time,
+            cl_ord_id=cl_ord_id,
+            options_security_id=options_security_id,
+            side=side,
+            order_qty=order_qty,
+            ord_type=ord_type,
+            price=price,
+            time_in_force=time_in_force,
+            exec_inst=exec_inst,
+            trading_capacity=trading_capacity,
+            parties_group=parties
+        )
+
+        unsequenced_message = struct.pack('!BH', 104, 91)  # MessageType=104, MessageLength=6, TCP Header Length=102
+        # Encode the NewOrderSingle instance
+        encoded_message = new_order_single.encode()
+        message = unsequenced_message + encoded_message
+
+        # Print the encoded message
+        print('NewOrderSingle:')
+        print(encoded_message)
+
+        return message
+
+    elif message_type == 'NewOrderSingle_mkt':
+  
+        # Generate values for the fields
+        sending_time = UTCTimestampNanos(int(time.time() * 10**9))
+        cl_ord_id = ''.join(choices(string.ascii_letters + string.digits, k=20))
+        options_security_id = OptionsSecurityID(choices(security_ids)[0])
+        side = SideType(value=SideType.BUY)  # Set the side to "Buy"
+        order_qty = UINT32(value=randint(1, 10))
+        ord_type = OrdType(value=OrdType.MARKET)
+        price = PriceType(None)  # Set the price with 10^8 multiplier
         time_in_force = TimeInForceType(value=TimeInForceType.DAY)  # Set the time in force to "Day"
         exec_inst = ExecInstType(value=ExecInstType.ParticipateDoNotInitiate)  # Set the execution instructions
         trading_capacity = TradingCapacityType(value=TradingCapacityType.MARKET_MAKER)  # Set the trading capacity
@@ -214,8 +259,8 @@ def generate_message(message_type,session_name):
         party_id_source = PartyIDSource('D')
         party_role = PartyRoleType(1)
         parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role]])]
-        quote1 = ShortTwoSidedQuote(list_seq_no=1, options_security_id='C0110002', bid_size=10, bid_mantissa=100,offer_size=20,offer_mantissa=150)
-        quote2 = ShortTwoSidedQuote(list_seq_no=2, options_security_id='C0110003', bid_size=15,bid_mantissa=200, offer_size=25, offer_mantissa=250)
+        quote1 = ShortTwoSidedQuote(list_seq_no=1, options_security_id='C0110002', bid_size=10, bid_mantissa=50000,offer_size=20,offer_mantissa=75000)
+        quote2 = ShortTwoSidedQuote(list_seq_no=2, options_security_id='C0110003', bid_size=15,bid_mantissa=80000, offer_size=25, offer_mantissa=85000)
 
         quotes = [quote1, quote2]
         
@@ -261,8 +306,8 @@ def generate_message(message_type,session_name):
         party_id_source = PartyIDSource('D')
         party_role = PartyRoleType(1)
         parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role]])]
-        quote1 = LongTwoSidedQuote(list_seq_no=1, options_security_id='C0110002', bid_size=10, bid_px=100,offer_size=20,offer_px=150)
-        quote2 = LongTwoSidedQuote(list_seq_no=2, options_security_id='C0110003',bid_size=15,bid_px=200, offer_size=25, offer_px=250)
+        quote1 = LongTwoSidedQuote(list_seq_no=1, options_security_id='C0110002', bid_size=10, bid_px=100000000,offer_size=20,offer_px=150000000)
+        quote2 = LongTwoSidedQuote(list_seq_no=2, options_security_id='C0110003',bid_size=15,bid_px=200000000, offer_size=25, offer_px=250000000)
 
         quotes = [quote1, quote2]
         
@@ -283,7 +328,7 @@ def generate_message(message_type,session_name):
 
         # Encode the LongTwoSideBulkQuote instance
         encoded_message = long_two_side_bulk_quote.encode()
-        unsequenced_message = struct.pack('!BH', 104, 101)  # MessageType=104, MessageLength=6, TCP Header Length=102
+        unsequenced_message = struct.pack('!BH', 104, 134)  # MessageType=104, MessageLength=6, TCP Header Length=102
         message = unsequenced_message + encoded_message
 
         # Print the encoded messag´
@@ -307,8 +352,8 @@ def generate_message(message_type,session_name):
         party_id_source = PartyIDSource('D')
         party_role = PartyRoleType(1)
         parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role]])]
-        quote1 = ShortOneSideQuote(list_seq_no=1, options_security_id='C0110002', side = SideType(value=SideType.BUY),quantity=10, price=100)
-        quote2 = ShortOneSideQuote(list_seq_no=2, options_security_id='C0110003',side=SideType(value=SideType.SELL), quantity=15, price=200)
+        quote1 = ShortOneSideQuote(list_seq_no=1, options_security_id='C0110002', side = SideType(value=SideType.BUY),quantity=10, price=10000)
+        quote2 = ShortOneSideQuote(list_seq_no=2, options_security_id='C0110003',side=SideType(value=SideType.SELL), quantity=15, price=20000)
 
         quotes = [quote1, quote2]
         
@@ -329,7 +374,7 @@ def generate_message(message_type,session_name):
 
         # Encode the ShortTwoSideBulkQuote instance
         encoded_message = short_one_side_bulk_quote.encode()
-        unsequenced_message = struct.pack('!BH', 104, 88)  # MessageType=104, MessageLength=6, TCP Header Length=102
+        unsequenced_message = struct.pack('!BH', 104, 82)  # MessageType=104, MessageLength=6, TCP Header Length=102
         message = unsequenced_message + encoded_message
 
         # Print the encoded message
@@ -353,8 +398,8 @@ def generate_message(message_type,session_name):
         party_id_source = PartyIDSource('D')
         party_role = PartyRoleType(1)
         parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role]])]
-        quote1 = LongOneSideQuote(list_seq_no=1, options_security_id='C0110002', side=SideType(value=SideType.BUY),quantity=10, price=100)
-        quote2 = LongOneSideQuote(list_seq_no=2, options_security_id='C0110003', side=SideType(value=SideType.SELL),quantity=15, price=200)
+        quote1 = LongOneSideQuote(list_seq_no=1, options_security_id='C0110002', side=SideType(value=SideType.BUY),quantity=10, price=100000000)
+        quote2 = LongOneSideQuote(list_seq_no=2, options_security_id='C0110003', side=SideType(value=SideType.SELL),quantity=15, price=200000000)
 
         quotes = [quote1, quote2]
         
@@ -406,7 +451,8 @@ def main():
 
     # Iterate over session names and establish sessions
     for session_name in session_names:
-        #try:
+        print(f"Processing session: {session_name}")
+        try:
             # Establish SBE TCP session for the current session name
             client_socket, session_id = establish_session(session_name)
 
@@ -433,8 +479,8 @@ def main():
             # Close the TCP connection for the current session
             client_socket.close()
 
-        #except Exception as e:
-            #print(f"Failed to establish session for {session_name}: {str(e)}")
+        except Exception as e:
+            print(f"Failed to establish session for {session_name}: {str(e)}")
 
     # Print the number of active sessions
     print(f"Total active sessions: {active_sessions}")
