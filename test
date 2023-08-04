@@ -4,31 +4,41 @@ class PriceType:
     MANTISSA_SIZE = 8
     EXPONENT = -8
 
-    def __init__(self, mantissa, exponent=None):
+    def __init__(self, mantissa=None):
         self.mantissa = mantissa
 
     def encode(self):
-        price_value = self.mantissa * (10 ** self.EXPONENT)
-        return struct.pack('>Q', int(price_value))
+        if self.mantissa is None:
+            return b'\xff' * self.MANTISSA_SIZE  # Represent null value with 0xFF bytes
+        else:
+            price_value = int(self.mantissa * (10 ** self.EXPONENT))
+            return struct.pack('>Q', price_value)
 
     def decode(self, buffer):
-        self.mantissa = struct.unpack_from('>Q', buffer)[0]
+        if buffer == b'\xff' * self.MANTISSA_SIZE:
+            self.mantissa = None
+        else:
+            price_value, = struct.unpack_from('>Q', buffer)
+            self.mantissa = price_value / (10 ** self.EXPONENT)
 
-
-
-
-import struct
 
 class ShortPriceType:
     MANTISSA_SIZE = 2
     EXPONENT = -2
 
-    def __init__(self, mantissa, exponent=None):
+    def __init__(self, mantissa=None):
         self.mantissa = mantissa
 
     def encode(self):
-        price_value = self.mantissa * (10 ** self.EXPONENT)
-        return struct.pack('>I', int(price_value))
+        if self.mantissa is None:
+            return b'\xff' * self.MANTISSA_SIZE  # Represent null value with 0xFF bytes
+        else:
+            price_value = int(self.mantissa * (10 ** self.EXPONENT))
+            return struct.pack('>H', price_value)
 
     def decode(self, buffer):
-        self.mantissa = struct.unpack_from('>I', buffer)[0]
+        if buffer == b'\xff' * self.MANTISSA_SIZE:
+            self.mantissa = None
+        else:
+            price_value, = struct.unpack_from('>H', buffer)
+            self.mantissa = price_value / (10 ** self.EXPONENT)
