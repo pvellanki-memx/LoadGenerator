@@ -1,147 +1,89 @@
-class MassCancelRequest:
-    TEMPLATE_ID = 8
-    num_groups = 0
-    schema_id = 9
-    version = 259
-    BLOCK_LENGTH = 57
+import struct
 
-    def __init__(self, **kwargs):
-        self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups)
-        self.sending_time = kwargs.get('sending_time', UTCTimestampNanos(0))
-        self.cl_ord_id = kwargs.get('cl_ord_id', Char(''))
-        self.efid = kwargs.get('efid', Char(''))
-        self.underlying_or_series = kwargs.get('underlying_or_series', UnderlyingOrSeriesType(0))
-        self.underlier = kwargs.get('underlier', Char(''))
-        self.options_security_id = kwargs.get('options_security_id', Char(''))
-        self.cancel_group_id = kwargs.get('cancel_group_id', UINT16(0))
-        self.mass_cancel_inst = kwargs.get('mass_cancel_inst', MassCancelInstType(0))
+class ER_NewDecoder:
+    def __init__(self, encoded_message):
+        self.encoded_message = encoded_message
+        self.offset = 0
 
-    def encode(self):
-        encoded_header = self.sbe_header.encode()
-        encoded_sending_time = self.sending_time.encode()
-        encoded_cl_ord_id = self.cl_ord_id.encode()
-        encoded_efid = self.efid.encode()
-        encoded_underlying_or_series = self.underlying_or_series.encode()
-        encoded_underlier = self.underlier.encode()
-        encoded_options_security_id = self.options_security_id.encode()
-        encoded_cancel_group_id = self.cancel_group_id.encode()
-        encoded_mass_cancel_inst = self.mass_cancel_inst.encode()
-
-        encoded_message = (
-            encoded_header +
-            encoded_sending_time +
-            encoded_cl_ord_id +
-            encoded_efid +
-            encoded_underlying_or_series +
-            encoded_underlier +
-            encoded_options_security_id +
-            encoded_cancel_group_id +
-            encoded_mass_cancel_inst
-        )
-
-        return encoded_message
-
-    @classmethod
-    def decode(cls, buffer):
-        sbe_header = SBEHeader.decode(buffer[0:8])
-        sending_time = UTCTimestampNanos.decode(buffer[8:16])
-        cl_ord_id = Char.decode(buffer[16:36])
-        efid = Char.decode(buffer[36:40])
-        underlying_or_series = UnderlyingOrSeriesType.decode(buffer[40:41])
-        underlier = Char.decode(buffer[41:47])
-        options_security_id = Char.decode(buffer[47:55])
-        cancel_group_id = UINT16.decode(buffer[55:57])
-        mass_cancel_inst = MassCancelInstType.decode(buffer[57:58])
-
-        return cls(
-            sbe_header=sbe_header,
-            sending_time=sending_time,
-            cl_ord_id=cl_ord_id,
-            efid=efid,
-            underlying_or_series=underlying_or_series,
-            underlier=underlier,
-            options_security_id=options_security_id,
-            cancel_group_id=cancel_group_id,
-            mass_cancel_inst=mass_cancel_inst
-        )
-
-
-
-class OrderCancelRequest:
-    TEMPLATE_ID = 2
-    num_groups = 0
-    schema_id = 9
-    version = 259
-    BLOCK_LENGTH = 73
-
-    def __init__(self, **kwargs):
-        self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups)
-        self.sending_time = kwargs.get('sending_time', UTCTimestampNanos(0))
-        self.order_id = kwargs.get('order_id', UINT64(0))
-        self.cl_ord_id = kwargs.get('cl_ord_id', Char(''))
-        self.list_seq_no = kwargs.get('list_seq_no', UINT8(0))
-        self.orig_cl_ord_id = kwargs.get('orig_cl_ord_id', Char(''))
-        self.options_security_id = kwargs.get('options_security_id', Char(''))
-        self.side = kwargs.get('side', SideType(0))
-
-    def encode(self):
-        encoded_header = self.sbe_header.encode()
-        encoded_sending_time = self.sending_time.encode()
-        encoded_order_id = self.order_id.encode()
-        encoded_cl_ord_id = self.cl_ord_id.encode()
-        encoded_list_seq_no = self.list_seq_no.encode()
-        encoded_orig_cl_ord_id = self.orig_cl_ord_id.encode()
-        encoded_options_security_id = self.options_security_id.encode()
-        encoded_side = self.side.encode()
-
-        encoded_message = (
-            encoded_header +
-            encoded_sending_time +
-            encoded_order_id +
-            encoded_cl_ord_id +
-            encoded_list_seq_no +
-            encoded_orig_cl_ord_id +
-            encoded_options_security_id +
-            encoded_side
-        )
-
-
-    elif message_type == 'LongOneSideBulkQuote':
-        # Generate LongOneSideBulkQuote message
-        sending_time = UTCTimestampNanos(int(time.time() * 10**9))
-        cl_ord_id = ''.join(choices(string.ascii_uppercase + string.digits, k=20))
-        time_in_force = TimeInForceType(value=TimeInForceType.DAY)
-        exec_inst = ExecInstType(value=ExecInstType.ParticipateDoNotInitiate)
-        trading_capacity = TradingCapacityType(value=TradingCapacityType.MARKET_MAKER)
-        mtp_group_id = MtpGroupIDType(0)
-        match_trade_prevention = MatchTradePreventionType(0)
-        cancel_group_id = UINT16(0)
-        risk_group_id = UINT16(0)
-        efid = connection_config[session_name]['EFID']
-        party_id = PartyID(efid)
-        party_id_source = PartyIDSource('D')
-        party_role = PartyRoleType(1)
-        parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role]])]
-        quote1 = LongOneSideQuote(list_seq_no=1, options_security_id='C0110002', side=SideType(value=SideType.BUY),quantity=10, price=100000000)
-        quote2 = LongOneSideQuote(list_seq_no=2, options_security_id='C0110003', side=SideType(value=SideType.SELL),quantity=15, price=200000000)
-
-        quotes = [quote1, quote2]
+    def decode(self):
+        # Decode SBE Header
+        template_id, message_size = struct.unpack_from('>BB', self.encoded_message)
+        self.offset += 2
         
+        # Check if template_id is 11 (ER_New message type)
+        if template_id != 11:
+            raise ValueError("Incorrect message template ID")
 
-        long_one_side_bulk_quote = LongOneSideBulkQuote(
-            sending_time=sending_time,
-            cl_ord_id=cl_ord_id,
-            time_in_force=time_in_force,
-            exec_inst=exec_inst,
-            trading_capacity=trading_capacity,
-            mtp_group_id=mtp_group_id,
-            match_trade_prevention=match_trade_prevention,
-            cancel_group_id=cancel_group_id,
-            risk_group_id=risk_group_id,
-            parties=parties,
-            quotes=quotes
-        )
+        # Decode fields
+        order_id, = struct.unpack_from('>Q', self.encoded_message, self.offset + 7)
+        cl_ord_id = self.encoded_message[self.offset + 15: self.offset + 35].decode().strip('\x00')
+        list_seq_no, = struct.unpack_from('>B', self.encoded_message, self.offset + 35)
+        exec_id, = struct.unpack_from('>Q', self.encoded_message, self.offset + 36)
+        ord_status, = struct.unpack_from('>B', self.encoded_message, self.offset + 44)
+        options_security_id = self.encoded_message[self.offset + 45: self.offset + 53].decode().strip('\x00')
+        side, = struct.unpack_from('>B', self.encoded_message, self.offset + 53)
+        order_qty, = struct.unpack_from('>I', self.encoded_message, self.offset + 54)
+        ord_type, = struct.unpack_from('>B', self.encoded_message, self.offset + 58)
+        price_value, = struct.unpack_from('>Q', self.encoded_message, self.offset + 59)
+        time_in_force, = struct.unpack_from('>B', self.encoded_message, self.offset + 67)
+        open_or_close, = struct.unpack_from('>B', self.encoded_message, self.offset + 68)
+        exec_inst, = struct.unpack_from('>H', self.encoded_message, self.offset + 69)
+        trading_capacity, = struct.unpack_from('>B', self.encoded_message, self.offset + 71)
+        reprice_frequency, = struct.unpack_from('>B', self.encoded_message, self.offset + 72)
+        reprice_behavior, = struct.unpack_from('>B', self.encoded_message, self.offset + 73)
+        leaves_qty, = struct.unpack_from('>I', self.encoded_message, self.offset + 74)
+        cum_qty, = struct.unpack_from('>I', self.encoded_message, self.offset + 78)
+        sending_time, = struct.unpack_from('>Q', self.encoded_message, self.offset + 82)
+        transact_time, = struct.unpack_from('>Q', self.encoded_message, self.offset + 90)
+        mtp_group_id, = struct.unpack_from('>H', self.encoded_message, self.offset + 98)
+        match_trade_prevention, = struct.unpack_from('>B', self.encoded_message, self.offset + 100)
+        cancel_group_id, = struct.unpack_from('>H', self.encoded_message, self.offset + 101)
+        risk_group_id, = struct.unpack_from('>H', self.encoded_message, self.offset + 103)
+        
+        # Move offset to the start of Repeating Group Dimensions
+        self.offset += 105
 
-       
-        encoded_message = long_one_side_bulk_quote.encode()
-        unsequenced_message = struct.pack('!BH', 104, 90)  # MessageType=104, MessageLength=6, TCP Header Length=102
+        # Extract NoPartyIDs from Repeating Group Dimensions
+        no_party_ids, = struct.unpack_from('>H', self.encoded_message, self.offset)
+        self.offset += 2
+
+        # Move offset to the start of Parties Group
+        self.offset += 2
+
+        # Extract and decode the Parties Group
+        parties = []
+        for _ in range(no_party_ids):
+            party_id = self.encoded_message[self.offset:self.offset+2].decode()
+            party_id_source = self.encoded_message[self.offset+2:self.offset+3].decode()
+            party_role, = struct.unpack_from('>B', self.encoded_message, self.offset+3)
+            parties.append((party_id, party_id_source, party_role))
+            self.offset += 4
+
+        # Return the decoded fields
+        return {
+            "OrderID": order_id,
+            "ClOrdID": cl_ord_id,
+            "ListSeqNo": list_seq_no,
+            "ExecID": exec_id,
+            "OrdStatus": ord_status,
+            "OptionsSecurityID": options_security_id,
+            "Side": side,
+            "OrderQty": order_qty,
+            "OrdType": ord_type,
+            "Price": price_value,
+            "TimeInForce": time_in_force,
+            "OpenOrClose": open_or_close,
+            "ExecInst": exec_inst,
+            "TradingCapacity": trading_capacity,
+            "RepriceFrequency": reprice_frequency,
+            "RepriceBehavior": reprice_behavior,
+            "LeavesQty": leaves_qty,
+            "CumQty": cum_qty,
+            "SendingTime": sending_time,
+            "TransactTime": transact_time,
+            "MtpGroupID": mtp_group_id,
+            "MatchTradePrevention": match_trade_prevention,
+            "CancelGroupID": cancel_group_id,
+            "RiskGroupID": risk_group_id,
+            "Parties": parties
+        }
