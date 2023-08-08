@@ -113,6 +113,9 @@ class MyApplication(fix.Application):
 
 
 
+               target_comp_id = sessionID.getTargetCompID().getString()
+
+        if target_comp_id == "MEOPF4":
 
         session = self.sessions[sessionID]
         session.setNextSenderMsgSeqNum(3938)  # Set your desired value
