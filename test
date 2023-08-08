@@ -111,12 +111,14 @@ class MyApplication(fix.Application):
 
 
 
+         if message_type.lower() == "logon":
+                message = fix.Message()
+                message.getHeader().setField(fix.BeginString(fix.BeginString_FIXT11))
+                message.getHeader().setField(fix.MsgType(fix.MsgType_Logon))
 
-
-               target_comp_id = sessionID.getTargetCompID().getString()
-
-        if target_comp_id == "MEOPF4":
-
-        session = self.sessions[sessionID]
-        session.setNextSenderMsgSeqNum(3938)  # Set your desired value
-        session.setNextTargetMsgSeqNum(3938)  # Set your desired value
+                # Set other required fields for Logon message
+                message.setField(fix.EncryptMethod(0))
+                message.setField(fix.HeartBtInt(30))
+                message.setField(fix.ResetSeqNumFlag(False))
+                message.setField(fix.DefaultApplVerID("FIX.5.0SP2"))
+                message.setField(fix.DefaultCstmApplVerID("1.3"))
