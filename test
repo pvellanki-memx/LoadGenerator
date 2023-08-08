@@ -92,11 +92,21 @@ class MyApplication(fix.Application):
 
 
 
+class MyApplication(fix.Application):
+    def __init__(self, message_weights, message_rate):
+        super().__init__()
+        # Existing code...
+        self.session_sequence_numbers = {}  # Dictionary to store session-specific sequence numbers
 
     def onCreate(self, sessionID):
         print("Session created -", sessionID.toString())
         self.sessions[sessionID] = fix.Session.lookupSession(sessionID)
-        self.session_sequence_numbers[sessionID.toString()] = int(config.get(sessionID.toString(), "next_sequence_number"))
+
+        target_comp_id = sessionID.getTargetCompID().getString()
+        self.session_sequence_numbers[sessionID.toString()] = int(config.get(target_comp_id, "next_sequence_number"))
+
+    # Rest of the code...
+
 
 
 
