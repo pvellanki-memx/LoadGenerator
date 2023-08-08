@@ -1,33 +1,4 @@
-class MyApplication(fix.Application):
 
-Capturing ClordId's
-
-# ... (Existing code)
-
-    def fromApp(self, message, sessionID):
-        msg_type = fix.MsgType()
-        message.getHeader().getField(msg_type)
-
-        if msg_type.getValue() == fix.MsgType_ExecutionReport:
-            cl_ord_id = fix.ClOrdID()
-            exec_report = fix.ExecutionReport()
-            message.getField(cl_ord_id)
-            message.getField(exec_report)
-            self.last_execution_report = exec_report
-
-            # Check if the execution report matches the conditions
-            if exec_report.getField(39).getString() == '0' or exec_report.getField(39).getString() == '150':
-                self.execution_report_received = True
-                
-                # Extract ClOrdID and OrdID from the execution report
-                clordid = cl_ord_id.getString()
-                ordid = exec_report.getField(fix.OrderID()).getString()
-
-                # Write ClOrdID and OrdID to the text file
-                self.write_clordid_ordid_to_file(clordid, ordid)
-
-
-Adding order cancels:
 
 class MyApplication(fix.Application):
     def __init__(self, message_weights, message_rate):
@@ -64,6 +35,40 @@ class MyApplication(fix.Application):
                 # Store the captured ClOrdID in the list
                 self.captured_clordids.append(clordid)
 
+
+class MyApplication(fix.Application):
+    # Existing code...
+
+    def generate_message(self, message_type, session_id):
+   
+        # ... (your existing code)
+
+        elif message_type.lower() == "ordercancel":
+            # Generate OrderCancelRequest message using captured ClOrdIDs
+            if self.captured_clordids:
+                clordid = random.choice(self.captured_clordids)
+                message = fix.Message()
+                message.getHeader().setField(fix.BeginString(session_id.getBeginString().getString()))
+                message.getHeader().setField(fix.MsgType(fix.MsgType_OrderCancelRequest))
+                message.getHeader().setField(fix.SenderCompID(session_id.getSenderCompID().getString()))
+                message.getHeader().setField(fix.TargetCompID(session_id.getTargetCompID().getString()))
+                message.getHeader().setField(fix.MsgSeqNum(self.get_outgoing_seq_num(session_id)))
+
+                message.setField(fix.OrigClOrdID(clordid))
+                # Set other fields for the OrderCancelRequest message
+
+            else:
+                message = None
+
+            return message
+
+    def generate_and_send_order_cancels(self):
+        for clordid in self.captured_clordids:
+            cancel_message = self.generate_message("ordercancel", session_id)  # Use the modified generate_message function
+            if cancel_message:
+                fix.Session.sendToTarget(cancel_message, session_id)
+
+    # ... (the rest of your existing code)
 
 
 
