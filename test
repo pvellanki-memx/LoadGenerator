@@ -230,6 +230,21 @@ initiator.run()
 
 
 
+Traceback (most recent call last):
+  File "/home/pvellanki/Final/FIX/test.py", line 300, in <module>
+    initiator.run()
+  File "/home/pvellanki/Final/FIX/test.py", line 241, in run
+    application = fix.SocketInitiator(self, fix.FileStoreFactory(settings), settings)
+  File "/usr/local/lib/python3.10/dist-packages/quickfix.py", line 39995, in __init__
+    SocketInitiatorBase.__init__(self, application, storeFactory, settings)
+  File "/usr/local/lib/python3.10/dist-packages/quickfix.py", line 39742, in __init__
+    this = _quickfix.new_SocketInitiatorBase(*args)
+NotImplementedError: Wrong number or type of arguments for overloaded function 'new_SocketInitiatorBase'.
+  Possible C/C++ prototypes are:
+    FIX::SocketInitiator::SocketInitiator(FIX::Application &,FIX::MessageStoreFactory &,FIX::SessionSettings const &)
+    FIX::SocketInitiator::SocketInitiator(FIX::Application &,FIX::MessageStoreFactory &,FIX::SessionSettings const &,FIX::LogFactory &)
+
+
 
 
 
