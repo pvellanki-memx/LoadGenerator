@@ -230,21 +230,60 @@ initiator.run()
 
 
 
-Traceback (most recent call last):
-  File "/home/pvellanki/Final/FIX/test.py", line 300, in <module>
-    initiator.run()
-  File "/home/pvellanki/Final/FIX/test.py", line 241, in run
-    application = fix.SocketInitiator(self, fix.FileStoreFactory(settings), settings)
-  File "/usr/local/lib/python3.10/dist-packages/quickfix.py", line 39995, in __init__
-    SocketInitiatorBase.__init__(self, application, storeFactory, settings)
-  File "/usr/local/lib/python3.10/dist-packages/quickfix.py", line 39742, in __init__
-    this = _quickfix.new_SocketInitiatorBase(*args)
-NotImplementedError: Wrong number or type of arguments for overloaded function 'new_SocketInitiatorBase'.
-  Possible C/C++ prototypes are:
-    FIX::SocketInitiator::SocketInitiator(FIX::Application &,FIX::MessageStoreFactory &,FIX::SessionSettings const &)
-    FIX::SocketInitiator::SocketInitiator(FIX::Application &,FIX::MessageStoreFactory &,FIX::SessionSettings const &,FIX::LogFactory &)
+import configparser
+import time
+import datetime
+import os
+import quickfix as fix
 
+# ... Other parts of your code ...
 
+def parse_custom_config(config_file):
+    config = configparser.ConfigParser()
+    config.read(config_file)
+    custom_sessions = {}
 
+    for section in config.sections():
+        if "SenderCompID" in config[section] and "TargetCompID" in config[section]:
+            custom_sessions[section] = {
+                "SenderCompID": config[section]["SenderCompID"],
+                "TargetCompID": config[section]["TargetCompID"]
+                # Add other relevant settings here
+            }
+    
+    return custom_sessions
 
+class MyApplication(fix.Application):
+    # ... Rest of your MyApplication class ...
+
+def run(self):
+    custom_sessions = parse_custom_config(self.connection_config_file)
+
+    for sender_comp_id, session_settings in custom_sessions.items():
+        target_comp_id = session_settings["TargetCompID"]
+        settings = fix.SessionSettings()
+        settings.setString(f"ConnectionType", "initiator")
+        settings.setString(f"ReconnectInterval", "10")
+        settings.setString(f"FileStorePath", "./Sessions/")
+        settings.setString(f"FileLogPath", "log")
+        settings.setString(f"BeginString", "FIXT.1.1")
+        settings.setString(f"SenderCompID", sender_comp_id)
+        settings.setString(f"TargetCompID", target_comp_id)
+        # Set other session settings based on your requirements
+        
+        application = fix.SocketInitiator(self, fix.FileStoreFactory(settings), settings)
+        application.start()
+
+        while not application.isLoggedOn():
+            time.sleep(1)
+    
+    while True:
+        # Your message generation and sending logic here
+
+# ... Rest of your code ...
+
+if __name__ == '__main__':
+    app = MyApplication()
+    app.connection_config_file = "connection.cfg"
+    app.run()
 
