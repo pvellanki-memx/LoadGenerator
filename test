@@ -94,3 +94,21 @@ import random
             # Randomize the price between 1 and 100
             random_price = round(random.uniform(1, 100), 2)
             message.setField(fix.Price(random_price))
+
+
+
+
+get efid from connections.cfg file:
+
+efid = self.efid_map.get(session_id.getSenderCompID().getString(), "")  # Get EFID based on SenderCompID
+
+   def load_efid_map(self, config_file):
+        config = configparser.ConfigParser()
+        config.read(config_file)
+
+        for section in config.sections():
+            if 'SenderCompID' in config[section]:
+                sender_comp_id = config[section]['SenderCompID']
+                if 'EFID' in config[section]:
+                    efid = config[section]['EFID']
+                    self.efid_map[sender_comp_id] = efid
