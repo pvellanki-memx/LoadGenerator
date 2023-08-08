@@ -93,25 +93,10 @@ class MyApplication(fix.Application):
 
 
 
-class MyApplication(fix.Application):
-    def __init__(self, message_weights, message_rate):
-        super().__init__()
-        # Existing code...
-        self.session_sequence_numbers = {}  # Dictionary to store session-specific sequence numbers
-
     def onCreate(self, sessionID):
-        # Initialize session-specific sequence number from the configuration
+        print("Session created -", sessionID.toString())
+        self.sessions[sessionID] = fix.Session.lookupSession(sessionID)
         self.session_sequence_numbers[sessionID.toString()] = int(config.get(sessionID.toString(), "next_sequence_number"))
-
-    def increment_outgoing_seq_num(self, session_id):
-        session_sequence_number = self.session_sequence_numbers.get(session_id)
-        if session_sequence_number is not None:
-            session_sequence_number += 1
-            self.session_sequence_numbers[session_id] = session_sequence_number
-            session = fix.Session.lookupSession(fix.SessionID(session_id))
-            if session is not None:
-                session.setNextSenderMsgSeqNum(session_sequence_number)
-    # Rest of the code...
 
 
 
