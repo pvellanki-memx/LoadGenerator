@@ -107,3 +107,13 @@ class MyApplication(fix.Application):
         application.start()
 
         # ... (your existing code)
+
+
+
+
+
+
+
+        session = self.sessions[sessionID]
+        session.setNextSenderMsgSeqNum(3938)  # Set your desired value
+        session.setNextTargetMsgSeqNum(3938)  # Set your desired value
