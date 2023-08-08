@@ -93,3 +93,22 @@ class MyApplication(fix.Application):
 
 
 
+class MyApplication(fix.Application):
+    def __init__(self, message_weights, message_rate):
+        super().__init__()
+        # Existing code...
+        self.next_sequence_number = int(config.get("LoadGenerator", "next_sequence_number"))  # Read from config
+
+    def generate_message(self, message_type, session_id):
+        # Existing code...
+        message.getHeader().setField(34, str(self.get_outgoing_seq_num(session_id)))  # Use the next_sequence_number
+
+    def increment_outgoing_seq_num(self, session_id):
+        self.next_sequence_number += 1  # Increment the sequence number
+        session = fix.Session.lookupSession(fix.SessionID(session_id))
+        if session is not None:
+            session.setNextSenderMsgSeqNum(self.next_sequence_number)  # Set the new sequence number
+
+
+
+
