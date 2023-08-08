@@ -111,14 +111,38 @@ class MyApplication(fix.Application):
 
 
 
-         if message_type.lower() == "logon":
-                message = fix.Message()
-                message.getHeader().setField(fix.BeginString(fix.BeginString_FIXT11))
-                message.getHeader().setField(fix.MsgType(fix.MsgType_Logon))
+class MyApplication(fix.Application):
+    # ... (your existing code)
 
-                # Set other required fields for Logon message
-                message.setField(fix.EncryptMethod(0))
-                message.setField(fix.HeartBtInt(30))
-                message.setField(fix.ResetSeqNumFlag(False))
-                message.setField(fix.DefaultApplVerID("FIX.5.0SP2"))
-                message.setField(fix.DefaultCstmApplVerID("1.3"))
+    def onLogon(self, sessionID):
+        print("Logon Successful -", sessionID.toString())
+
+        # Get the session's sequence numbers for incoming messages
+        session = fix.Session.lookupSession(sessionID)
+        next_incoming_seq_num = session.getExpectedTargetNum()
+
+        # Adjust the session's outgoing sequence numbers
+        self.sessions[sessionID].setNextSenderMsgSeqNum(next_incoming_seq_num + 1)
+
+    def generate_message(self, message_type, session_id):
+        # ... (your existing code)
+
+        # Adjust sequence numbers based on the next incoming sequence number
+        next_incoming_seq_num = self.sessions[session_id].getExpectedTargetNum()
+        self.sessions[session_id].setNextSenderMsgSeqNum(next_incoming_seq_num + 1)
+        self.sessions[session_id].setNextTargetMsgSeqNum(next_incoming_seq_num + 1)
+
+        # Create the message based on the adjusted sequence numbers
+        message = fix.Message()
+        message.getHeader().setField(fix.BeginString(session_id.getBeginString().getString()))
+        message.getHeader().setField(fix.MsgType(fix.MsgType_NewOrderSingle))
+        message.getHeader().setField(fix.SenderCompID(session_id.getSenderCompID().getString()))
+        message.getHeader().setField(fix.TargetCompID(session_id.getTargetCompID().getString()))
+        message.getHeader().setField(fix.MsgSeqNum(self.get_outgoing_seq_num(session_id)))
+
+        # ... (your existing code)
+
+        return message
+
+    # ... (your existing code)
+
