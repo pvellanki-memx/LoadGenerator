@@ -112,3 +112,45 @@ efid = self.efid_map.get(session_id.getSenderCompID().getString(), "")  # Get EF
                 if 'EFID' in config[section]:
                     efid = config[section]['EFID']
                     self.efid_map[sender_comp_id] = efid
+
+
+
+
+
+
+
+
+
+
+SBE FUNCTIONAL ISSUES:
+
+1.Update dictionary to have right message types:
+2. update send_receive function as below:
+
+def send_and_receive(self, message_type, message):
+    # Send the message over the TCP connection
+    send_message(self.client_socket, message)
+
+    # Receive the first 10 bytes of the response message
+    response_header = self.client_socket.recv(10)
+
+    # Decode the template ID from the 5th byte
+    template_id = struct.unpack_from('!B', response_header, 4)[0]
+
+    # Assuming response_length is calculated properly, receive the remaining response
+    response_length = struct.unpack_from('!H', response_header, 1)[0]
+    remaining_bytes = response_length - 10
+    response_message = response_header + self.client_socket.recv(remaining_bytes)
+
+    # Decode the message type based on the template ID
+    decoded_message_type = None
+    for message_name, message_template_id in MESSAGE_TYPES.items():
+        if message_template_id == template_id:
+            decoded_message_type = message_name
+            break
+
+    if decoded_message_type is not None:
+        print(f"Decoded Message Type: {decoded_message_type}")
+
+    # You can now process the decoded_message_type and response_message as needed
+
