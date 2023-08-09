@@ -91,17 +91,17 @@ class UINT8:
 
 
     
-'''
+
 class PriceType:
     MANTISSA_SIZE = 8
     EXPONENT = -8
 
-    def __init__(self, mantissa, exponent=None):
+    def __init__(self, mantissa=None, exponent=None):
         self.mantissa = mantissa
 
     def encode(self):
         price_value = self.mantissa * (10 ** self.EXPONENT)
-        return pack('>d', price_value)
+        return pack('>Q', int(price_value))
 
     def decode(self, buffer):
         self.mantissa = unpack_from('>Q', buffer)[0]
@@ -112,18 +112,18 @@ class ShortPriceType:
     MANTISSA_SIZE = 2
     EXPONENT = -2
 
-    def __init__(self, mantissa, exponent=None):
+    def __init__(self, mantissa=None, exponent=None):
         self.mantissa = mantissa
 
     def encode(self):
         price_value = self.mantissa * (10 ** self.EXPONENT)
-        return pack('>e', price_value)
+        return pack('>H', int(price_value))
 
     def decode(self, buffer):
         self.mantissa = unpack_from('>H', buffer)[0] >> 48  # Shift the mantissa back to its original position
 
-'''
 
+'''
 class PriceType:
     MANTISSA_SIZE = 8
     EXPONENT = -8
@@ -167,7 +167,7 @@ class ShortPriceType:
             price_value, = unpack_from('>H', buffer)
             self.mantissa = price_value / (10 ** self.EXPONENT)
 
-
+'''
 
 class UTCTimestampNanos:
     SIZE = 8
