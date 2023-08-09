@@ -154,3 +154,11 @@ def send_and_receive(self, message_type, message):
 
     # You can now process the decoded_message_type and response_message as needed
 
+
+
+# Initialize the FIX application
+app = MyApplication(message_weights, message_rate)
+app.connection_config_file = connection_config_file
+app.send_duration = send_duration
+app.load_efid_map(connection_config_file) 
+
