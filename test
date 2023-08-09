@@ -101,17 +101,24 @@ import random
 get efid from connections.cfg file:
 
 efid = self.efid_map.get(session_id.getSenderCompID().getString(), "")  # Get EFID based on SenderCompID
+def load_efid_map(self, config_file):
+    config = configparser.ConfigParser()
+    config.read(config_file)
 
-   def load_efid_map(self, config_file):
-        config = configparser.ConfigParser()
-        config.read(config_file)
+    sender_comp_ids = []
 
+    for section in config.sections():
+        if 'SenderCompID' in config[section]:
+            sender_comp_ids.append(config[section]['SenderCompID'])
+
+    for sender_comp_id in sender_comp_ids:
         for section in config.sections():
-            if 'SenderCompID' in config[section]:
-                sender_comp_id = config[section]['SenderCompID']
+            if 'SenderCompID' in config[section] and config[section]['SenderCompID'] == sender_comp_id:
                 if 'EFID' in config[section]:
                     efid = config[section]['EFID']
                     self.efid_map[sender_comp_id] = efid
+                break  # Stop searching once a matching section is found
+
 
 
 
