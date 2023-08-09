@@ -163,18 +163,13 @@ def send_and_receive(self, message_type, message):
 
 
 
-# Initialize the FIX application
-app = MyApplication(message_weights, message_rate)
-app.connection_config_file = connection_config_file
-app.send_duration = send_duration
-app.load_efid_map(connection_config_file) 
+ efid_mapping = dict(config.items("EFID"))
 
-
-
-def load_efid_map(self, config_file):
-    config = configparser.ConfigParser()
-    config.read(config_file)
-
-    if 'EFID' in config:
-        self.efid_map = dict(config['EFID'])
-
+        sender_comp_id = session_id.getSenderCompID().getString()
+        
+        if sender_comp_id in efid_mapping:
+            efid = efid_mapping[sender_comp_id]
+            message.setField(fix.SenderLocationID(efid))
+        else:
+            print(f"EFID mapping not found for SenderCompID: {sender_comp_id}")
+        
