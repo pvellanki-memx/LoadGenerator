@@ -169,3 +169,16 @@ app.connection_config_file = connection_config_file
 app.send_duration = send_duration
 app.load_efid_map(connection_config_file) 
 
+
+
+Traceback (most recent call last):
+  File "/home/pvellanki/work/FIX/test.py", line 331, in <module>
+    app.load_efid_map(connection_config_file) 
+  File "/home/pvellanki/work/FIX/test.py", line 207, in load_efid_map
+    config.read(config_file)
+  File "/usr/lib/python3.10/configparser.py", line 698, in read
+    self._read(fp, filename)
+  File "/usr/lib/python3.10/configparser.py", line 1071, in _read
+    raise DuplicateSectionError(sectname, fpname,
+configparser.DuplicateSectionError: While reading from 'connections.cfg' [line 22]: section 'SESSION' already exists
+
