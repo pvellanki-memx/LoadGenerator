@@ -1,74 +1,60 @@
+Tell about trade cancels and trade correction
+finish MTP execution
+try out below scenarios with bulk quotes:
+1. send 2 limit buy and sell limits orders that are booked and send a bulk quote that would cross/lock with sitting orders. Bulkquote should be cancelled
+Execute same aabove scenario with same firm sending both the limit orders and bulk quote and have MTP param defined and see that it works as approitae.
 
+@venkat: please get the new code for generate_message from sbe_load_generator.py
 
-class MyApplication(fix.Application):
-    def __init__(self, message_weights, message_rate):
-        # Existing code...
-        self.captured_clordids = []  # Initialize an empty list to store the captured ClOrdIDs
 
+ReadMe SBE:
+SBE Load Generator 
+The SBE Load Generator script is designed to simulate load on the SBE server by generating and sending various types of messages at a controlled rate. This script reads configuration details from config.ini and connections.cfg files and sends messages over TCP connections to the SBE ports.
 
+Prerequisites
+Python 3.x should be installed on your system.
+Ensure that the required libraries (socket, struct, time, string, random, configparser, and sbe_encoder_decoder) are properly installed.
 
-class MyApplication(fix.Application):
-    # Existing code...
+Configuration
+Open the config.ini file and configure the following parameters:
+message_rate: The rate at which messages will be sent per second.
+duration: The duration for which the load simulation should run in seconds.
+Open the connections.cfg file and configure connection details for each session. The following details are required for each session:
+host: Hostname or IP address of the SBE server.
+port: Port number to connect to.
+user: User name for authentication.
+password: Password for authentication.
+EFID: EFID for the session.
 
-    def fromApp(self, message, sessionID):
-        msg_type = fix.MsgType()
-        message.getHeader().getField(msg_type)
+Update the security_ids parameter with the list of security IDs you want to use.
 
-        if msg_type.getValue() == fix.MsgType_ExecutionReport:
-            cl_ord_id = fix.ClOrdID()
-            exec_report = fix.ExecutionReport()
-            message.getField(cl_ord_id)
-            message.getField(exec_report)
-            self.last_execution_report = exec_report
+Running the Script
+Ensure that all the required configurations are properly set in the config.ini and connections.cfg files.
 
-            # Check if the execution report matches the conditions
-            if exec_report.getField(39).getString() == '0' or exec_report.getField(39).getString() == '150':
-                self.execution_report_received = True
-                
-                # Extract ClOrdID and OrdID from the execution report
-                clordid = cl_ord_id.getString()
-                ordid = exec_report.getField(fix.OrderID()).getString()
+Open a terminal and navigate to the directory containing the script.
 
-                # Write ClOrdID and OrdID to the text file
-                self.write_clordid_ordid_to_file(clordid, ordid)
+Run the script using the following command:
 
-                # Store the captured ClOrdID in the list
-                self.captured_clordids.append(clordid)
+Copy code
+python sbe_load_generator.py
 
 
-class MyApplication(fix.Application):
-    # Existing code...
+Script Execution
+The script will establish connections to the SBE server for each session specified in the connections.cfg file.
 
-    def generate_message(self, message_type, session_id):
-   
-        # ... (your existing code)
+It will generate messages based on the specified weights for each message type in the config.ini file.
 
-        elif message_type.lower() == "ordercancel":
-            # Generate OrderCancelRequest message using captured ClOrdIDs
-            if self.captured_clordids:
-                clordid = random.choice(self.captured_clordids)
-                message = fix.Message()
-                message.getHeader().setField(fix.BeginString(session_id.getBeginString().getString()))
-                message.getHeader().setField(fix.MsgType(fix.MsgType_OrderCancelRequest))
-                message.getHeader().setField(fix.SenderCompID(session_id.getSenderCompID().getString()))
-                message.getHeader().setField(fix.TargetCompID(session_id.getTargetCompID().getString()))
-                message.getHeader().setField(fix.MsgSeqNum(self.get_outgoing_seq_num(session_id)))
+The script will send messages to the server at the specified message rate for the specified duration.
 
-                message.setField(fix.OrigClOrdID(clordid))
-                # Set other fields for the OrderCancelRequest message
+During execution, the script will print the encoded message for each message sent.
 
-            else:
-                message = None
+After the specified duration, the script will close the connections and display the total number of active sessions.
 
-            return message
+Note
 
-    def generate_and_send_order_cancels(self):
-        for clordid in self.captured_clordids:
-            cancel_message = self.generate_message("ordercancel", session_id)  # Use the modified generate_message function
-            if cancel_message:
-                fix.Session.sendToTarget(cancel_message, session_id)
+Ensure that the sbe_encoder_decoder module is correctly imported and properly placed in the same folder as sbe_load_generator.py
 
-    # ... (the rest of your existing code)
+Any order parameters that need to be updated, can be done by editing NewOrderSingle message structure in sbe_load_generator.py
 
 
 
@@ -77,99 +63,53 @@ class MyApplication(fix.Application):
 
 
 
+FIX Load Generator
+Introduction
+The FIX Load Generator is a tool designed to simulate a high load of FIX messages distributed across predefined ports. It utilizes the QuickFIX library to establish connections with multiple sessions and send various types of FIX messages. This document will guide you through the setup, configuration, and usage of the FIX Load Generator.
 
+Prerequisites
+Before using the FIX Load Generator, ensure you have the following:
 
+Python installed (version 3.6 or higher).
+Required Python packages: quickfix
 
 
-symbols = config.get("LoadGenerator", "symbols").split(",")
-    selected_symbol = random.choice(symbols)
-message.setField(fix.Symbol(selected_symbol))
+Installation
+Clone or download the code repository to your local machine.
 
+Install the required Python packages:
 
-import random
+pip install quickfix
 
-          random_quantity = random.randint(1, 1000)
-            message.setField(fix.OrderQty(random_quantity))
-            
-            # Randomize the price between 1 and 100
-            random_price = round(random.uniform(1, 100), 2)
-            message.setField(fix.Price(random_price))
+Configuration
+config.ini: Open the config.ini file in the root directory of the project. This file contains various configuration parameters for the load generator.
 
+LoadGenerator Section:
 
+connection_config_file: The path to the QuickFIX connection configuration file.
+log_file: The path where log files will be generated.
+message_rate: The rate (messages per second) at which messages will be generated.
+send_duration: The duration (in seconds) for which the messages will be sent.
+symbol: The symbol for which trading messages will be generated.
+MessageTypes Section: Define the weight of each message type. The higher the weight, the more frequently that message type will be sent.
 
+connection_config_file: Configure your QuickFIX session details in this file. Each section should represent a unique session with a distinct SenderCompID and TargetCompID. Ensure you have defined the SenderCompID to EFID mapping in the [EFID] section for each session.
 
-get efid from connections.cfg file:
 
-efid = self.efid_map.get(session_id.getSenderCompID().getString(), "")  # Get EFID based on SenderCompID
-def load_efid_map(self, config_file):
-    config = configparser.ConfigParser()
-    config.read(config_file)
+Usage
+Open a terminal and navigate to the directory containing the load generator code.
 
-    sender_comp_ids = []
+Run the load generator:
 
-    for section in config.sections():
-        if 'SenderCompID' in config[section]:
-            sender_comp_ids.append(config[section]['SenderCompID'])
+python load_generator.py
 
-    for sender_comp_id in sender_comp_ids:
-        for section in config.sections():
-            if 'SenderCompID' in config[section] and config[section]['SenderCompID'] == sender_comp_id:
-                if 'EFID' in config[section]:
-                    efid = config[section]['EFID']
-                    self.efid_map[sender_comp_id] = efid
-                break  # Stop searching once a matching section is found
+Output
+The load generator will display log messages indicating the progress and status of the load generation process.
 
+Log files will be generated in the specified log_directory (default is "log"). Each log file will be named with a timestamp.
 
+Customization
+You can modify the generate_message method to customize the content of each type of FIX message.
 
+Adjust the weights of message types in the MessageTypes section of the config.ini file to simulate different load scenarios.
 
-
-
-
-
-
-
-
-SBE FUNCTIONAL ISSUES:
-
-1.Update dictionary to have right message types:
-2. update send_receive function as below:
-
-def send_and_receive(self, message_type, message):
-    # Send the message over the TCP connection
-    send_message(self.client_socket, message)
-
-    # Receive the first 10 bytes of the response message
-    response_header = self.client_socket.recv(10)
-
-    # Decode the template ID from the 5th byte
-    template_id = struct.unpack_from('!B', response_header, 4)[0]
-
-    # Assuming response_length is calculated properly, receive the remaining response
-    response_length = struct.unpack_from('!H', response_header, 1)[0]
-    remaining_bytes = response_length - 10
-    response_message = response_header + self.client_socket.recv(remaining_bytes)
-
-    # Decode the message type based on the template ID
-    decoded_message_type = None
-    for message_name, message_template_id in MESSAGE_TYPES.items():
-        if message_template_id == template_id:
-            decoded_message_type = message_name
-            break
-
-    if decoded_message_type is not None:
-        print(f"Decoded Message Type: {decoded_message_type}")
-
-    # You can now process the decoded_message_type and response_message as needed
-
-
-
- efid_mapping = dict(config.items("EFID"))
-
-        sender_comp_id = session_id.getSenderCompID().getString()
-        
-        if sender_comp_id in efid_mapping:
-            efid = efid_mapping[sender_comp_id]
-            message.setField(fix.SenderLocationID(efid))
-        else:
-            print(f"EFID mapping not found for SenderCompID: {sender_comp_id}")
-        
