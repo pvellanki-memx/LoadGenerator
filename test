@@ -1,7 +1,3 @@
-sent application message 8=FIXT.1.19=17835=D34=8149=MEOPVF352=20230810-17:21:56.67056=MXOP11=26998318=h38=5640=244=32.754=159=060=20230810-17:21:56.67077=O453=1448=MT03447=D452=11815=621035=U012000210=252
-log/log_file_2023-08-10_13.log
-received application message 8=FIXT.1.19=28035=834=1349=MXOP52=20230810-17:23:32.36356=MEOPVF111=77262214=017=21618927478820281118=h37=21618927478820114238=2739=040=244=89.654=155=CMG59=060=20230810-17:23:32.36377=O150=0151=27201=0202=1040447=D448=MT02452=1453=1541=202501171815=621035=C011000810=221
-Traceback (most recent call last):
-  File "/home/pvellanki/work/FIX/test.py", line 54, in fromApp
-    exec_report = fix.ExecutionReport()
-AttributeError: module 'quickfix' has no attribute 'ExecutionReport'
+
+        if exec_type.getValue() == fix.ExecType_NEW or exec_type.getValue() == fix.ExecType_TRADE:
+            self.handle_execution_report(message)
