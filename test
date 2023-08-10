@@ -154,3 +154,20 @@ Traceback (most recent call last):
 UnboundLocalError: local variable 'efid' referenced before assignment
 Segmentation fault
 
+
+
+
+
+
+
+                efid_mapping = dict(config.items("EFID"))
+
+                sender_comp_id = session_id.getSenderCompID().getString()
+        
+                if sender_comp_id in efid_mapping:
+                    efid = efid_mapping[sender_comp_id]
+                    message.setField(fix.SenderLocationID(efid))
+                else:
+                    print(f"EFID mapping not found for SenderCompID: {sender_comp_id}")
+                
+
