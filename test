@@ -1,3 +1,48 @@
+    def fromApp(self, message, sessionID):
+        session_id = sessionID.toString()
+        with open(self.get_log_file(), "a") as file:
+            file.write(f"Session: {session_id}\n")
+            file.write(message.toString() + '\n')
+        print("received application message", message.toString())
+        msg_type = fix.MsgType()
+        message.getHeader().getField(msg_type)
 
-        if exec_type.getValue() == fix.ExecType_NEW or exec_type.getValue() == fix.ExecType_TRADE:
-            self.handle_execution_report(message)
+        if msg_type.getValue() == fix.MsgType_ExecutionReport:
+            cl_ord_id = fix.ClOrdID()
+            exec_type = fix.ExecType()
+            order_id = fix.OrderID()
+            message.getField(cl_ord_id)
+            message.getField(exec_type)
+           
+
+            # Check if the execution report matches the conditions
+            if exec_type.getValue() == fix.ExecType_NEW or exec_type.getValue() == fix.ExecType_TRADE:
+                #self.handle_execution_report(message)
+                
+                # Extract ClOrdID and OrdID from the execution report
+                clordid = cl_ord_id.getString()
+                ordid =  order_id.getString()
+
+                # Write ClOrdID and OrdID to the text file
+                #self.write_clordid_ordid_to_file(clordid, ordid)
+
+                # Store the captured ClOrdID in the list
+                self.captured_clordids.append(clordid)
+
+
+
+
+            elif message_type.lower() == "ordercancel":
+                # Generate OrderCancelRequest message using captured ClOrdIDs
+                if self.captured_clordids:
+                    clordid = random.choice(self.captured_clordids)
+                    message = fix.Message()
+                    message.getHeader().setField(fix.BeginString(session_id.getBeginString().getString()))
+                    message.getHeader().setField(fix.MsgType(fix.MsgType_OrderCancelRequest))
+                    message.getHeader().setField(fix.SenderCompID(session_id.getSenderCompID().getString()))
+                    message.getHeader().setField(fix.TargetCompID(session_id.getTargetCompID().getString()))
+                    message.getHeader().setField(fix.MsgSeqNum(self.get_outgoing_seq_num(session_id)))
+                    message.setField(fix.ClOrdID(self.generate_clordid()))
+
+                    message.setField(fix.OrigClOrdID(clordid))
+                    # Set other fields for the OrderCancelRequest message
