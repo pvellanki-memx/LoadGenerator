@@ -113,3 +113,44 @@ You can modify the generate_message method to customize the content of each type
 
 Adjust the weights of message types in the MessageTypes section of the config.ini file to simulate different load scenarios.
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[RateChanges]
+0 = 0, 0
+10 = 10, 20
+20 = 20, 15
+30 = 30, 10
+
+[EFID]
+MEOPF4 = MT02
+MEOPF6 = MT03
+MEOPVF1 = MT02
+MEOPVF3 = MT03
+~                  
+
+
+<quickfix.Session; proxy of <Swig Object of type 'FIX::Session *' at 0x7f2f82e68b40> >
+EFID mapping not found for SenderCompID: MEOPVF1
+Traceback (most recent call last):
+  File "/home/pvellanki/work/FIX/test.py", line 326, in <module>
+    app.run()
+  File "/home/pvellanki/work/FIX/test.py", line 296, in run
+    message = self.generate_message(load[message_count], session_id)
+  File "/home/pvellanki/work/FIX/test.py", line 168, in generate_message
+    party_group.setField(448, efid)
+UnboundLocalError: local variable 'efid' referenced before assignment
+Segmentation fault
+
