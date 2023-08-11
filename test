@@ -12,8 +12,8 @@ def fromApp(self, message, sessionID):
         exec_type = fix.ExecType()
         order_id = fix.OrderID()
         side = fix.Side()
-        symbol = fix.Symbol()  # Field 55 (Symbol)
-        tag_21035 = fix.StringField(21035)  # Field 21035 (Symbol)
+        symbol = fix.Symbol()
+        tag_21035 = fix.StringField(21035)
 
         message.getField(cl_ord_id)
         message.getField(exec_type)
@@ -21,7 +21,6 @@ def fromApp(self, message, sessionID):
         message.getField(symbol)
         message.getField(tag_21035)
         
-        # Extract ClOrdID and OrdID from the execution report
         clordid = cl_ord_id.getString()
         ordid = order_id.getString()
         side_value = side.getString()
@@ -30,6 +29,9 @@ def fromApp(self, message, sessionID):
 
         # Store the captured ClOrdID, its corresponding side, and 21035 in the dictionary
         self.captured_clordid_side_mapping[clordid] = {"side": side_value, "symbol": symbol_value, "tag_21035": tag_21035_value}
+        
+        # Store the session for the ClOrdID
+        self.captured_clordid_session_mapping[clordid] = session_id
 
 
 
@@ -40,7 +42,9 @@ elif message_type.lower() == "ordercancel":
     if self.captured_clordids:
         clordid = random.choice(self.captured_clordids)
         clordid_info = self.captured_clordid_side_mapping.get(clordid)
-        if clordid_info is not None:
+        clordid_session = self.captured_clordid_session_mapping.get(clordid)
+        
+        if clordid_info is not None and clordid_session is not None:
             side = clordid_info["side"]
             symbol = clordid_info["symbol"]
             tag_21035 = clordid_info["tag_21035"]
@@ -59,9 +63,12 @@ elif message_type.lower() == "ordercancel":
             message.setField(fix.Side(side))
             message.setField(21035, tag_21035)  # Set Tag 21035 (Symbol) field in Order Cancel Request
             
+            # Send the Order Cancel Request on the same session as the corresponding ClOrdID
+            fix.Session.sendToTarget(message, clordid_session)
+            
             print(f"Order Cancel Request: ClOrdID={clordid}, Side={side}, Symbol (Tag 21035)={tag_21035}")
         else:
-            print(f"Error: ClOrdID info not found for ClOrdID={clordid}")
+            print(f"Error: ClOrdID info or session not found for ClOrdID={clordid}")
             message = None
     else:
         print("Error: No captured ClOrdIDs available for order cancel")
