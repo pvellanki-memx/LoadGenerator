@@ -1,26 +1,70 @@
+def fromApp(self, message, sessionID):
+    session_id = sessionID.toString()
+    with open(self.get_log_file(), "a") as file:
+        file.write(f"Session: {session_id}\n")
+        file.write(message.toString() + '\n')
+    print("received application message", message.toString())
+    msg_type = fix.MsgType()
+    message.getHeader().getField(msg_type)
+
+    if msg_type.getValue() == fix.MsgType_ExecutionReport:
+        cl_ord_id = fix.ClOrdID()
+        exec_type = fix.ExecType()
+        order_id = fix.OrderID()
+        side = fix.Side()
+        symbol = fix.Symbol()  # Field 55 (Symbol)
+        tag_21035 = fix.StringField(21035)  # Field 21035 (Symbol)
+
+        message.getField(cl_ord_id)
+        message.getField(exec_type)
+        message.getField(side)
+        message.getField(symbol)
+        message.getField(tag_21035)
+        
+        # Extract ClOrdID and OrdID from the execution report
+        clordid = cl_ord_id.getString()
+        ordid = order_id.getString()
+        side_value = side.getString()
+        symbol_value = symbol.getString()
+        tag_21035_value = tag_21035.getValue()
+
+        # Store the captured ClOrdID, its corresponding side, and 21035 in the dictionary
+        self.captured_clordid_side_mapping[clordid] = {"side": side_value, "symbol": symbol_value, "tag_21035": tag_21035_value}
+
+
+
+
+
 elif message_type.lower() == "ordercancel":
     # Generate OrderCancelRequest message using captured ClOrdIDs
     if self.captured_clordids:
         clordid = random.choice(self.captured_clordids)
-        side = self.captured_clordid_side_mapping.get(clordid, "UNKNOWN")
-        message = fix.Message()
-        sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
-        message.setField(60, sending_time)
-        message.getHeader().setField(fix.BeginString(session_id.getBeginString().getString()))
-        message.getHeader().setField(fix.MsgType(fix.MsgType_OrderCancelRequest))
-        message.getHeader().setField(fix.SenderCompID(session_id.getSenderCompID().getString()))
-        message.getHeader().setField(fix.TargetCompID(session_id.getTargetCompID().getString()))
-        message.getHeader().setField(fix.MsgSeqNum(self.get_outgoing_seq_num(session_id)))
-        message.setField(fix.ClOrdID(self.generate_clordid()))
+        clordid_info = self.captured_clordid_side_mapping.get(clordid)
+        if clordid_info is not None:
+            side = clordid_info["side"]
+            symbol = clordid_info["symbol"]
+            tag_21035 = clordid_info["tag_21035"]
+            
+            message = fix.Message()
+            sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
+            message.setField(60, sending_time)
+            message.getHeader().setField(fix.BeginString(session_id.getBeginString().getString()))
+            message.getHeader().setField(fix.MsgType(fix.MsgType_OrderCancelRequest))
+            message.getHeader().setField(fix.SenderCompID(session_id.getSenderCompID().getString()))
+            message.getHeader().setField(fix.TargetCompID(session_id.getTargetCompID().getString()))
+            message.getHeader().setField(fix.MsgSeqNum(self.get_outgoing_seq_num(session_id)))
+            message.setField(fix.ClOrdID(self.generate_clordid()))
 
-        message.setField(fix.OrigClOrdID(clordid))
-        message.setField(fix.Side(side))
-        print(clordid, side)
+            message.setField(fix.OrigClOrdID(clordid))
+            message.setField(fix.Side(side))
+            message.setField(21035, tag_21035)  # Set Tag 21035 (Symbol) field in Order Cancel Request
+            
+            print(f"Order Cancel Request: ClOrdID={clordid}, Side={side}, Symbol (Tag 21035)={tag_21035}")
+        else:
+            print(f"Error: ClOrdID info not found for ClOrdID={clordid}")
+            message = None
     else:
-        # Handle the case when no captured ClOrdIDs are available
-        print("No captured ClOrdIDs available for order cancel")
-        return fix.Message()  # Return an empty message indicating no ClOrdIDs
+        print("Error: No captured ClOrdIDs available for order cancel")
+        message = None
 
     return message if message is not None else fix.Message()  # Return the generated message if not None, otherwise return an empty message
-
-# ... (rest of the code remains the same)
