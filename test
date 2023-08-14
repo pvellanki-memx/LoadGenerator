@@ -198,6 +198,7 @@ class MyApplication(fix.Application):
                     if clordid_info is not None:
                         session_id_str = clordid_info.get("session")
                         clordid_session = self.sessions.get(session_id_str)
+                        print(session_id_str,clordid_session)
 
                         if clordid_session is not None:
                             side = clordid_info["side"]
@@ -216,11 +217,12 @@ class MyApplication(fix.Application):
                             message.setField(fix.OrigClOrdID(clordid))
                             message.setField(fix.Side(side))
                             message.setField(21035, tag_21035)
+                            print(message)
                             
                             # Send the Order Cancel Request on the same session as the corresponding ClOrdID
                             fix.Session.sendToTarget(message, clordid_session)
                         else:
-                            print(f"Error: ClOrdID info not found for ClOrdID={clordid}")
+                            print(f"Error: ClOrdID Session info not found for ClOrdID={clordid}")
                             return fix.Message()
 
                     else:
