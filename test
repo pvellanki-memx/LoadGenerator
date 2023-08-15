@@ -1,23 +1,6 @@
-class MyApplication(fix.Application):
-    # ... (other functions)
-
-    def toApp(self, message, sessionID):
-        session_id = sessionID.toString()
-
-        msg_type_field = fix.MsgType()
-        if message.getHeader().getFieldIfSet(msg_type_field):
-            msg_type = msg_type_field.getValue()
-        else:
-            print("Message does not have a MsgType tag (35), skipping sending.")
-            return
-
-        with open(self.get_log_file(), "a") as file:
-            file.write(f"Session: {session_id}\n")
-            file.write(message.toString() + '\n')
-        print("sent application message", message.toString())
-
-    # ... (other functions)
-
+{<quickfix.SessionID; proxy of <Swig Object of type 'FIX::SessionID *' at 0x7f93dcff9f20> >: <quickfix.Session; proxy of <Swig Object of type 'FIX::Session *' at 0x7f93dcff9fb0> >, <quickfix.SessionID; proxy of <Swig Object of type 'FIX::SessionID *' at 0x7f93dcffa190> >: <quickfix.Session; proxy of <Swig Object of type 'FIX::Session *' at 0x7f93dcffa0d0> >}
+<quickfix.Session; proxy of <Swig Object of type 'FIX::Session *' at 0x7f93dcff9fb0> >
+<quickfix.Session; proxy of <Swig Object of type 'FIX::Session *' at 0x7f93dcffa0d0> >
 
 
 
