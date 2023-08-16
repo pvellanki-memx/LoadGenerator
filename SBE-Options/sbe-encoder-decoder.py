@@ -1110,7 +1110,7 @@ class ShortOneSideQuote:
         self.list_seq_no = UINT8(list_seq_no)
         self.options_security_id = OptionsSecurityID(options_security_id)
         self.side = SideType(side)
-        self.quantity = UINT32(quantity)
+        self.quantity = UINT16(quantity)
         self.price = ShortPriceType(price,0)
 
     def encode(self):
