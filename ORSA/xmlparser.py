@@ -135,3 +135,48 @@ if __name__ == "__main__":
     
     split_xml_file(input_xml_file_path, output_file_prefix)
 
+
+
+
+
+
+
+
+
+
+
+
+
+bash script:
+
+#!/bin/bash
+db_name="trades.db"
+
+# Step 1: Split the big XML file using split.py
+python split.py big.xml output_file
+
+# Step 2: Process each split file using xml_to_db.py
+for split_file in output_file_*; do
+    python xml_to_db.py "$split_file" "$db_name" > log.txt &
+
+    # Capture the PID of the last background process
+    pid=$!
+
+    # Wait for the background process to complete
+    wait "$pid"
+
+    echo "Processing of $split_file completed."
+done
+
+# Step 3: Group the data in the database using groupedexcel.py
+python groupedexcel.py
+
+# Wait for groupedexcel.py to complete
+wait
+
+echo "Grouping of data completed."
+
+# Step 4: Perform further processing using furtherstreaming.py
+python furtherstreaming.py
+
+
