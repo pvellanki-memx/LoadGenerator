@@ -53,3 +53,75 @@ def main():
 # Start the main execution
 if __name__ == '__main__':
     main()
+
+
+
+
+
+
+
+
+
+
+
+
+import configparser
+import socket
+import struct
+import time
+from sbe_encoder_decoder import UTCTimestampNanos, NewOrderSingle, ShortTwoSidedQuote, ShortTwoSideBulkQuote, LongTwoSideBulkQuote, ShortOneSideBulkQuote, LongOneSideBulkQuote, MatchTradePreventionType, MtpGroupIDType, LongOneSideQuote, LongTwoSidedQuote
+from sbe_encoder_decoder import UINT32, UINT16, OrdType, PriceType, TimeInForceType, ExecInstType, TradingCapacityType, SideType, PartyID, PartiesGroup, PartyIDSource, PartyRoleType, ShortPriceType, OptionsSecurityID, ShortOneSideQuote
+from random import choices, randint
+import string
+import threading
+
+# ... (other imports and configurations)
+
+# Function to establish SBE TCP session
+def establish_session(session_name):
+    # ... (session establishment logic)
+    return client_socket, session_id
+
+# Function to handle workload for each session
+def session_workload(session_name):
+    try:
+        client_socket, session_id = establish_session(session_name)
+        
+        start_time = time.time()
+        while time.time() - start_time < duration:
+            message_type = generate_message_type()
+            message = generate_message(message_type, session_name)
+            send_message(client_socket, message)
+            time.sleep(1 / message_rate)
+        
+        client_socket.close()
+
+    except Exception as e:
+        print(f"Failed to establish session for {session_name}: {str(e)}")
+
+def main():
+    # Read session names from connections.cfg
+    session_names = connection_config.sections()
+
+    # List to hold thread objects
+    threads = []
+
+    # Iterate over session names and create threads
+    for session_name in session_names:
+        thread = threading.Thread(target=session_workload, args=(session_name,))
+        threads.append(thread)
+
+    # Start all threads
+    for thread in threads:
+        thread.start()
+
+    # Wait for all threads to finish
+    for thread in threads:
+        thread.join()
+
+    print(f"Total active sessions: {len(session_names)}")
+
+# Start the main execution
+if __name__ == '__main__':
+    main()
+
