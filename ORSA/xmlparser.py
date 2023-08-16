@@ -126,7 +126,12 @@ def split_xml_file(input_file_path, output_file_prefix, chunk_size=1):
     print(f"Split into {file_count} files.")
 
 if __name__ == "__main__":
-    input_xml_file_path = 'big.xml'
-    output_file_prefix = 'small'
+    if len(sys.argv) < 3:
+        print("Usage: python script_name.py <input_xml_file> <output_file_prefix>")
+        sys.exit(1)
+
+    input_xml_file_path = sys.argv[1]
+    output_file_prefix = sys.argv[2]
+    
     split_xml_file(input_xml_file_path, output_file_prefix)
 
