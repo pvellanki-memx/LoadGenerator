@@ -177,3 +177,48 @@ def generate_message(self, message_type, session_id):
     # Rest of the function...
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MESSAGE_TYPES = {
+    "NewOrderSingle": 1,
+    "ShortTwoSidedBulkQuote": 2,
+    "LongTwoSidedBulkQuote": 3,
+    "ShortOneSidedBulkQuote": 4,
+    "LongOneSidedBulkQuote": 5,
+    "ExecutionReport_New":11,
+    "ExecutionReport_BulkQuote_PendingNew":12,
+    "ExecutionReport_BulkQuote_ComponentNew":13,
+    "ExecutionReport_Rejected":14,
+    "ExecutionReport_Trade":15,
+    "ExecutionReport_PendingCancel":16,
+    "ExecutionReport_Canceled":17,
+    "ExecutionReport_PendingReplace":18,
+    "ExecutionReport_Replaced":19,
+    "ExecutionReport_TradeCorrection":20,
+    "ExecutionReport_TradeBreak":21,
+    "ExecutionReport_Restatement":22,
+    "PendingMassCancel":23,
+    "MassCancelReject":24,
+    "MassCancelDone":25,
+    "OrderCancelReject":26,
+    "AllocationInstructionAck":27,
+    "AllocationReport":28,
+    "UserNotification":29,
+    "MassCancelClearLockoutReject":30,
+    "MassCancelClearLockoutDone":31
+}
+
+
