@@ -136,3 +136,36 @@ def main():
 if __name__ == '__main__':
     main()
 
+
+
+[LoadGenerator]
+template_file = template_file.txt
+connection_config_file = connections.cfg
+log_file = ./log/load_generator.log
+message_rate = 10
+send_duration = 60
+heartbeat_interval = 1
+symbols = C0110008,T0130006,U0120002
+
+[MessageTypes]
+Logon = 1
+NewOrderSingle = 80
+OrderReplace = 0
+OrderCancel = 20
+
+
+[RateChanges]
+0 = 0, 0
+10 = 10, 20
+20 = 20, 15
+30 = 30, 10
+
+[EFID]
+MEOPF4=MT02
+MEOPF3=MT03
+MEOPVF1=MT02
+MEOPVF3=MT03
+MEOPVF2=MT02
+MEOPVF4=MT03
+~                
+
