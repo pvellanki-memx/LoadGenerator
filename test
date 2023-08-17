@@ -192,33 +192,67 @@ def generate_message(self, message_type, session_id):
 
 
 
+# Define the MESSAGE_TYPES dictionary
 MESSAGE_TYPES = {
     "NewOrderSingle": 1,
     "ShortTwoSidedBulkQuote": 2,
     "LongTwoSidedBulkQuote": 3,
     "ShortOneSidedBulkQuote": 4,
     "LongOneSidedBulkQuote": 5,
-    "ExecutionReport_New":11,
-    "ExecutionReport_BulkQuote_PendingNew":12,
-    "ExecutionReport_BulkQuote_ComponentNew":13,
-    "ExecutionReport_Rejected":14,
-    "ExecutionReport_Trade":15,
-    "ExecutionReport_PendingCancel":16,
-    "ExecutionReport_Canceled":17,
-    "ExecutionReport_PendingReplace":18,
-    "ExecutionReport_Replaced":19,
-    "ExecutionReport_TradeCorrection":20,
-    "ExecutionReport_TradeBreak":21,
-    "ExecutionReport_Restatement":22,
-    "PendingMassCancel":23,
-    "MassCancelReject":24,
-    "MassCancelDone":25,
-    "OrderCancelReject":26,
-    "AllocationInstructionAck":27,
-    "AllocationReport":28,
-    "UserNotification":29,
-    "MassCancelClearLockoutReject":30,
-    "MassCancelClearLockoutDone":31
+    "ExecutionReport_New": 11,
+    "ExecutionReport_BulkQuote_PendingNew": 12,
+    "ExecutionReport_BulkQuote_ComponentNew": 13,
+    "ExecutionReport_Rejected": 14,
+    "ExecutionReport_Trade": 15,
+    "ExecutionReport_PendingCancel": 16,
+    "ExecutionReport_Canceled": 17,
+    "ExecutionReport_PendingReplace": 18,
+    "ExecutionReport_Replaced": 19,
+    "ExecutionReport_TradeCorrection": 20,
+    "ExecutionReport_TradeBreak": 21,
+    "ExecutionReport_Restatement": 22,
+    "PendingMassCancel": 23,
+    "MassCancelReject": 24,
+    "MassCancelDone": 25,
+    "OrderCancelReject": 26,
+    "AllocationInstructionAck": 27,
+    "AllocationReport": 28,
+    "UserNotification": 29,
+    "MassCancelClearLockoutReject": 30,
+    "MassCancelClearLockoutDone": 31
 }
+
+# After extracting the Template ID from SBE header
+message_type_name = None
+for message_name, template_id_value in MESSAGE_TYPES.items():
+    if template_id == template_id_value:
+        message_type_name = message_name
+        break
+
+if message_type_name:
+    print("Message Type Name:", message_type_name)
+else:
+    print("Unknown Message Type")
+
+
+# After sending the message and before processing the response
+send_message(client_socket, message)
+
+# Receive 10 bytes of the response
+response_data = client_socket.recv(10)
+
+# Extract TCP header fields
+response_type, response_length = struct.unpack('!B H', response_data[:3])
+
+# Extract SBE header fields
+sbe_header_data = response_data[3:]
+block_length, template_id, schema_id, version, num_groups = struct.unpack('!H B B H B', sbe_header_data)
+
+# Print extracted header fields
+print("Template ID:", template_id)
+print("Message Type:", message_name
+
+
+
 
 
