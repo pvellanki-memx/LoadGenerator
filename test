@@ -1,13 +1,22 @@
-import threading
-# ... (other imports)
+import configparser
+import socket
+import struct
+import time
+from multiprocessing import Process
+from sbe_encoder_decoder import UTCTimestampNanos, NewOrderSingle, ShortTwoSidedQuote, ShortTwoSideBulkQuote, LongTwoSideBulkQuote, ShortOneSideBulkQuote, LongOneSideBulkQuote, MatchTradePreventionType, MtpGroupIDType, LongOneSideQuote, LongTwoSidedQuote, UINT32, UINT16, OrdType, PriceType, TimeInForceType, ExecInstType, TradingCapacityType, SideType, PartyID, PartiesGroup, PartyIDSource, PartyRoleType, OptionsSecurityID, ShortOneSideQuote
+from random import choices, randint
+import string
 
-# Function to handle workload for each session
-def session_workload(session_name):
+# Rest of the script remains the same
+
+def session_worker(session_name):
     try:
         # Establish SBE TCP session for the current session name
         client_socket, session_id = establish_session(session_name)
 
-        # ... (rest of the workload logic)
+        # Start time for calculating duration
+        start_time = time.time()
+
         # Generate and send messages for the specified duration
         while time.time() - start_time < duration:
             # Generate a random message type
@@ -29,30 +38,32 @@ def session_workload(session_name):
         print(f"Failed to establish session for {session_name}: {str(e)}")
 
 def main():
-    # ... (other parts of your main function)
+    # Read session names from connections.cfg
+    session_names = connection_config.sections()
 
-    # List to hold thread objects
-    threads = []
+    # List to hold the worker processes
+    processes = []
 
-    # Iterate over session names and create threads
+    # Iterate over session names and create worker processes
     for session_name in session_names:
-        thread = threading.Thread(target=session_workload, args=(session_name,))
-        threads.append(thread)
+        process = Process(target=session_worker, args=(session_name,))
+        processes.append(process)
 
-    # Start all threads
-    for thread in threads:
-        thread.start()
+    # Start all the worker processes
+    for process in processes:
+        process.start()
 
-    # Wait for all threads to finish
-    for thread in threads:
-        thread.join()
+    # Wait for all worker processes to complete
+    for process in processes:
+        process.join()
 
     # Print the number of active sessions
-    print(f"Total active sessions: {len(session_names)}")
+    print(f"Total active sessions: {len(processes)}")
 
 # Start the main execution
 if __name__ == '__main__':
     main()
+
 
 
 
