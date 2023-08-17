@@ -138,34 +138,42 @@ if __name__ == '__main__':
 
 
 
-[LoadGenerator]
-template_file = template_file.txt
-connection_config_file = connections.cfg
-log_file = ./log/load_generator.log
-message_rate = 10
-send_duration = 60
-heartbeat_interval = 1
-symbols = C0110008,T0130006,U0120002
-
-[MessageTypes]
-Logon = 1
-NewOrderSingle = 80
-OrderReplace = 0
-OrderCancel = 20
 
 
-[RateChanges]
-0 = 0, 0
-10 = 10, 20
-20 = 20, 15
-30 = 30, 10
 
-[EFID]
-MEOPF4=MT02
-MEOPF3=MT03
-MEOPVF1=MT02
-MEOPVF3=MT03
-MEOPVF2=MT02
-MEOPVF4=MT03
-~                
+
+
+class MyApplication(fix.Application):
+    def __init__(self, message_weights, message_rate):
+        super().__init__()
+        self.message_weights = message_weights
+        self.message_rate = message_rate
+        self.sessions = {}
+        self.log_directory = "log"
+        self.captured_clordids = []
+        self.efid_map = {}
+        self.captured_clordid_side_mapping = {}
+
+        # Load EFID mapping from config
+        efid_mapping = dict(config.items("EFID"))
+        for comp_id, efid in efid_mapping.items():
+            efid, trading_capacity = efid.split(",")
+            self.efid_map[comp_id] = {"efid": efid, "trading_capacity": int(trading_capacity)}
+
+
+
+
+def generate_message(self, message_type, session_id):
+    sender_comp_id = session_id.getSenderCompID().getString()
+    efid_info = self.efid_map.get(sender_comp_id)
+    
+    if efid_info is None:
+        print(f"EFID mapping not found for SenderCompID: {sender_comp_id}")
+        return None
+
+    efid = efid_info["efid"]
+    trading_capacity = efid_info["trading_capacity"]
+
+    # Rest of the function...
+
 
