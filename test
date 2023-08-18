@@ -256,3 +256,93 @@ print("Message Type:", message_name
 
 
 
+
+
+
+
+
+
+
+def decode_ER_New(data):
+    offsets = {
+        'OrderID': 7,
+        'ClOrdID': 15,
+        'ListSeqNo': 35,
+        'ExecID': 36,
+        'OrdStatus': 44,
+        'OptionsSecurityID': 45,
+        'Side': 53,
+        'OrderQty': 54,
+        'OrdType': 58,
+        'Price': 59,
+        'TimeInForce': 67,
+        'OpenOrClose': 68,
+        'ExecInst': 69,
+        'TradingCapacity': 71,
+        'RepriceFrequency': 72,
+        'RepriceBehavior': 73,
+        'LeavesQty': 74,
+        'CumQty': 78,
+        'SendingTime': 82,
+        'TransactTime': 90,
+        'MtpGroupID': 98,
+        'MatchTradePrevention': 100,
+        'CancelGroupID': 101,
+        'RiskGroupID': 103
+    }
+
+    decoded_message = {}
+    for field, offset in offsets.items():
+        field_size = struct.unpack('!H', data[offset - 2:offset])[0]
+        field_data = data[offset:offset + field_size]
+        if field_size == 1:
+            decoded_message[field] = struct.unpack('!B', field_data)[0]
+        else:
+            decoded_message[field] = field_data.decode('utf-8').strip('\x00')
+    
+    return decoded_message
+
+def decode_BulkQuote_pending_new(data):
+    offsets = {
+        'ClOrdID': 7,
+        'Symbol': 27,
+        'TimeInForce': 33,
+        'ExecInst': 34,
+        'TradingCapacity': 36,
+        'SendingTime': 37,
+        'TransactTime': 45,
+        'MtpGroupID': 53,
+        'MatchTradePrevention': 55,
+        'CancelGroupID': 56,
+        'RiskGroupID': 58,
+        'NumberOfOrders': 60
+    }
+
+    decoded_message = {}
+    for field, offset in offsets.items():
+        field_size = struct.unpack('!H', data[offset - 2:offset])[0]
+        field_data = data[offset:offset + field_size]
+        if field_size == 1:
+            decoded_message[field] = struct.unpack('!B', field_data)[0]
+        else:
+            decoded_message[field] = field_data.decode('utf-8').strip('\x00')
+    
+    return decoded_message
+
+# Add similar decode functions for other message types
+
+# Call the decoders based on the template ID
+template_id = struct.unpack('!B', response_data[2:3])[0]
+
+if template_id == 11:
+    decoded_message = decode_ER_New(response_data[3:])
+elif template_id == 12:
+    decoded_message = decode_BulkQuote_pending_new(response_data[3:])
+# Add similar conditional statements for other template IDs
+
+print(decoded_message)
+
+
+
+
+
