@@ -346,3 +346,19 @@ print(decoded_message)
 
 
 
+
+Traceback (most recent call last):
+  File "/home/pvellanki/work/FIX/test2.py", line 380, in <module>
+    app.run()
+  File "/home/pvellanki/work/FIX/test2.py", line 350, in run
+    message = self.generate_message(load[message_count], session_id)
+  File "/home/pvellanki/work/FIX/test2.py", line 186, in generate_message
+    message.setField(1815,int(trading_capacity))
+  File "/usr/local/lib/python3.10/dist-packages/quickfix.py", line 1230, in setField
+    return _quickfix.FieldMap_setField(self, *args)
+NotImplementedError: Wrong number or type of arguments for overloaded function 'FieldMap_setField'.
+  Possible C/C++ prototypes are:
+    FIX::FieldMap::setField(FIX::FieldBase const &,bool)
+    FIX::FieldMap::setField(FIX::FieldBase const &)
+    FIX::FieldMap::setField(int,std::string const &)
+
