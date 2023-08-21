@@ -19,6 +19,16 @@ class MyApplication(fix.Application):
         self.message_rate = message_rate
         self.sessions = {}
         self.log_directory = "log"
+        self.captured_clordids = []  # Initialize an empty list to store the captured ClOrdIDs
+        self.efid_map = {}
+        self.captured_clordid_side_mapping = {}
+
+        efid_mapping = dict(config.items("EFID"))
+        for comp_id, efid in efid_mapping.items():
+            efid, trading_capacity = efid.split(",")
+            self.efid_map[comp_id] = {"efid": efid, "trading_capacity": int(trading_capacity)}
+            #print(efid,trading_capacity)
+
 
     def onCreate(self, sessionID):
         print("Session created -", sessionID.toString())
@@ -33,6 +43,12 @@ class MyApplication(fix.Application):
 
     def toApp(self, message, sessionID):
         session_id = sessionID.toString()
+        msg_type_field = fix.MsgType()
+        if message.getHeader().getFieldIfSet(msg_type_field):
+            msg_type = msg_type_field.getValue()
+        else:
+            print("Message does not have a MsgType tag (35), skipping sending.")
+            return
         with open(self.get_log_file(), "a") as file:
             file.write(f"Session: {session_id}\n")
             file.write(message.toString() + '\n')
@@ -44,13 +60,47 @@ class MyApplication(fix.Application):
             file.write(f"Session: {session_id}\n")
             file.write(message.toString() + '\n')
         print("received application message", message.toString())
+        msg_type = fix.MsgType()
+        message.getHeader().getField(msg_type)
+
+        if msg_type.getValue() == fix.MsgType_ExecutionReport:
+            cl_ord_id = fix.ClOrdID()
+            exec_type = fix.ExecType()
+            order_id = fix.OrderID()
+            side = fix.Side()
+            tag_21035 = fix.StringField(21035)
+            message.getField(cl_ord_id)
+            message.getField(exec_type)
+            message.getField(side)
+            message.getField(tag_21035)
+           
+
+            # Check if the execution report matches the conditions
+            if exec_type.getValue() == fix.ExecType_NEW or exec_type.getValue() == fix.ExecType_TRADE:
+                #self.handle_execution_report(message)
+                
+                # Extract ClOrdID and OrdID from the execution report
+                clordid = cl_ord_id.getString()
+                side_value = side.getString()
+                tag_21035_value = tag_21035.getValue()
+                
+
+
+                # Store the captured ClOrdID in the list
+                self.captured_clordids.append(clordid)
+
+                # Store the ClOrdID and its corresponding side in the dictionary
+                self.captured_clordid_side_mapping[clordid] = {"side": side_value, "tag_21035": tag_21035_value, "session": sessionID}
+                #print(self.captured_clordid_side_mapping)
+
+    
 
     def fromAdmin(self, message, sessionID):
         global sessions
         session_id = sessionID.toString()
         incoming_msg_seq_num = int(message.getHeader().getField(34))
         msg_type = message.getHeader().getField(35)
-        print(message)
+        #print(message)
 
         if msg_type == 'A':  # Logon message
             if incoming_msg_seq_num == 1:
@@ -84,59 +134,69 @@ class MyApplication(fix.Application):
 
     def generate_message(self, message_type, session_id):
 
-def generate_message(self, message_type, session_id):
-    with open('instrument_definitions.json', 'r') as file:
-        instrument_definitions = json.load(file)
+            if message_type.lower() == "logon":
+                message = fix.Message()
+                message.getHeader().setField(fix.BeginString(fix.BeginString_FIXT11))
+                message.getHeader().setField(fix.MsgType(fix.MsgType_Logon))
 
-    if message_type.lower() == "logon":
-        message = fix.Message()
-        message.getHeader().setField(fix.BeginString(fix.BeginString_FIXT11))
-        message.getHeader().setField(fix.MsgType(fix.MsgType_Logon))
+                # Set other required fields for Logon message
+                message.setField(fix.EncryptMethod(0))
+                message.setField(fix.HeartBtInt(30))
+                message.setField(fix.ResetSeqNumFlag(False))
+                message.setField(fix.DefaultApplVerID("FIX.5.0SP2"))
+                message.setField(fix.DefaultCstmApplVerID("1.3"))
 
-        # Set other required fields for Logon message
-        message.setField(fix.EncryptMethod(0))
-        message.setField(fix.HeartBtInt(30))
-        message.setField(fix.ResetSeqNumFlag(False))
-        message.setField(fix.DefaultApplVerID("FIX.5.0SP2"))
-        message.setField(fix.DefaultCstmApplVerID("1.3"))
+            elif message_type.lower() == "newordersingle":
 
-    elif message_type.lower() == "newordersingle":
-        message = fix.Message()
-        message.getHeader().setField(fix.BeginString(session_id.getBeginString().getString()))
-        message.getHeader().setField(fix.MsgType(fix.MsgType_NewOrderSingle))
-        message.getHeader().setField(fix.SenderCompID(session_id.getSenderCompID().getString()))
-        message.getHeader().setField(fix.TargetCompID(session_id.getTargetCompID().getString()))
-        message.getHeader().setField(fix.MsgSeqNum(self.get_outgoing_seq_num(session_id)))
+                selected_symbol = random.choice(symbols)
+                random_quantity = random.randint(1, 100)
+                random_price = round(random.uniform(1, 100), 0)
+              
 
-        # Set other required fields for NewOrderSingle message
-        message.setField(fix.Symbol("AMD"))
-        message.setField(fix.Side(fix.Side_BUY))
-        message.setField(fix.OrderQty(100))
-        message.setField(fix.Price(8))
-        message.setField(fix.OrdType(fix.OrdType_LIMIT))
-        message.setField(fix.TimeInForce(fix.TimeInForce_DAY))
-        message.setField(fix.ClOrdID(self.generate_clordid()))
-        message.setField(fix.ExecInst("h"))
+                sender_comp_id = session_id.getSenderCompID().getString()
 
-        option_id = None
-        for item in instrument_definitions:
-            if item['underlyingSymbolId'] == symbol:
-                option_id = item['optionId']
-                break
 
-        if option_id:
-            instrument_definition = next((item for item in instrument_definitions if item["optionId"] == option_id), None)
-            if instrument_definition:
-                message.setField(fix.PutOrCall(instrument_definition["putCall"]))
-                message.setField(fix.StrikePrice(instrument_definition["strikePrice"]))
-                message.setField(21035, option_id)
+                efid_info = self.efid_map.get(sender_comp_id.lower())
+                if efid_info is None:
+                    print(f"EFID mapping not found for SenderCOmpID: {sender_comp_id}")
 
-        # Create the repeating group for PartyIDs
-        party_group = fix44.NewOrderSingle.NoPartyIDs()
-        party_group.setField(448, "QAX3")
-        party_group.setField(447, "D")
-        party_group.setField(452, "1")
-        message.addGroup(party_group)
+                efid =efid_info["efid"]
+                trading_capacity = efid_info["trading_capacity"]
+                print(efid,trading_capacity)
+
+                
+                message = fix.Message()
+                message.getHeader().setField(fix.BeginString(session_id.getBeginString().getString()))
+                message.getHeader().setField(fix.MsgType(fix.MsgType_NewOrderSingle))
+                message.getHeader().setField(fix.SenderCompID(session_id.getSenderCompID().getString()))
+                message.getHeader().setField(fix.TargetCompID(session_id.getTargetCompID().getString()))
+                message.getHeader().setField(fix.MsgSeqNum(self.get_outgoing_seq_num(session_id)))
+
+
+                # Set other required fields for NewOrderSingle message
+                #message.setField(fix.Symbol(selected_symbol))
+                message.setField(fix.Side(fix.Side_BUY))
+                message.setField(fix.OrderQty(random_quantity))
+                message.setField(fix.Price(random_price))
+                message.setField(fix.OrdType(fix.OrdType_LIMIT))
+                message.setField(fix.TimeInForce(fix.TimeInForce_DAY))
+                message.setField(fix.ClOrdID(self.generate_clordid()))
+                message.setField(fix.ExecInst("h"))
+                #message.setField(1815,"6")
+                message.setField(1815,str(trading_capacity))
+                message.setField(21035,selected_symbol)
+                sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
+                message.setField(60,sending_time)
+                message.setField(77,"O")
+                #message.setField(201,"1")
+                #message.setField(202,"100")
+                # Create the repeating group for PartyIDs
+                party_group = fix44.NewOrderSingle.NoPartyIDs()
+                party_group.setField(448, efid)
+                party_group.setField(447, "D")
+                party_group.setField(452, "1")
+                message.addGroup(party_group)
+                
 
 
 
@@ -147,16 +207,56 @@ def generate_message(self, message_type, session_id):
                 # ...
 
             elif message_type.lower() == "ordercancel":
-                pass
-                #..
-                # Code for other message types
-                # ...
+                # Generate OrderCancelRequest message using captured ClOrdIDs
+                if self.captured_clordids:
+                    org_clordid = random.choice(self.captured_clordids)
+                    clordid_info = self.captured_clordid_side_mapping.get(org_clordid)
+                    if clordid_info is not None:
+                        session_obj = clordid_info.get("session")
+                   
+
+                        if session_obj is not None:
+                            side = clordid_info["side"]
+                            tag_21035 = clordid_info["tag_21035"]
+                            #side = self.captured_clordid_side_mapping.get(clordid, "UNKNOWN")
+                            message = fix.Message()
+                            sending_time = datetime.datetime.utcnow().strftime('%Y%m%d-%H:%M:%S.%f')[:-3]
+                            message.setField(60,sending_time)
+                            message.getHeader().setField(fix.BeginString(session_id.getBeginString().getString()))
+                            message.getHeader().setField(fix.MsgType(fix.MsgType_OrderCancelRequest))
+                            message.getHeader().setField(fix.SenderCompID(session_id.getSenderCompID().getString()))
+                            message.getHeader().setField(fix.TargetCompID(session_id.getTargetCompID().getString()))
+                            message.getHeader().setField(fix.MsgSeqNum(self.get_outgoing_seq_num(session_id)))
+                            message.setField(fix.ClOrdID(self.generate_clordid()))
+
+                            message.setField(fix.OrigClOrdID(org_clordid))
+                            message.setField(fix.Side(side))
+                            message.setField(21035, tag_21035)
+                            print(message)
+                            
+                            # Send the Order Cancel Request on the same session as the corresponding ClOrdID
+                            fix.Session.sendToTarget(message, session_obj)
+                        else:
+                            print(f"Error: ClOrdID Session info not found for ClOrdID={org_clordid}")
+                            return fix.Message()
+
+                    else:
+                        print(f"Error: ClOrdID info not found for ClOrdID={org_clordid}")
+                        return fix.Message()
+                                
+
+                else:
+                    # Handle the case when no captured ClOrdIDs are available
+                    print("No captured ClOrdIDs available for order cancel")
+                    return fix.Message()
+
+                return message
 
             else:
                 # Unknown message type
                 return None
 
-            return message
+            return message if message is not None else fix.Message()
 
 
 
@@ -164,6 +264,7 @@ def generate_message(self, message_type, session_id):
         session = fix.Session.lookupSession(fix.SessionID(session_id))
         if session is not None:
             session.incrementNextSenderMsgSeqNum()
+
 
 
     def send_heartbeats(self, session_id, interval):
@@ -213,7 +314,7 @@ def generate_message(self, message_type, session_id):
         
     def get_log_file(self):
         os.makedirs(self.log_directory, exist_ok=True)
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H")
         log_file_name = f"log_file_{timestamp}.log"
         print(os.path.join(self.log_directory, log_file_name))
         return os.path.join(self.log_directory, log_file_name)
@@ -264,7 +365,8 @@ connection_config_file = config.get("LoadGenerator", "connection_config_file")
 log_file = config.get("LoadGenerator", "log_file")
 message_rate = float(config.get("LoadGenerator", "message_rate"))
 send_duration = int(config.get("LoadGenerator", "send_duration"))
-symbol = config.get("LoadGenerator", "symbol")
+symbols = config.get("LoadGenerator", "symbols").split(",")
+
 
 message_weights = dict(config.items("MessageTypes"))
 
@@ -273,73 +375,7 @@ app = MyApplication(message_weights, message_rate)
 app.connection_config_file = connection_config_file
 app.send_duration = send_duration
 
+
 # Run the FIX application
 app.run()
-
-
-
-
-
-
-
-
-
-
-
-
-def generate_message(self, message_type, session_id):
-    with open('instrument_definitions.json', 'r') as file:
-        instrument_definitions = json.load(file)
-
-    if message_type.lower() == "logon":
-        message = fix.Message()
-        message.getHeader().setField(fix.BeginString(fix.BeginString_FIXT11))
-        message.getHeader().setField(fix.MsgType(fix.MsgType_Logon))
-
-        # Set other required fields for Logon message
-        message.setField(fix.EncryptMethod(0))
-        message.setField(fix.HeartBtInt(30))
-        message.setField(fix.ResetSeqNumFlag(False))
-        message.setField(fix.DefaultApplVerID("FIX.5.0SP2"))
-        message.setField(fix.DefaultCstmApplVerID("1.3"))
-
-    elif message_type.lower() == "newordersingle":
-        message = fix.Message()
-        message.getHeader().setField(fix.BeginString(session_id.getBeginString().getString()))
-        message.getHeader().setField(fix.MsgType(fix.MsgType_NewOrderSingle))
-        message.getHeader().setField(fix.SenderCompID(session_id.getSenderCompID().getString()))
-        message.getHeader().setField(fix.TargetCompID(session_id.getTargetCompID().getString()))
-        message.getHeader().setField(fix.MsgSeqNum(self.get_outgoing_seq_num(session_id)))
-
-        # Set other required fields for NewOrderSingle message
-        message.setField(fix.Symbol("AMD"))
-        message.setField(fix.Side(fix.Side_BUY))
-        message.setField(fix.OrderQty(100))
-        message.setField(fix.Price(8))
-        message.setField(fix.OrdType(fix.OrdType_LIMIT))
-        message.setField(fix.TimeInForce(fix.TimeInForce_DAY))
-        message.setField(fix.ClOrdID(self.generate_clordid()))
-        message.setField(fix.ExecInst("h"))
-
-        option_id = None
-        for item in instrument_definitions:
-            if item['underlyingSymbolId'] == symbol:
-                option_id = item['optionId']
-                break
-
-        if option_id:
-            instrument_definition = next((item for item in instrument_definitions if item["optionId"] == option_id), None)
-            if instrument_definition:
-                message.setField(fix.PutOrCall(instrument_definition["putCall"]))
-                message.setField(fix.StrikePrice(instrument_definition["strikePrice"]))
-                message.setField(21035, option_id)
-
-        # Create the repeating group for PartyIDs
-        party_group = fix44.NewOrderSingle.NoPartyIDs()
-        party_group.setField(448, "QAX3")
-        party_group.setField(447, "D")
-        party_group.setField(452, "1")
-        message.addGroup(party_group)
-
-
 
