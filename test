@@ -347,18 +347,34 @@ print(decoded_message)
 
 
 
-Traceback (most recent call last):
-  File "/home/pvellanki/work/FIX/test2.py", line 380, in <module>
-    app.run()
-  File "/home/pvellanki/work/FIX/test2.py", line 350, in run
-    message = self.generate_message(load[message_count], session_id)
-  File "/home/pvellanki/work/FIX/test2.py", line 186, in generate_message
-    message.setField(1815,int(trading_capacity))
-  File "/usr/local/lib/python3.10/dist-packages/quickfix.py", line 1230, in setField
-    return _quickfix.FieldMap_setField(self, *args)
-NotImplementedError: Wrong number or type of arguments for overloaded function 'FieldMap_setField'.
-  Possible C/C++ prototypes are:
-    FIX::FieldMap::setField(FIX::FieldBase const &,bool)
-    FIX::FieldMap::setField(FIX::FieldBase const &)
-    FIX::FieldMap::setField(int,std::string const &)
+#!/bin/bash
+db_name="june27.db"
+
+# Step 1: Split the big XML file using split.py
+python3 split_v4.py orsa_trades_2023-06-27.xml june27
+
+# Step 2: Process each split file using xml_to_db.py
+for split_file in june27_*; do
+    python3 xml_2_db_v4.py "$split_file" "$db_name" > log.txt &
+
+    # Capture the PID of the last background process
+    pid=$!
+
+    # Wait for the background process to complete
+    wait "$pid"
+
+    echo "Processing of $split_file completed."
+done
+
+# Step 3: Group the data in the database using groupedexcel.py
+python3 groupedexcel_v4.py "$db_name"
+
+grouped_pid=$!
+# Wait for groupedexcel.py to complete
+wait "$grouped_pid"
+
+echo "Grouping of data completed."
+
+# Step 4: Perform further processing using furtherstreaming.py
+python3 streamfurther_v4.py "$db_name"
 
