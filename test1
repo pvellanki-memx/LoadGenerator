@@ -290,8 +290,8 @@ def generate_message(message_type,session_name):
         party_id_source = PartyIDSource('D')
         party_role = PartyRoleType(1)
         parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role]])]
-        quote1 = ShortTwoSidedQuote(list_seq_no=1, options_security_id='C0110002', bid_size=10, bid_mantissa=50000,offer_size=20,offer_mantissa=75000)
-        quote2 = ShortTwoSidedQuote(list_seq_no=2, options_security_id='C0110003', bid_size=15,bid_mantissa=80000, offer_size=25, offer_mantissa=85000)
+        quote1 = ShortTwoSidedQuote(list_seq_no=1, options_security_id='U2cn66kp', bid_size=10, bid_mantissa=50000,offer_size=20,offer_mantissa=75000)
+        quote2 = ShortTwoSidedQuote(list_seq_no=2, options_security_id='U2cn66kp', bid_size=15,bid_mantissa=80000, offer_size=25, offer_mantissa=85000)
 
         quotes = [quote1, quote2]
         
@@ -337,8 +337,8 @@ def generate_message(message_type,session_name):
         party_id_source = PartyIDSource('D')
         party_role = PartyRoleType(1)
         parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role]])]
-        quote1 = LongTwoSidedQuote(list_seq_no=1, options_security_id='C0110002', bid_size=10, bid_px=100000000,offer_size=20,offer_px=150000000)
-        quote2 = LongTwoSidedQuote(list_seq_no=2, options_security_id='C0110003',bid_size=15,bid_px=200000000, offer_size=25, offer_px=250000000)
+        quote1 = LongTwoSidedQuote(list_seq_no=1, options_security_id='U2cn66kp', bid_size=10, bid_px=1000000000000000,offer_size=20,offer_px=15000000000000000)
+        quote2 = LongTwoSidedQuote(list_seq_no=2, options_security_id='U2cn66kp',bid_size=15,bid_px=20000000000000000, offer_size=25, offer_px=250000000000000000)
 
         quotes = [quote1, quote2]
         
@@ -383,8 +383,8 @@ def generate_message(message_type,session_name):
         party_id_source = PartyIDSource('D')
         party_role = PartyRoleType(1)
         parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role]])]
-        quote1 = ShortOneSideQuote(list_seq_no=1, options_security_id='C0110002', side = SideType(value=SideType.BUY),quantity=11, price=10000)
-        quote2 = ShortOneSideQuote(list_seq_no=2, options_security_id='C0110003',side=SideType(value=SideType.SELL), quantity=12, price=20000)
+        quote1 = ShortOneSideQuote(list_seq_no=1, options_security_id='U2cn66kp', side = SideType(value=SideType.BUY),quantity=11, price=10000)
+        quote2 = ShortOneSideQuote(list_seq_no=2, options_security_id='U2cn66kp',side=SideType(value=SideType.SELL), quantity=12, price=20000)
 
         quotes = [quote1, quote2]
         
@@ -429,8 +429,8 @@ def generate_message(message_type,session_name):
         party_id_source = PartyIDSource('D')
         party_role = PartyRoleType(1)
         parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role]])]
-        quote1 = LongOneSideQuote(list_seq_no=1, options_security_id='C0110002', side=SideType(value=SideType.BUY),quantity=12, price=1000000000000000)
-        quote2 = LongOneSideQuote(list_seq_no=2, options_security_id='C0110003', side=SideType(value=SideType.SELL),quantity=13, price=2000000000000000)
+        quote1 = LongOneSideQuote(list_seq_no=1, options_security_id='U2cn66kp', side=SideType(value=SideType.BUY),quantity=12, price=1000000000000000)
+        quote2 = LongOneSideQuote(list_seq_no=2, options_security_id='U2cn66kp', side=SideType(value=SideType.SELL),quantity=13, price=2000000000000000)
 
         quotes = [quote1, quote2]
         
@@ -493,11 +493,13 @@ def session_worker(session_name):
             send_message(client_socket, message)
 
             # Receive 10 bytes of the response
-            response_data = client_socket.recv(10)
+            response_data = client_socket.recv(11)
+            print(response_data)
 
             # Extract SBE header fields
-            sbe_header_data = response_data[3:]
-            block_length, template_id, schema_id, version, num_groups = struct.unpack('!H B B H B', sbe_header_data)
+            template_id = struct.unpack_from('!B', response_data, 7)[0]
+            #sbe_header_data = response_data[3:]
+            #block_length, template_id, schema_id, version, num_groups = struct.unpack('!H B B H B', sbe_header_data)
 
             # Print extracted header fields
             print("Template ID:", template_id)
