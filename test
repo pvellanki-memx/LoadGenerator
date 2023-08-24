@@ -350,6 +350,18 @@ print(decoded_message)
 #!/bin/bash
 date="$1"
 db_name="$date.db"
+zip_file="$2"
+
+# Step 0: Extract the zip file using gzip -d
+if [[ -n "$zip_file" ]]; then
+    gzip -d "$zip_file" &
+    gzip_pid=$!
+fi
+
+# Wait for the gzip process to complete, if it's running
+if [[ -n "$gzip_pid" ]]; then
+    wait "$gzip_pid"
+fi
 
 # Step 1: Split the big XML file using split.py
 python3 split_v4.py orsa_trades_2023-"$date".xml "$date"
@@ -379,4 +391,57 @@ echo "Grouping of data completed."
 # Step 4: Perform further processing using furtherstreaming.py
 python3 streamfurther_v4.py "$db_name"
 
+
+
+
+
+
+
+
+
+
+
+def decode_ER_New(data):
+    offsets = {
+        'OrderID': 7,
+        'ClOrdID': 15,
+        'ListSeqNo': 35,
+        'ExecID': 36,
+        'OrdStatus': 44,
+        'OptionsSecurityID': 45,
+        'Side': 53,
+        'OrderQty': 54,
+        'OrdType': 58,
+        'Price': 59,
+        'TimeInForce': 67,
+        'OpenOrClose': 68,
+        'ExecInst': 69,
+        'TradingCapacity': 71,
+        'RepriceFrequency': 72,
+        'RepriceBehavior': 73,
+        'LeavesQty': 74,
+        'CumQty': 78,
+        'SendingTime': 82,
+        'TransactTime': 90,
+        'MtpGroupID': 98,
+        'MatchTradePrevention': 100,
+        'CancelGroupID': 101,
+        'RiskGroupID': 103
+    }
+    
+    # Define fields that should be treated as non-string fields regardless of size
+    non_string_fields = ['OrdStatus', 'Side', 'OrdType', 'TimeInForce', 'OpenOrClose', 'ExecInst', 'TradingCapacity']
+
+    decoded_message = {}
+    for field, offset in offsets.items():
+        field_size = struct.unpack('!H', data[offset - 2:offset])[0]
+        field_data = data[offset:offset + field_size]
+
+        # Check if the field is non-string
+        if field in non_string_fields:
+            decoded_message[field] = struct.unpack('!B', field_data)[0]
+        else:
+            decoded_message[field] = field_data.decode('utf-8').rstrip('\x00')
+    
+    return decoded_message
 
