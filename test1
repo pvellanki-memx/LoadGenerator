@@ -551,3 +551,8 @@ def main():
 # Start the main execution
 if __name__ == '__main__':
     main()
+
+
+
+
+total_party_ids = sum(len(party_group.party_ids) for party_group in party_entries)
