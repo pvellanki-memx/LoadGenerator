@@ -554,5 +554,8 @@ if __name__ == '__main__':
 
 
 
-
-total_party_ids = sum(len(party_group.party_ids) for party_group in party_entries)
+    efid = connection_config[session_name]['EFID']
+        party_id = PartyID(efid)
+        party_id_source = PartyIDSource('D')
+        party_role = PartyRoleType(1)
+        parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role]])]
