@@ -52,31 +52,7 @@ Follow the on-screen instructions to pause, resume, change the message rate, or 
 Results and Reporting
 The load generator provides real-time progress updates during the load test. Additionally, it generates a log file (load_generator.log) that contains detailed information about the load test, including the sent messages, timestamps, and any errors encountered.
 
-For further analysis and reporting, the load generator exports performance metrics and statistics to a CSV file (performance_metrics.csv) upon completion of the load test. You can use tools like Microsoft Excel or Python's pandas library to analyze the data and generate reports.
 
-Conclusion
-The Load Generator Framework offers a versatile solution for load testing trading systems using the FIX protocol. It provides flexibility, configurability, and real-time insights into the system's performance. By following the steps outlined in this README, you can easily set up and execute load tests tailored to your specific requirements.
-
-For additional information or support, please contact [your email address or support contact].
-
-
-
-import configparser
-import random
-import time
-
-class FIXSession:
-    # FIX session management code here
-
-def generate_message(templates):
-    # Message generation logic here
-
-def load_generator(config_file):
-    # Load generation code here
-
-if __name__ == "__main__":
-    config_file = "config.ini"  # Specify the path to the config file
-    load_generator(config_file)
 
 
 
