@@ -559,3 +559,12 @@ if __name__ == '__main__':
         party_id_source = PartyIDSource('D')
         party_role = PartyRoleType(1)
         parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role]])]
+
+
+
+
+pvellanki@pvellanki-MacBookPro Downloads % scp -r fix_package pvellanki@10.2.23.112:/home/pvellanki/loadgenerator/FIX/
+Enter passphrase for key '/Users/pvellanki/.ssh/id_rsa': 
+scp: realpath /home/pvellanki/loadgenerator/FIX/fix_package: No such file
+scp: upload "/home/pvellanki/loadgenerator/FIX/fix_package": path canonicalization failed
+scp: failed to upload directory fix_package to /home/pvellanki/loadgenerator/FIX/
