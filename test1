@@ -380,3 +380,67 @@ app.send_duration = send_duration
 # Run the FIX application
 app.run()
 
+
+
+
+
+
+
+
+
+FIX Load Generator ReadMe
+The FIX Load Generator is a Python script designed to simulate the sending of FIX messages to a FIX server. This script utilizes the QuickFIX library to create and send various types of FIX messages to different sessions. The generated load can be customized according to message types and rates defined in the configuration file.
+
+Prerequisites
+Python 3.x
+QuickFIX library (Python bindings)
+Configuration file (config.ini) for the Load Generator and FIX session settings
+Installation
+Install Python 3.x on your system.
+
+Install the QuickFIX library's Python bindings. You can use the following command:
+
+Copy code
+pip install quickfix
+Create a configuration file named config.ini and set up the required parameters for the Load Generator and FIX session settings. An example configuration might look like this:
+
+ini
+Copy code
+[LoadGenerator]
+connection_config_file = FIX_session_settings.cfg
+log_file = log
+message_rate = 2.0
+send_duration = 300
+symbols = AAPL,GOOGL
+
+[MessageTypes]
+logon = 1
+newordersingle = 3
+ordercancel = 2
+
+[EFID]
+sender_comp_id_1 = EFID1,100
+sender_comp_id_2 = EFID2,200
+Usage
+Open a terminal or command prompt.
+
+Navigate to the directory containing the fix_load_generator.py script.
+
+Run the script using the following command:
+
+Copy code
+python fix_load_generator.py
+Functionality
+The FIX Load Generator script performs the following actions:
+
+Establishes FIX sessions with the counterparty based on the provided session settings.
+Generates and sends various types of FIX messages, including Logon, NewOrderSingle, and OrderCancel.
+Handles incoming application messages and admin messages.
+Captures ClOrdIDs from Execution Reports and uses them for generating OrderCancelRequest messages.
+Logs the messages sent and received in a log file within the specified log directory.
+Customization
+Configuration: Adjust the parameters in the config.ini file to suit your testing needs. Customize message rates, message types, session settings, symbols, and more.
+
+Message Generation: Customize the generate_message method within the MyApplication class to modify the content and structure of the generated FIX messages.
+
+Message Types: Extend the script by adding support for other FIX message types as needed.
