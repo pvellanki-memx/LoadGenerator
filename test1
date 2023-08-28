@@ -563,8 +563,92 @@ if __name__ == '__main__':
 
 
 
-pvellanki@pvellanki-MacBookPro Downloads % scp -r fix_package pvellanki@10.2.23.112:/home/pvellanki/loadgenerator/FIX/
+pvellanki@pvellanki-MacBookPro Downloads % scp -r -v fix_package pvellanki@10.2.23.112:/home/pvellanki/loadgenerator/FIX/
+Executing: program /usr/bin/ssh host 10.2.23.112, user pvellanki, command sftp
+OpenSSH_9.0p1, LibreSSL 3.3.6
+debug1: Reading configuration data /etc/ssh/ssh_config
+debug1: /etc/ssh/ssh_config line 21: include /etc/ssh/ssh_config.d/* matched no files
+debug1: /etc/ssh/ssh_config line 54: Applying options for *
+debug1: Authenticator provider $SSH_SK_PROVIDER did not resolve; disabling
+debug1: Connecting to 10.2.23.112 [10.2.23.112] port 22.
+debug1: Connection established.
+debug1: identity file /Users/pvellanki/.ssh/id_rsa type 0
+debug1: identity file /Users/pvellanki/.ssh/id_rsa-cert type -1
+debug1: identity file /Users/pvellanki/.ssh/id_ecdsa type -1
+debug1: identity file /Users/pvellanki/.ssh/id_ecdsa-cert type -1
+debug1: identity file /Users/pvellanki/.ssh/id_ecdsa_sk type -1
+debug1: identity file /Users/pvellanki/.ssh/id_ecdsa_sk-cert type -1
+debug1: identity file /Users/pvellanki/.ssh/id_ed25519 type -1
+debug1: identity file /Users/pvellanki/.ssh/id_ed25519-cert type -1
+debug1: identity file /Users/pvellanki/.ssh/id_ed25519_sk type -1
+debug1: identity file /Users/pvellanki/.ssh/id_ed25519_sk-cert type -1
+debug1: identity file /Users/pvellanki/.ssh/id_xmss type -1
+debug1: identity file /Users/pvellanki/.ssh/id_xmss-cert type -1
+debug1: identity file /Users/pvellanki/.ssh/id_dsa type -1
+debug1: identity file /Users/pvellanki/.ssh/id_dsa-cert type -1
+debug1: Local version string SSH-2.0-OpenSSH_9.0
+debug1: Remote protocol version 2.0, remote software version OpenSSH_8.0
+debug1: compat_banner: match: OpenSSH_8.0 pat OpenSSH* compat 0x04000000
+debug1: Authenticating to 10.2.23.112:22 as 'pvellanki'
+debug1: load_hostkeys: fopen /Users/pvellanki/.ssh/known_hosts2: No such file or directory
+debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+debug1: SSH2_MSG_KEXINIT sent
+debug1: SSH2_MSG_KEXINIT received
+debug1: kex: algorithm: curve25519-sha256
+debug1: kex: host key algorithm: ssh-ed25519
+debug1: kex: server->client cipher: chacha20-poly1305@openssh.com MAC: <implicit> compression: none
+debug1: kex: client->server cipher: chacha20-poly1305@openssh.com MAC: <implicit> compression: none
+debug1: expecting SSH2_MSG_KEX_ECDH_REPLY
+debug1: SSH2_MSG_KEX_ECDH_REPLY received
+debug1: Server host key: ssh-ed25519 SHA256:VThX4Jp31GjLJO43i0DnBfGcnY/58ny+fRiNZKI/I8U
+debug1: load_hostkeys: fopen /Users/pvellanki/.ssh/known_hosts2: No such file or directory
+debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+debug1: Host '10.2.23.112' is known and matches the ED25519 host key.
+debug1: Found key in /Users/pvellanki/.ssh/known_hosts:44
+debug1: rekey out after 134217728 blocks
+debug1: SSH2_MSG_NEWKEYS sent
+debug1: expecting SSH2_MSG_NEWKEYS
+debug1: SSH2_MSG_NEWKEYS received
+debug1: rekey in after 134217728 blocks
+debug1: get_agent_identities: bound agent to hostkey
+debug1: get_agent_identities: ssh_fetch_identitylist: agent contains no identities
+debug1: Will attempt key: /Users/pvellanki/.ssh/id_rsa RSA SHA256:rBZp9akblGSh2RoAk69zAJ7mcRlegNaF1dEUynkCbxo
+debug1: Will attempt key: /Users/pvellanki/.ssh/id_ecdsa 
+debug1: Will attempt key: /Users/pvellanki/.ssh/id_ecdsa_sk 
+debug1: Will attempt key: /Users/pvellanki/.ssh/id_ed25519 
+debug1: Will attempt key: /Users/pvellanki/.ssh/id_ed25519_sk 
+debug1: Will attempt key: /Users/pvellanki/.ssh/id_xmss 
+debug1: Will attempt key: /Users/pvellanki/.ssh/id_dsa 
+debug1: SSH2_MSG_EXT_INFO received
+debug1: kex_input_ext_info: server-sig-algs=<ssh-ed25519,ssh-rsa,rsa-sha2-256,rsa-sha2-512,ssh-dss,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521>
+debug1: SSH2_MSG_SERVICE_ACCEPT received
+debug1: Authentications that can continue: publickey
+debug1: Next authentication method: publickey
+debug1: Offering public key: /Users/pvellanki/.ssh/id_rsa RSA SHA256:rBZp9akblGSh2RoAk69zAJ7mcRlegNaF1dEUynkCbxo
+debug1: Server accepts key: /Users/pvellanki/.ssh/id_rsa RSA SHA256:rBZp9akblGSh2RoAk69zAJ7mcRlegNaF1dEUynkCbxo
 Enter passphrase for key '/Users/pvellanki/.ssh/id_rsa': 
+Authenticated to 10.2.23.112 ([10.2.23.112]:22) using "publickey".
+debug1: channel 0: new [client-session]
+debug1: Requesting no-more-sessions@openssh.com
+debug1: Entering interactive session.
+debug1: pledge: filesystem
+debug1: client_input_global_request: rtype hostkeys-00@openssh.com want_reply 0
+debug1: client_input_hostkeys: searching /Users/pvellanki/.ssh/known_hosts for 10.2.23.112 / (none)
+debug1: client_input_hostkeys: searching /Users/pvellanki/.ssh/known_hosts2 for 10.2.23.112 / (none)
+debug1: client_input_hostkeys: hostkeys file /Users/pvellanki/.ssh/known_hosts2 does not exist
+debug1: client_input_hostkeys: no new or deprecated keys from server
+debug1: Remote: /home/pvellanki/.ssh/authorized_keys:1: key options: agent-forwarding port-forwarding pty user-rc x11-forwarding
+debug1: Remote: /home/pvellanki/.ssh/authorized_keys:1: key options: agent-forwarding port-forwarding pty user-rc x11-forwarding
+debug1: Sending environment.
+debug1: channel 0: setting env LANG = "en_US.UTF-8"
+debug1: Sending subsystem: sftp
 scp: realpath /home/pvellanki/loadgenerator/FIX/fix_package: No such file
 scp: upload "/home/pvellanki/loadgenerator/FIX/fix_package": path canonicalization failed
 scp: failed to upload directory fix_package to /home/pvellanki/loadgenerator/FIX/
+debug1: client_input_channel_req: channel 0 rtype exit-status reply 0
+debug1: channel 0: free: client-session, nchannels 1
+Transferred: sent 3696, received 3388 bytes, in 0.3 seconds
+Bytes per second: sent 14380.4, received 13182.0
+debug1: Exit status 0
