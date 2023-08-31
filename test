@@ -576,30 +576,25 @@ if __name__ == '__main__':
 
 
 
-
 import sqlite3
 import pandas as pd
 
 # Connect to the SQLite database
 conn = sqlite3.connect('trades.db')
 
-def create_excel_sheet(exchange):
-    query = f"SELECT * FROM grouped_trades WHERE EXCH = '{exchange}'"
-    df = pd.read_sql_query(query, conn)
-
-    # Create an Excel writer object
-    excel_writer = pd.ExcelWriter(f'{exchange}.xlsx', engine='openpyxl')
-    df.to_excel(excel_writer, index=False, sheet_name=exchange)
-    excel_writer.save()
-    excel_writer.close()
-
 # List of exchanges
 exchanges = ['XBOX', 'XCBO', 'EXCH3']  # Add more exchanges as needed
 
-# Create Excel sheets for each exchange
+# Iterate through exchanges
 for exchange in exchanges:
-    create_excel_sheet(exchange)
+    query = f"SELECT * FROM grouped_trades WHERE EXCH = '{exchange}'"
+    df = pd.read_sql_query(query, conn)
+    
+    # Create an Excel file for each exchange
+    file_name = f'{exchange}.xlsx'
+    df.to_excel(file_name, index=False, engine='openpyxl')
 
 # Close the database connection
 conn.close()
+
 
