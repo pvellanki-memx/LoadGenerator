@@ -575,7 +575,6 @@ if __name__ == '__main__':
 
 
 
-
 import sqlite3
 import pandas as pd
 
@@ -590,11 +589,12 @@ for exchange in exchanges:
     query = f"SELECT * FROM grouped_trades WHERE EXCH = '{exchange}'"
     df = pd.read_sql_query(query, conn)
     
-    # Create an Excel file for each exchange
-    file_name = f'{exchange}.xlsx'
-    df.to_excel(file_name, index=False, engine='openpyxl')
+    # Create a CSV file for each exchange
+    file_name = f'{exchange}.csv'
+    df.to_csv(file_name, index=False)
 
 # Close the database connection
 conn.close()
+
 
 
