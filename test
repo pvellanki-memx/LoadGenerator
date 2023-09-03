@@ -574,27 +574,54 @@ if __name__ == '__main__':
 
 
 
+[OptionsSecurityIDs]
+AMD = F0070007,F0070008
+F = F0070010,F0070018
+CMG = C0070010,C0070018
+# Add more underliers and their associated options security IDs
 
-import sqlite3
-import pandas as pd
 
-# Connect to the SQLite database
-conn = sqlite3.connect('trades.db')
+# Read the underliers and their options security IDs from the configuration
+options_security_ids_by_underlier = {
+    'AMD': config.get('OptionsSecurityIDs', 'AMD').split(','),
+    'F': config.get('OptionsSecurityIDs', 'F').split(','),
+    'CMG': config.get('OptionsSecurityIDs', 'CMG').split(','),
+    # Add more underliers and their associated options security IDs
+}
 
-# List of exchanges
-exchanges = ['XBOX', 'XCBO', 'EXCH3']  # Add more exchanges as needed
+# Randomly select an underlier
+selected_underlier = choice(list(options_security_ids_by_underlier.keys()))
 
-# Iterate through exchanges
-for exchange in exchanges:
-    query = f"SELECT * FROM grouped_trades WHERE EXCH = '{exchange}'"
-    df = pd.read_sql_query(query, conn)
-    
-    # Create a CSV file for each exchange
-    file_name = f'{exchange}.csv'
-    df.to_csv(file_name, index=False)
+# Get the associated options security IDs for the selected underlier
+selected_options_security_ids = options_security_ids_by_underlier[selected_underlier]
 
-# Close the database connection
-conn.close()
+# Generate ShortTwoSideBulkQuote message
+sending_time = UTCTimestampNanos(int(time.time() * 10**9))
+cl_ord_id = ''.join(choices(string.ascii_uppercase + string.digits, k=20))
+time_in_force = TimeInForceType(value=TimeInForceType.DAY)
+exec_inst = ExecInstType(value=ExecInstType.ParticipateDoNotInitiate)
+trading_capacity = TradingCapacityType(value=TradingCapacityType.MARKET_MAKER)
+mtp_group_id = MtpGroupIDType(1)
+match_trade_prevention = MatchTradePreventionType(1)
+cancel_group_id = UINT16(1)
+risk_group_id = UINT16(1)
+efid = connection_config[session_name]['EFID']
+party_id = PartyID(efid)
+party_id_source = PartyIDSource('D')
+party_role = PartyRoleType(1)
+party_id1 = PartyID(efid)
+party_id_source1 = PartyIDSource('D')
+party_role1 = PartyRoleType(66)
+parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role],[party_id1, party_id_source1, party_role1]])]
+
+# Randomly select an options security ID from the list associated with the selected underlier
+options_security_id = choice(selected_options_security_ids)
+
+quote1 = ShortTwoSidedQuote(list_seq_no=1, options_security_id=options_security_id, bid_size=10, bid_mantissa=50000, offer_size=20, offer_mantissa=75000)
+quote2 = ShortTwoSidedQuote(list_seq_no=2, options_security_id=options_security_id, bid_size=15, bid_mantissa=80000, offer_size=25, offer_mantissa=85000)
+
+quotes = [quote1, quote2]
+
 
 
 
