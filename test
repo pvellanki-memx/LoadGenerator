@@ -508,6 +508,57 @@ def session_worker(session_name):
             send_message(client_socket, message)
             
             '''
+
+            
+            # Define the custom TCP header format
+            tcp_header_format = '!B H'
+            
+            # Size of the TCP header in bytes
+            tcp_header_size = struct.calcsize(tcp_header_format)
+            
+            # Loop to receive and process incoming messages
+            while True:
+                # Receive the response header
+                response_header = client_socket.recv(tcp_header_size)
+            
+                # Check if there is enough data for the TCP header
+                if len(response_header) < tcp_header_size:
+                    # Incomplete message, wait for more data
+                    continue
+            
+                # Parse the TCP header
+                response_type, response_length = struct.unpack(tcp_header_format, response_header)
+            
+                # Receive the SBE-encoded message based on the message length
+                sbe_message = b''
+                while len(sbe_message) < response_length:
+                    chunk = client_socket.recv(response_length - len(sbe_message))
+                    if not chunk:
+                        # Handle the case where the connection is closed prematurely
+                        break
+                    sbe_message += chunk
+            
+                # Process the SBE-encoded message based on its type
+                if response_type == 1:
+                    # Parse and decode message type 1 using the appropriate SBE template
+                    # Example: sbe_message_decoded = decode_message_type_1(sbe_message)
+                    pass
+                elif response_type == 2:
+                    # Parse and decode message type 2 using the appropriate SBE template
+                    # Example: sbe_message_decoded = decode_message_type_2(sbe_message)
+                    pass
+                else:
+                    # Unknown message type, handle accordingly
+                    pass
+            
+                # You can print or process the decoded message here
+            
+            # Close the client socket when done
+            client_socket.close()
+
+
+
+
             # Receive 10 bytes of the response
             response_data = client_socket.recv(11)
             print(response_data)
