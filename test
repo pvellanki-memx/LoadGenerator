@@ -827,3 +827,47 @@ while True:
 
 
 
+
+import xml.etree.ElementTree as ET
+import sqlite3
+
+# Function to count unique RptIDs in an XML file
+def count_unique_rptids_in_xml(xml_file):
+    unique_rptids = set()
+    tree = ET.parse(xml_file)
+    root = tree.getroot()
+
+    # Assuming the RptID is an attribute of TrdCaptRpt element
+    for trd_capt_rpt in root.findall('.//TrdCaptRpt'):
+        rpt_id = trd_capt_rpt.get('RptID')
+        if rpt_id:
+            unique_rptids.add(rpt_id)
+
+    return len(unique_rptids)
+
+# Function to count unique RptIDs in a SQLite database table
+def count_unique_rptids_in_db(db_file):
+    conn = sqlite3.connect(db_file)
+    cursor = conn.cursor()
+
+    cursor.execute('SELECT COUNT(DISTINCT RptID) FROM grouped_trades')
+    count = cursor.fetchone()[0]
+
+    conn.close()
+
+    return count
+
+if __name__ == '__main__':
+    # Path to your XML file
+    xml_file_path = 'your_xml_file.xml'
+
+    # Path to your SQLite database file
+    db_file_path = 'your_database.db'
+
+    xml_unique_count = count_unique_rptids_in_xml(xml_file_path)
+    db_unique_count = count_unique_rptids_in_db(db_file_path)
+
+    print(f'Unique RptIDs in XML: {xml_unique_count}')
+    print(f'Unique RptIDs in Database: {db_unique_count}')
+
+
