@@ -537,6 +537,36 @@ def session_worker(session_name):
                         # Handle the case where the connection is closed prematurely
                         break
                     sbe_message += chunk
+
+                # Inside the loop that processes responses
+                while True:
+                    # ... (previous code to receive response_length and SBE-encoded message)
+                
+                    # Assuming sbe_header_size is the size of the SBE header in bytes
+                    sbe_header_data = client_socket.recv(sbe_header_size)
+                
+                    # Extract fields from the SBE header
+                    block_length, template_id, schema_id, version = struct.unpack('!HBBH', sbe_header_data)
+                
+                    # Now you have template_id, and you can decode message types based on it
+                    message_type_name = None
+                    for message_name, template_id_value in MESSAGE_TYPES.items():
+                        if template_id == template_id_value:
+                            message_type_name = message_name
+                            break
+                
+                    if message_type_name:
+                        print("Message Type Name:", message_type_name)
+                    else:
+                        print("Unknown Message Type")
+                
+                    # Continue to receive and process the rest of the SBE-encoded message
+                    sbe_message_data = client_socket.recv(response_length - sbe_header_size)
+                
+                    # Decode and process the SBE-encoded message here
+                
+                # Rest of the code
+
             
                 # Process the SBE-encoded message based on its type
                 if response_type == 1:
