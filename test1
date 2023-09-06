@@ -451,6 +451,136 @@ Message Types: Extend the script by adding support for other FIX message types a
 
 
 
+import sqlite3
+import xml.etree.ElementTree as ET
+from multiprocessing import Pool, cpu_count
+from tqdm import tqdm
+import sys
+
+xml_file = sys.argv[1]
+db_name = sys.argv[2]
+
+# Function to insert a batch of data into the database
+def insert_batch(batch_data):
+    conn = sqlite3.connect(db_name)
+    cursor = conn.cursor()
+
+    cursor.executemany('''INSERT INTO tradedata VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', batch_data)
+
+    conn.commit()
+    conn.close()
+
+# Connect to your SQLite database
+conn = sqlite3.connect(db_name)
+cursor = conn.cursor()
+
+# Create a table to store the parsed data
+cursor.execute('''CREATE TABLE IF NOT EXISTS tradedata (
+                    RptID TEXT,
+                    PrevlyRpted TEXT,
+                    LastQty INTEGER,
+                    LastPx REAL,
+                    TrdDt DATE,
+                    TxnTm TIMESTAMP,
+                    TransTyp INTEGER,
+                    RptTyp INTEGER,
+                    TrdTyp INTEGER,
+                    TrdSubTyp INTEGER,
+                    BizDt DATE,
+                    MtchStat INTEGER,
+                    Sym TEXT,
+                    CFI TEXT,
+                    MMY TEXT,
+                    MatDt DATE,
+                    StrkPx REAL,
+                    StrkCcy TEXT,
+                    StrkMult REAL,
+                    StrkValu REAL,
+                    Mult INTEGER,
+                    Exch TEXT,
+                    Amt_Prem REAL,
+                    Side1_Pty_ID TEXT,
+                    Side1_Pty_R TEXT,
+                    Side1_Pty_Sub_ID TEXT,
+                    Side2_Pty_ID TEXT,
+                    Side2_Pty_R TEXT,
+                    Side2_Pty_Sub_ID TEXT
+                 )''')
+
+# Parse the XML data and insert records into the database
+tree = ET.parse(xml_file)
+root = tree.getroot()
+
+# Define a namespace for the XML
+ns = {'fixml': 'http://www.fixprotocol.org/FIXML-4-4'}
+
+# Initialize batch data and batch size
+batch_data = []
+batch_size = 1000  # Adjust this to your preference
+
+# Process each TrdCaptRpt element
+for trd_capt_rpt in tqdm(root.findall('.//fixml:TrdCaptRpt', ns)):
+    exch = trd_capt_rpt.find('.//fixml:Instrmt', ns).get('Exch')
+    
+    if exch == 'XCBO':
+        # Extract data from the XML (same code as before)
+        rpt_id = trd_capt_rpt.get('RptID')
+        prevly_rpted = trd_capt_rpt.get('PrevlyRpted')
+        last_qty = int(trd_capt_rpt.get('LastQty'))
+        last_px = float(trd_capt_rpt.get('LastPx'))
+        trd_dt = trd_capt_rpt.get('TrdDt')
+        txn_tm = trd_capt_rpt.get('TxnTm')
+        trans_typ = int(trd_capt_rpt.get('TransTyp'))
+        rpt_typ = int(trd_capt_rpt.get('RptTyp'))
+        trd_typ = int(trd_capt_rpt.get('TrdTyp'))
+        trd_sub_typ = int(trd_capt_rpt.get('TrdSubTyp'))
+        biz_dt = trd_capt_rpt.get('BizDt')
+        mtch_stat = int(trd_capt_rpt.get('MtchStat'))
+        
+        instrmt = trd_capt_rpt.find('.//fixml:Instrmt', ns)
+        sym = instrmt.get('Sym')
+        cfi = instrmt.get('CFI')
+        mmy = instrmt.get('MMY')
+        mat_dt = instrmt.get('MatDt')
+        strk_px = float(instrmt.get('StrkPx'))
+        strk_ccy = instrmt.get('StrkCcy')
+        strk_mult = float(instrmt.get('StrkMult'))
+        strk_valu = float(instrmt.get('StrkValu'))
+        mult = int(instrmt.get('Mult'))
+        
+        side1 = trd_capt_rpt.find('.//fixml:RptSide[@Side="1"]', ns)
+        side1_pty = side1.find('fixml:Pty', ns)
+        side1_pty_id = side1_pty.get('ID')
+        side1_pty_r = side1_pty.get('R')
+        side1_pty_sub = side1_pty.find('fixml:Sub', ns)
+        side1_pty_sub_id = side1_pty_sub.get('ID') if side1_pty_sub is not None else None
+        
+        side2 = trd_capt_rpt.find('.//fixml:RptSide[@Side="2"]', ns)
+        side2_pty = side2.find('fixml:Pty', ns)
+        side2_pty_id = side2_pty.get('ID')
+        side2_pty_r = side2_pty.get('R')
+        side2_pty_sub = side2_pty.find('fixml:Sub', ns)
+        side2_pty_sub_id = side2_pty_sub.get('ID') if side2_pty_sub is not None else None
+
+        amt_prem = float(trd_capt_rpt.find('.//fixml:Amt[@Typ="PREM"]', ns).get('Amt'))
+
+        # Append the data to the batch_data list
+        batch_data.append((rpt_id, prevly_rpted, last_qty, last_px, trd_dt, txn_tm, trans_typ, rpt_typ, trd_typ, trd_sub_typ, biz_dt, mtch_stat,
+             sym, cfi, mmy, mat_dt, strk_px, strk_ccy, strk_mult, strk_valu, mult, exch, amt_prem,
+             side1_pty_id, side1_pty_r, side1_pty_sub_id, side2_pty_id, side2_pty_r, side2_pty_sub_id))
+
+        # If batch size is reached, insert the batch into the database
+        if len(batch_data) >= batch_size:
+            insert_batch(batch_data)
+            batch_data = []
+
+# Insert the remaining data in the batch_data list
+if batch_data:
+    insert_batch(batch_data)
+
+# Commit the changes and close the database connection
+conn.commit()
+conn.close()
 
 
 
@@ -464,77 +594,9 @@ Message Types: Extend the script by adding support for other FIX message types a
 
 
 
-import xml.sax
-import collections
-
-class RptIDHandler(xml.sax.ContentHandler):
-    def __init__(self):
-        self.unique_rptids = set()
-        self.in_trd_capt_rpt = False
-
-    def startElement(self, name, attrs):
-        if name == "TrdCaptRpt":
-            self.in_trd_capt_rpt = True
-            rpt_id = attrs.get("RptID")
-            if rpt_id:
-                self.unique_rptids.add(rpt_id)
-
-    def endElement(self, name):
-        if name == "TrdCaptRpt":
-            self.in_trd_capt_rpt = False
-
-    def getCount(self):
-        return len(self.unique_rptids)
-
-def count_unique_rptids_in_xml(xml_file):
-    handler = RptIDHandler()
-    parser = xml.sax.make_parser()
-    parser.setContentHandler(handler)
-    with open(xml_file, "rb") as file:
-        parser.parse(file)
-    return handler.getCount()
-
-if __name__ == '__main__':
-    # Path to your XML file
-    xml_file_path = 'your_xml_file.xml'
-
-    xml_unique_count = count_unique_rptids_in_xml(xml_file_path)
-
-    print(f'Unique RptIDs in XML: {xml_unique_count}')
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-import random
-
-# ... (your message preparation code)
-
-# Generate random values for price and quantity
-random_price = random.uniform(min_price, max_price)  # Adjust min_price and max_price as needed
-random_qty = random.randint(min_qty, max_qty)  # Adjust min_qty and max_qty as needed
-
-# Create your message with the random values
-quote = ShortTwoSidedQuote(
-    list_seq_no=1,
-    options_security_id='U2cn66kp',
-    bid_size=random_qty,
-    bid_mantissa=int(random_price * 10000),  # Assuming 4 decimal places for price
-    offer_size=random_qty,
-    offer_mantissa=int(random_price * 10000)  # Assuming 4 decimal places for price
-)
-
-# ... (continue with sending the message)
 
 
