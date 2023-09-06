@@ -908,3 +908,12 @@ selected_options_security_ids = options_security_ids_by_underlier[selected_under
 
 
 
+
+
+['AAPL']
+{'AMD': ['A00h5XKW', 'A05R5YmM', 'A05R5YmO'], 'AAPL': ['A00h5XKB', 'A00h5XO8', 'A00h5XO7'], 'GLD': ['G0UG60J2', 'G0UG60Jk', 'G0UG60Jj']}
+Traceback (most recent call last):
+  File "/home/pvellanki/work/SBE/sbe_load_generator_MM.py", line 75, in <module>
+    selected_options_security_ids = options_security_ids_by_underlier[selected_underlier]
+TypeError: unhashable type: 'list'
+
