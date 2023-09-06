@@ -502,3 +502,39 @@ if __name__ == '__main__':
 
     print(f'Unique RptIDs in XML: {xml_unique_count}')
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import random
+
+# ... (your message preparation code)
+
+# Generate random values for price and quantity
+random_price = random.uniform(min_price, max_price)  # Adjust min_price and max_price as needed
+random_qty = random.randint(min_qty, max_qty)  # Adjust min_qty and max_qty as needed
+
+# Create your message with the random values
+quote = ShortTwoSidedQuote(
+    list_seq_no=1,
+    options_security_id='U2cn66kp',
+    bid_size=random_qty,
+    bid_mantissa=int(random_price * 10000),  # Assuming 4 decimal places for price
+    offer_size=random_qty,
+    offer_mantissa=int(random_price * 10000)  # Assuming 4 decimal places for price
+)
+
+# ... (continue with sending the message)
+
+
