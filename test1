@@ -444,3 +444,61 @@ Configuration: Adjust the parameters in the config.ini file to suit your testing
 Message Generation: Customize the generate_message method within the MyApplication class to modify the content and structure of the generated FIX messages.
 
 Message Types: Extend the script by adding support for other FIX message types as needed.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import xml.sax
+import collections
+
+class RptIDHandler(xml.sax.ContentHandler):
+    def __init__(self):
+        self.unique_rptids = set()
+        self.in_trd_capt_rpt = False
+
+    def startElement(self, name, attrs):
+        if name == "TrdCaptRpt":
+            self.in_trd_capt_rpt = True
+            rpt_id = attrs.get("RptID")
+            if rpt_id:
+                self.unique_rptids.add(rpt_id)
+
+    def endElement(self, name):
+        if name == "TrdCaptRpt":
+            self.in_trd_capt_rpt = False
+
+    def getCount(self):
+        return len(self.unique_rptids)
+
+def count_unique_rptids_in_xml(xml_file):
+    handler = RptIDHandler()
+    parser = xml.sax.make_parser()
+    parser.setContentHandler(handler)
+    with open(xml_file, "rb") as file:
+        parser.parse(file)
+    return handler.getCount()
+
+if __name__ == '__main__':
+    # Path to your XML file
+    xml_file_path = 'your_xml_file.xml'
+
+    xml_unique_count = count_unique_rptids_in_xml(xml_file_path)
+
+    print(f'Unique RptIDs in XML: {xml_unique_count}')
+
