@@ -871,3 +871,40 @@ if __name__ == '__main__':
     print(f'Unique RptIDs in Database: {db_unique_count}')
 
 
+
+
+
+
+
+
+
+
+
+
+
+# Define a list of underliers you want to check
+underliers_to_check = ['AMD', 'F', 'CMG']  # Add more if needed
+
+# Initialize the dictionary to store options security IDs
+options_security_ids_by_underlier = {}
+
+# Read the underliers and their options security IDs from the configuration
+for underlier in underliers_to_check:
+    # Convert the underlier name to lowercase before retrieving
+    underlier_lower = underlier.lower()
+    if config.has_option('OptionsSecurityIDs', underlier_lower):
+        options_security_ids = config.get('OptionsSecurityIDs', underlier_lower).split(',')
+        options_security_ids_by_underlier[underlier] = options_security_ids
+    else:
+        print(f"Warning: Key '{underlier}' not found in the configuration file.")
+
+# Now, options_security_ids_by_underlier contains the data for the specified underliers
+
+# Randomly select an underlier
+selected_underlier = choice(underliers_to_check)
+
+# Get the associated options security IDs for the selected underlier
+selected_options_security_ids = options_security_ids_by_underlier[selected_underlier]
+
+
+
