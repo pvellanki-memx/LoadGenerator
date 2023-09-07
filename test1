@@ -585,7 +585,9 @@ conn.close()
 
 
 
-
+  File "/home/pvellanki/orsa/test.py", line 83, in <module>
+    trd_sub_typ = int(trd_capt_rpt.get('TrdSubTyp'))
+TypeError: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'
 
 
 
