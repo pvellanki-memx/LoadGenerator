@@ -288,3 +288,12 @@ if batch_data:
 # Commit the changes and close the database connection
 conn.commit()
 conn.close()
+
+
+
+
+ # Combine all the Pty data into a single string
+        trd_data = ",".join(side1_pty_ids) + "|" + ",".join(side1_pty_rs) + "|" + ",".join(side1_pty_sub_ids) + "|" + ",".join(side2_pty_ids) + "|" + ",".join(side2_pty_rs) + "|" + ",".join(side2_pty_sub_ids)
+
+
+
