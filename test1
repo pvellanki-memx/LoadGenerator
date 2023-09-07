@@ -583,11 +583,13 @@ conn.commit()
 conn.close()
 
 
+# Extracting 'TrdSubTyp' from the XML, handling the case where it's not present
+trd_sub_typ = trd_capt_rpt.get('TrdSubTyp')
+if trd_sub_typ is not None:
+    trd_sub_typ = int(trd_sub_typ)
+else:
+    trd_sub_typ = None
 
-
-  File "/home/pvellanki/orsa/test.py", line 83, in <module>
-    trd_sub_typ = int(trd_capt_rpt.get('TrdSubTyp'))
-TypeError: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'
 
 
 
