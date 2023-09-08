@@ -292,8 +292,55 @@ conn.close()
 
 
 
- # Combine all the Pty data into a single string
-        trd_data = ",".join(side1_pty_ids) + "|" + ",".join(side1_pty_rs) + "|" + ",".join(side1_pty_sub_ids) + "|" + ",".join(side2_pty_ids) + "|" + ",".join(side2_pty_rs) + "|" + ",".join(side2_pty_sub_ids)
+# Define the custom TCP header format
+tcp_header_format = '!B H'
 
+# Size of the TCP header in bytes
+tcp_header_size = struct.calcsize(tcp_header_format)
 
+# SBE header size in bytes
+sbe_header_size = 7
 
+# Loop to receive and process incoming messages
+while True:
+    response_header = client_socket.recv(tcp_header_size)
+
+    # Check if there is enough data for the TCP header
+    if len(response_header) < tcp_header_size:
+        # Incomplete message, wait for more data
+        continue
+
+    # Parse the TCP header
+    response_type, response_length = struct.unpack(tcp_header_format, response_header)
+
+    # Receive the SBE-encoded message based on the message length
+    sbe_message = b''
+    while len(sbe_message) < response_length:
+        chunk = client_socket.recv(response_length - len(sbe_message))
+        if not chunk:
+            # Handle the case where the connection is closed prematurely
+            break
+        sbe_message += chunk
+
+    # Extract fields from the SBE header
+    if len(sbe_message) >= sbe_header_size:
+        sbe_header_data = sbe_message[:sbe_header_size]
+        sbe_message_data = sbe_message[sbe_header_size:]
+
+        block_length, template_id, schema_id, version = struct.unpack('!HBBH', sbe_header_data)
+
+        # Now you have template_id, and you can decode message types based on it
+        message_type_name = None
+        for message_name, template_id_value in MESSAGE_TYPES.items():
+            if template_id == template_id_value:
+                message_type_name = message_name
+                break
+
+        if message_type_name:
+            print("Message Type Name:", message_type_name)
+        else:
+            print("Unknown Message Type")
+
+        # Process the sbe_message_data here
+
+# Rest of the code
