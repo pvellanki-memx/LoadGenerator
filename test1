@@ -346,11 +346,4 @@ while True:
 # Rest of the code
 
 
-
-                message.setField(fix.Side(fix.Side_BUY))
-                message.setField(fix.OrderQty(random_quantity))
-                message.setField(fix.Price(random_price))
-                message.setField(fix.OrdType(fix.OrdType_LIMIT))
-                message.setField(fix.TimeInForce(fix.TimeInForce_DAY))
-                message.setField(fix.ClOrdID(self.generate_clordid()))
-                message.setField(fix.ExecInst("h"))
+fix.TimeInForce_IMMEDIATE_OR_CANCEL
