@@ -679,10 +679,10 @@ new_order_single = NewOrderSingle(
     parties_group=parties
 )
 
-
+sbe_encoder_decoder.py
 
 class OrderCancelRequest:
-    TEMPLATE_ID = 2
+    TEMPLATE_ID = 7
     num_groups = 0
     schema_id = 9
     version = 261
@@ -720,3 +720,87 @@ class OrderCancelRequest:
         )
 
         return encoded_message
+
+
+sbe_load_generator session worker:
+
+# ...
+
+# Read SendCancels from the configuration file once
+send_cancels = config.getboolean('Load', 'SendCancels')
+
+# Inside your main loop or where you send messages:
+# Generate a random message type
+message_type = generate_message_type()
+
+# Initialize message variables
+new_order_message = None
+cancel_request_message = None
+
+# Generate a message based on the random message type
+if message_type == 'NewOrderSingle':
+    # Generate NewOrderSingle message
+    new_order_message = generate_message('NewOrderSingle', session_name)
+
+    if send_cancels:
+        # Immediately generate an order cancel request for the new order
+        # Use the same data for the cancel request as in the NewOrderSingle message
+        cancel_request_message = generate_message('OrderCancelRequest', session_name, cl_ord_id=new_order_message.cl_ord_id, side=new_order_message.side, options_security_id=new_order_message.options_security_id)
+else:
+    # For other message types (non-NewOrderSingle), send the generated message as usual
+    message = generate_message(message_type, session_name)
+
+# Send messages in the desired order
+if new_order_message:
+    send_message(client_socket, new_order_message)
+
+if cancel_request_message:
+    send_message(client_socket, cancel_request_message)
+
+# ...
+
+def generate_messages(message_type, session_name, send_cancels=False):
+    new_order_single_message = None
+    order_cancel_message = None
+
+    if message_type == 'NewOrderSingle':
+        # Generate and encode the NewOrderSingle message
+        # ...
+        new_order_single_message = ...
+
+        if send_cancels:
+            # Generate and encode the corresponding OrderCancelRequest message
+            # Use the same cl_ord_id, side, and options_security_id from the NewOrderSingle
+            # ...
+            order_cancel_message = ...
+
+    elif message_type == 'LongOneSidedQuote':
+        # Generate and encode the LongOneSidedQuote message
+        # ...
+        new_order_single_message = ...
+
+        if send_cancels:
+            # Generate and encode the corresponding OrderCancelRequest message
+            # Use the same cl_ord_id, side, and options_security_id from the LongOneSidedQuote
+            # ...
+            order_cancel_message = ...
+
+    return new_order_single_message, order_cancel_message
+
+# In the main loop:
+while time.time() - start_time < duration:
+    message_type = generate_message_type()
+
+    # Generate one or two messages
+    new_order_single_message, order_cancel_message = generate_messages(message_type, session_name, send_cancels=config.getboolean('Load', 'SendCancels'))
+
+    # Send the NewOrderSingle message
+    if new_order_single_message:
+        send_message(client_socket, new_order_single_message)
+
+    # Send the OrderCancelRequest message if it's generated
+    if order_cancel_message:
+        send_message(client_socket, order_cancel_message)
+
+
+
