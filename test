@@ -1,3 +1,5 @@
+
+
 import configparser
 import socket
 import struct
@@ -678,3 +680,43 @@ new_order_single = NewOrderSingle(
 )
 
 
+
+class OrderCancelRequest:
+    TEMPLATE_ID = 2
+    num_groups = 0
+    schema_id = 9
+    version = 261
+    BLOCK_LENGTH = 73
+
+    def __init__(self, **kwargs):
+        self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups)
+        self.sending_time = kwargs.get('sending_time', UTCTimestampNanos(0))
+        self.order_id = kwargs.get('order_id', UINT64(0))
+        self.cl_ord_id = kwargs.get('cl_ord_id', Char(''))
+        self.list_seq_no = kwargs.get('list_seq_no', UINT8(0))
+        self.orig_cl_ord_id = kwargs.get('orig_cl_ord_id', Char(''))
+        self.options_security_id = kwargs.get('options_security_id', Char(''))
+        self.side = kwargs.get('side', SideType(0))
+
+    def encode(self):
+        encoded_header = self.sbe_header.encode()
+        encoded_sending_time = self.sending_time.encode()
+        encoded_order_id = self.order_id.encode()
+        encoded_cl_ord_id = self.cl_ord_id.encode()
+        encoded_list_seq_no = self.list_seq_no.encode()
+        encoded_orig_cl_ord_id = self.orig_cl_ord_id.encode()
+        encoded_options_security_id = self.options_security_id.encode()
+        encoded_side = self.side.encode()
+
+        encoded_message = (
+            encoded_header +
+            encoded_sending_time +
+            encoded_order_id +
+            encoded_cl_ord_id +
+            encoded_list_seq_no +
+            encoded_orig_cl_ord_id +
+            encoded_options_security_id +
+            encoded_side
+        )
+
+        return encoded_message
