@@ -288,39 +288,52 @@ conn.close()
 
 
 
+import sqlite3
+import sys
 
+db_name = sys.argv[1]
 
-SQLite version 3.37.2 2022-01-06 13:25:41
-Enter ".help" for usage hints.
-sqlite> select * from summary ;
-|0|1565206|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0
-|0|0|3212491|0|0|0|0|0|0|0|0|0|0|0|0|0|0
-|0|0|0|2367079|0|0|0|0|0|0|0|0|0|0|0|0|0
-|0|0|0|0|2898700|0|0|0|0|0|0|0|0|0|0|0|0
-|0|0|0|0|0|1590351|0|0|0|0|0|0|0|0|0|0|0
-|0|0|0|0|0|0|798737|0|0|0|0|0|0|0|0|0|0
-|0|0|0|0|0|0|0|3761358|0|0|0|0|0|0|0|0|0
-|0|0|0|0|0|0|0|0|12679177|0|0|0|0|0|0|0|0
-|0|0|0|0|0|0|0|0|0|7857307|0|0|0|0|0|0|0
-|0|0|0|0|0|0|0|0|0|0|1671839|0|0|0|0|0|0
-|0|0|0|0|0|0|0|0|0|0|0|13508074|0|0|0|0|0
-|0|0|0|0|0|0|0|0|0|0|0|0|4101887|0|0|0|0
-|0|0|0|0|0|0|0|0|0|0|0|0|0|3136767|0|0|0
-|0|0|0|0|0|0|0|0|0|0|0|0|0|0|3832852|0|0
-|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|10499208|0
-|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|0|7775435
-|0|1565206|3212491|2367079|2898700|1590351|798737|3761358|12679177|7857307|1671839|13508074|4101887|3136767|3832852|10499208|7775435
-00005|0|1459|2588|1921|14021|2012|1639|6502|52094|13544|823|243406|5993|6410|7291|35181|48262
-00010|0|12384|43589|53974|43326|5833|100223|32092|21896|24811|15239|91292|44100|27829|78142|15044|45409
-00013|0|215|429|1045|349|472|5|1197|211|358|302|307|135|180|728|145|112
-00015|0|2044|2217|4054|3967|32235|3117|4945|50268|4522|2261|138245|6360|36906|2452|16947|2179
-00017|0|25|616|536|2|11|2|517|0|47|78|564|437|2|326|43|561
-00019|0|3688|1622|1297|1143|197|972|2533|4070|3728|726|4762|1842|1123|1381|6601|12918
-00033|0|254|418|147|73|72|2|254|241|365|208|158|105|187|1030|161|391
-00045|0|1059|4217|1425|639|1447|4483|4300|1562|2639|197|1764|1842|448|1353|2257|273
-00050|0|1505|43555|48459|38137|1374|5258|5584|28000|454455|2765|305423|14272|11217|16637|49881|71084
-00052|0|572|711|245|970|113|132|379|483|559|336|1226|121|613|705|2677|2784
-00062|0|5175|8005|1411|1251|330|424|3546|3722|4755|1083|10661|2983|4181|5267|11821|9031
-00075|0|387|1081|448|349|77|27|266|999|301|328|1799|953|777|751|3364|1867
-00080|0|1136|5551|1130|1458|475|242|5188|46676|3438|1234|13362|6323|3839|5631|29000|5005
+# List of exchanges
+exchanges = ["MEMX", "EMLD", "BATO", "C2OX", "EDGO", "GMNI", "MCRY", "MPRL", "XASE", "XBOX", "XBXO", "XCBO", "XISX", "XMIO", "XNDQ", "XPHO", "XPSE"]
+
+# Connect to the SQLite database
+conn = sqlite3.connect(db_name)
+cursor = conn.cursor()
+
+# Create a summary table with dynamic columns for each exchange
+cursor.execute(f'''CREATE TABLE IF NOT EXISTS summary (
+                    Ultimate_Clearing_Firm TEXT PRIMARY KEY,
+                    {', '.join([f"{exchange} INTEGER" for exchange in exchanges])}
+                 )''')
+
+# Commit the changes to create the summary table
+conn.commit()
+
+# Iterate through each exchange to populate the summary table
+for exchange in exchanges:
+    # Construct the table name dynamically
+    table_name = f'grouped_trades_summary_{exchange}'
+    
+    # Check if the table exists in the database
+    cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name=?;", (table_name,))
+    result = cursor.fetchone()
+
+    if result:
+        # Calculate the sum of quantities for each Ultimate_Clearing_Firm in the exchange-specific table
+        query = f'''
+            INSERT OR REPLACE INTO summary (Ultimate_Clearing_Firm, {exchange})
+            SELECT Ultimate_Clearing_Firm, SUM({exchange})
+            FROM {table_name}
+            WHERE Ultimate_Clearing_Firm != '0'  -- Exclude rows where Ultimate_Clearing_Firm is '0'
+            GROUP BY Ultimate_Clearing_Firm
+        '''
+        conn.execute(query)
+    else:
+        continue
+
+# Commit the changes to populate the summary table
+conn.commit()
+
+# Close the connection
+conn.close()
 
