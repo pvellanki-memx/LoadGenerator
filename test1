@@ -121,11 +121,12 @@ exchanges = ["MEMX", "EMLD", "BATO", "C2OX", "EDGO", "GMNI", "MCRY", "MPRL", "XA
 conn = sqlite3.connect('trades.db')
 cursor = conn.cursor()
 
-# Create a summary table
-cursor.execute('''CREATE TABLE IF NOT EXISTS summary (
+# Create a summary table with dynamic columns for each exchange
+cursor.execute(f'''CREATE TABLE IF NOT EXISTS summary (
                     Ultimate_Clearing_Firm TEXT,
-                    ''' + ', '.join([f'{exchange} INTEGER' for exchange in exchanges]) + ''',
+                    {', '.join([f"{exchange} INTEGER" for exchange in exchanges])}
                  )''')
+
 
 # Commit the changes to create the summary table
 conn.commit()
