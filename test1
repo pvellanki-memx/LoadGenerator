@@ -1,349 +1,148 @@
+New Grouped table script:
+
 import sqlite3
-import xml.etree.ElementTree as ET
-from multiprocessing import Pool, cpu_count
-from tqdm import tqdm
-import sys
 
-xml_file = sys.argv[1]
-db_name = sys.argv[2]
+# Connect to the original SQLite database
+conn = sqlite3.connect('trades_81.db')
 
-# Function to insert a batch of data into the database
-def insert_batch(batch_data):
-    conn = sqlite3.connect(db_name)
-    cursor = conn.cursor()
+# Get a list of distinct 'EXCH' values from the original table
+distinct_exchanges = conn.execute('SELECT DISTINCT EXCH FROM trades').fetchall()
 
-    cursor.executemany('''INSERT INTO tradedata VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', batch_data)
-
-    conn.commit()
-    conn.close()
-
-# Connect to your SQLite database
-conn = sqlite3.connect(db_name)
-cursor = conn.cursor()
-
-# Create a table to store the parsed data
-cursor.execute('''CREATE TABLE IF NOT EXISTS tradedata (
-                    RptID TEXT,
-                    PrevlyRpted TEXT,
-                    LastQty INTEGER,
-                    LastPx REAL,
-                    TrdDt DATE,
-                    TxnTm TIMESTAMP,
-                    TransTyp INTEGER,
-                    RptTyp INTEGER,
-                    TrdTyp INTEGER,
-                    TrdSubTyp INTEGER,
-                    BizDt DATE,
-                    MtchStat INTEGER,
-                    Sym TEXT,
-                    CFI TEXT,
-                    MMY TEXT,
-                    MatDt DATE,
-                    StrkPx REAL,
-                    StrkCcy TEXT,
-                    StrkMult REAL,
-                    StrkValu REAL,
-                    Mult INTEGER,
-                    Exch TEXT,
-                    Amt_Prem REAL,
-                    Side1_Pty_ID TEXT,
-                    Side1_Pty_R TEXT,
-                    Side1_Pty_Sub_ID TEXT,
-                    Side2_Pty_ID TEXT,
-                    Side2_Pty_R TEXT,
-                    Side2_Pty_Sub_ID TEXT
-                 )''')
-
-# Parse the XML data and insert records into the database
-tree = ET.parse(xml_file)
-root = tree.getroot()
-
-# Define a namespace for the XML
-ns = {'fixml': 'http://www.fixprotocol.org/FIXML-4-4'}
-
-# Initialize batch data and batch size
-batch_data = []
-batch_size = 1000  # Adjust this to your preference
-
-# Process each TrdCaptRpt element
-for trd_capt_rpt in tqdm(root.findall('.//fixml:TrdCaptRpt', ns)):
-    exch = trd_capt_rpt.find('.//fixml:Instrmt', ns).get('Exch')
+# Iterate through each distinct 'EXCH' value
+for exchange in distinct_exchanges:
+    exchange_name = exchange[0]
     
-    if exch == 'XCBO':
-        # Extract data from the XML (same code as before)
-        rpt_id = trd_capt_rpt.get('RptID')
-        prevly_rpted = trd_capt_rpt.get('PrevlyRpted')
-        last_qty = int(trd_capt_rpt.get('LastQty'))
-        last_px = float(trd_capt_rpt.get('LastPx'))
-        trd_dt = trd_capt_rpt.get('TrdDt')
-        txn_tm = trd_capt_rpt.get('TxnTm')
-        trans_typ = int(trd_capt_rpt.get('TransTyp'))
-        rpt_typ = int(trd_capt_rpt.get('RptTyp'))
-        trd_typ = int(trd_capt_rpt.get('TrdTyp'))
-        trd_sub_typ = int(trd_capt_rpt.get('TrdSubTyp'))
-        biz_dt = trd_capt_rpt.get('BizDt')
-        mtch_stat = int(trd_capt_rpt.get('MtchStat'))
-        
-        instrmt = trd_capt_rpt.find('.//fixml:Instrmt', ns)
-        sym = instrmt.get('Sym')
-        cfi = instrmt.get('CFI')
-        mmy = instrmt.get('MMY')
-        mat_dt = instrmt.get('MatDt')
-        strk_px = float(instrmt.get('StrkPx'))
-        strk_ccy = instrmt.get('StrkCcy')
-        strk_mult = float(instrmt.get('StrkMult'))
-        strk_valu = float(instrmt.get('StrkValu'))
-        mult = int(instrmt.get('Mult'))
-        
-        side1 = trd_capt_rpt.find('.//fixml:RptSide[@Side="1"]', ns)
-        side1_pty = side1.find('fixml:Pty', ns)
-        side1_pty_id = side1_pty.get('ID')
-        side1_pty_r = side1_pty.get('R')
-        side1_pty_sub = side1_pty.find('fixml:Sub', ns)
-        side1_pty_sub_id = side1_pty_sub.get('ID') if side1_pty_sub is not None else None
-        
-        side2 = trd_capt_rpt.find('.//fixml:RptSide[@Side="2"]', ns)
-        side2_pty = side2.find('fixml:Pty', ns)
-        side2_pty_id = side2_pty.get('ID')
-        side2_pty_r = side2_pty.get('R')
-        side2_pty_sub = side2_pty.find('fixml:Sub', ns)
-        side2_pty_sub_id = side2_pty_sub.get('ID') if side2_pty_sub is not None else None
+    # Create a new table for the current exchange to store the query results
+    conn.execute(f'''CREATE TABLE IF NOT EXISTS grouped_trades_{exchange_name} (
+                        Side TEXT,
+                        Sub_ID TEXT,
+                        Rpt_ID TEXT,
+                        Ultimate_Clearing_Firm TEXT,
+                        Entering_Firm_Col1 TEXT,
+                        EXCH TEXT,
+                        TRANS_TYPE TEXT,
+                        BIZ_DT TEXT,
+                        CFI TEXT,
+                        PREVLY_RPTD TEXT,
+                        RPT_TYP TEXT,
+                        MTCH_STAT TEXT,
+                        Quantity INTEGER  -- Add the Quantity column
+                     )''')
 
-        amt_prem = float(trd_capt_rpt.find('.//fixml:Amt[@Typ="PREM"]', ns).get('Amt'))
+    # Query the data from the original table for the current exchange with grouping
+    query = f"""
+        INSERT INTO grouped_trades_{exchange_name} (Side, Sub_ID, Rpt_ID, Ultimate_Clearing_Firm, Entering_Firm_Col1, EXCH, TRANS_TYPE, BIZ_DT, CFI, PREVLY_RPTD, RPT_TYP, MTCH_STAT, Quantity)
+        SELECT 
+            t.Side,
+            MAX(CASE WHEN t.Sub_ID != '' AND t.Sub_ID IS NOT NULL THEN t.Sub_ID END) AS Sub_ID,
+            t.Rpt_ID,
+            MAX(CASE WHEN t.Ultimate_Clearing_Firm != '' AND t.Ultimate_Clearing_Firm IS NOT NULL THEN t.Ultimate_Clearing_Firm END) AS Ultimate_Clearing_Firm,
+            MAX(CASE WHEN t.Entering_Firm_Col1 != '' AND t.Entering_Firm_Col1 IS NOT NULL THEN t.Entering_Firm_Col1 END) AS Entering_Firm_Col1,
+            t.EXCH,
+            t.TRANS_TYPE,
+            t.BIZ_DT,
+            t.CFI,
+            t.PREVLY_RPTD,
+            t.RPT_TYP,
+            t.MTCH_STAT,
+            t.Quantity
+        FROM trades t
+        WHERE t.EXCH = ?
+        GROUP BY t.Rpt_ID, t.Side, t.Quantity
+    """
 
-        # Append the data to the batch_data list
-        batch_data.append((rpt_id, prevly_rpted, last_qty, last_px, trd_dt, txn_tm, trans_typ, rpt_typ, trd_typ, trd_sub_typ, biz_dt, mtch_stat,
-             sym, cfi, mmy, mat_dt, strk_px, strk_ccy, strk_mult, strk_valu, mult, exch, amt_prem,
-             side1_pty_id, side1_pty_r, side1_pty_sub_id, side2_pty_id, side2_pty_r, side2_pty_sub_id))
+    # Execute the query to insert the data into the new table for the current exchange
+    conn.execute(query, (exchange_name,))
 
-        # If batch size is reached, insert the batch into the database
-        if len(batch_data) >= batch_size:
-            insert_batch(batch_data)
-            batch_data = []
-
-# Insert the remaining data in the batch_data list
-if batch_data:
-    insert_batch(batch_data)
-
-# Commit the changes and close the database connection
+# Commit the changes and close the connection to the original database
 conn.commit()
 conn.close()
 
+print("Data has been successfully inserted into the grouped_trades tables.")
 
 
 
+
+
+Run the stream further
+
+
+Create a table where you have a exchange column (all exchanges possible), sum of qty of all trades where sub_ID = C, trans_type =0, side=1(side1_qty) , sum of qty of all trades where sub_ID = C, trans_type =0, side=2 (side2_qty),
+ ,sum of qty of all trades where sub_ID = C, trans_type =1 or 4, side=1(side1_bust_qty) , sum of qty of all trades where sub_ID = C, trans_type =1 or 4, side=2 (side2_bust_qty),
+
+
+ import sqlite3
+
+# Connect to the SQLite database
+conn = sqlite3.connect('trades_81.db')
+
+# Create a new table to store the aggregated data
+conn.execute('''CREATE TABLE IF NOT EXISTS common_aggregates (
+                    EXCH TEXT,
+                    Side1_Qty INTEGER,
+                    Side2_Qty INTEGER,
+                    Side1_Bust_Qty INTEGER,
+                    Side2_Bust_Qty INTEGER
+                 )''')
+
+# Define a list of exchange codes
+exchanges = ["MEMX", "EMLD", "BATO", "C2OX", "EDGO", "GMNI", "MCRY", "MPRL", "XASE", "XBOX", "XBXO", "XCBO", "XISX", "XMIO", "XNDQ", "XPHO", "XPSE"]  # Replace with the actual exchange codes
+
+# Loop through each exchange and calculate the aggregated quantities
+for exchange in exchanges:
+    query = f"""
+        INSERT INTO common_aggregates (EXCH, Side1_Qty, Side2_Qty, Side1_Bust_Qty, Side2_Bust_Qty)
+        SELECT 
+            '{exchange}' AS EXCH,
+            SUM(CASE WHEN Sub_ID = 'C' AND TRANS_TYPE = '0' AND Side = '1' THEN Quantity ELSE 0 END) AS Side1_Qty,
+            SUM(CASE WHEN Sub_ID = 'C' AND TRANS_TYPE = '0' AND Side = '2' THEN Quantity ELSE 0 END) AS Side2_Qty,
+            SUM(CASE WHEN Sub_ID = 'C' AND (TRANS_TYPE = '1' OR TRANS_TYPE = '4') AND Side = '1' THEN Quantity ELSE 0 END) AS Side1_Bust_Qty,
+            SUM(CASE WHEN Sub_ID = 'C' AND (TRANS_TYPE = '1' OR TRANS_TYPE = '4') AND Side = '2' THEN Quantity ELSE 0 END) AS Side2_Bust_Qty
+        FROM grouped_trades_{exchange}
+    """
+    
+    # Execute the query to insert the aggregated data into the new table
+    conn.execute(query)
+
+# Commit the changes and close the connection
+conn.commit()
+conn.close()
+
+print("Aggregated data has been successfully inserted into the 'common_aggregates' table.")
 
 
 
 import sqlite3
-import xml.etree.ElementTree as ET
-from multiprocessing import Pool, cpu_count
-from tqdm import tqdm
-import sys
 
-xml_file = sys.argv[1]
-db_name = sys.argv[2]
+# List of exchanges
+exchanges = ["MEMX", "EMLD", "BATO", "C2OX", "EDGO", "GMNI", "MCRY", "MPRL", "XASE", "XBOX", "XBXO", "XCBO", "XISX", "XMIO", "XNDQ", "XPHO", "XPSE"]
 
-# Function to insert a batch of data into the database
-def insert_batch(batch_data):
-    conn = sqlite3.connect(db_name)
-    cursor = conn.cursor()
-
-    cursor.executemany('''INSERT INTO tradedata VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', batch_data)
-
-    conn.commit()
-    conn.close()
-
-# Connect to your SQLite database
-conn = sqlite3.connect(db_name)
+# Connect to the SQLite database
+conn = sqlite3.connect('trades.db')
 cursor = conn.cursor()
 
-# Create a table to store the parsed data
-cursor.execute('''CREATE TABLE IF NOT EXISTS tradedata (
-                    RptID TEXT,
-                    PrevlyRpted TEXT,
-                    LastQty INTEGER,
-                    LastPx REAL,
-                    TrdDt DATE,
-                    TxnTm TIMESTAMP,
-                    TransTyp INTEGER,
-                    RptTyp INTEGER,
-                    TrdTyp INTEGER,
-                    TrdSubTyp TEXT,  -- Change the data type to TEXT
-                    BizDt DATE,
-                    MtchStat INTEGER,
-                    Sym TEXT,
-                    CFI TEXT,
-                    MMY TEXT,
-                    MatDt DATE,
-                    StrkPx REAL,
-                    StrkCcy TEXT,
-                    StrkMult REAL,
-                    StrkValu REAL,
-                    Mult INTEGER,
-                    Exch TEXT,
-                    Amt_Prem REAL,
-                    Side1_Pty_ID TEXT,
-                    Side1_Pty_R TEXT,
-                    Side1_Pty_Sub_ID TEXT,
-                    Side2_Pty_ID TEXT,
-                    Side2_Pty_R TEXT,
-                    Side2_Pty_Sub_ID TEXT,
-                    TrdData TEXT  -- Add a column for TrdData
+# Create a summary table
+cursor.execute('''CREATE TABLE IF NOT EXISTS summary (
+                    Ultimate_Clearing_Firm TEXT,
+                    ''' + ', '.join([f'{exchange} INTEGER' for exchange in exchanges]) + ''',
                  )''')
 
-# Parse the XML data and insert records into the database
-tree = ET.parse(xml_file)
-root = tree.getroot()
-
-# Define a namespace for the XML
-ns = {'fixml': 'http://www.fixprotocol.org/FIXML-4-4'}
-
-# Initialize batch data and batch size
-batch_data = []
-batch_size = 1000  # Adjust this to your preference
-
-# Process each TrdCaptRpt element
-for trd_capt_rpt in tqdm(root.findall('.//fixml:TrdCaptRpt', ns)):
-    exch = trd_capt_rpt.find('.//fixml:Instrmt', ns).get('Exch')
-    
-    if exch == 'XCBO':
-        # Extract data from the XML (same code as before)
-        rpt_id = trd_capt_rpt.get('RptID')
-        prevly_rpted = trd_capt_rpt.get('PrevlyRpted')
-        last_qty = int(trd_capt_rpt.get('LastQty'))
-        last_px = float(trd_capt_rpt.get('LastPx'))
-        trd_dt = trd_capt_rpt.get('TrdDt')
-        txn_tm = trd_capt_rpt.get('TxnTm')
-        trans_typ = int(trd_capt_rpt.get('TransTyp'))
-        rpt_typ = int(trd_capt_rpt.get('RptTyp'))
-        trd_typ = int(trd_capt_rpt.get('TrdTyp'))
-        trd_sub_typ = trd_capt_rpt.get('TrdSubTyp') or ''  # Handle NoneType case
-        biz_dt = trd_capt_rpt.get('BizDt')
-        mtch_stat = int(trd_capt_rpt.get('MtchStat'))
-        
-        instrmt = trd_capt_rpt.find('.//fixml:Instrmt', ns)
-        sym = instrmt.get('Sym')
-        cfi = instrmt.get('CFI')
-        mmy = instrmt.get('MMY')
-        mat_dt = instrmt.get('MatDt')
-        strk_px = float(instrmt.get('StrkPx'))
-        strk_ccy = instrmt.get('StrkCcy')
-        strk_mult = float(instrmt.get('StrkMult'))
-        strk_valu = float(instrmt.get('StrkValu'))
-        mult = int(instrmt.get('Mult'))
-        
-        side1 = trd_capt_rpt.find('.//fixml:RptSide[@Side="1"]', ns)
-        side1_pty = side1.find('fixml:Pty', ns)
-        side1_pty_id = side1_pty.get('ID')
-        side1_pty_r = side1_pty.get('R')
-        side1_pty_sub = side1_pty.find('fixml:Sub', ns)
-        side1_pty_sub_id = side1_pty_sub.get('ID') if side1_pty_sub is not None else ''
-        
-        side2 = trd_capt_rpt.find('.//fixml:RptSide[@Side="2"]', ns)
-        side2_pty = side2.find('fixml:Pty', ns)
-        side2_pty_id = side2_pty.get('ID')
-        side2_pty_r = side2_pty.get('R')
-        side2_pty_sub = side2_pty.find('fixml:Sub', ns)
-        side2_pty_sub_id = side2_pty_sub.get('ID') if side2_pty_sub is not None else ''
-
-        amt_prem = float(trd_capt_rpt.find('.//fixml:Amt[@Typ="PREM"]', ns).get('Amt'))
-
-        # Collect all Pty IDs, Rs, and Sub IDs into lists
-        side1_pty_ids = []
-        side1_pty_rs = []
-        side1_pty_sub_ids = []
-        for pty in side1.findall('fixml:Pty', ns):
-            side1_pty_ids.append(pty.get('ID'))
-            side1_pty_rs.append(pty.get('R'))
-            sub_element = pty.find('fixml:Sub', ns)
-            sub_id = sub_element.get('ID') if sub_element is not None else ''
-            side1_pty_sub_ids.append(sub_id)
-
-        side2_pty_ids = []
-        side2_pty_rs = []
-        side2_pty_sub_ids = []
-        for pty in side2.findall('fixml:Pty', ns):
-            side2_pty_ids.append(pty.get('ID'))
-            side2_pty_rs.append(pty.get('R'))
-            sub_element = pty.find('fixml:Sub', ns)
-            sub_id = sub_element.get('ID') if sub_element is not None else ''
-            side2_pty_sub_ids.append(sub_id)
-
-        # Append the data to the batch_data list
-        batch_data.append((rpt_id, prevly_rpted, last_qty, last_px, trd_dt, txn_tm, trans_typ, rpt_typ, trd_typ, trd_sub_typ, biz_dt, mtch_stat,
-             sym, cfi, mmy, mat_dt, strk_px, strk_ccy, strk_mult, strk_valu, mult, exch, amt_prem,
-             side1_pty_id, side1_pty_r, side1_pty_sub_id, side2_pty_id, side2_pty_r, side2_pty_sub_id,
-             ",".join(side1_pty_ids), ",".join(side1_pty_rs), ",".join(side1_pty_sub_ids), ",".join(side2_pty_ids), ",".join(side2_pty_rs), ",".join(side2_pty_sub_ids)))
-
-        # If batch size is reached, insert the batch into the database
-        if len(batch_data) >= batch_size:
-            insert_batch(batch_data)
-            batch_data = []
-
-# Insert the remaining data in the batch_data list
-if batch_data:
-    insert_batch(batch_data)
-
-# Commit the changes and close the database connection
+# Commit the changes to create the summary table
 conn.commit()
+
+# Iterate through each exchange to populate the summary table
+for exchange in exchanges:
+    # Calculate the sum of quantities for each Ultimate_Clearing_Firm in the exchange-specific table
+    query = f'''
+        INSERT INTO summary (Ultimate_Clearing_Firm, {exchange})
+        SELECT Ultimate_Clearing_Firm, SUM(Quantity)
+        FROM groupedtrades_{exchange}
+        GROUP BY Ultimate_Clearing_Firm
+    '''
+    cursor.execute(query)
+
+# Commit the changes to populate the summary table
+conn.commit()
+
+# Close the connection
 conn.close()
-
-
-
-
-# Define the custom TCP header format
-tcp_header_format = '!B H'
-
-# Size of the TCP header in bytes
-tcp_header_size = struct.calcsize(tcp_header_format)
-
-# SBE header size in bytes
-sbe_header_size = 7
-
-# Loop to receive and process incoming messages
-while True:
-    response_header = client_socket.recv(tcp_header_size)
-
-    # Check if there is enough data for the TCP header
-    if len(response_header) < tcp_header_size:
-        # Incomplete message, wait for more data
-        continue
-
-    # Parse the TCP header
-    response_type, response_length = struct.unpack(tcp_header_format, response_header)
-
-    # Receive the SBE-encoded message based on the message length
-    sbe_message = b''
-    while len(sbe_message) < response_length:
-        chunk = client_socket.recv(response_length - len(sbe_message))
-        if not chunk:
-            # Handle the case where the connection is closed prematurely
-            break
-        sbe_message += chunk
-
-    # Extract fields from the SBE header
-    if len(sbe_message) >= sbe_header_size:
-        sbe_header_data = sbe_message[:sbe_header_size]
-        sbe_message_data = sbe_message[sbe_header_size:]
-
-        block_length, template_id, schema_id, version = struct.unpack('!HBBH', sbe_header_data)
-
-        # Now you have template_id, and you can decode message types based on it
-        message_type_name = None
-        for message_name, template_id_value in MESSAGE_TYPES.items():
-            if template_id == template_id_value:
-                message_type_name = message_name
-                break
-
-        if message_type_name:
-            print("Message Type Name:", message_type_name)
-        else:
-            print("Unknown Message Type")
-
-        # Process the sbe_message_data here
-
-# Rest of the code
-
-
-fix.TimeInForce_IMMEDIATE_OR_CANCEL
