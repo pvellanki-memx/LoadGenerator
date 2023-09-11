@@ -965,3 +965,11 @@ async def main():
 if __name__ == '__main__':
     asyncio.run(main())
 
+
+
+
+
+
+    realprice = price_value * 10**14
+TypeError: unsupported operand type(s) for *: 'UINT32' and 'int'
+
