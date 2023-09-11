@@ -527,3 +527,12 @@ conn.close()
 cursor.execute("DROP TABLE IF EXISTS summary;")
 
 
+
+
+
+
+SELECT 'DROP TABLE IF EXISTS ' || name || ';'
+FROM sqlite_master
+WHERE type='table' AND name LIKE 'grouped\_%';
+
+
