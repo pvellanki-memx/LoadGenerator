@@ -105,7 +105,7 @@ with open(template_file) as template_file:
     template = template_file.read()
 
 # Establish SBE TCP session
-async def establish_session(session_name):
+def establish_session(session_name):
 
 
     # Get connection details for the specified session name
@@ -574,7 +574,7 @@ async def send_message(client_socket, message):
     client_socket.sendall(message)
 
     # Sleep for a short period to control the message rate
-    time.sleep(1 / message_rate)
+    await asyncio.sleep(1 / message_rate)
 
 async def session_worker(session_name):
     #try:
@@ -642,23 +642,18 @@ async def main():
     session_names = connection_config.sections()
 
     # List to hold the worker processes
-    processes = []
+    tasks = []
 
     # Iterate over session names and create worker processes
     for session_name in session_names:
-        process = Process(target=session_worker, args=(session_name,))
-        processes.append(process)
+        task = Process(target=session_worker, args=(session_name,))
+        tasks.append(task)
 
-    # Start all the worker processes
-    for process in processes:
-        process.start()
 
-    # Wait for all worker processes to complete
-    for process in processes:
-        process.join()
+    await asyncio.gather(*tasks)
 
     # Print the number of active sessions
-    print(f"Total active sessions: {len(processes)}")
+    print(f"Total active sessions: {len(tasks)}")
 
 # Start the main execution
 if __name__ == '__main__':
