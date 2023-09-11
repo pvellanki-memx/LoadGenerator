@@ -337,3 +337,69 @@ conn.commit()
 # Close the connection
 conn.close()
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import sqlite3
+import sys
+
+db_name = sys.argv[1]
+
+# List of exchanges
+exchanges = ["MEMX", "EMLD", "BATO", "C2OX", "EDGO", "GMNI", "MCRY", "MPRL", "XASE", "XBOX", "XBXO", "XCBO", "XISX", "XMIO", "XNDQ", "XPHO", "XPSE"]
+
+# Connect to the SQLite database
+conn = sqlite3.connect(db_name)
+cursor = conn.cursor()
+
+# Create a summary table with dynamic columns for each exchange
+cursor.execute(f'''CREATE TABLE IF NOT EXISTS summary (
+                    Ultimate_Clearing_Firm TEXT PRIMARY KEY,
+                    {', '.join([f'"{exchange}" INTEGER' for exchange in exchanges])}
+                 )''')
+
+# Commit the changes to create the summary table
+conn.commit()
+
+# Iterate through each exchange to populate the summary table
+for exchange in exchanges:
+    # Construct the table name dynamically
+    table_name = f'grouped_trades_summary_{exchange}'
+    
+    # Check if the table exists in the database
+    cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name=?;", (table_name,))
+    result = cursor.fetchone()
+
+    if result:
+        # Calculate the sum of quantities for each Ultimate_Clearing_Firm in the exchange-specific table
+        query = f'''
+            INSERT OR REPLACE INTO summary (Ultimate_Clearing_Firm, {exchange})
+            SELECT
+                Ultimate_Clearing_Firm,
+                SUM("{exchange}")
+            FROM {table_name}
+            WHERE "{exchange}" > 0  -- Exclude rows where the exchange value is not greater than 0
+            GROUP BY Ultimate_Clearing_Firm
+        '''
+        conn.execute(query)
+    else:
+        continue
+
+# Commit the changes to populate the summary table
+conn.commit()
+
+# Close the connection
+conn.close()
+
