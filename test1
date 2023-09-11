@@ -431,23 +431,95 @@ cursor = conn.cursor()
 cursor.execute('SELECT * FROM common_aggregates')
 common_aggregates_data = cursor.fetchall()
 
+# Get column names (headers) for common_aggregates table
+cursor.execute('PRAGMA table_info(common_aggregates)')
+common_aggregates_headers = [column[1] for column in cursor.fetchall()]
+
 # Dump data from summary table
 cursor.execute('SELECT * FROM summary')
 summary_data = cursor.fetchall()
 
+# Get column names (headers) for summary table
+cursor.execute('PRAGMA table_info(summary)')
+summary_headers = [column[1] for column in cursor.fetchall()]
+
 # Close the database connection
 conn.close()
 
-# Write data to CSV files
+# Write data to CSV files with headers
 with open(common_aggregates_csv, 'w', newline='') as common_aggregates_file:
     csv_writer = csv.writer(common_aggregates_file)
+    csv_writer.writerow(common_aggregates_headers)  # Write headers
     csv_writer.writerows(common_aggregates_data)
 
 with open(summary_csv, 'w', newline='') as summary_file:
     csv_writer = csv.writer(summary_file)
+    csv_writer.writerow(summary_headers)  # Write headers
     csv_writer.writerows(summary_data)
 
 print(f'Data from common_aggregates table has been written to {common_aggregates_csv}')
 print(f'Data from summary table has been written to {summary_csv}')
+
+
+
+
+
+
+
+
+
+
+
+
+
+import sqlite3
+import sys
+
+db_name = sys.argv[1]
+
+# List of exchanges
+exchanges = ["MEMX", "EMLD", "BATO", "C2OX", "EDGO", "GMNI", "MCRY", "MPRL", "XASE", "XBOX", "XBXO", "XCBO", "XISX", "XMIO", "XNDQ", "XPHO", "XPSE"]
+
+# Connect to the SQLite database
+conn = sqlite3.connect(db_name)
+cursor = conn.cursor()
+
+# Create a summary table with dynamic columns for each exchange
+cursor.execute(f'''CREATE TABLE IF NOT EXISTS summary (
+                    Ultimate_Clearing_Firm TEXT PRIMARY KEY,
+                    {', '.join([f"{exchange} INTEGER" for exchange in exchanges])}
+                 )''')
+
+# Commit the changes to create the summary table
+conn.commit()
+
+# Iterate through each exchange to populate the summary table
+for exchange in exchanges:
+    # Construct the table name dynamically
+    table_name = f'grouped_trades_summary_{exchange}'
+    
+    # Check if the table exists in the database
+    cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name=?;", (table_name,))
+    result = cursor.fetchone()
+
+    if result:
+        # Calculate the sum of quantities for each Ultimate_Clearing_Firm in the exchange-specific table,
+        # while including only the rows where sub_ID is "C"
+        query = f'''
+            INSERT OR REPLACE INTO summary (Ultimate_Clearing_Firm, {exchange})
+            SELECT Ultimate_Clearing_Firm, SUM(Total_Quantity)
+            FROM {table_name}
+            WHERE sub_ID = 'C'
+            GROUP BY Ultimate_Clearing_Firm
+        '''
+        conn.execute(query)
+    else:
+        continue
+
+# Commit the changes to populate the summary table
+conn.commit()
+
+# Close the connection
+conn.close()
 
 
