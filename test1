@@ -403,3 +403,51 @@ conn.commit()
 # Close the connection
 conn.close()
 
+
+
+
+
+
+
+
+
+
+
+import sqlite3
+import csv
+
+# Database file name
+db_name = 'your_database.db'
+
+# Output CSV file names
+common_aggregates_csv = 'common_aggregates.csv'
+summary_csv = 'summary.csv'
+
+# Connect to the SQLite database
+conn = sqlite3.connect(db_name)
+cursor = conn.cursor()
+
+# Dump data from common_aggregates table
+cursor.execute('SELECT * FROM common_aggregates')
+common_aggregates_data = cursor.fetchall()
+
+# Dump data from summary table
+cursor.execute('SELECT * FROM summary')
+summary_data = cursor.fetchall()
+
+# Close the database connection
+conn.close()
+
+# Write data to CSV files
+with open(common_aggregates_csv, 'w', newline='') as common_aggregates_file:
+    csv_writer = csv.writer(common_aggregates_file)
+    csv_writer.writerows(common_aggregates_data)
+
+with open(summary_csv, 'w', newline='') as summary_file:
+    csv_writer = csv.writer(summary_file)
+    csv_writer.writerows(summary_data)
+
+print(f'Data from common_aggregates table has been written to {common_aggregates_csv}')
+print(f'Data from summary table has been written to {summary_csv}')
+
+
