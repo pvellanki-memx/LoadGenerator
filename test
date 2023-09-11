@@ -660,6 +660,9 @@ if __name__ == '__main__':
 # Randomize the Side field
 side = SideType(value=choice([SideType.BUY, SideType.SELL]))
 
+[NewOrderSingle]
+TimeInForce = DAY
+
 # Read TimeInForce from config.ini
 time_in_force_value = config.get('NewOrderSingle', 'TimeInForce')
 time_in_force = TimeInForceType(value=time_in_force_value)
@@ -869,3 +872,96 @@ def generate_message(message_type,session_name):
             )
 
             encoded_cancel_request = cancel_request.encode()
+
+
+
+
+
+
+
+
+import asyncio
+import configparser
+import socket
+import struct
+import time
+from sbe_encoder_decoder import UTCTimestampNanos, NewOrderSingle, ShortTwoSidedQuote, ShortTwoSideBulkQuote, LongTwoSideBulkQuote, ShortOneSideBulkQuote, LongOneSideBulkQuote, MatchTradePreventionType, MtpGroupIDType, LongOneSideQuote, LongTwoSidedQuote
+from sbe_encoder_decoder import UINT32, UINT16, OrdType, PriceType, TimeInForceType, ExecInstType, TradingCapacityType, SideType, PartyID, PartiesGroup, PartyIDSource, PartyRoleType, ShortPriceType, OptionsSecurityID, ShortOneSideQuote
+from random import choices, randint
+import string
+from random import choices, randint
+
+# Read configuration from config.ini
+config = configparser.ConfigParser()
+config.read('config.ini')
+
+# Read connection details from connections.cfg
+connection_config = configparser.ConfigParser()
+connection_config.read(config['Server']['config_file'])
+
+# Other configuration parameters
+message_rate = config.getint('Load', 'message_rate')
+duration = config.getint('Load', 'duration')
+weights = {
+    'NewOrderSingle': config.getfloat('Weights', 'NewOrderSingle'),
+    'ShortTwoSideBulkQuote': config.getfloat('Weights', 'ShortTwoSideBulkQuote'),
+    'LongTwoSideBulkQuote': config.getfloat('Weights', 'LongTwoSideBulkQuote'),
+    'ShortOneSideBulkQuote': config.getfloat('Weights', 'ShortOneSideBulkQuote'),
+    'LongOneSideBulkQuote': config.getfloat('Weights', 'LongOneSideBulkQuote')
+}
+security_ids = config.get('OptionsSecurityIDs', 'security_ids').split(',')
+template_file = config.get('Template', 'template_file')
+
+# Load template.txt
+with open(template_file) as template_file:
+    template = template_file.read()
+
+# Establish SBE TCP session
+async def establish_session(session_name):
+    # ...
+
+async def send_message(client_socket, message):
+    # Send the message
+    client_socket.sendall(message)
+
+async def send_messages(session_name):
+    try:
+        # Establish SBE TCP session for the current session name
+        client_socket, session_id = await establish_session(session_name)
+
+        # Start time for calculating duration
+        start_time = time.time()
+
+        # Generate and send messages for the specified duration
+        while time.time() - start_time < duration:
+            # Generate a random message type
+            message_type = generate_message_type()
+
+            # Generate a message based on the random message type
+            message = generate_message(message_type, session_name)
+
+            # Send the generated message over the TCP connection
+            await send_message(client_socket, message)
+
+            # Sleep to control the message rate
+            await asyncio.sleep(1 / message_rate)
+
+        # Close the TCP connection for the current session
+        client_socket.close()
+
+    except Exception as e:
+        print(f"Failed to establish session for {session_name}: {str(e)}")
+
+async def main():
+    # Read session names from connections.cfg
+    session_names = connection_config.sections()
+
+    # Create tasks to send messages for each session concurrently
+    tasks = [send_messages(session_name) for session_name in session_names]
+
+    # Start all tasks concurrently
+    await asyncio.gather(*tasks)
+
+if __name__ == '__main__':
+    asyncio.run(main())
+
