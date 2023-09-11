@@ -163,6 +163,7 @@ conn.close()
 
 
 
+
 import sqlite3
 import sys
 
@@ -173,42 +174,42 @@ exchanges = ["MEMX", "EMLD", "BATO", "C2OX", "EDGO", "GMNI", "MCRY", "MPRL", "XA
 
 # Connect to the SQLite database
 conn = sqlite3.connect(db_name)
-cursor = conn.cursor()
+
 
 # Create a summary table with dynamic columns for each exchange
-cursor.execute(f'''CREATE TABLE IF NOT EXISTS summary (
+conn.execute(f'''CREATE TABLE IF NOT EXISTS summary (
                     Ultimate_Clearing_Firm TEXT PRIMARY KEY,
                     {', '.join([f"{exchange} INTEGER" for exchange in exchanges])}
                  )''')
 
-# Commit the changes to create the summary table
-conn.commit()
+
 
 # Iterate through each exchange to populate the summary table
 for exchange in exchanges:
-    # Construct the table name dynamically
     table_name = f'grouped_trades_summary_{exchange}'
+     # Check if the table exists in the database
     
-    # Check if the table exists in the database
-    cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name=?;", (table_name,))
+    cursor = conn.cursor()
+    cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table_name}';")
     result = cursor.fetchone()
+    cursor.close()
+    
 
     if result:
         # Calculate the sum of quantities for each Ultimate_Clearing_Firm in the exchange-specific table
         query = f'''
-            INSERT OR REPLACE INTO summary (Ultimate_Clearing_Firm, {exchange})
+            INSERT INTO summary (Ultimate_Clearing_Firm, {exchange})
             SELECT Ultimate_Clearing_Firm, SUM(Total_Quantity)
-            FROM {table_name}
+            FROM grouped_trades_summary_{exchange}
             GROUP BY Ultimate_Clearing_Firm
         '''
         conn.execute(query)
     else:
-        # If the table doesn't exist, continue to the next exchange
         continue
+
 
 # Commit the changes to populate the summary table
 conn.commit()
 
 # Close the connection
 conn.close()
-
