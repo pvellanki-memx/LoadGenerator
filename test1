@@ -175,50 +175,40 @@ exchanges = ["MEMX", "EMLD", "BATO", "C2OX", "EDGO", "GMNI", "MCRY", "MPRL", "XA
 # Connect to the SQLite database
 conn = sqlite3.connect(db_name)
 
-
-# Create a summary table with dynamic columns for each exchange
+# Create a summary table with dynamic columns for each exchange if it doesn't exist
 conn.execute(f'''CREATE TABLE IF NOT EXISTS summary (
                     Ultimate_Clearing_Firm TEXT PRIMARY KEY,
-                    {', '.join([f"{exchange} INTEGER" for exchange in exchanges])}
+                    {', '.join([f"{exchange} INTEGER DEFAULT 0" for exchange in exchanges])}
                  )''')
-
-
 
 # Iterate through each exchange to populate the summary table
 for exchange in exchanges:
+    # Construct the table name dynamically
     table_name = f'grouped_trades_summary_{exchange}'
-     # Check if the table exists in the database
-    
+
+    # Check if the table exists in the database
     cursor = conn.cursor()
-    cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table_name}';")
+    cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name=?;", (table_name,))
     result = cursor.fetchone()
     cursor.close()
-    
 
     if result:
         # Calculate the sum of quantities for each Ultimate_Clearing_Firm in the exchange-specific table
         query = f'''
-            INSERT INTO summary (Ultimate_Clearing_Firm, {exchange})
-            SELECT Ultimate_Clearing_Firm, SUM(Total_Quantity)
-            FROM grouped_trades_summary_{exchange}
-            GROUP BY Ultimate_Clearing_Firm
+            INSERT OR REPLACE INTO summary (Ultimate_Clearing_Firm, {exchange})
+            SELECT Ultimate_Clearing_Firm, 
+                   COALESCE(
+                       (SELECT SUM(Total_Quantity) FROM {table_name} WHERE {table_name}.Ultimate_Clearing_Firm = summary.Ultimate_Clearing_Firm), 
+                       0
+                   ) + COALESCE({exchange}, 0)
+            FROM summary
         '''
         conn.execute(query)
     else:
         continue
-
 
 # Commit the changes to populate the summary table
 conn.commit()
 
 # Close the connection
 conn.close()
-
-
-
-
-pvellanki@qa2434:~/orsa$ python3 OCCSummary.py 06-16.db
-Traceback (most recent call last):
-  File "/home/pvellanki/orsa/OCCSummary.py", line 43, in <module>
-    conn.execute(query)
-sqlite3.IntegrityError: UNIQUE constraint failed: summary.Ultimate_Clearing_Firm
