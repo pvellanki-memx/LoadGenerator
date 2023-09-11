@@ -219,39 +219,67 @@ conn.close()
 
 
 
-Ultimate_Clearing_Firm  MEMX  EMLD     BATO     C2OX     EDGO     GMNI     MCRY    MPRL     XASE      XBOX     XBXO     XCBO      XISX     XMIO     XNDQ     XPHO      XPSE   
-----------------------  ----  -------  -------  -------  -------  -------  ------  -------  --------  -------  -------  --------  -------  -------  -------  --------  -------
-                        0     1565206  0        0        0        0        0       0        0         0        0        0         0        0        0        0         0      
-                        0     0        3212491  0        0        0        0       0        0         0        0        0         0        0        0        0         0      
-                        0     0        0        2367079  0        0        0       0        0         0        0        0         0        0        0        0         0      
-                        0     0        0        0        2898700  0        0       0        0         0        0        0         0        0        0        0         0      
-                        0     0        0        0        0        1590351  0       0        0         0        0        0         0        0        0        0         0      
-                        0     0        0        0        0        0        798737  0        0         0        0        0         0        0        0        0         0      
-                        0     0        0        0        0        0        0       3761358  0         0        0        0         0        0        0        0         0      
-                        0     0        0        0        0        0        0       0        12679177  0        0        0         0        0        0        0         0      
-00043                   0     0        0        0        0        0        0       0        4000      0        0        0         0        0        0        0         0      
-00375                   0     0        0        0        0        0        0       0        6955      0        0        0         0        0        0        0         0      
-00825                   0     0        0        0        0        0        0       0        4872      0        0        0         0        0        0        0         0      
-                        0     0        0        0        0        0        0       0        0         7857307  0        0         0        0        0        0         0      
-                        0     0        0        0        0        0        0       0        0         0        1671839  0         0        0        0        0         0      
-                        0     0        0        0        0        0        0       0        0         0        0        13508074  0        0        0        0         0      
-00008                   0     0        0        0        0        0        0       0        0         0        0        8690      0        0        0        0         0      
-00460                   0     0        0        0        0        0        0       0        0         0        0        7         0        0        0        0         0      
-00776                   0     0        0        0        0        0        0       0        0         0        0        4000      0        0        0        0         0      
-00810                   0     0        0        0        0        0        0       0        0         0        0        55        0        0        0        0         0      
-00891                   0     0        0        0        0        0        0       0        0         0        0        244096    0        0        0        0         0      
-00968                   0     0        0        0        0        0        0       0        0         0        0        776       0        0        0        0         0      
-                        0     0        0        0        0        0        0       0        0         0        0        0         4101887  0        0        0         0      
-                        0     0        0        0        0        0        0       0        0         0        0        0         0        3136767  0        0         0      
-00388                   0     0        0        0        0        0        0       0        0         0        0        0         0        20       0        0         0      
-00577                   0     0        0        0        0        0        0       0        0         0        0        0         0        56       0        0         0      
-                        0     0        0        0        0        0        0       0        0         0        0        0         0        0        3832852  0         0      
-                        0     0        0        0        0        0        0       0        0         0        0        0         0        0        0        10499208  0      
-00233                   0     0        0        0        0        0        0       0        0         0        0        0         0        0        0        147       0      
-00424                   0     0        0        0        0        0        0       0        0         0        0        0         0        0        0        7         0      
-00794                   0     0        0        0        0        0        0       0        0         0        0        0         0        0        0        1400      0      
-                        0     0        0        0        0        0        0       0        0         0        0        0         0        0        0        0         7775435
-00005                   0     0        0        0        0        0        0       0        0         0        0        0         0        0        0        0         48262  
-00010                   0     0        0        0        0        0        0       0        0         0        0        0         0        0        0        0         45409  
-00013                   0     0        0        0        0        0        0       0        0         0        0        0         0        0        0        0         112    
-00015                   0     0        0        0        0        0        0       0        0         0        0        0         0        0        0        0         2179  
+
+
+import sqlite3
+import sys
+
+db_name = sys.argv[1]
+
+# List of exchanges
+exchanges = ["MEMX", "EMLD", "BATO", "C2OX", "EDGO", "GMNI", "MCRY", "MPRL", "XASE", "XBOX", "XBXO", "XCBO", "XISX", "XMIO", "XNDQ", "XPHO", "XPSE"]
+
+# Connect to the SQLite database
+conn = sqlite3.connect(db_name)
+cursor = conn.cursor()
+
+# Create a summary table with dynamic columns for each exchange
+cursor.execute(f'''CREATE TABLE IF NOT EXISTS summary (
+                    Ultimate_Clearing_Firm TEXT PRIMARY KEY,
+                    {', '.join([f"{exchange} INTEGER" for exchange in exchanges])}
+                 )''')
+
+# Commit the changes to create the summary table
+conn.commit()
+
+# Create a dictionary to hold the aggregated data
+summary_data = {}
+
+# Iterate through each exchange to populate the summary data
+for exchange in exchanges:
+    table_name = f'grouped_trades_summary_{exchange}'
+    
+    # Check if the table exists in the database
+    cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name=?;", (table_name,))
+    result = cursor.fetchone()
+    
+    if result:
+        # Calculate the sum of quantities for each Ultimate_Clearing_Firm in the exchange-specific table
+        query = f'''
+            SELECT Ultimate_Clearing_Firm, SUM(Total_Quantity) AS Total
+            FROM {table_name}
+            GROUP BY Ultimate_Clearing_Firm
+        '''
+        cursor.execute(query)
+        
+        # Fetch the results and update the summary_data dictionary
+        for row in cursor.fetchall():
+            ultimate_clearing_firm, total_quantity = row
+            if ultimate_clearing_firm not in summary_data:
+                summary_data[ultimate_clearing_firm] = {exchange: total_quantity}
+            else:
+                summary_data[ultimate_clearing_firm][exchange] = total_quantity
+
+# Insert the aggregated data into the summary table
+for ultimate_clearing_firm, exchange_data in summary_data.items():
+    query = f'''
+        INSERT OR REPLACE INTO summary (Ultimate_Clearing_Firm, {', '.join([f"{exchange}" for exchange in exchanges])})
+        VALUES (?, {', '.join(['?' for _ in exchanges])})
+    '''
+    cursor.execute(query, [ultimate_clearing_firm] + [exchange_data.get(exchange, 0) for exchange in exchanges])
+
+# Commit the changes to populate the summary table
+conn.commit()
+
+# Close the connection
+conn.close()
