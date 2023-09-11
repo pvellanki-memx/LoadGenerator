@@ -523,3 +523,7 @@ conn.commit()
 conn.close()
 
 
+
+cursor.execute("DROP TABLE IF EXISTS summary;")
+
+
