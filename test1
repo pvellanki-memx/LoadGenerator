@@ -213,3 +213,12 @@ conn.commit()
 
 # Close the connection
 conn.close()
+
+
+
+
+pvellanki@qa2434:~/orsa$ python3 OCCSummary.py 06-16.db
+Traceback (most recent call last):
+  File "/home/pvellanki/orsa/OCCSummary.py", line 43, in <module>
+    conn.execute(query)
+sqlite3.IntegrityError: UNIQUE constraint failed: summary.Ultimate_Clearing_Firm
