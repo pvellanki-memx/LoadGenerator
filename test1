@@ -581,21 +581,23 @@ sqlite> select *  from grouped_trades_EMLD where Entering_Firm_Col1 = 5;
 
 
 
+sqlite> select sum(Quantity) from grouped_trades_EMLD where (Ultimate_Clearing_Firm ="00050") AND Sub_ID='C'AND TRANS_TYPE=0
+   ...> ;
+sum(Quantity)
+-------------
+1904         
+sqlite> select sum(Quantity) from grouped_trades_EMLD where (Entering_Firm_Col1="00050" AND Ultimate_Clearing_Firm is NULL) AND Sub_ID='C'AND TRANS_TYPE=0
+   ...> ;
+sum(Quantity)
+-------------
+8870         
 
-sqlite> select sum(Quantity) from grouped_trades_EMLD where (Entering_Firm_Col1="00050" AND Ultimate_Clearing_Firm is NULL) AND Sub_ID='C'AND TRANS_TYPE=0 AND Side=1;
-sum(Quantity)
--------------
-5244         
-sqlite> select sum(Quantity) from grouped_trades_EMLD where (Ultimate_Clearing_Firm ="00050") AND Sub_ID='C'AND TRANS_TYPE=0 AND Side=1;
-sum(Quantity)
--------------
-1788         
-sqlite> select sum(Quantity) from grouped_trades_EMLD where (Ultimate_Clearing_Firm ="00050") AND Sub_ID='C'AND TRANS_TYPE=0 AND Side=2;
-sum(Quantity)
--------------
-116          
-sqlite> select sum(Quantity) from grouped_trades_EMLD where (Entering_Firm_Col1="00050" AND Ultimate_Clearing_Firm is NULL) AND Sub_ID='C'AND TRANS_TYPE=0 AND Side=2;
-sum(Quantity)
--------------
-3626 
 
+
+
+      # Calculate the sum of quantities for each Ultimate_Clearing_Firm in the exchange-specific table
+        query = f'''
+            SELECT Ultimate_Clearing_Firm, SUM(Quantity) AS Total
+            FROM {table_name}
+            WHERE TRANS_TYPE = 0 AND Sub_ID = 'C'
+            GROUP BY Ultimate_Clearing_Firm
