@@ -10,12 +10,10 @@ exchanges = ["MEMX", "EMLD", "BATO", "C2OX", "EDGO", "GMNI", "MCRY", "MPRL", "XA
 conn = sqlite3.connect(db_name)
 cursor = conn.cursor()
 
-cursor.execute("DROP TABLE IF EXISTS summary3;")
-
 # Create a summary table with dynamic columns for each exchange
-cursor.execute(f'''CREATE TABLE IF NOT EXISTS summary2 (
-                    Ultimate_Clearing_Firm TEXT PRIMARY KEY,
-                    {', '.join([f"{exchange} INTEGER " for exchange in exchanges])}
+cursor.execute(f'''CREATE TABLE IF NOT EXISTS summary (
+                    Firm_Type TEXT PRIMARY KEY,
+                    {', '.join([f"{exchange}_Total INTEGER" for exchange in exchanges])}
                  )''')
 
 # Commit the changes to create the summary table
@@ -26,25 +24,21 @@ summary_data = {}
 
 # Iterate through each exchange to populate the summary data
 for exchange in exchanges:
-    table_name = f'grouped_trades_{exchange}'
+    table_name = f'grouped_trades_summary_{exchange}'
     
     # Check if the table exists in the database
     cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name=?;", (table_name,))
     result = cursor.fetchone()
     
     if result:
-        # Calculate the sum of quantities for each Ultimate_Clearing_Firm in the exchange-specific table
+        # Calculate the sum of quantities for each Firm_Type (Entering Firm Col1 and Ultimate Clearing Firm)
         query = f'''
             SELECT
                 COALESCE(Ultimate_Clearing_Firm, Entering_Firm_Col1) AS Firm_Type,
                 SUM(CASE
                     WHEN Ultimate_Clearing_Firm IS NULL THEN Quantity
-                    ELSE 0
-                END) AS Entering_Firm_Col1_Quantity,
-                SUM(CASE
-                    WHEN Ultimate_Clearing_Firm IS NOT NULL THEN Quantity
-                    ELSE 0
-                END) AS Ultimate_Clearing_Firm_Quantity
+                    ELSE Quantity
+                END) AS Total_Quantity
             FROM {table_name}
             WHERE Sub_ID = 'C' AND TRANS_TYPE = 0
             GROUP BY Firm_Type
@@ -53,19 +47,19 @@ for exchange in exchanges:
         
         # Fetch the results and update the summary_data dictionary
         for row in cursor.fetchall():
-            ultimate_clearing_firm, total_quantity = row
-            if ultimate_clearing_firm not in summary_data:
-                summary_data[ultimate_clearing_firm] = {exchange: total_quantity}
+            firm_type, total_qty = row
+            if firm_type not in summary_data:
+                summary_data[firm_type] = {exchange: total_qty}
             else:
-                summary_data[ultimate_clearing_firm][exchange] = total_quantity
+                summary_data[firm_type][exchange] = total_qty
 
 # Insert the aggregated data into the summary table
-for ultimate_clearing_firm, exchange_data in summary_data.items():
+for firm_type, exchange_data in summary_data.items():
     query = f'''
-        INSERT OR REPLACE INTO summary3 (Ultimate_Clearing_Firm, {', '.join([f"{exchange}" for exchange in exchanges])})
+        INSERT OR REPLACE INTO summary (Firm_Type, {', '.join([f"{exchange}_Total" for exchange in exchanges])})
         VALUES (?, {', '.join(['?' for _ in exchanges])})
     '''
-    cursor.execute(query, [ultimate_clearing_firm] + [exchange_data.get(exchange, 0) for exchange in exchanges])
+    cursor.execute(query, [firm_type] + [exchange_data.get(exchange, 0) for exchange in exchanges])
 
 # Commit the changes to populate the summary table
 conn.commit()
