@@ -658,3 +658,36 @@ async def main():
 # Start the main execution
 if __name__ == '__main__':
     main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ...
+
+# Define the session_worker as an asynchronous coroutine
+async def session_worker(session_name):
+    # ...
+
+async def main():
+    # ...
+    # Change the line to create and execute coroutine tasks
+    await asyncio.gather(*[session_worker(session_name) for session_name in session_names])
+
+# Start the main execution
+if __name__ == '__main__':
+    asyncio.run(main())
+
