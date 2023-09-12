@@ -601,3 +601,25 @@ sum(Quantity)
             FROM {table_name}
             WHERE TRANS_TYPE = 0 AND Sub_ID = 'C'
             GROUP BY Ultimate_Clearing_Firm
+
+
+
+
+
+# Calculate the sum of quantities for each Firm_Type in the exchange-specific table
+query = f'''
+    SELECT
+        COALESCE(Ultimate_Clearing_Firm, Entering_Firm_Col1) AS Firm_Type,
+        SUM(CASE
+            WHEN Ultimate_Clearing_Firm IS NULL THEN Quantity
+            ELSE 0
+        END) AS Entering_Firm_Col1_Quantity,
+        SUM(CASE
+            WHEN Ultimate_Clearing_Firm IS NOT NULL THEN Quantity
+            ELSE 0
+        END) AS Ultimate_Clearing_Firm_Quantity
+    FROM {table_name}
+    WHERE Sub_ID = 'C' AND TRANS_TYPE = 0
+    GROUP BY Firm_Type
+'''
+
