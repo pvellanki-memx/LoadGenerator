@@ -551,3 +551,25 @@ def get_ultimate_clearing_firm(sub_id, pty_r, rpt_id, pty_id):
         return pty_id
     return None
 
+
+
+
+
+
+
+sqlite> select * from grouped_trades_EMLD where Rpt_ID=1109543609;
+Side  Sub_ID  Rpt_ID      Ultimate_Clearing_Firm  Entering_Firm_Col1  EXCH  TRANS_TYPE  BIZ_DT      CFI     PREVLY_RPTD  RPT_TYP  MTCH_STAT  Quantity
+----  ------  ----------  ----------------------  ------------------  ----  ----------  ----------  ------  -----------  -------  ---------  --------
+1             1109543609                                              EMLD  0           2023-06-28  OPASPS  N            2        0          1004    
+1     C       1109543609                          00050               EMLD  0           2023-06-28  OPASPS  N            2        0          1004    
+2             1109543609                                              EMLD  0           2023-06-28  OPASPS  N            2        0          1004    
+2     M       1109543609                          00551               EMLD  0           2023-06-28  OPASPS  N            2        0          1004    
+1     C       1109543609                          00050               EMLD  0           2023-06-28  OPASPS  N            2        0          1004    
+2     M       1109543609                          00551               EMLD  0           2023-06-28  OPASPS  N            2        0          1004    
+sqlite> select *  from grouped_trades_EMLD where Entering_Firm_Col1 = '00050' AND Rpt_ID=1109543609;
+Side  Sub_ID  Rpt_ID      Ultimate_Clearing_Firm  Entering_Firm_Col1  EXCH  TRANS_TYPE  BIZ_DT      CFI     PREVLY_RPTD  RPT_TYP  MTCH_STAT  Quantity
+----  ------  ----------  ----------------------  ------------------  ----  ----------  ----------  ------  -----------  -------  ---------  --------
+1     C       1109543609                          00050               EMLD  0           2023-06-28  OPASPS  N            2        0          1004    
+1     C       1109543609                          00050               EMLD  0           2023-06-28  OPASPS  N            2        0          1004    
+sqlite> select *  from grouped_trades_EMLD where Entering_Firm_Col1 = 5;
+
