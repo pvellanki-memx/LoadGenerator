@@ -536,3 +536,18 @@ FROM sqlite_master
 WHERE type='table' AND name LIKE 'grouped\_%';
 
 
+
+
+
+
+
+
+def get_ultimate_clearing_firm(sub_id, pty_r, rpt_id, pty_id):
+    if pty_r == '14':
+        return pty_id
+    elif pty_r == '18':
+        return pty_id
+    elif pty_r == '1':
+        return pty_id
+    return None
+
