@@ -1630,3 +1630,57 @@ SendingTime	7	8	UTCTimestampNanos
 UserStatus	15	1	UserStatusType
 926	Y	Reason for notification.
  
+
+
+
+
+
+
+
+
+
+
+
+Field	Offset	Length	Type
+SBE Header	0	7	SBE Header
+SendingTime	7	8	UTCTimestampNanos
+AllocID	15	20	CHAR
+AllocType	35	1	AllocType
+AllocTransType	36	1	AllocTransType
+RefAllocID	37	20	CHAR
+OptionsSecurityID	57	8	CHAR
+Side	65	1	SideType
+NoExecs	-	-	RepeatingGroupDimensions
+ExecutionAllocations	-	-	ExecutionAllocationsGroup
+NoAllocs	-	-	RepeatingGroupDimensions
+RequestedAllocations	-	-	RequestAllocationsGroup
+
+
+
+Execution Allocations Group
+Field	Offset	Length	Type
+			
+TradeId	0	8	UINT64
+LastQty	8	4	UINT32
+LastPx	12	8	PriceType
+
+
+
+RequestedAllocations	
+
+Field	Offset	Length	Type
+			
+AllocQty	0	4	UINT32
+AllocPositionEffect	4	1	AllocPositionEffectType
+NoNestedPartyIDs	5	2	RepeatingGroupDimensions
+NestedParties	-	-	Nested Parties Group
+
+
+
+
+Field	Offset	Length	Type
+			
+NestedPartyID	0	16	CHAR
+NestedPartyIDSource	17	1	CHAR
+			
+NestedPartyRole	18	1	PartyRoleType
