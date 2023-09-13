@@ -1,8 +1,8 @@
 import configparser
-import asyncio
 import socket
 import struct
 import time
+from tqdm import tqdm
 from multiprocessing import Process
 from sbe_encoder_decoder import UTCTimestampNanos, NewOrderSingle,  ShortTwoSidedQuote,ShortTwoSideBulkQuote, LongTwoSideBulkQuote, ShortOneSideBulkQuote, LongOneSideBulkQuote,MatchTradePreventionType,MtpGroupIDType, LongOneSideQuote,LongTwoSidedQuote,OrderCancelRequest
 from sbe_encoder_decoder import UINT32,UINT16,UINT8, OrdType, PriceType,TimeInForceType, ExecInstType, TradingCapacityType, SideType, PartyID, PartiesGroup,PartyIDSource, PartyRoleType, ShortPriceType, OptionsSecurityID,ShortOneSideQuote
@@ -27,7 +27,7 @@ time_in_force = TimeInForceType(value=time_in_force_value)
 
 # Define the MESSAGE_TYPES dictionary
 MESSAGE_TYPES = {
-    "NewOrderSingle": 1,
+    "NewOrderSingle": 1,can you give me complete 
     "ShortTwoSidedBulkQuote": 2,
     "LongTwoSidedBulkQuote": 3,
     "ShortOneSidedBulkQuote": 4,
@@ -567,16 +567,16 @@ def generate_message(message_type,session_name, send_cancels=False):
         raise ValueError(f"Invalid message type: {message_type}")
 
 # Send the generated message over the TCP connection
-async def send_message(client_socket, message):
+def send_message(client_socket, message):
 
 
     # Send the message
     client_socket.sendall(message)
 
     # Sleep for a short period to control the message rate
-    await asyncio.sleep(1 / message_rate)
+    time.sleep(1 / message_rate)
 
-async def session_worker(session_name):
+def session_worker(session_name):
     #try:
         # Establish SBE TCP session for the current session name
         client_socket, session_id = establish_session(session_name)
@@ -594,11 +594,11 @@ async def session_worker(session_name):
 
             # Send the NewOrderSingle message
             if new_order_single_message:
-                await send_message(client_socket, new_order_single_message)
+                send_message(client_socket, new_order_single_message)
 
             # Send the OrderCancelRequest message if it's generated
             if order_cancel_message:
-                await send_message(client_socket, order_cancel_message)
+                send_message(client_socket, order_cancel_message)
 
             
             '''
@@ -629,7 +629,7 @@ async def session_worker(session_name):
             '''
 
             # Sleep for a short period to control the message rate
-            await asyncio.sleep(1 / message_rate)
+            time.sleep(1 / message_rate)
 
         # Close the TCP connection for the current session
         client_socket.close()
@@ -637,57 +637,29 @@ async def session_worker(session_name):
     #except Exception as e:
     #   print(f"Failed to establish session for {session_name}: {str(e)}")
 
-async def main():
+def main():
     # Read session names from connections.cfg
     session_names = connection_config.sections()
 
     # List to hold the worker processes
-    tasks = []
+    processes = []
 
     # Iterate over session names and create worker processes
     for session_name in session_names:
-        task = Process(target=session_worker, args=(session_name,))
-        tasks.append(task)
+        process = Process(target=session_worker, args=(session_name,))
+        processes.append(process)
 
+    # Start all the worker processes
+    for process in processes:
+        process.start()
 
-    await asyncio.gather(*tasks)
+    # Wait for all worker processes to complete
+    for process in processes:
+        process.join()
 
     # Print the number of active sessions
-    print(f"Total active sessions: {len(tasks)}")
+    print(f"Total active sessions: {len(processes)}")
 
 # Start the main execution
 if __name__ == '__main__':
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# ...
-
-# Define the session_worker as an asynchronous coroutine
-async def session_worker(session_name):
-    # ...
-
-async def main():
-    # ...
-    # Change the line to create and execute coroutine tasks
-    await asyncio.gather(*[session_worker(session_name) for session_name in session_names])
-
-# Start the main execution
-if __name__ == '__main__':
-    asyncio.run(main())
-
