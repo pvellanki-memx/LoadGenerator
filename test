@@ -1003,4 +1003,215 @@ if __name__ == '__main__':
 
 
 
-curl --location 'https://www.memxtrading.dev/api/docs/folder?folder=Finance'  --header 'Institution: MEMX'  --header 'market: OPTIONS’  --header 'Authorization: Token testtoken1234'  --form 'folder=“Finance/”’  --form 'uploads=@"/Users/pvellanki/Downloads/06-28.xlsx”’
+curl --location 'https://www.memxtrading.dev/api/docs/folder?folder=Finance' \
+--header 'Institution: MEMX' \
+--header 'market: OPTIONS' \
+--header 'Authorization: Token testtoken1234' \
+--form 'folder="Finance/"' \
+--form 'uploads=@"/Users/pvellanki/Downloads/06-28.xlsx"'
+
+
+Multiprocessing:
+
+
+import configparser
+import socket
+import struct
+import time
+from tqdm import tqdm
+from multiprocessing import Process, Queue
+from sbe_encoder_decoder import UTCTimestampNanos, NewOrderSingle,  ShortTwoSidedQuote, ShortTwoSideBulkQuote, LongTwoSideBulkQuote, ShortOneSideBulkQuote, LongOneSideBulkQuote, MatchTradePreventionType, MtpGroupIDType, LongOneSideQuote, LongTwoSidedQuote, OrderCancelRequest
+from sbe_encoder_decoder import UINT32, UINT16, UINT8, OrdType, PriceType, TimeInForceType, ExecInstType, TradingCapacityType, SideType, PartyID, PartiesGroup, PartyIDSource, PartyRoleType, ShortPriceType, OptionsSecurityID, ShortOneSideQuote
+from random import choices, randint
+import string
+from random import choices, randint, uniform
+
+# Read configuration from config.ini
+config = configparser.ConfigParser()
+config.read('config.ini')
+
+# Read connection details from connections.cfg
+connection_config = configparser.ConfigParser()
+connection_config.read(config['Server']['config_file'])
+
+# Read TimeInForce from config.ini
+time_in_force_value = config.get('NewOrderSingle', 'TimeInForce')
+time_in_force = TimeInForceType(value=time_in_force_value)
+
+# Define the MESSAGE_TYPES dictionary
+# ... (rest of your script as is)
+
+def send_worker(session_name, message_queue):
+    # Establish SBE TCP session for the current session name
+    client_socket, session_id = establish_session(session_name)
+
+    # Start time for calculating duration
+    start_time = time.time()
+
+    while time.time() - start_time < duration:
+        # Generate a random message type
+        message_type = generate_message_type()
+
+        # Generate one or two messages
+        new_order_single_message, order_cancel_message = generate_message(message_type, session_name, send_cancels=config.getboolean('Load', 'SendCancels'))
+
+        # Send the NewOrderSingle message to the queue
+        if new_order_single_message:
+            message_queue.put(new_order_single_message)
+
+        # Send the OrderCancelRequest message to the queue if it's generated
+        if order_cancel_message:
+            message_queue.put(order_cancel_message)
+
+        # Sleep for a short period to control the message rate
+        time.sleep(1 / message_rate)
+
+    # Close the TCP connection for the current session
+    client_socket.close()
+
+def sender_worker(message_queue):
+    # Establish SBE TCP session for the current session name
+    client_socket, session_id = establish_session(session_name)
+
+    while True:
+        # Try to get a message from the queue
+        try:
+            message = message_queue.get(timeout=1)
+            send_message(client_socket, message)
+        except queue.Empty:
+            pass
+
+def main():
+    # Read session names from connections.cfg
+    session_names = connection_config.sections()
+
+    # Create a queue to pass messages between sender and send_worker
+    message_queue = Queue()
+
+    # Create a sender process
+    sender_process = Process(target=sender_worker, args=(message_queue,))
+    sender_process.start()
+
+    # List to hold the worker processes
+    processes = []
+
+    # Iterate over session names and create worker processes
+    for session_name in session_names:
+        process = Process(target=send_worker, args=(session_name, message_queue))
+        processes.append(process)
+
+    # Start all the worker processes
+    for process in processes:
+        process.start()
+
+    # Wait for all worker processes to complete
+    for process in processes:
+        process.join()
+
+    # Print the number of active sessions
+    print(f"Total active sessions: {len(processes)}")
+
+if __name__ == '__main__':
+    main()
+
+
+
+
+
+
+
+
+
+
+
+
+AllocationInstruction:
+
+import struct
+
+# Sample values for fields
+sending_time = 1631146142000000000
+alloc_id = "12345"  # 20 characters
+alloc_type = "1"  # 1 character
+alloc_trans_type = "A"  # 1 character
+ref_alloc_id = "67890"  # 20 characters
+options_security_id = "ABC12345"  # 8 characters
+side = "1"  # 1 character
+no_execs = 2  # Number of ExecutionAllocations
+execution_allocations = [
+    (12345678, 100, 123456789012345678),
+    (87654321, 50, 987654321098765432)
+]
+no_allocs = 2  # Number of RequestAllocations
+requested_allocations = [
+    (10, "N", [("Party1", "D", 1), ("Party2", "E", 2)]),
+    (20, "Y", [("Party3", "F", 3), ("Party4", "G", 4)])
+]
+
+class SBEHeader:
+    def encode(self):
+        # Encode SBE Header fields
+        return b"HeaderData"  # Replace with actual encoding logic
+
+class UTCTimestampNanos:
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return struct.pack('!Q', self.value)
+
+class CHAR:
+    def __init__(self, value, length):
+        self.value = value
+        self.length = length
+
+    def encode(self):
+        return self.value.encode('utf-8').ljust(self.length, b'\x00')
+
+class AllocType:
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return struct.pack('!c', self.value.encode('utf-8'))
+
+class AllocTransType:
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return struct.pack('!c', self.value.encode('utf-8'))
+
+class SideType:
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return struct.pack('!c', self.value.encode('utf-8'))
+
+class RepeatingGroupDimensions:
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return struct.pack('!H', self.value)
+
+class ExecutionAllocationsGroup:
+    def __init__(self, trade_id, last_qty, last_px):
+        self.trade_id = trade_id
+        self.last_qty = last_qty
+        self.last_px = last_px
+
+    def encode(self):
+        return struct.pack('!QIq', self.trade_id, self.last_qty, self.last_px)
+
+class RequestAllocationsGroup:
+    def __init__(self, alloc_qty, alloc_position_effect, nested_party_ids):
+        self
+
+
+
+
+
+
+
