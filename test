@@ -991,3 +991,16 @@ if __name__ == '__main__':
     main()
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+curl --location 'https://www.memxtrading.dev/api/docs/folder?folder=Finance'  --header 'Institution: MEMX'  --header 'market: OPTIONS’  --header 'Authorization: Token testtoken1234'  --form 'folder=“Finance/”’  --form 'uploads=@"/Users/pvellanki/Downloads/06-28.xlsx”’
