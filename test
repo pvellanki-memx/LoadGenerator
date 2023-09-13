@@ -1215,3 +1215,119 @@ class RequestAllocationsGroup:
 
 
 
+import struct
+from sbe_encoder_decoder import UTCTimestampNanos, PriceType, SideType, UINT64, UINT32, CHAR, AllocType, AllocTransType, AllocPositionEffectType, PartyRoleType
+
+class SBEHeader:
+    def __init__(self, block_length, template_id, schema_id, version):
+        self.block_length = block_length
+        self.template_id = template_id
+        self.schema_id = schema_id
+        self.version = version
+
+    def encode(self):
+        return struct.pack('!HHBB', self.block_length, self.template_id, self.schema_id, self.version)
+
+class ExecutionAllocationsGroup:
+    def __init__(self, trade_id, last_qty, last_px):
+        self.trade_id = trade_id
+        self.last_qty = last_qty
+        self.last_px = last_px
+
+    def encode(self):
+        return struct.pack('!QIq', self.trade_id, self.last_qty, self.last_px)
+
+class NestedPartiesGroup:
+    def __init__(self, nested_party_id, nested_party_id_source, nested_party_role):
+        self.nested_party_id = nested_party_id
+        self.nested_party_id_source = nested_party_id_source
+        self.nested_party_role = nested_party_role
+
+    def encode(self):
+        return struct.pack('16s1s1B', self.nested_party_id.encode('utf-8'), self.nested_party_id_source.encode('utf-8'), self.nested_party_role.value)
+
+class RequestedAllocationsGroup:
+    def __init__(self, alloc_qty, alloc_position_effect, nested_parties):
+        self.alloc_qty = alloc_qty
+        self.alloc_position_effect = alloc_position_effect
+        self.nested_parties = nested_parties
+
+    def encode(self):
+        nested_parties_data = b''.join([np.encode() for np in self.nested_parties])
+        return struct.pack('IB', self.alloc_qty, self.alloc_position_effect.value) + nested_parties_data
+
+class YourMessage:
+    def __init__(self, sending_time, alloc_id, alloc_type, alloc_trans_type, ref_alloc_id, options_security_id, side, no_execs, execution_allocations, no_allocs, requested_allocations):
+        self.sending_time = sending_time
+        self.alloc_id = alloc_id
+        self.alloc_type = alloc_type
+        self.alloc_trans_type = alloc_trans_type
+        self.ref_alloc_id = ref_alloc_id
+        self.options_security_id = options_security_id
+        self.side = side
+        self.no_execs = no_execs
+        self.execution_allocations = execution_allocations
+        self.no_allocs = no_allocs
+        self.requested_allocations = requested_allocations
+
+    def encode(self):
+        execution_allocations_data = b''.join([ea.encode() for ea in self.execution_allocations])
+        no_allocs_data = b''.join([na.encode() for na in self.no_allocs])
+        requested_allocations_data = b''.join([ra.encode() for ra in self.requested_allocations])
+
+        return (
+            self.sending_time.encode() +
+            self.alloc_id.encode() +
+            self.alloc_type.value.encode('utf-8') +
+            self.alloc_trans_type.value.encode('utf-8') +
+            self.ref_alloc_id.encode() +
+            self.options_security_id.encode() +
+            self.side.value.encode('utf-8') +
+            struct.pack('H', len(self.no_execs)) +
+            execution_allocations_data +
+            struct.pack('H', len(self.no_allocs)) +
+            no_allocs_data +
+            struct.pack('H', len(self.requested_allocations)) +
+            requested_allocations_data
+        )
+
+# Example usage:
+header = SBEHeader(42, 1, 2, 3)
+sending_time = UTCTimestampNanos(1234567890)
+alloc_id = CHAR("ABC12345")
+alloc_type = AllocType("I")
+alloc_trans_type = AllocTransType("N")
+ref_alloc_id = CHAR("XYZ98765")
+options_security_id = CHAR("98765432")
+side = SideType("B")
+
+# Construct ExecutionAllocationsGroup instances
+execution_allocations = [
+    ExecutionAllocationsGroup(12345, 100, PriceType(1234567890)),
+    ExecutionAllocationsGroup(67890, 50, PriceType(9876543210))
+]
+
+# Construct NestedPartiesGroup instances
+nested_parties = [
+    NestedPartiesGroup("Nested1", "S", PartyRoleType(1)),
+    NestedPartiesGroup("Nested2", "T", PartyRoleType(2))
+]
+
+# Construct RequestedAllocationsGroup instances
+requested_allocations = [
+    RequestedAllocationsGroup(10, AllocPositionEffectType("O"), nested_parties),
+    RequestedAllocationsGroup(20, AllocPositionEffectType("C"), [])
+]
+
+# Create the YourMessage instance
+your_message = YourMessage(sending_time, alloc_id, alloc_type, alloc_trans_type, ref_alloc_id, options_security_id, side, len(execution_allocations), execution_allocations, len(requested_allocations), requested_allocations)
+
+# Encode the message
+encoded_message = header.encode() + your_message.encode()
+
+# Print the encoded message
+print(encoded_message)
+
+
+
+
