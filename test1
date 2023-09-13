@@ -66,3 +66,12 @@ conn.commit()
 
 # Close the connection
 conn.close()
+
+
+
+
+
+
+
+
+curl --location 'https://www.memxtrading.dev/secure-api/docs?type=settlement'  --header 'Institution: MEMX'  --header 'market: EDX'  --header 'Authorization: Token testtoken1234'  --form 'folder="Reporting/MEMX/EDX_Clearing"'  --form 'uploads=@"/Users/pvellanki/Downloads/SettlementInstructions0420.csv"'
