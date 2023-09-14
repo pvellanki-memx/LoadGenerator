@@ -1329,5 +1329,6 @@ encoded_message = header.encode() + your_message.encode()
 print(encoded_message)
 
 
-
+side = random.choice([fix.Side_BUY, fix.Side_SELL])
+        message.setField(fix.Side(side))
 
