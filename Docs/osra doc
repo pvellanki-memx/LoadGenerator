@@ -365,3 +365,69 @@ conn.close()
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import sqlite3
+import pandas as pd
+
+# Connect to the SQLite database
+conn = sqlite3.connect('06-28.db')  # Replace 'your_database.db' with your database file
+cursor = conn.cursor()
+
+# List of exchanges you want to process
+exchanges = ["EMLD"]
+
+# Initialize a DataFrame to store the data
+df_combined = pd.DataFrame()
+
+# Iterate over each exchange
+for exchange in exchanges:
+    # Define the table name for the current exchange
+    table_name = f'grouped_trades_{exchange}'
+
+    # Define your SQL query for cases where ENTERING_FIRM_COL1 is not blank
+    query = f'''
+            SELECT
+                Ultimate_Clearing_Firm,Entering_Firm_Col1,
+                COALESCE(Ultimate_Clearing_Firm, Entering_Firm_Col1) AS Firm_Type,
+                SUM(CASE
+                    WHEN Ultimate_Clearing_Firm IS NULL THEN Quantity
+                    ELSE Quantity
+                END) AS Total_Quantity,
+                Side
+            FROM {table_name}
+            WHERE Sub_ID = 'C' AND TRANS_TYPE = 0
+            GROUP BY Firm_Type
+        '''
+
+    # Execute the query and fetch data into a Pandas DataFrame
+    df_entering = pd.read_sql_query(query, conn)
+
+
+# Pivot the combined DataFrame to get the desired format
+pivot_table = pd.pivot_table(df_entering, values='Total_Quantity', index='Ultimate_Clearing_Firm',
+                              columns=['Entering_Firm_Col1', 'Side'], aggfunc='sum', fill_value=0)
+
+# Reset the index for cleaner output
+pivot_table.reset_index(inplace=True)
+
+# Display the pivot table or do further processing as needed
+pivot_table.to_csv('summary_new3_june_28.csv', index=False)
+
+# Close the database connection
+conn.close()
+
+
