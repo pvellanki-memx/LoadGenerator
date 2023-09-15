@@ -484,3 +484,16 @@ pivot_table.to_csv('summary_new3_june_28.csv', index=False)
 
 # Close the database connection
 conn.close()
+
+
+
+
+
+
+
+
+
+sqlite> select sum(quantity) from grouped_trades_EMLD where Ultimate_Clearing_Firm ="00005";
+sum(quantity)
+-------------
+1810   
