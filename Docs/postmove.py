@@ -207,3 +207,13 @@ if __name__ == '__main__':
     xml_file = sys.argv[1]  # Get the XML file name from command-line arguments
     batch_size = 100  # Adjust the batch size as per your requirement
     fetch_data_in_batches(xml_file, batch_size)
+
+
+
+
+
+
+
+
+
+=GETPIVOTDATA("/TrdCaptRpt/@LastQty",$A$3,"/TrdCaptRpt/@TransTyp",0,"/TrdCaptRpt/RptSide/@Side",1,"/TrdCaptRpt/RptSide/Pty/Sub/@ID","C")+GETPIVOTDATA("/TrdCaptRpt/@LastQty",$A$3,"/TrdCaptRpt/@TransTyp",0,"/TrdCaptRpt/RptSide/@Side",1,"/TrdCaptRpt/RptSide/Pty/Sub/@ID","F")+GETPIVOTDATA("/TrdCaptRpt/@LastQty",$A$3,"/TrdCaptRpt/@TransTyp",0,"/TrdCaptRpt/RptSide/@Side",1,"/TrdCaptRpt/RptSide/Pty/Sub/@ID","M")+GETPIVOTDATA("/TrdCaptRpt/@LastQty",$A$3,"/TrdCaptRpt/@TransTyp",1,"/TrdCaptRpt/RptSide/@Side",1,"/TrdCaptRpt/RptSide/Pty/Sub/@ID","C")+GETPIVOTDATA("/TrdCaptRpt/@LastQty",$A$3,"/TrdCaptRpt/@TransTyp",1,"/TrdCaptRpt/RptSide/@Side",1,"/TrdCaptRpt/RptSide/Pty/Sub/@ID","F")
