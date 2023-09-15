@@ -245,4 +245,51 @@ Side  Sub_ID  Rpt_ID      Ultimate_Clearing_Firm  Entering_Firm_Col1  EXCH  TRAN
 1     C       1106933091  00385                   00551               EMLD  0           2023-06-28  OPASPS  N            2        0          1       
 2     M       1106933091                          00551               EMLD  0           2023-06-28  OPASPS  N            2        0          1  
 
- 
+
+
+
+
+
+
+
+
+
+
+
+import sqlite3
+import pandas as pd
+
+# Connect to the SQLite database
+conn = sqlite3.connect('your_database.db')  # Replace 'your_database.db' with your database file
+cursor = conn.cursor()
+
+# Get a list of all tables in the database that start with 'grouped_trades_'
+cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'grouped_trades_%';")
+table_names = [row[0] for row in cursor.fetchall()]
+
+# Iterate over each table
+for table_name in table_names:
+    # Define your SQL query
+    query = f'''
+        SELECT ULTIMATE_CLEARING_FIRM, ENTERING_FIRM_COL1, SIDE, QUANTITY
+        FROM {table_name}
+        WHERE SUB_ID = 'C' AND TRANS_TYPE = 0
+    '''
+
+    # Execute the query and fetch data into a Pandas DataFrame
+    df = pd.read_sql_query(query, conn)
+
+    # Pivot the DataFrame to get your desired format
+    pivot_df = df.pivot_table(index=['ENTERING_FIRM_COL1', 'SIDE'], columns='ULTIMATE_CLEARING_FIRM', values='QUANTITY', aggfunc='sum', fill_value=0)
+
+    # Reset the index and rename the columns
+    pivot_df.reset_index(inplace=True)
+    pivot_df.columns.name = None  # Remove the columns' name for cleaner output
+
+    # Display the pivot DataFrame or do further processing as needed
+    print(f"Table Name: {table_name}")
+    print(pivot_df)
+
+# Close the database connection
+conn.close()
+
