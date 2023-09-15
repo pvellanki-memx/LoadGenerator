@@ -433,10 +433,54 @@ conn.close()
 
 
 
-sqlite> select * from grouped_trades_EMLD where Rpt_ID=1110082899;
-Side  Sub_ID  Rpt_ID      Ultimate_Clearing_Firm  Entering_Firm_Col1  EXCH  TRANS_TYPE  BIZ_DT      CFI     PREVLY_RPTD  RPT_TYP  MTCH_STAT  Quantity
-----  ------  ----------  ----------------------  ------------------  ----  ----------  ----------  ------  -----------  -------  ---------  --------
-1     M       1110082899                          00010               EMLD  0           2023-06-28  OCASPS  N            2        0          17      
-2     C       1110082899  00005                   00067               EMLD  0           2023-06-28  OCASPS  N            2        0          17      
+import sqlite3
+import pandas as pd
 
+# Connect to the SQLite database
+conn = sqlite3.connect('06-28.db')  # Replace 'your_database.db' with your database file
+cursor = conn.cursor()
 
+# List of exchanges you want to process
+exchanges = ["EMLD"]
+
+# Initialize a DataFrame to store the data
+df_combined = pd.DataFrame()
+
+# Iterate over each exchange
+for exchange in exchanges:
+    # Define the table name for the current exchange
+    table_name = f'grouped_trades_{exchange}'
+
+    # Define your SQL query
+    query = f'''
+            SELECT
+                COALESCE(Ultimate_Clearing_Firm, 'Blank') AS Ultimate_Clearing_Firm,
+                COALESCE(Entering_Firm_Col1, 'Blank') AS Entering_Firm_Col1,
+                SUM(Quantity) AS Total_Quantity,
+                Side
+            FROM {table_name}
+            WHERE Sub_ID = 'C' AND TRANS_TYPE = 0
+            GROUP BY COALESCE(Ultimate_Clearing_Firm, 'Blank'), COALESCE(Entering_Firm_Col1, 'Blank'), Side
+        '''
+
+    # Execute the query and fetch data into a Pandas DataFrame
+    df_entering = pd.read_sql_query(query, conn)
+
+    # Append the data to the combined DataFrame
+    df_combined = pd.concat([df_combined, df_entering], ignore_index=True)
+
+    # Dump df_entering DataFrame into a table in the database
+    df_entering.to_sql('your_table_name', conn, if_exists='replace', index=False)
+
+# Pivot the combined DataFrame to get the desired format
+pivot_table = pd.pivot_table(df_combined, values='Total_Quantity', index='Ultimate_Clearing_Firm',
+                              columns=['Entering_Firm_Col1', 'Side'], aggfunc='sum', fill_value=0)
+
+# Reset the index for cleaner output
+pivot_table.reset_index(inplace=True)
+
+# Display the pivot table or do further processing as needed
+pivot_table.to_csv('summary_new3_june_28.csv', index=False)
+
+# Close the database connection
+conn.close()
