@@ -210,4 +210,39 @@ If AQ = 2 does not exist, return corresponding AP value where AQ= 26
 
 Repeat for AR = F and AR = M just to have the full qty to help resolve any potential issues
 
+
+
+
+
+
+
+
+
+
+
+
+sqlite> select * from grouped_trades_EMLD limit 20;
+Side  Sub_ID  Rpt_ID      Ultimate_Clearing_Firm  Entering_Firm_Col1  EXCH  TRANS_TYPE  BIZ_DT      CFI     PREVLY_RPTD  RPT_TYP  MTCH_STAT  Quantity
+----  ------  ----------  ----------------------  ------------------  ----  ----------  ----------  ------  -----------  -------  ---------  --------
+1     C       1106932769  00534                   00017               EMLD  0           2023-06-28  OPASPS  N            2        0          1       
+2     M       1106932769                          00551               EMLD  0           2023-06-28  OPASPS  N            2        0          1       
+1     M       1106932781                          00010               EMLD  0           2023-06-28  OPASPS  N            2        0          2       
+2     C       1106932781  00534                   00017               EMLD  0           2023-06-28  OPASPS  N            2        0          2       
+1     C       1106932825  00777                   00551               EMLD  0           2023-06-28  OCASPS  N            2        0          4       
+2     M       1106932825                          00551               EMLD  0           2023-06-28  OCASPS  N            2        0          4       
+1     M       1106932827                          00551               EMLD  0           2023-06-28  OCASPS  N            2        0          3       
+2     M       1106932827                          00695               EMLD  0           2023-06-28  OCASPS  N            2        0          3       
+1     C       1106932877  00769                   00050               EMLD  0           2023-06-28  OCASPS  N            2        0          1       
+2     M       1106932877                          00551               EMLD  0           2023-06-28  OCASPS  N            2        0          1       
+1     M       1106932994                          00551               EMLD  0           2023-06-28  OCASPS  N            2        0          16      
+2     C       1106932994  00534                   00017               EMLD  0           2023-06-28  OCASPS  N            2        0          16      
+1     M       1106933072                          00551               EMLD  0           2023-06-28  OCASPS  N            2        0          3       
+2     M       1106933072                          00050               EMLD  0           2023-06-28  OCASPS  N            2        0          3       
+1     M       1106933073                          00551               EMLD  0           2023-06-28  OCASPS  N            2        0          14      
+2     M       1106933073                          00010               EMLD  0           2023-06-28  OCASPS  N            2        0          14      
+1     C       1106933090  00778                   00551               EMLD  0           2023-06-28  OPASPS  N            2        0          1       
+2     M       1106933090                          00551               EMLD  0           2023-06-28  OPASPS  N            2        0          1       
+1     C       1106933091  00385                   00551               EMLD  0           2023-06-28  OPASPS  N            2        0          1       
+2     M       1106933091                          00551               EMLD  0           2023-06-28  OPASPS  N            2        0          1  
+
  
