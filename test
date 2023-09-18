@@ -1479,3 +1479,50 @@ conn.close()
 # Step 4: Perform further processing using furtherstreaming.py
 #python3 streamfurther_v4.py "$db_name"
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import sqlite3
+import pandas as pd
+
+# Connect to the SQLite database
+conn = sqlite3.connect('your_database.db')  # Replace 'your_database.db' with your database file
+cursor = conn.cursor()
+
+# List of exchanges
+exchanges = ["EMLD", "BATO", "C2OX", "EDGO", "GMNI", "MCRY", "MPRL", "XASE", "XBOX", "XBXO", "XCBO", "XISX", "XMIO", "XNDQ", "XPHO", "XPSE"]
+
+# Create an Excel writer object to save data to an Excel file
+excel_writer = pd.ExcelWriter('summary.xlsx', engine='xlsxwriter')
+
+# Iterate through each exchange to export data to separate sheets
+for exchange in exchanges:
+    # Define the table name for the current exchange
+    table_name = f'grouped_trades_summary_{exchange}'
+
+    # Define your SQL query to fetch data from the table
+    query = f'SELECT * FROM {table_name}'
+
+    # Fetch data from the database into a DataFrame
+    df = pd.read_sql_query(query, conn)
+
+    # Write the DataFrame to the Excel sheet named after the exchange
+    df.to_excel(excel_writer, sheet_name=exchange, index=False)
+
+# Save the Excel file
+excel_writer.save()
+
+# Close the database connection
+conn.close()
+
