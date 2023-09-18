@@ -1404,6 +1404,78 @@ wait "$grouped_pid"
 
 echo "Grouping of data completed."
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import sqlite3
+import pandas as pd
+
+# Connect to the SQLite database
+conn = sqlite3.connect('06-28.db')  # Replace 'your_database.db' with your database file
+cursor = conn.cursor()
+
+# List of exchanges you want to process
+#exchanges = ["EMLD", "BATO", "C2OX", "EDGO", "GMNI", "MCRY", "MPRL", "XASE", "XBOX", "XBXO", "XCBO", "XISX", "XMIO", "XNDQ", "XPHO", "XPSE"]
+exchanges = ["EMLD"]
+
+# Initialize a DataFrame to store the data
+df_combined = pd.DataFrame()
+
+# Iterate over each exchange
+for exchange in exchanges:
+    # Define the table name for the current exchange
+    table_name = f'grouped_trades_{exchange}'
+
+    # Define your SQL query
+    query = f'''
+            SELECT
+                COALESCE(Ultimate_Clearing_Firm, 'Blank') AS Ultimate_Clearing_Firm,
+                COALESCE(Entering_Firm_Col1, 'Blank') AS Entering_Firm_Col1,
+                SUM(CASE
+                    WHEN Ultimate_Clearing_Firm IS NULL THEN Quantity
+                    ELSE Quantity
+                END) AS Total_Quantity,
+                TRANS_TYPE
+            FROM {table_name}
+            WHERE Sub_ID = 'C'
+            GROUP BY COALESCE(Ultimate_Clearing_Firm, 'Blank'), COALESCE(Entering_Firm_Col1, 'Blank'), TRANS_TYPE
+        '''
+
+    # Execute the query and fetch data into a Pandas DataFrame
+    df_entering = pd.read_sql_query(query, conn)
+
+    # Append the data to the combined DataFrame
+    df_combined = pd.concat([df_combined, df_entering], ignore_index=True)
+
+    # Dump df_entering DataFrame into a table in the database
+    df_entering.to_sql('your_table_name', conn, if_exists='replace', index=False)
+
+# Pivot the combined DataFrame to get the desired format
+pivot_table = pd.pivot_table(df_combined, values='Total_Quantity', index='Ultimate_Clearing_Firm',
+                              columns=['Entering_Firm_Col1', 'TRANS_TYPE'], aggfunc='sum', fill_value=0)
+
+# Reset the index for cleaner output
+pivot_table.reset_index(inplace=True)
+
+# Display the pivot table or do further processing as needed
+pivot_table.to_csv('summary_tradesemld_june_28.csv', index=False)
+
+# Close the database connection
+conn.close()
+
 # Step 4: Perform further processing using furtherstreaming.py
 #python3 streamfurther_v4.py "$db_name"
 
