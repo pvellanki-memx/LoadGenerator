@@ -1491,10 +1491,10 @@ conn.close()
 
 
 
-
-
 import sqlite3
 import pandas as pd
+from openpyxl import Workbook
+from openpyxl.utils.dataframe import dataframe_to_rows
 
 # Connect to the SQLite database
 conn = sqlite3.connect('your_database.db')  # Replace 'your_database.db' with your database file
@@ -1503,8 +1503,8 @@ cursor = conn.cursor()
 # List of exchanges
 exchanges = ["EMLD", "BATO", "C2OX", "EDGO", "GMNI", "MCRY", "MPRL", "XASE", "XBOX", "XBXO", "XCBO", "XISX", "XMIO", "XNDQ", "XPHO", "XPSE"]
 
-# Create an Excel writer object to save data to an Excel file
-excel_writer = pd.ExcelWriter('summary.xlsx', engine='xlsxwriter')
+# Create an Excel workbook
+workbook = Workbook()
 
 # Iterate through each exchange to export data to separate sheets
 for exchange in exchanges:
@@ -1517,11 +1517,18 @@ for exchange in exchanges:
     # Fetch data from the database into a DataFrame
     df = pd.read_sql_query(query, conn)
 
-    # Write the DataFrame to the Excel sheet named after the exchange
-    df.to_excel(excel_writer, sheet_name=exchange, index=False)
+    # Create a new sheet for the exchange
+    sheet = workbook.create_sheet(title=exchange)
+
+    # Write data from the DataFrame to the sheet
+    for row in dataframe_to_rows(df, index=False, header=True):
+        sheet.append(row)
+
+# Remove the default sheet created by openpyxl
+workbook.remove(workbook['Sheet'])
 
 # Save the Excel file
-excel_writer.save()
+workbook.save('summary.xlsx')
 
 # Close the database connection
 conn.close()
