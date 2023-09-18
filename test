@@ -1332,3 +1332,38 @@ print(encoded_message)
 side = random.choice([fix.Side_BUY, fix.Side_SELL])
         message.setField(fix.Side(side))
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#!/bin/bash
+date="$1"
+db_name="$date.db"
+
+# Step 1: Parse and dump postmove XML file to db.
+python3 postmove.py orsa_postmove_2023-"$date".xml "$date"
+
+# Capture the PID of the last background process
+  pid=$!
+# Wait for the background process to complete
+    wait "$pid"
+
+    echo "Processing of $split_file completed."
+done
+
+# Step 3: Group the data in the database using groupedexcel.py
+python3 pivot.py "$db_name"
+
