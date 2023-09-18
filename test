@@ -1533,3 +1533,86 @@ workbook.save('summary.xlsx')
 # Close the database connection
 conn.close()
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+pvellanki@qa2434:~/orsa$ python3 groupedexcel_v5.py 06-28.db
+Traceback (most recent call last):
+  File "/home/pvellanki/orsa/groupedexcel_v5.py", line 45, in <module>
+    conn.execute(query)
+sqlite3.ProgrammingError: Incorrect number of bindings supplied. The current statement uses 1, and there are 0 supplied.
+
+
+
+
+
+
+
+
+import sqlite3
+import sys
+
+# Connect to the original SQLite database
+
+db_name = sys.argv[1]
+conn = sqlite3.connect(db_name)
+
+# Drop the 'grouped_trades' table if it exists
+conn.execute('DROP TABLE IF EXISTS grouped_trades')
+
+
+
+
+# Create a new table for the current exchange to store the query results
+conn.execute(f'''CREATE TABLE IF NOT EXISTS grouped_trades (
+                    Side TEXT,
+                    Sub_ID TEXT,
+                    Rpt_ID TEXT,
+                    Ultimate_Clearing_Firm TEXT,
+                    Entering_Firm_Col1 TEXT,
+                    EXCH TEXT,
+                    TRANS_TYPE TEXT,
+                    Quantity INTEGER  -- Add the Quantity column
+                    )''')
+
+# Query the data from the original table for the current exchange with grouping
+query = f"""
+    INSERT INTO grouped_trades (Side, Sub_ID, Rpt_ID, Ultimate_Clearing_Firm, Entering_Firm_Col1, EXCH, TRANS_TYPE, Quantity)
+    SELECT
+        t.Side,
+        MAX(CASE WHEN t.Sub_ID != '' AND t.Sub_ID IS NOT NULL THEN t.Sub_ID END) AS Sub_ID,
+        t.Rpt_ID,
+        MAX(CASE WHEN t.Ultimate_Clearing_Firm != '' AND t.Ultimate_Clearing_Firm IS NOT NULL THEN t.Ultimate_Clearing_Firm END) AS Ultimate_Clearing_Firm,
+        MAX(CASE WHEN t.Entering_Firm_Col1 != '' AND t.Entering_Firm_Col1 IS NOT NULL THEN t.Entering_Firm_Col1 END) AS Entering_Firm_Col1,
+        t.EXCH,
+        t.TRANS_TYPE,
+        t.Quantity
+    FROM trades t
+    WHERE t.EXCH = ?
+    GROUP BY t.Rpt_ID, t.Side, t.Quantity, t.TRANS_TYPE
+"""
+
+# Execute the query to insert the data into the new table for the current exchange
+conn.execute(query)
+
+# Commit the changes and close the connection to the original database
+conn.commit()
+conn.close()
+
+print("Data has been successfully inserted into the grouped_trades tables.")
+
+
