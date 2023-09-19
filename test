@@ -1655,11 +1655,11 @@ query = '''
 
 df = pd.read_sql_query(query, conn)
 
-# Create a pivot table
+# Create a pivot table initially grouped by 'ORDInd', 'ORFInd', and 'EXCH'
 pivot_table = df.pivot_table(
     values='lastqty_sum',
-    index=['Sub_ID', 'OCC', 'transtype'],
-    columns=['EXCH', 'Side', 'ORFInd'],
+    index=['Sub_ID', 'OCC', 'transtype', 'ORDInd'],
+    columns=['ORFInd', 'EXCH'],
     aggfunc='sum',
     fill_value=0
 )
@@ -1667,14 +1667,30 @@ pivot_table = df.pivot_table(
 # Reset the index for a cleaner format
 pivot_table = pivot_table.reset_index()
 
-# Calculate the total for each combination of 'Side' and 'ORFInd' across all EXCH columns
-pivot_table['(Side, ORFInd) Total'] = pivot_table.groupby(['Sub_ID', 'OCC', 'transtype'])[['(1, Y)', '(1, )', '(2, Y)', '(2, )']].sum(axis=1)
+# Create a new DataFrame where 'ORFInd' is blank
+blank_orfind_df = df[df['ORFInd'] == '']
 
-# Save the pivot table to a CSV file
-pivot_table.to_csv('summary_june_28.csv', index=False)
+# Calculate the sum of all values for each row where 'ORFInd' is blank
+sum_blank_orfind = blank_orfind_df.sum(axis=1)
 
-# Close the connection
-conn.close()
+# Create a new DataFrame where 'ORFInd' is 'Y'
+y_orfind_df = df[df['ORFInd'] == 'Y']
+
+# Calculate the sum of all values for each row where 'ORFInd' is 'Y'
+sum_y_orfind = y_orfind_df.sum(axis=1)
+
+# Create a DataFrame to store the results
+result_df = pd.DataFrame({
+    'Sum when ORFInd is Blank': sum_blank_orfind,
+    'Sum when ORFInd is Y': sum_y_orfind
+})
+
+# Append the result_df to the end of the initial pivot table
+final_pivot_table = pd.concat([pivot_table, result_df], axis=1)
+
+# If you want to see the results
+print(final_pivot_table)
+
 
 
 
