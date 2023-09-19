@@ -1635,7 +1635,6 @@ print("Data has been successfully inserted into the grouped_trades tables.")
 
 
 
-
 import sqlite3
 import pandas as pd
 
@@ -1651,7 +1650,6 @@ query = '''
            COALESCE(Ultimate_Clearing_Firm, 'Blank') as OCC, 
            TRANS_TYPE as transtype, 
            COALESCE(EXCH, 'Blank') as EXCH, 
-           Side, 
            Quantity as lastqty_sum,
            ORFInd
     FROM trades
@@ -1663,7 +1661,7 @@ df = pd.read_sql_query(query, conn)
 pivot_table = df.pivot_table(
     values='lastqty_sum',
     index=['Sub_ID', 'OCC', 'transtype'],
-    columns=['EXCH', 'Side', 'ORFInd'],
+    columns=['EXCH', 'ORFInd'],
     aggfunc='sum',
     fill_value=0
 )
@@ -1671,20 +1669,21 @@ pivot_table = df.pivot_table(
 # Reset the index for a cleaner format
 pivot_table = pivot_table.reset_index()
 
-# Calculate the total for (Side, ORFInd) combinations
-pivot_table['(Side, ORFInd) Total'] = pivot_table.groupby(['Side', 'ORFInd']).transform('sum').sum(axis=1)
+# Calculate the total for (Side, ORFInd) combinations without considering EXCH
+pivot_table['(Side, ORFInd) Total'] = pivot_table.groupby(['Sub_ID', 'OCC', 'transtype'])['(Side, ORFInd) Total'].transform('sum')
 
-# Calculate the total for (Side) combinations
-pivot_table['(Side) Total'] = pivot_table.groupby(['Side']).transform('sum').sum(axis=1)
+# Calculate the total for EXCH combinations (excluding '(Blank)' EXCH)
+pivot_table['(EXCH) Total'] = pivot_table.groupby(['Sub_ID', 'OCC', 'transtype'])['(EXCH) Total'].transform('sum')
 
-# Calculate the total for (ORFInd) combinations
-pivot_table['(ORFInd) Total'] = pivot_table.groupby(['ORFInd']).transform('sum').sum(axis=1)
+# Calculate the total for ORFInd combinations
+pivot_table['(ORFInd) Total'] = pivot_table.groupby(['Sub_ID', 'OCC', 'transtype'])['(ORFInd) Total'].transform('sum')
 
 # Save the pivot table to a CSV file
 pivot_table.to_csv('summary_june_28.csv', index=False)
 
 # Close the connection
 conn.close()
+
 
 
 
