@@ -1694,3 +1694,24 @@ print(final_pivot_table)
 
 
 
+
+
+
+
+Traceback (most recent call last):
+  File "/home/pvellanki/orsa/pivot_v2.py", line 24, in <module>
+    pivot_table = df.pivot_table(
+  File "/home/pvellanki/.local/lib/python3.10/site-packages/pandas/core/frame.py", line 8579, in pivot_table
+    return pivot_table(
+  File "/home/pvellanki/.local/lib/python3.10/site-packages/pandas/core/reshape/pivot.py", line 97, in pivot_table
+    table = __internal_pivot_table(
+  File "/home/pvellanki/.local/lib/python3.10/site-packages/pandas/core/reshape/pivot.py", line 166, in __internal_pivot_table
+    grouped = data.groupby(keys, observed=observed, sort=sort)
+  File "/home/pvellanki/.local/lib/python3.10/site-packages/pandas/core/frame.py", line 8252, in groupby
+    return DataFrameGroupBy(
+  File "/home/pvellanki/.local/lib/python3.10/site-packages/pandas/core/groupby/groupby.py", line 931, in __init__
+    grouper, exclusions, obj = get_grouper(
+  File "/home/pvellanki/.local/lib/python3.10/site-packages/pandas/core/groupby/grouper.py", line 985, in get_grouper
+    raise KeyError(gpr)
+KeyError: 'ORDInd'
+
