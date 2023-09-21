@@ -1,68 +1,53 @@
-sqlite> select * from grouped_trades limit 10;
-Side  Sub_ID  Rpt_ID     Pty_R  Ultimate_Clearing_Firm  EXCH  TRANS_TYPE  ORFInd  Quantity
-----  ------  ---------  -----  ----------------------  ----  ----------  ------  --------
-1     C       241802106  1      00015                         0                   3       
-1             241802106  21                                   0                   3       
-2     C       241802106  18     00075                         0                   3       
-2             241802106  21                                   0                   3       
-1     C       241802107  1      00015                         0                   1       
-1             241802107  21                                   0                   1       
-2     C       241802107  18     00075                         0                   1       
-2             241802107  21                                   0                   1       
-1     C       241802108  1      00062                         0                   1       
-1             241802108  21                                   0                   1       
-sqlite> 
+ elif message_type == 'AllocationInstruction':
+                # Generate AllowInstruction message
+                sending_time = UTCTimestampNanos(int(time.time() * 10**9))
+                alloc_id = ''.join(choices(string.ascii_uppercase + string.digits, k=20))
+                alloc_type = AllocType(value=AllocType.I)
+                alloc_trans_type = AllocTransType(value=AllocTransType.N)
+                ref_alloc_id = Char("")
+                options_security_id = OptionsSecurityID(choices(security_ids)[0])
+                side = SideType(value=SideType.SELL)
+
+                print('sending time:',sending_time.timestamp)
+                print('allocation id:',alloc_id)
+                print('allocation type:',alloc_type.value)
+                print('ref allocation id:',ref_alloc_id.value)
+                print('allocation trans type:',alloc_trans_type.value)
+                print('optional security id:',options_security_id.value)
+                print('side:',side.value)
+
+                # Construct ExecutionAllocationsGroup instances
+                execution_allocations = [
+                        ExecutionAllocationsGroup(216201369416105991, 100, PriceType(500000000000000)),
+                        ExecutionAllocationsGroup(216201369416105992, 50, PriceType(5000000000000))
+                ]
+
+                # Construct NestedPartiesGroup instances
+                nested_parties = [
+                        NestedPartiesGroup("Nested1", "S", PartyRoleType(1)),
+                        NestedPartiesGroup("Nested2", "T", PartyRoleType(2))
+                ]
+
+                # Construct RequestedAllocationsGroup instances
+                requested_allocations = [
+                        RequestedAllocationsGroup(10, AllocPositionEffectType("O"), nested_parties),
+                        RequestedAllocationsGroup(20, AllocPositionEffectType("C"), [])
+                ]
+
+                allocation_instruction = AllocationInstruction(
+                        sending_time = sending_time,
+                        alloc_id = alloc_id,
+                        alloc_type = alloc_type,
+                        alloc_trans_type = alloc_trans_type,
+                        ref_alloc_id = ref_alloc_id,
+                        options_security_id = options_security_id,
+                        side = side,
+                        execution_allocations = execution_allocations,
+                        requested_allocations = requested_allocations
+                        )
 
 
-
-
-import sqlite3
-import sys
-
-# Connect to the original SQLite database
-db_name = sys.argv[1]
-conn = sqlite3.connect(db_name)
-
-# Drop the 'grouped_trades' table if it exists
-conn.execute('DROP TABLE IF EXISTS grouped_trades')
-
-# Create a new table for the current exchange to store the query results
-conn.execute(f'''CREATE TABLE IF NOT EXISTS grouped_trades (
-                    Side TEXT,
-                    Sub_ID TEXT,
-                    Rpt_ID TEXT,
-                    Pty_R TEXT,
-                    Ultimate_Clearing_Firm TEXT,
-                    EXCH TEXT,
-                    TRANS_TYPE TEXT,
-                    ORFInd TEXT,
-                    Quantity INTEGER  -- Add the Quantity column
-                    )''')
-
-# Query the data from the original table for the current exchange with grouping
-query = f"""
-    INSERT INTO grouped_trades (Side, Sub_ID, Rpt_ID, Pty_R, Ultimate_Clearing_Firm, EXCH, TRANS_TYPE, ORFInd, Quantity)
-    SELECT
-        t.Side,
-        MAX(CASE WHEN t.Sub_ID != '' AND t.Sub_ID IS NOT NULL THEN t.Sub_ID END) AS Sub_ID,
-        t.Rpt_ID,
-        t.Pty_R,
-        MAX(CASE WHEN t.Ultimate_Clearing_Firm != '' AND t.Ultimate_Clearing_Firm IS NOT NULL THEN t.Ultimate_Clearing_Firm END) AS Ultimate_Clearing_Firm,
-        t.EXCH,
-        t.TRANS_TYPE,
-        t.ORFInd,
-        t.Quantity
-    FROM trades t
-    WHERE t.Pty_R != '21'  -- Exclude rows where Pty_R is equal to 21
-    GROUP BY t.Rpt_ID, t.Side, t.Quantity, t.TRANS_TYPE, t.ORFInd, t.Pty_R
-"""
-
-# Execute the query to insert the data into the new table for the current exchange
-conn.execute(query)
-
-# Commit the changes and close the connection to the original database
-conn.commit()
-conn.close()
-
-print("Data with Pty_R=21 removed and successfully inserted into the grouped_trades table.")
-
+                encoded_message = allocation_instruction.encode()
+                execution_allocations = 2
+                nested_parties = 2
+                requested_allocations = 2
