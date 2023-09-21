@@ -1,77 +1,69 @@
 import sqlite3
 import sys
 
+# Connect to the original SQLite database
 db_name = sys.argv[1]
-
-# List of exchanges
-exchanges = ["MEMX", "EMLD", "BATO", "C2OX", "EDGO", "GMNI", "MCRY", "MPRL", "XASE", "XBOX", "XBXO", "XCBO", "XISX", "XMIO", "XNDQ", "XPHO", "XPSE"]
-
-# Connect to the SQLite database
 conn = sqlite3.connect(db_name)
-cursor = conn.cursor()
 
-# Create a summary table with dynamic columns for each exchange
-cursor.execute(f'''CREATE TABLE IF NOT EXISTS summary (
-                    Firm_Type TEXT PRIMARY KEY,
-                    {', '.join([f"{exchange}_Total INTEGER" for exchange in exchanges])}
-                 )''')
+# Drop the 'grouped_trades' table if it exists
+conn.execute('DROP TABLE IF EXISTS grouped_trades')
 
-# Commit the changes to create the summary table
+# Create a new table for the current exchange to store the query results
+conn.execute(f'''CREATE TABLE IF NOT EXISTS grouped_trades (
+                    Side TEXT,
+                    Sub_ID TEXT,
+                    Rpt_ID TEXT,
+                    Pty_R TEXT,
+                    Ultimate_Clearing_Firm TEXT,
+                    EXCH TEXT,
+                    TRANS_TYPE TEXT,
+                    ORFInd TEXT,
+                    Quantity INTEGER  -- Add the Quantity column
+                    )''')
+
+# Query the data from the original table for the current exchange with grouping
+query_insert = f"""
+    INSERT INTO grouped_trades (Side, Sub_ID, Rpt_ID, Pty_R, Ultimate_Clearing_Firm, EXCH, TRANS_TYPE, ORFInd, Quantity)
+    SELECT
+        t.Side,
+        MAX(CASE WHEN t.Sub_ID != '' AND t.Sub_ID IS NOT NULL THEN t.Sub_ID END) AS Sub_ID,
+        t.Rpt_ID,
+        t.Pty_R,
+        MAX(CASE WHEN t.Ultimate_Clearing_Firm != '' AND t.Ultimate_Clearing_Firm IS NOT NULL THEN t.Ultimate_Clearing_Firm END) AS Ultimate_Clearing_Firm,
+        t.EXCH,
+        t.TRANS_TYPE,
+        t.ORFInd,
+        t.Quantity
+    FROM trades t
+    WHERE t.Pty_R != '21'  -- Exclude rows where Pty_R is equal to 21
+    GROUP BY t.Rpt_ID, t.Side, t.Quantity, t.TRANS_TYPE, t.ORFInd, t.Pty_R
+"""
+
+# Execute the query to insert the data into the new table for the current exchange
+conn.execute(query_insert)
+
+# Commit the changes
 conn.commit()
 
-# Create a dictionary to hold the aggregated data
-summary_data = {}
+# Update the 'grouped_trades' table
+query_update = f"""
+    UPDATE grouped_trades AS gt1
+    SET gt1.ORFInd = 'Y'
+    WHERE gt1.ORFInd = 'Y'
+    AND gt1.Pty_R = '1'
+    AND EXISTS (
+        SELECT 1
+        FROM grouped_trades AS gt2
+        WHERE gt2.Rpt_ID = gt1.Rpt_ID
+        AND gt2.Pty_R = '18'
+    )
+"""
 
-# Iterate through each exchange to populate the summary data
-for exchange in exchanges:
-    table_name = f'grouped_trades_summary_{exchange}'
-    
-    # Check if the table exists in the database
-    cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name=?;", (table_name,))
-    result = cursor.fetchone()
-    
-    if result:
-        # Calculate the sum of quantities for each Firm_Type (Entering Firm Col1 and Ultimate Clearing Firm)
-        query = f'''
-            SELECT
-                COALESCE(Ultimate_Clearing_Firm, Entering_Firm_Col1) AS Firm_Type,
-                SUM(CASE
-                    WHEN Ultimate_Clearing_Firm IS NULL THEN Quantity
-                    ELSE Quantity
-                END) AS Total_Quantity
-            FROM {table_name}
-            WHERE Sub_ID = 'C' AND TRANS_TYPE = 0
-            GROUP BY Firm_Type
-        '''
-        cursor.execute(query)
-        
-        # Fetch the results and update the summary_data dictionary
-        for row in cursor.fetchall():
-            firm_type, total_qty = row
-            if firm_type not in summary_data:
-                summary_data[firm_type] = {exchange: total_qty}
-            else:
-                summary_data[firm_type][exchange] = total_qty
+# Execute the query to perform the update
+conn.execute(query_update)
 
-# Insert the aggregated data into the summary table
-for firm_type, exchange_data in summary_data.items():
-    query = f'''
-        INSERT OR REPLACE INTO summary (Firm_Type, {', '.join([f"{exchange}_Total" for exchange in exchanges])})
-        VALUES (?, {', '.join(['?' for _ in exchanges])})
-    '''
-    cursor.execute(query, [firm_type] + [exchange_data.get(exchange, 0) for exchange in exchanges])
-
-# Commit the changes to populate the summary table
+# Commit the changes and close the connection to the database
 conn.commit()
-
-# Close the connection
 conn.close()
 
-
-
-
-
-
-
-
-curl --location 'https://www.memxtrading.dev/secure-api/docs?type=settlement'  --header 'Institution: MEMX'  --header 'market: EDX'  --header 'Authorization: Token testtoken1234'  --form 'folder="Reporting/MEMX/EDX_Clearing"'  --form 'uploads=@"/Users/pvellanki/Downloads/SettlementInstructions0420.csv"'
+print("Data has been successfully processed.")
