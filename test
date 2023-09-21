@@ -91,3 +91,81 @@ class RequestedAllocationsGroup:
     def encode(self):
         nested_parties_data = b''.join([np.encode() for np in self.nested_parties])
         return pack('IB', self.alloc_qty, self.alloc_position_effect.value) + nested_parties_data
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class ExecutionAllocationsGroup:
+    def __init__(self):
+        self.entries = []  # Initialize an empty list to store group entries
+
+    def add_entry(self, trade_id, last_qty, last_px):
+        self.entries.append((trade_id, last_qty, last_px))
+
+    def encode(self):
+        encoded_data = b''  # Initialize an empty bytes object
+
+        for entry in self.entries:
+            trade_id, last_qty, last_px = entry
+            encoded_data += pack('!QIq', trade_id, last_qty, last_px)
+
+        return encoded_data
+
+class RequestedAllocationsGroup:
+    def __init__(self):
+        self.entries = []  # Initialize an empty list to store group entries
+
+    def add_entry(self, alloc_qty, alloc_position_effect, nested_parties):
+        self.entries.append((alloc_qty, alloc_position_effect, nested_parties))
+
+    def encode(self):
+        encoded_data = b''  # Initialize an empty bytes object
+
+        for entry in self.entries:
+            alloc_qty, alloc_position_effect, nested_parties = entry
+            nested_parties_data = b''.join([np.encode() for np in nested_parties])
+            entry_data = pack('IB', alloc_qty, alloc_position_effect.value) + nested_parties_data
+            encoded_data += entry_data
+
+        return encoded_data
+
+
+
+
+
+
+
+
+
+
+
+# Create instances of ExecutionAllocationsGroup and RequestedAllocationsGroup
+execution_allocations = ExecutionAllocationsGroup()
+requested_allocations = RequestedAllocationsGroup()
+
+# Add entries to these groups
+execution_allocations.add_entry(216201369416105991, 100, PriceType(500000000000000))
+execution_allocations.add_entry(216201369416105992, 50, PriceType(5000000000000))
+
+nested_parties_1 = [NestedPartiesGroup("Nested1", "S", PartyRoleType(1))]
+nested_parties_2 = [NestedPartiesGroup("Nested2", "T", PartyRoleType(2))]
+
+requested_allocations.add_entry(10, AllocPositionEffectType("O"), nested_parties_1)
+requested_allocations.add_entry(20, AllocPositionEffectType("C"), nested_parties_2)
+
+# Encode the groups
+execution_allocations_data = execution_allocations.encode()
+requested_allocations_data = requested_allocations.encode()
+
+# Now you have the encoded data for both groups
+
