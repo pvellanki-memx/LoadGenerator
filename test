@@ -1740,3 +1740,13 @@ print(pivot_table)
 print("\nSum by ORFInd for Each OCC:")
 print(sum_by_orfind)
 
+
+
+
+
+
+
+pvellanki@orsa01:~$ vmstat
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 0  0      0 17386904 602056 12559080    0    0     3     5    0    0  0  0 100  0  0
