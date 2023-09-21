@@ -51,3 +51,43 @@
                 execution_allocations = 2
                 nested_parties = 2
                 requested_allocations = 2
+
+
+
+
+
+
+
+
+
+
+
+
+
+class ExecutionAllocationsGroup:
+    def __init__(self, trade_id, last_qty, last_px):
+        self.trade_id = trade_id
+        self.last_qty = last_qty
+        self.last_px = last_px
+
+    def encode(self):
+        return pack('!QIq', self.trade_id, self.last_qty, self.last_px)
+
+class NestedPartiesGroup:
+    def __init__(self, nested_party_id, nested_party_id_source, nested_party_role):
+        self.nested_party_id = nested_party_id
+        self.nested_party_id_source = nested_party_id_source
+        self.nested_party_role = nested_party_role
+
+    def encode(self):
+        return pack('16s1s1B', self.nested_party_id.encode('utf-8'), self.nested_party_id_source.encode('utf-8'), self.nested_party_role.value)
+
+class RequestedAllocationsGroup:
+    def __init__(self, alloc_qty, alloc_position_effect, nested_parties):
+        self.alloc_qty = alloc_qty
+        self.alloc_position_effect = alloc_position_effect
+        self.nested_parties = nested_parties
+
+    def encode(self):
+        nested_parties_data = b''.join([np.encode() for np in self.nested_parties])
+        return pack('IB', self.alloc_qty, self.alloc_position_effect.value) + nested_parties_data
