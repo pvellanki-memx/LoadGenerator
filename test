@@ -20,15 +20,11 @@ import sqlite3
 import sys
 
 # Connect to the original SQLite database
-
 db_name = sys.argv[1]
 conn = sqlite3.connect(db_name)
 
 # Drop the 'grouped_trades' table if it exists
 conn.execute('DROP TABLE IF EXISTS grouped_trades')
-
-
-
 
 # Create a new table for the current exchange to store the query results
 conn.execute(f'''CREATE TABLE IF NOT EXISTS grouped_trades (
@@ -45,7 +41,7 @@ conn.execute(f'''CREATE TABLE IF NOT EXISTS grouped_trades (
 
 # Query the data from the original table for the current exchange with grouping
 query = f"""
-    INSERT INTO grouped_trades (Side, Sub_ID, Rpt_ID, Pty_R,Ultimate_Clearing_Firm, EXCH, TRANS_TYPE,ORFInd, Quantity)
+    INSERT INTO grouped_trades (Side, Sub_ID, Rpt_ID, Pty_R, Ultimate_Clearing_Firm, EXCH, TRANS_TYPE, ORFInd, Quantity)
     SELECT
         t.Side,
         MAX(CASE WHEN t.Sub_ID != '' AND t.Sub_ID IS NOT NULL THEN t.Sub_ID END) AS Sub_ID,
@@ -57,6 +53,7 @@ query = f"""
         t.ORFInd,
         t.Quantity
     FROM trades t
+    WHERE t.Pty_R != '21'  -- Exclude rows where Pty_R is equal to 21
     GROUP BY t.Rpt_ID, t.Side, t.Quantity, t.TRANS_TYPE, t.ORFInd, t.Pty_R
 """
 
@@ -67,4 +64,5 @@ conn.execute(query)
 conn.commit()
 conn.close()
 
-print("Data has been successfully inserted into the grouped_trades tables.")
+print("Data with Pty_R=21 removed and successfully inserted into the grouped_trades table.")
+
