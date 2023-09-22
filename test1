@@ -6,18 +6,6 @@ from tqdm import tqdm
 db_name = sys.argv[1]
 conn = sqlite3.connect(db_name)
 
-# Update the 'grouped_trades' table
-query_update = f"""
-    UPDATE grouped_trades AS g1
-    SET ORFInd = CASE
-        WHEN g2.Pty_R = '18' AND g2.ORFInd = 'Y' THEN 'Y'
-        ELSE ORFInd
-        END
-    FROM grouped_trades AS g2
-    WHERE g1.Rpt_ID = g2.Rpt_ID
-      AND g2.Pty_R = '1';
-"""
-
 # Count the number of rows to update
 count_query = f"""
     SELECT COUNT(*) FROM grouped_trades AS g1
@@ -34,11 +22,38 @@ count_query = f"""
 cursor = conn.execute(count_query)
 total_rows_to_update = cursor.fetchone()[0]
 
-# Create a progress bar
-with tqdm(total=total_rows_to_update, desc='Updating rows') as pbar:
-    conn.execute(query_update)
-    conn.commit()
-    pbar.update(total_rows_to_update)
+# Define the batch size (adjust as needed)
+batch_size = 1000
+
+# Calculate the number of batches
+num_batches = (total_rows_to_update + batch_size - 1) // batch_size
+
+# Create a progress bar for overall progress
+with tqdm(total=num_batches, desc='Updating rows') as overall_pbar:
+    for batch_num in range(num_batches):
+        offset = batch_num * batch_size
+
+        # Update the 'grouped_trades' table for the current batch
+        query_update = f"""
+            UPDATE grouped_trades AS g1
+            SET ORFInd = CASE
+                WHEN g2.Pty_R = '18' AND g2.ORFInd = 'Y' THEN 'Y'
+                ELSE ORFInd
+                END
+            FROM grouped_trades AS g2
+            WHERE g1.Rpt_ID = g2.Rpt_ID
+              AND g2.Pty_R = '1'
+              AND g1.Pty_R = '18'
+              AND g2.ORFInd = 'Y'
+            LIMIT {batch_size};
+        """
+
+        # Execute the batch update query
+        conn.execute(query_update)
+        conn.commit()
+
+        # Update the progress bar for the current batch
+        overall_pbar.update(1)
 
 # Close the connection to the database
 conn.close()
