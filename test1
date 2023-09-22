@@ -14,9 +14,9 @@ count_query = f"""
         SELECT 1
         FROM grouped_trades AS g2
         WHERE g1.Rpt_ID = g2.Rpt_ID
-          AND g2.Pty_R = '1'
+          AND g2.Pty_R = '18'
           AND g2.ORFInd = 'Y'
-    ) AND g1.Pty_R = '18';
+    ) AND g1.Pty_R = '1';
 """
 
 # Get the count of rows to update
@@ -37,19 +37,14 @@ with tqdm(total=num_batches, desc='Updating rows', dynamic_ncols=True) as overal
         # Update the 'grouped_trades' table for the current batch
         query_update = f"""
             UPDATE grouped_trades AS g1
-            SET ORFInd = CASE
-                WHEN g2.Pty_R = '18' AND g2.ORFInd = 'Y' THEN 'Y'
-                ELSE ORFInd
-                END,
-                UpdateTimestamp = CASE
-                WHEN g2.Pty_R = '18' AND g2.ORFInd = 'Y' THEN '{datetime.now()}'
-                ELSE UpdateTimestamp
-                END
-            FROM grouped_trades AS g2
-            WHERE g1.Rpt_ID = g2.Rpt_ID
-              AND g2.Pty_R = '1'
-              AND g1.Pty_R = '18'
-              AND g2.ORFInd = 'Y'
+            SET ORFInd = 'Y', UpdateTimestamp = '{datetime.now()}'
+            WHERE EXISTS (
+                SELECT 1
+                FROM grouped_trades AS g2
+                WHERE g1.Rpt_ID = g2.Rpt_ID
+                  AND g2.Pty_R = '18'
+                  AND g2.ORFInd = 'Y'
+            ) AND g1.Pty_R = '1'
             LIMIT {batch_size};
         """
 
