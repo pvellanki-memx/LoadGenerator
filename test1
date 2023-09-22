@@ -67,3 +67,20 @@ conn.commit()
 conn.close()
 
 print("Data has been successfully processed.")
+
+
+
+
+
+
+
+
+
+
+
+
+
+Traceback (most recent call last):
+  File "/home/pvellanki/orsa/groupedexcel_postmove_v3.py", line 63, in <module>
+    conn.execute(query_update)
+sqlite3.OperationalError: near ".": syntax error
