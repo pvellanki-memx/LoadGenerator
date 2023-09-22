@@ -7,34 +7,13 @@ from datetime import datetime
 db_name = sys.argv[1]
 conn = sqlite3.connect(db_name)
 
-# Count the number of rows to update
-count_query = f"""
-    SELECT COUNT(*) FROM grouped_trades AS g1
-    WHERE EXISTS (
-        SELECT 1
-        FROM grouped_trades AS g2
-        WHERE g1.Rpt_ID = g2.Rpt_ID
-          AND g2.Pty_R = '18'
-          AND g2.ORFInd = 'Y'
-    ) AND g1.Pty_R = '1';
-"""
-
-# Get the count of rows to update
-cursor = conn.execute(count_query)
-total_rows_to_update = cursor.fetchone()[0]
-
-# Define the batch size (adjust as needed)
-batch_size = 1000
-
-# Calculate the number of batches
-num_batches = (total_rows_to_update + batch_size - 1) // batch_size
-
 # Create a progress bar for overall progress
-overall_pbar = tqdm(total=num_batches, desc='Updating rows', dynamic_ncols=True)
+overall_pbar = tqdm(desc='Updating rows', dynamic_ncols=True)
 
-for batch_num in range(num_batches):
-    offset = batch_num * batch_size
+batch_size = 1000  # Adjust as needed
+updated_rows = True
 
+while updated_rows:
     # Update the 'grouped_trades' table for the current batch
     query_update = f"""
         UPDATE grouped_trades AS g1
@@ -53,10 +32,17 @@ for batch_num in range(num_batches):
     conn.execute(query_update)
     conn.commit()
 
+    # Check if any rows were updated in the current batch
+    rows_updated = conn.total_changes
+
     # Update the progress bar for the current batch
     overall_pbar.update(1)
     # Flush the stdout buffer to ensure real-time progress updates
     sys.stdout.flush()
+
+    # If no rows were updated in the current batch, exit the loop
+    if rows_updated == 0:
+        updated_rows = False
 
 # Close the connection to the database
 conn.close()
