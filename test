@@ -1,237 +1,69 @@
- elif message_type == 'AllocationInstruction':
-                # Generate AllowInstruction message
-                sending_time = UTCTimestampNanos(int(time.time() * 10**9))
-                alloc_id = ''.join(choices(string.ascii_uppercase + string.digits, k=20))
-                alloc_type = AllocType(value=AllocType.I)
-                alloc_trans_type = AllocTransType(value=AllocTransType.N)
-                ref_alloc_id = Char("")
-                options_security_id = OptionsSecurityID(choices(security_ids)[0])
-                side = SideType(value=SideType.SELL)
-
-                print('sending time:',sending_time.timestamp)
-                print('allocation id:',alloc_id)
-                print('allocation type:',alloc_type.value)
-                print('ref allocation id:',ref_alloc_id.value)
-                print('allocation trans type:',alloc_trans_type.value)
-                print('optional security id:',options_security_id.value)
-                print('side:',side.value)
-
-                # Construct ExecutionAllocationsGroup instances
-                execution_allocations = [
-                        ExecutionAllocationsGroup(216201369416105991, 100, PriceType(500000000000000)),
-                        ExecutionAllocationsGroup(216201369416105992, 50, PriceType(5000000000000))
-                ]
-
-                # Construct NestedPartiesGroup instances
-                nested_parties = [
-                        NestedPartiesGroup("Nested1", "S", PartyRoleType(1)),
-                        NestedPartiesGroup("Nested2", "T", PartyRoleType(2))
-                ]
-
-                # Construct RequestedAllocationsGroup instances
-                requested_allocations = [
-                        RequestedAllocationsGroup(10, AllocPositionEffectType("O"), nested_parties),
-                        RequestedAllocationsGroup(20, AllocPositionEffectType("C"), [])
-                ]
-
-                allocation_instruction = AllocationInstruction(
-                        sending_time = sending_time,
-                        alloc_id = alloc_id,
-                        alloc_type = alloc_type,
-                        alloc_trans_type = alloc_trans_type,
-                        ref_alloc_id = ref_alloc_id,
-                        options_security_id = options_security_id,
-                        side = side,
-                        execution_allocations = execution_allocations,
-                        requested_allocations = requested_allocations
-                        )
-
-
-                encoded_message = allocation_instruction.encode()
-                execution_allocations = 2
-                nested_parties = 2
-                requested_allocations = 2
-
-
-
-
-
-
-
-
-
-
-
-
-
-class ExecutionAllocationsGroup:
-    def __init__(self, trade_id, last_qty, last_px):
-        self.trade_id = trade_id
-        self.last_qty = last_qty
-        self.last_px = last_px
-
-    def encode(self):
-        return pack('!QIq', self.trade_id, self.last_qty, self.last_px)
-
-class NestedPartiesGroup:
-    def __init__(self, nested_party_id, nested_party_id_source, nested_party_role):
-        self.nested_party_id = nested_party_id
-        self.nested_party_id_source = nested_party_id_source
-        self.nested_party_role = nested_party_role
-
-    def encode(self):
-        return pack('16s1s1B', self.nested_party_id.encode('utf-8'), self.nested_party_id_source.encode('utf-8'), self.nested_party_role.value)
-
-class RequestedAllocationsGroup:
-    def __init__(self, alloc_qty, alloc_position_effect, nested_parties):
-        self.alloc_qty = alloc_qty
-        self.alloc_position_effect = alloc_position_effect
-        self.nested_parties = nested_parties
-
-    def encode(self):
-        nested_parties_data = b''.join([np.encode() for np in self.nested_parties])
-        return pack('IB', self.alloc_qty, self.alloc_position_effect.value) + nested_parties_data
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-class ExecutionAllocationsGroup:
-    def __init__(self):
-        self.entries = []  # Initialize an empty list to store group entries
-
-    def add_entry(self, trade_id, last_qty, last_px):
-        self.entries.append((trade_id, last_qty, last_px))
-
-    def encode(self):
-        encoded_data = b''  # Initialize an empty bytes object
-
-        for entry in self.entries:
-            trade_id, last_qty, last_px = entry
-            encoded_data += pack('!QIq', trade_id, last_qty, last_px)
-
-        return encoded_data
-
-class RequestedAllocationsGroup:
-    def __init__(self):
-        self.entries = []  # Initialize an empty list to store group entries
-
-    def add_entry(self, alloc_qty, alloc_position_effect, nested_parties):
-        self.entries.append((alloc_qty, alloc_position_effect, nested_parties))
-
-    def encode(self):
-        encoded_data = b''  # Initialize an empty bytes object
-
-        for entry in self.entries:
-            alloc_qty, alloc_position_effect, nested_parties = entry
-            nested_parties_data = b''.join([np.encode() for np in nested_parties])
-            entry_data = pack('IB', alloc_qty, alloc_position_effect.value) + nested_parties_data
-            encoded_data += entry_data
-
-        return encoded_data
-
-
-
-
-
-
-
-
-
-
-
-# Create instances of ExecutionAllocationsGroup and RequestedAllocationsGroup
-execution_allocations = ExecutionAllocationsGroup()
-requested_allocations = RequestedAllocationsGroup()
-
-# Add entries to these groups
-execution_allocations.add_entry(216201369416105991, 100, PriceType(500000000000000))
-execution_allocations.add_entry(216201369416105992, 50, PriceType(5000000000000))
-
-nested_parties_1 = [NestedPartiesGroup("Nested1", "S", PartyRoleType(1))]
-nested_parties_2 = [NestedPartiesGroup("Nested2", "T", PartyRoleType(2))]
-
-requested_allocations.add_entry(10, AllocPositionEffectType("O"), nested_parties_1)
-requested_allocations.add_entry(20, AllocPositionEffectType("C"), nested_parties_2)
-
-# Encode the groups
-execution_allocations_data = execution_allocations.encode()
-requested_allocations_data = requested_allocations.encode()
-
-# Now you have the encoded data for both groups
-
-
-
-
-
-
-
-
-
-
-<     conn.execute('pragma journal_mode=wal')
-<     conn.execute('pragma synchronous=normal')
-<     conn.execute('pragma temp_store=memory')
-<     conn.execute('pragma wal_autocheckpoint=10000')
-
-
-
-
-
-
-
-
-
-
-
-def session_worker(session_name):
-    #try:
-        # Establish SBE TCP session for the current session name
-        client_socket, session_id = establish_session(session_name)
-
-        # Start time for calculating duration
-        start_time = time.time()
-
-        # Generate and send messages for the specified duration
-        while time.time() - start_time < duration:
-            # Generate a random message type
-            message_type = generate_message_type()
-
-            # Generate one or two messages
-            new_order_single_message, order_cancel_message = generate_message(message_type, session_name, send_cancels=config.getboolean('Load', 'SendCancels'))
-
-            # Send the NewOrderSingle message
-            if new_order_single_message:
-                send_message(client_socket, new_order_single_message + order_cancel_message )
-
-            # Send the OrderCancelRequest message if it's generated
-            if order_cancel_message:
-                send_message(client_socket, order_cancel_message)
-
-
-
-
-
-
-
-class UINT16:
-    SIZE = 2
-    NULL_VALUE = 65535
+class UnderlyingOrSeriesType:
+    CancelAllOnUnderlying = 0
+    CancelAllOnSeries = 1
+    SIZE = 1
 
     def __init__(self, value):
         self.value = value
 
     def encode(self):
-        return pack('>H', self.value)
+        return pack('B', self.value)
 
     def decode(self, buffer):
-        self.value, = unpack_from('>H', buffer)
+        self.value, = unpack_from('B', buffer)
+
+
+
+class OptionsSecurityID:
+    SIZE = 8
+
+    def __init__(self, value=''):
+        self.value = value
+
+    def encode(self):
+        encoded_value = self.value.encode('utf-8')
+        padding = b'\x00' * (self.SIZE - len(encoded_value))
+        return encoded_value + padding
+
+    def decode(self, buffer):
+        encoded_value = buffer[:self.SIZE].rstrip(b'\x00')
+        self.value = encoded_value.decode('utf-8')
+
+    def __str__(self):
+        return self.value
+
+
+
+class Char:
+    SIZE = 1
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('s', self.value.encode())
+
+    def decode(self, buffer):
+        value, = unpack_from('s', buffer)
+        self.value = value.decode()
+
+
+
+
+
+
+
+
+Type	Length (bytes)	Description	Value Range	Null Value	Null Value (Hex)
+CHAR	1	ASCII Character	32 to 126 (printable ASCII)	0	0x00
+BOOLEAN	1	Boolean value (true or false)	0 to 1	255	0xFF
+			0 = false		
+			1 = true		
+INT8	1	Signed Integer	-127 to 127	-128 	0x80
+INT16	2	Signed Integer	-32767 to 32767	-32768	0x8000
+INT32	4	Signed Integer	-2^31 + 1 to 2^31 - 1	-2147483648	0x80000000
+INT64	8	Signed Integer	-2^63 + 1 to 2^63 - 1	-9.22337E+18	0x8000000000000000
+UINT8	1	Unsigned Integer	0 to 254	255	0xFF
+UINT16	2	Unsigned Integer	0 to 65534	65535	0xFFFF
+UINT32	4	Unsigned Integer	0 to 2^32-2	2^32 - 1	0xFFFFFFFF
+UINT64	8	Unsigned Integer	0 to 2^63 - 1	2^64 - 1	0xFFFFFFFFFFFFFFFF
