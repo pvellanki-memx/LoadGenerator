@@ -54,11 +54,8 @@ query_update = f"""
         FROM grouped_trades
         WHERE ORFInd = 'Y'
         AND Pty_R = '1'
-        INTERSECT
-        SELECT Rpt_ID
-        FROM grouped_trades
-        WHERE Pty_R = '18'
     )
+    AND Pty_R = '18'
 """
 
 # Execute the query to perform the update
@@ -72,10 +69,3 @@ print("Data has been successfully processed.")
 
 
 
-
-
-sqlite> select * from grouped_trades where Rpt_ID ="241849058";
-Side  Sub_ID  Rpt_ID     Pty_R  Ultimate_Clearing_Firm  EXCH  TRANS_TYPE  ORFInd  Quantity
-----  ------  ---------  -----  ----------------------  ----  ----------  ------  --------
-1     C       241849058  1      00365                   XCBO  0                   69      
-2     C       241849058  18     00005                   XCBO  0           Y       69   
