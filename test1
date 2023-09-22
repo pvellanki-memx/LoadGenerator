@@ -1,69 +1,46 @@
 import sqlite3
 import sys
+from tqdm import tqdm
 
 # Connect to the original SQLite database
 db_name = sys.argv[1]
 conn = sqlite3.connect(db_name)
 
-# Drop the 'grouped_trades' table if it exists
-conn.execute('DROP TABLE IF EXISTS grouped_trades')
-
-# Create a new table for the current exchange to store the query results
-conn.execute(f'''CREATE TABLE IF NOT EXISTS grouped_trades (
-                    Side TEXT,
-                    Sub_ID TEXT,
-                    Rpt_ID TEXT,
-                    Pty_R TEXT,
-                    Ultimate_Clearing_Firm TEXT,
-                    EXCH TEXT,
-                    TRANS_TYPE TEXT,
-                    ORFInd TEXT,
-                    Quantity INTEGER  -- Add the Quantity column
-                    )''')
-
-# Query the data from the original table for the current exchange with grouping
-query_insert = f"""
-    INSERT INTO grouped_trades (Side, Sub_ID, Rpt_ID, Pty_R, Ultimate_Clearing_Firm, EXCH, TRANS_TYPE, ORFInd, Quantity)
-    SELECT
-        t.Side,
-        MAX(CASE WHEN t.Sub_ID != '' AND t.Sub_ID IS NOT NULL THEN t.Sub_ID END) AS Sub_ID,
-        t.Rpt_ID,
-        t.Pty_R,
-        MAX(CASE WHEN t.Ultimate_Clearing_Firm != '' AND t.Ultimate_Clearing_Firm IS NOT NULL THEN t.Ultimate_Clearing_Firm END) AS Ultimate_Clearing_Firm,
-        t.EXCH,
-        t.TRANS_TYPE,
-        t.ORFInd,
-        t.Quantity
-    FROM trades t
-    WHERE t.Pty_R IN ('1', '18')  -- Exclude rows where Pty_R is equal to 21
-    GROUP BY t.Rpt_ID, t.Side, t.Quantity, t.TRANS_TYPE, t.ORFInd, t.Pty_R
-"""
-
-# Execute the query to insert the data into the new table for the current exchange
-conn.execute(query_insert)
-
-# Commit the changes
-conn.commit()
-
 # Update the 'grouped_trades' table
 query_update = f"""
     UPDATE grouped_trades AS g1
-    SET ORFInd = 'Y'
-    WHERE Pty_R = '18'
-    AND EXISTS (
-        SELECT 1
-        FROM grouped_trades AS g2
-        WHERE g2.Rpt_ID = g1.Rpt_ID
-        AND g2.Pty_R = '1'
-        AND g2.ORFInd = 'Y'
-    )
+    SET ORFInd = CASE
+        WHEN g2.Pty_R = '18' AND g2.ORFInd = 'Y' THEN 'Y'
+        ELSE ORFInd
+        END
+    FROM grouped_trades AS g2
+    WHERE g1.Rpt_ID = g2.Rpt_ID
+      AND g2.Pty_R = '1';
 """
 
-# Execute the query to perform the update
-conn.execute(query_update)
+# Count the number of rows to update
+count_query = f"""
+    SELECT COUNT(*) FROM grouped_trades AS g1
+    WHERE EXISTS (
+        SELECT 1
+        FROM grouped_trades AS g2
+        WHERE g1.Rpt_ID = g2.Rpt_ID
+          AND g2.Pty_R = '1'
+          AND g2.ORFInd = 'Y'
+    ) AND g1.Pty_R = '18';
+"""
 
-# Commit the changes and close the connection to the database
-conn.commit()
+# Get the count of rows to update
+cursor = conn.execute(count_query)
+total_rows_to_update = cursor.fetchone()[0]
+
+# Create a progress bar
+with tqdm(total=total_rows_to_update, desc='Updating rows') as pbar:
+    conn.execute(query_update)
+    conn.commit()
+    pbar.update(total_rows_to_update)
+
+# Close the connection to the database
 conn.close()
 
-print("Data has been successfully processed.")
+print("Data has been successfully updated.")
