@@ -47,15 +47,17 @@ conn.commit()
 
 # Update the 'grouped_trades' table
 query_update = f"""
-    UPDATE grouped_trades AS gt1
-    SET gt1.ORFInd = 'Y'
-    WHERE gt1.ORFInd = 'Y'
-    AND gt1.Pty_R = '1'
-    AND EXISTS (
-        SELECT 1
-        FROM grouped_trades AS gt2
-        WHERE gt2.Rpt_ID = gt1.Rpt_ID
-        AND gt2.Pty_R = '18'
+    UPDATE grouped_trades
+    SET ORFInd = 'Y'
+    WHERE Rpt_ID IN (
+        SELECT Rpt_ID
+        FROM grouped_trades
+        WHERE ORFInd = 'Y'
+        AND Pty_R = '1'
+        INTERSECT
+        SELECT Rpt_ID
+        FROM grouped_trades
+        WHERE Pty_R = '18'
     )
 """
 
@@ -67,20 +69,3 @@ conn.commit()
 conn.close()
 
 print("Data has been successfully processed.")
-
-
-
-
-
-
-
-
-
-
-
-
-
-Traceback (most recent call last):
-  File "/home/pvellanki/orsa/groupedexcel_postmove_v3.py", line 63, in <module>
-    conn.execute(query_update)
-sqlite3.OperationalError: near ".": syntax error
