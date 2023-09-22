@@ -169,3 +169,16 @@ requested_allocations_data = requested_allocations.encode()
 
 # Now you have the encoded data for both groups
 
+
+
+
+
+
+
+
+
+
+<     conn.execute('pragma journal_mode=wal')
+<     conn.execute('pragma synchronous=normal')
+<     conn.execute('pragma temp_store=memory')
+<     conn.execute('pragma wal_autocheckpoint=10000')
