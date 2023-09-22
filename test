@@ -79,21 +79,26 @@ UINT64	8	Unsigned Integer	0 to 2^63 - 1	2^64 - 1	0xFFFFFFFFFFFFFFFF
 
 class Char:
     SIZE = 1
-    NULL_VALUE = 0  # Define null value for CHAR
+    NULL_VALUE = b'\x00'  # Define null value for Char as a byte string
 
     def __init__(self, value):
         self.value = value
 
     def encode(self):
-        return pack('s', self.value.encode())
+        if self.value is None:
+            return self.NULL_VALUE
+        else:
+            return pack('s', self.value.encode())
 
     def decode(self, buffer):
         value, = unpack_from('s', buffer)
-        self.value = value.decode()
+        self.value = value.decode() if value != self.NULL_VALUE else None
 
 # Usage:
-char_value = Char('A')
-null_char_value = Char(Char.NULL_VALUE)  # Represents null value
+char_value = 'A'
+null_char = Char(None)  # Represents null value
+encoded_char = null_char.encode()
+
 
 
 
