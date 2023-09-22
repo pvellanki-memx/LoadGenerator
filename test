@@ -217,3 +217,21 @@ def session_worker(session_name):
             if order_cancel_message:
                 send_message(client_socket, order_cancel_message)
 
+
+
+
+
+
+
+class UINT16:
+    SIZE = 2
+    NULL_VALUE = 65535
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('>H', self.value)
+
+    def decode(self, buffer):
+        self.value, = unpack_from('>H', buffer)
