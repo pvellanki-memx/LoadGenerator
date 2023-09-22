@@ -1,4 +1,3 @@
-
 import sqlite3
 import sys
 
@@ -36,7 +35,7 @@ query_insert = f"""
         t.ORFInd,
         t.Quantity
     FROM trades t
-    WHERE t.Pty_R in ("1","18")  -- Exclude rows where Pty_R is equal to 21
+    WHERE t.Pty_R IN ('1', '18')  -- Exclude rows where Pty_R is equal to 21
     GROUP BY t.Rpt_ID, t.Side, t.Quantity, t.TRANS_TYPE, t.ORFInd, t.Pty_R
 """
 
@@ -48,15 +47,16 @@ conn.commit()
 
 # Update the 'grouped_trades' table
 query_update = f"""
-    UPDATE grouped_trades
+    UPDATE grouped_trades AS g1
     SET ORFInd = 'Y'
-    WHERE Rpt_ID IN (
-        SELECT Rpt_ID
-        FROM grouped_trades
-        WHERE ORFInd = 'Y'
-        AND Pty_R = '1'
+    WHERE Pty_R = '18'
+    AND EXISTS (
+        SELECT 1
+        FROM grouped_trades AS g2
+        WHERE g2.Rpt_ID = g1.Rpt_ID
+        AND g2.Pty_R = '1'
+        AND g2.ORFInd = 'Y'
     )
-    AND Pty_R = '18'
 """
 
 # Execute the query to perform the update
