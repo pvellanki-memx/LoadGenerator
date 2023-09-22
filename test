@@ -67,3 +67,101 @@ UINT8	1	Unsigned Integer	0 to 254	255	0xFF
 UINT16	2	Unsigned Integer	0 to 65534	65535	0xFFFF
 UINT32	4	Unsigned Integer	0 to 2^32-2	2^32 - 1	0xFFFFFFFF
 UINT64	8	Unsigned Integer	0 to 2^63 - 1	2^64 - 1	0xFFFFFFFFFFFFFFFF
+
+
+
+
+
+
+
+
+
+
+class Char:
+    SIZE = 1
+    NULL_VALUE = 0  # Define null value for CHAR
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('s', self.value.encode())
+
+    def decode(self, buffer):
+        value, = unpack_from('s', buffer)
+        self.value = value.decode()
+
+# Usage:
+char_value = Char('A')
+null_char_value = Char(Char.NULL_VALUE)  # Represents null value
+
+
+
+
+class UINT16:
+    SIZE = 2
+    NULL_VALUE = 65535  # Define a value to represent null or missing
+
+    def __init__(self, value):
+        if value is not None and (value < 0 or value > 65535):
+            raise ValueError("Value must be within the range 0-65535 or None for null value")
+        self.value = value
+
+    def encode(self):
+        if self.value is None:
+            return pack('>H', self.NULL_VALUE)  # Encode as the null value
+        return pack('>H', self.value)
+
+    def decode(self, buffer):
+        self.value, = unpack_from('>H', buffer)
+
+# Example usage:
+value1 = UINT16(42)
+value2 = UINT16(None)  # Represents null value
+
+
+
+
+class UnderlyingOrSeriesType:
+    CancelAllOnUnderlying = 0
+    CancelAllOnSeries = 1
+    SIZE = 1
+    NULL_VALUE = 255  # Define null value for UnderlyingOrSeriesType
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('B', self.value)
+
+    def decode(self, buffer):
+        self.value, = unpack_from('B', buffer)
+
+# Usage:
+underlying_type = UnderlyingOrSeriesType(UnderlyingOrSeriesType.CancelAllOnUnderlying)
+null_underlying_type = UnderlyingOrSeriesType(UnderlyingOrSeriesType.NULL_VALUE)  # Represents null value
+
+
+
+
+
+class OptionsSecurityID:
+    SIZE = 8
+    NULL_VALUE = b'\x00\x00\x00\x00\x00\x00\x00\x00'  # Define null value for OptionsSecurityID
+
+    def __init__(self, value=''):
+        self.value = value
+
+    def encode(self):
+        encoded_value = self.value.encode('utf-8')
+        padding = b'\x00' * (self.SIZE - len(encoded_value))
+        return encoded_value + padding
+
+    def decode(self, buffer):
+        encoded_value = buffer[:self.SIZE].rstrip(b'\x00')
+        self.value = encoded_value.decode('utf-8')
+
+# Usage:
+options_security_id = OptionsSecurityID('ABC12345')
+null_options_security_id = OptionsSecurityID(OptionsSecurityID.NULL_VALUE)  # Represents null value
+
