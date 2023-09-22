@@ -10,26 +10,53 @@ conn = sqlite3.connect(db_name)
 # Create a progress bar for overall progress
 overall_pbar = tqdm(desc='Updating rows', dynamic_ncols=True)
 
+# Create a new table to store the updated data
+conn.execute('DROP TABLE IF EXISTS updated_grouped_trades')
+conn.execute(f'''CREATE TABLE IF NOT EXISTS updated_grouped_trades (
+                    Side TEXT,
+                    Sub_ID TEXT,
+                    Rpt_ID TEXT,
+                    Pty_R TEXT,
+                    Ultimate_Clearing_Firm TEXT,
+                    EXCH TEXT,
+                    TRANS_TYPE TEXT,
+                    ORFInd TEXT,
+                    Quantity INTEGER,
+                    UpdateTimestamp TEXT  -- Add UpdateTimestamp column
+                    )''')
+
 batch_size = 1000  # Adjust as needed
 updated_rows = True
 
 while updated_rows:
-    # Update the 'grouped_trades' table for the current batch
-    query_update = f"""
-        UPDATE grouped_trades AS g1
-        SET ORFInd = 'Y', UpdateTimestamp = '{datetime.now()}'
-        WHERE EXISTS (
-            SELECT 1
-            FROM grouped_trades AS g2
-            WHERE g1.Rpt_ID = g2.Rpt_ID
-              AND g2.Pty_R = '18'
-              AND g2.ORFInd = 'Y'
-        ) AND g1.Pty_R = '1'
+    # Insert data from grouped_trades into updated_grouped_trades
+    insert_query = f"""
+        INSERT INTO updated_grouped_trades (Side, Sub_ID, Rpt_ID, Pty_R, Ultimate_Clearing_Firm, EXCH, TRANS_TYPE, ORFInd, Quantity)
+        SELECT Side, Sub_ID, Rpt_ID, Pty_R, Ultimate_Clearing_Firm, EXCH, TRANS_TYPE, ORFInd, Quantity
+        FROM grouped_trades
+        WHERE Pty_R IN ('1', '18')
         LIMIT {batch_size};
     """
 
+    # Execute the insert query
+    conn.execute(insert_query)
+    conn.commit()
+
+    # Update the 'updated_grouped_trades' table for the current batch
+    update_query = f"""
+        UPDATE updated_grouped_trades AS g1
+        SET ORFInd = 'Y', UpdateTimestamp = '{datetime.now()}'
+        WHERE EXISTS (
+            SELECT 1
+            FROM updated_grouped_trades AS g2
+            WHERE g1.Rpt_ID = g2.Rpt_ID
+              AND g2.Pty_R = '18'
+              AND g2.ORFInd = 'Y'
+        ) AND g1.Pty_R = '1';
+    """
+
     # Execute the batch update query
-    conn.execute(query_update)
+    conn.execute(update_query)
     conn.commit()
 
     # Check if any rows were updated in the current batch
