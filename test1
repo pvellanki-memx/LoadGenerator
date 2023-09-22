@@ -1,3 +1,4 @@
+
 import sqlite3
 import sys
 
@@ -35,7 +36,7 @@ query_insert = f"""
         t.ORFInd,
         t.Quantity
     FROM trades t
-    WHERE t.Pty_R != '21'  -- Exclude rows where Pty_R is equal to 21
+    WHERE t.Pty_R in ("1","18")  -- Exclude rows where Pty_R is equal to 21
     GROUP BY t.Rpt_ID, t.Side, t.Quantity, t.TRANS_TYPE, t.ORFInd, t.Pty_R
 """
 
@@ -66,20 +67,3 @@ conn.commit()
 conn.close()
 
 print("Data has been successfully processed.")
-
-
-
-
-
-
-
-
-sqlite> select * from grouped_trades where Rpt_ID ="241849058";
-Side  Sub_ID  Rpt_ID     Pty_R  Ultimate_Clearing_Firm  EXCH  TRANS_TYPE  ORFInd  Quantity
-----  ------  ---------  -----  ----------------------  ----  ----------  ------  --------
-1     C       241849058  1      00365                   XCBO  0                   69      
-2     C       241849058  18     00005                   XCBO  0           Y       69      
-2             241849058  24                             XCBO  0           Y       69    
-
-
-
