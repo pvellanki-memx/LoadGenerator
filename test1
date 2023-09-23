@@ -7,69 +7,59 @@ from datetime import datetime
 db_name = sys.argv[1]
 conn = sqlite3.connect(db_name)
 
+# Create an index on the Rpt_ID column if it doesn't already exist
+conn.execute("CREATE INDEX IF NOT EXISTS rpt_id_index ON trades (Rpt_ID)")
+
+# Count the number of rows to update
+count_query = f"""
+    SELECT COUNT(*) FROM grouped_trades AS g1
+    WHERE EXISTS (
+        SELECT 1
+        FROM grouped_trades AS g2
+        WHERE g1.Rpt_ID = g2.Rpt_ID
+          AND g2.Pty_R = '18'
+          AND g2.ORFInd = 'Y'
+    ) AND g1.Pty_R = '1';
+"""
+
+# Get the count of rows to update
+cursor = conn.execute(count_query)
+total_rows_to_update = cursor.fetchone()[0]
+
+# Define the batch size (adjust as needed)
+batch_size = 1000
+
+# Calculate the number of batches
+num_batches = (total_rows_to_update + batch_size - 1) // batch_size
+
 # Create a progress bar for overall progress
-overall_pbar = tqdm(desc='Updating rows', dynamic_ncols=True)
+overall_pbar = tqdm(total=num_batches, desc='Updating rows', dynamic_ncols=True)
 
-# Create a new table to store the updated data
-conn.execute('DROP TABLE IF EXISTS updated_grouped_trades')
-conn.execute(f'''CREATE TABLE IF NOT EXISTS updated_grouped_trades (
-                    Side TEXT,
-                    Sub_ID TEXT,
-                    Rpt_ID TEXT,
-                    Pty_R TEXT,
-                    Ultimate_Clearing_Firm TEXT,
-                    EXCH TEXT,
-                    TRANS_TYPE TEXT,
-                    ORFInd TEXT,
-                    Quantity INTEGER,
-                    UpdateTimestamp TEXT  -- Add UpdateTimestamp column
-                    )''')
+for batch_num in range(num_batches):
+    offset = batch_num * batch_size
 
-batch_size = 1000  # Adjust as needed
-updated_rows = True
-
-while updated_rows:
-    # Insert data from grouped_trades into updated_grouped_trades
-    insert_query = f"""
-        INSERT INTO updated_grouped_trades (Side, Sub_ID, Rpt_ID, Pty_R, Ultimate_Clearing_Firm, EXCH, TRANS_TYPE, ORFInd, Quantity)
-        SELECT Side, Sub_ID, Rpt_ID, Pty_R, Ultimate_Clearing_Firm, EXCH, TRANS_TYPE, ORFInd, Quantity
-        FROM grouped_trades
-        WHERE Pty_R IN ('1', '18')
-        LIMIT {batch_size};
-    """
-
-    # Execute the insert query
-    conn.execute(insert_query)
-    conn.commit()
-
-    # Update the 'updated_grouped_trades' table for the current batch
-    update_query = f"""
-        UPDATE updated_grouped_trades AS g1
+    # Update the 'grouped_trades' table for the current batch
+    query_update = f"""
+        UPDATE grouped_trades AS g1
         SET ORFInd = 'Y', UpdateTimestamp = '{datetime.now()}'
         WHERE EXISTS (
             SELECT 1
-            FROM updated_grouped_trades AS g2
+            FROM grouped_trades AS g2
             WHERE g1.Rpt_ID = g2.Rpt_ID
               AND g2.Pty_R = '18'
               AND g2.ORFInd = 'Y'
-        ) AND g1.Pty_R = '1';
+        ) AND g1.Pty_R = '1'
+        LIMIT {batch_size};
     """
 
     # Execute the batch update query
-    conn.execute(update_query)
+    conn.execute(query_update)
     conn.commit()
-
-    # Check if any rows were updated in the current batch
-    rows_updated = conn.total_changes
 
     # Update the progress bar for the current batch
     overall_pbar.update(1)
     # Flush the stdout buffer to ensure real-time progress updates
     sys.stdout.flush()
-
-    # If no rows were updated in the current batch, exit the loop
-    if rows_updated == 0:
-        updated_rows = False
 
 # Close the connection to the database
 conn.close()
