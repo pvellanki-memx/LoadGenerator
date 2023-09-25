@@ -1,29 +1,3 @@
-Updating rows:   0%|                                                                                                                                 | 0/1 [00:00<?, ?it/s]multiprocessing.pool.RemoteTraceback: 
-"""
-Traceback (most recent call last):
-  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
-    result = (True, func(*args, **kwds))
-  File "/home/pvellanki/orsa/test.py", line 26, in update_batch
-    cursor.execute(query_update)
-sqlite3.OperationalError: near "241849058": syntax error
-"""
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/home/pvellanki/orsa/test.py", line 81, in <module>
-    for _ in pool.imap_unordered(update_batch, [rpt_ids_to_update[i:i+batch_size] for i in range(0, total_rows_to_update, batch_size)]):
-  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
-    raise value
-sqlite3.OperationalError: near "241849058": syntax error
-Updating rows:   0%|          | 0/1 [00:00<?, ?it/s]                                                                                                                       
-pvellanki@qa2434:~/orsa$ 
-
-
-
-
-
-
 
 import sys
 from tqdm import tqdm
@@ -38,19 +12,22 @@ def update_batch(batch):
     cursor = conn.cursor()
 
     for rpt_id in batch:
-        query_update = f"""
+        query_update = """
             UPDATE grouped_trades AS g1
-            SET ORFInd = 'Y', UpdateTimestamp = '{datetime.now()}'
-            WHERE Rpt_ID = '{rpt_id}'
-              AND EXISTS (
+            SET ORFInd = 'Y', UpdateTimestamp = ?
+            WHERE Rpt_ID = ?
+            AND EXISTS (
                 SELECT 1
                 FROM grouped_trades AS g2
                 WHERE g2.Rpt_ID = g1.Rpt_ID
-                  AND g2.Pty_R = '18'
-                  AND g2.ORFInd = 'Y'
+                AND g2.Pty_R = '18'
+                AND g2.ORFInd = 'Y'
             ) AND g1.Pty_R = '1';
         """
-        cursor.execute(query_update)
+
+        # Now, execute the query with parameters
+        cursor.execute(query_update, (datetime.now(), rpt_id))
+      
 
     conn.commit()
     conn.close()
@@ -112,29 +89,3 @@ with Pool(processes=cpu_count()) as pool:
 overall_pbar.close()
 
 print("Data has been successfully updated.")
-
-
-
-
-
-
-
-
-
-
-
-query_update = """
-    UPDATE grouped_trades AS g1
-    SET ORFInd = 'Y', UpdateTimestamp = ?
-    WHERE Rpt_ID = ?
-      AND EXISTS (
-        SELECT 1
-        FROM grouped_trades AS g2
-        WHERE g2.Rpt_ID = g1.Rpt_ID
-          AND g2.Pty_R = '18'
-          AND g2.ORFInd = 'Y'
-    ) AND g1.Pty_R = '1';
-"""
-
-# Now, execute the query with parameters
-cursor.execute(query_update, (datetime.now(), rpt_id))
