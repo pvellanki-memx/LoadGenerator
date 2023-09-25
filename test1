@@ -1,5 +1,9 @@
-pvellanki@qa2434:~/orsa$ python3 test.py  orsa_postmove_2023-06-28.xml postmove.db
-Traceback (most recent call last):
-  File "/home/pvellanki/orsa/test.py", line 53, in <module>
-    cursor = conn.execute(count_query)
-sqlite3.DatabaseError: file is not a database
+SELECT COUNT(DISTINCT g1.Rpt_ID)
+FROM grouped_trades AS g1
+INNER JOIN (
+    SELECT DISTINCT Rpt_ID
+    FROM grouped_trades
+    WHERE Pty_R = '18' AND ORFInd = 'Y'
+) AS g2 ON g1.Rpt_ID = g2.Rpt_ID
+WHERE g1.Pty_R = '1';
+
