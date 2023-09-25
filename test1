@@ -466,3 +466,11 @@ if __name__ == '__main__':
     xml_file = sys.argv[1]  # Get the XML file name from command-line arguments
     batch_size = 100  # Adjust the batch size as per your requirement
     fetch_data_in_batches(xml_file, batch_size)
+
+
+
+
+
+
+cursor.execute("CREATE INDEX IF NOT EXISTS rpt_id_index ON trades (Rpt_ID);")  # Add this line to create an index on Rpt_ID
+
