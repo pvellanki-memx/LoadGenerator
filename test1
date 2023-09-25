@@ -154,3 +154,41 @@ procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
  3  0      0 392720 1510272 10232472    0    0     0  8376 4634 6923  1  1 96  3  0
  0  3      0 391460 1510272 10233476    0    0     0  8392 4765 6925  1  1 96  3  0
  3  1      0 360720 1510284 10234436    0    0     0  8540 5008 7493  1  1 95  3  0
+
+
+
+
+
+
+
+#!/bin/bash
+date="$1"
+db_name="$date.db"
+
+# Step 1: Split the big XML file using split.py
+python3 split_v4.py orsa_trades_2023-"$date".xml "$date"
+
+# Step 2: Process each split file using xml_to_db.py
+for split_file in "$date"_*; do
+    python3 xml_2_db_v5.py "$split_file" "$db_name" > log.txt &
+
+    # Capture the PID of the last background process
+    pid=$!
+
+    # Wait for the background process to complete
+    wait "$pid"
+
+    echo "Processing of $split_file completed."
+done
+
+# Step 3: Group the data in the database using groupedexcel.py
+python3 groupedexcel_v5.py "$db_name"
+
+grouped_pid=$!
+# Wait for groupedexcel.py to complete
+wait "$grouped_pid"
+
+echo "Grouping of data completed."
+
+# Step 4: Perform further processing using furtherstreaming.py
+#python3 streamfurther_v4.py "$db_name"
