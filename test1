@@ -1,25 +1,114 @@
-SELECT COUNT(DISTINCT g1.Rpt_ID)
-FROM grouped_trades AS g1
-INNER JOIN (
-    SELECT DISTINCT Rpt_ID
-    FROM grouped_trades
-    WHERE Pty_R = '18' AND ORFInd = 'Y'
-) AS g2 ON g1.Rpt_ID = g2.Rpt_ID
-WHERE g1.Pty_R = '1';
+Updating rows:   0%|                                                                                                                                 | 0/1 [00:00<?, ?it/s]multiprocessing.pool.RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/home/pvellanki/orsa/test.py", line 26, in update_batch
+    cursor.execute(query_update)
+sqlite3.OperationalError: near "241849058": syntax error
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/pvellanki/orsa/test.py", line 81, in <module>
+    for _ in pool.imap_unordered(update_batch, [rpt_ids_to_update[i:i+batch_size] for i in range(0, total_rows_to_update, batch_size)]):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
+    raise value
+sqlite3.OperationalError: near "241849058": syntax error
+Updating rows:   0%|          | 0/1 [00:00<?, ?it/s]                                                                                                                       
+pvellanki@qa2434:~/orsa$ 
 
 
 
 
-# Create a list of Rpt_IDs to update
-rpt_ids_to_update = conn.execute(f"""
-    SELECT DISTINCT g1.Rpt_ID
+
+
+
+import sys
+from tqdm import tqdm
+from datetime import datetime
+from multiprocessing import Pool, cpu_count
+import sqlite3
+
+# Function to update a batch of rows
+def update_batch(batch):
+    conn = sqlite3.connect(db_name)
+    conn.execute("BEGIN")  # Start a transaction for the batch
+    cursor = conn.cursor()
+
+    for rpt_id in batch:
+        query_update = f"""
+            UPDATE grouped_trades AS g1
+            SET ORFInd = 'Y', UpdateTimestamp = '{datetime.now()}'
+            WHERE Rpt_ID = '{rpt_id}'
+              AND EXISTS (
+                SELECT 1
+                FROM grouped_trades AS g2
+                WHERE g2.Rpt_ID = g1.Rpt_ID
+                  AND g2.Pty_R = '18'
+                  AND g2.ORFInd = 'Y'
+            ) AND g1.Pty_R = '1';
+        """
+        cursor.execute(query_update)
+
+    conn.commit()
+    conn.close()
+
+# Connect to the original SQLite database
+db_name = sys.argv[1]
+conn = sqlite3.connect(db_name)
+
+
+
+# Define the batch size (adjust as needed)
+batch_size = 1000
+
+# Count the number of rows to update
+count_query = f"""
+    SELECT COUNT(DISTINCT g1.Rpt_ID)
     FROM grouped_trades AS g1
     INNER JOIN (
         SELECT DISTINCT Rpt_ID
         FROM grouped_trades
         WHERE Pty_R = '18' AND ORFInd = 'Y'
     ) AS g2 ON g1.Rpt_ID = g2.Rpt_ID
-    WHERE g1.Pty_R = '1'
-    LIMIT {total_rows_to_update};
+    WHERE g1.Pty_R = '1';
+"""
+
+# Get the count of distinct Rpt_IDs to update
+cursor = conn.execute(count_query)
+total_rows_to_update = cursor.fetchone()[0]
+
+# Calculate the number of batches
+num_batches = (total_rows_to_update + batch_size - 1) // batch_size
+
+# Create a list of Rpt_IDs to update
+
+rpt_ids_to_update = conn.execute(f"""
+        SELECT DISTINCT g1.Rpt_ID
+        FROM grouped_trades AS g1
+        INNER JOIN (
+            SELECT DISTINCT Rpt_ID
+            FROM grouped_trades
+            WHERE Pty_R = '18' AND ORFInd = 'Y'
+        ) AS g2 ON g1.Rpt_ID = g2.Rpt_ID
+        WHERE g1.Pty_R = '1'
+        LIMIT {total_rows_to_update};
 """).fetchall()
 
+# Close the connection to the database
+conn.close()
+
+# Create a progress bar for overall progress
+overall_pbar = tqdm(total=num_batches, desc='Updating rows', dynamic_ncols=True)
+
+# Use multiprocessing to update the data in parallel
+with Pool(processes=cpu_count()) as pool:
+    for _ in pool.imap_unordered(update_batch, [rpt_ids_to_update[i:i+batch_size] for i in range(0, total_rows_to_update, batch_size)]):
+        overall_pbar.update(1)
+
+# Close the progress bar
+overall_pbar.close()
+
+print("Data has been successfully updated.")
