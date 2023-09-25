@@ -1,4 +1,3 @@
-
 import sys
 from tqdm import tqdm
 from datetime import datetime
@@ -28,15 +27,12 @@ def update_batch(batch):
         # Now, execute the query with parameters
         cursor.execute(query_update, (datetime.now(), rpt_id))
       
-
     conn.commit()
     conn.close()
 
 # Connect to the original SQLite database
 db_name = sys.argv[1]
 conn = sqlite3.connect(db_name)
-
-
 
 # Define the batch size (adjust as needed)
 batch_size = 1000
@@ -57,21 +53,39 @@ count_query = f"""
 cursor = conn.execute(count_query)
 total_rows_to_update = cursor.fetchone()[0]
 
+# Create a new table 'updated_group_trades' with UpdateTimestamp column
+create_table_query = """
+    CREATE TABLE IF NOT EXISTS updated_group_trades (
+        Quantity INTEGER,
+        Side TEXT,
+        Pty_ID TEXT,
+        Pty_R TEXT,
+        Sub_ID TEXT,
+        Rpt_ID TEXT,
+        Ultimate_Clearing_Firm TEXT,
+        EXCH TEXT,
+        TRANS_TYPE TEXT,
+        ORFInd TEXT,
+        UpdateTimestamp TEXT
+    );
+"""
+conn.execute(create_table_query)
+conn.commit()
+
 # Calculate the number of batches
 num_batches = (total_rows_to_update + batch_size - 1) // batch_size
 
 # Create a list of Rpt_IDs to update
-
 rpt_ids_to_update = conn.execute(f"""
-        SELECT DISTINCT g1.Rpt_ID
-        FROM grouped_trades AS g1
-        INNER JOIN (
-            SELECT DISTINCT Rpt_ID
-            FROM grouped_trades
-            WHERE Pty_R = '18' AND ORFInd = 'Y'
-        ) AS g2 ON g1.Rpt_ID = g2.Rpt_ID
-        WHERE g1.Pty_R = '1'
-        LIMIT {total_rows_to_update};
+    SELECT DISTINCT g1.Rpt_ID
+    FROM grouped_trades AS g1
+    INNER JOIN (
+        SELECT DISTINCT Rpt_ID
+        FROM grouped_trades
+        WHERE Pty_R = '18' AND ORFInd = 'Y'
+    ) AS g2 ON g1.Rpt_ID = g2.Rpt_ID
+    WHERE g1.Pty_R = '1'
+    LIMIT {total_rows_to_update};
 """).fetchall()
 
 # Close the connection to the database
