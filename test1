@@ -112,3 +112,29 @@ with Pool(processes=cpu_count()) as pool:
 overall_pbar.close()
 
 print("Data has been successfully updated.")
+
+
+
+
+
+
+
+
+
+
+
+query_update = """
+    UPDATE grouped_trades AS g1
+    SET ORFInd = 'Y', UpdateTimestamp = ?
+    WHERE Rpt_ID = ?
+      AND EXISTS (
+        SELECT 1
+        FROM grouped_trades AS g2
+        WHERE g2.Rpt_ID = g1.Rpt_ID
+          AND g2.Pty_R = '18'
+          AND g2.ORFInd = 'Y'
+    ) AND g1.Pty_R = '1';
+"""
+
+# Now, execute the query with parameters
+cursor.execute(query_update, (datetime.now(), rpt_id))
