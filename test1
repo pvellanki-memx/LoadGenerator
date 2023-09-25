@@ -180,3 +180,89 @@ overall_pbar.close()
 
 print("Data has been successfully updated.")
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import sqlite3
+import sys
+from tqdm import tqdm
+from datetime import datetime
+
+# Connect to the original SQLite database
+db_name = sys.argv[1]
+conn = sqlite3.connect(db_name)
+
+# Create an index on the Rpt_ID column if it doesn't already exist
+conn.execute("CREATE INDEX IF NOT EXISTS rpt_id_index ON trades (Rpt_ID)")
+
+# Count the number of rows to update
+count_query = f"""
+    SELECT COUNT(*) FROM grouped_trades AS g1
+    WHERE EXISTS (
+        SELECT 1
+        FROM grouped_trades AS g2
+        WHERE g1.Rpt_ID = g2.Rpt_ID
+          AND g2.Pty_R = '18'
+          AND g2.ORFInd = 'Y'
+    ) AND g1.Pty_R = '1';
+"""
+
+# Get the count of rows to update
+cursor = conn.execute(count_query)
+total_rows_to_update = cursor.fetchone()[0]
+
+# Define the batch size (adjust as needed)
+batch_size = 1000
+
+# Calculate the number of batches
+num_batches = (total_rows_to_update + batch_size - 1) // batch_size
+
+# Create a progress bar for overall progress
+overall_pbar = tqdm(total=num_batches, desc='Updating rows', dynamic_ncols=True)
+
+for batch_num in range(num_batches):
+    offset = batch_num * batch_size
+
+    # Update the 'grouped_trades' table for the current batch
+    query_update = f"""
+        UPDATE grouped_trades AS g1
+        SET ORFInd = 'Y', UpdateTimestamp = '{datetime.now()}'
+        WHERE EXISTS (
+            SELECT 1
+            FROM grouped_trades AS g2
+            WHERE g1.Rpt_ID = g2.Rpt_ID
+              AND g2.Pty_R = '18'
+              AND g2.ORFInd = 'Y'
+        ) AND g1.Pty_R = '1'
+        LIMIT {batch_size};
+    """
+
+    # Execute the batch update query
+    conn.execute(query_update)
+    conn.commit()
+
+    # Update the progress bar for the current batch
+    overall_pbar.update(1)
+    # Flush the stdout buffer to ensure real-time progress updates
+    sys.stdout.flush()
+
+# Close the connection to the database
+conn.close()
+
+# Close the progress bar
+overall_pbar.close()
+
+print("Data has been successfully updated.")
+
+
