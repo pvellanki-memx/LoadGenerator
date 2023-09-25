@@ -103,3 +103,19 @@ with Pool(processes=cpu_count()) as pool:
 overall_pbar.close()
 
 print("Data has been successfully updated.")
+
+
+
+
+
+
+
+
+Filesystem          Size  Used Avail Use% Mounted on
+tmpfs               3.0G  780K  3.0G   1% /run
+/dev/sda2            98G   77G   17G  83% /
+tmpfs                15G     0   15G   0% /dev/shm
+tmpfs               5.0M     0  5.0M   0% /run/lock
+10.0.7.170:/op1occ  1.0T   13G 1012G   2% /mnt/occ
+/dev/sdb1           984G   28G  906G   3% /data
+tmpfs               1.5G     0  1.5G   0% /run/user/5012
