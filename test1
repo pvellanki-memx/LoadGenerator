@@ -266,3 +266,12 @@ overall_pbar.close()
 print("Data has been successfully updated.")
 
 
+
+
+pvellanki@qa2434:~/orsa$ python3 groupedexcel_postmove_v3.py postmove.db 
+Traceback (most recent call last):
+  File "/home/pvellanki/orsa/groupedexcel_postmove_v3.py", line 13, in <module>
+    conn.execute(f'''CREATE TABLE IF NOT EXISTS grouped_trades (
+sqlite3.OperationalError: near "INDEX": syntax error
+
+
