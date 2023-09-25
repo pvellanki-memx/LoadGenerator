@@ -170,7 +170,10 @@ python3 split_v4.py orsa_trades_2023-"$date".xml "$date"
 
 # Step 2: Process each split file using xml_to_db.py
 for split_file in "$date"_*; do
-    python3 xml_2_db_v5.py "$split_file" "$db_name" > log.txt &
+    log_file="${split_file%.xml}.log"  # Create a log file with the same name as the split file
+
+    # Redirect the output of python3 to the log file
+    python3 xml_2_db_v5.py "$split_file" "$db_name" > "$log_file" &
 
     # Capture the PID of the last background process
     pid=$!
@@ -178,7 +181,7 @@ for split_file in "$date"_*; do
     # Wait for the background process to complete
     wait "$pid"
 
-    echo "Processing of $split_file completed."
+    echo "Processing of $split_file completed. Log saved to $log_file"
 done
 
 # Step 3: Group the data in the database using groupedexcel.py
