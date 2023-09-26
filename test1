@@ -1,166 +1,4 @@
-import sys
-from tqdm import tqdm
-from datetime import datetime
-from multiprocessing import Pool, cpu_count
-import sqlite3
-
-# Function to update a batch of rows
-def update_batch(batch):
-    conn = sqlite3.connect(db_name)
-    conn.execute("BEGIN")  # Start a transaction for the batch
-    cursor = conn.cursor()
-
-    for rpt_id in batch:
-        query_update = """
-            UPDATE grouped_trades AS g1
-            SET ORFInd = 'Y', UpdateTimestamp = ?
-            WHERE Rpt_ID = ?
-            AND EXISTS (
-                SELECT 1
-                FROM grouped_trades AS g2
-                WHERE g2.Rpt_ID = g1.Rpt_ID
-                AND g2.Pty_R = '18'
-                AND g2.ORFInd = 'Y'
-            ) AND g1.Pty_R = '1';
-        """
-
-        # Now, execute the query with parameters
-        cursor.execute(query_update, (datetime.now(), rpt_id))
-      
-    conn.commit()
-    conn.close()
-
-# Connect to the original SQLite database
-db_name = sys.argv[1]
-conn = sqlite3.connect(db_name)
-
-# Define the batch size (adjust as needed)
-batch_size = 1000
-
-# Count the number of rows to update
-count_query = f"""
-    SELECT COUNT(DISTINCT g1.Rpt_ID)
-    FROM grouped_trades AS g1
-    INNER JOIN (
-        SELECT DISTINCT Rpt_ID
-        FROM grouped_trades
-        WHERE Pty_R = '18' AND ORFInd = 'Y'
-    ) AS g2 ON g1.Rpt_ID = g2.Rpt_ID
-    WHERE g1.Pty_R = '1';
-"""
-
-# Get the count of distinct Rpt_IDs to update
-cursor = conn.execute(count_query)
-total_rows_to_update = cursor.fetchone()[0]
-
-# Create a new table 'updated_group_trades' with UpdateTimestamp column
-create_table_query = """
-    CREATE TABLE IF NOT EXISTS updated_group_trades (
-        Quantity INTEGER,
-        Side TEXT,
-        Pty_ID TEXT,
-        Pty_R TEXT,
-        Sub_ID TEXT,
-        Rpt_ID TEXT,
-        Ultimate_Clearing_Firm TEXT,
-        EXCH TEXT,
-        TRANS_TYPE TEXT,
-        ORFInd TEXT,
-        UpdateTimestamp TEXT
-    );
-"""
-conn.execute(create_table_query)
-conn.commit()
-
-# Calculate the number of batches
-num_batches = (total_rows_to_update + batch_size - 1) // batch_size
-
-# Create a list of Rpt_IDs to update
-rpt_ids_to_update = conn.execute(f"""
-    SELECT DISTINCT g1.Rpt_ID
-    FROM grouped_trades AS g1
-    INNER JOIN (
-        SELECT DISTINCT Rpt_ID
-        FROM grouped_trades
-        WHERE Pty_R = '18' AND ORFInd = 'Y'
-    ) AS g2 ON g1.Rpt_ID = g2.Rpt_ID
-    WHERE g1.Pty_R = '1'
-    LIMIT {total_rows_to_update};
-""").fetchall()
-
-# Close the connection to the database
-conn.close()
-
-# Create a progress bar for overall progress
-overall_pbar = tqdm(total=num_batches, desc='Updating rows', dynamic_ncols=True)
-
-# Use multiprocessing to update the data in parallel
-with Pool(processes=cpu_count()) as pool:
-    for _ in pool.imap_unordered(update_batch, [rpt_ids_to_update[i:i+batch_size] for i in range(0, total_rows_to_update, batch_size)]):
-        overall_pbar.update(1)
-
-# Close the progress bar
-overall_pbar.close()
-
-print("Data has been successfully updated.")
-
-
-
-
-
-
-
-
-Filesystem          Size  Used Avail Use% Mounted on
-tmpfs               3.0G  780K  3.0G   1% /run
-/dev/sda2            98G   77G   17G  83% /
-tmpfs                15G     0   15G   0% /dev/shm
-tmpfs               5.0M     0  5.0M   0% /run/lock
-10.0.7.170:/op1occ  1.0T   13G 1012G   2% /mnt/occ
-/dev/sdb1           984G   28G  906G   3% /data
-tmpfs               1.5G     0  1.5G   0% /run/user/5012
-
-
-
-
-
-
-
-
-
-
-pvellanki@orsa01:~/orsa/orsa-package-2$ vmstat -n 1
-procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
- r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
- 3  1      0 469308 1510044 10214344    0    0     8    24    4    4  0  0 100  0  0
- 0  2      0 468300 1510056 10215336    0    0     0  8384 4767 7133  1  1 96  3  0
- 3  0      0 467544 1510056 10216124    0    0     0  7728 4151 6256  0  1 96  3  0
- 1  2      0 466536 1510072 10217068    0    0     0  8308 4735 7139  1  1 96  3  0
- 1  1      0 465780 1510080 10217728    0    0     0  8480 4908 7136  1  1 96  3  0
- 1  0      0 464520 1510088 10218988    0    0     0  8372 4801 7201  1  1 96  3  0
- 0  1      0 463512 1510100 10220000    0    0     0  8152 4592 6955  1  1 96  3  0
- 0  1      0 404312 1510116 10220924    0    0     0  8444 4847 7131  1  1 95  3  0
- 1  1      0 403292 1510124 10221948    0    0     0  8324 4709 7000  1  1 96  3  0
- 0  1      0 402284 1510128 10222904    0    0     0  8364 4750 7058  1  1 96  3  0
- 1  1      0 401276 1510144 10223864    0    0     0  8400 4474 6656  1  1 96  3  0
- 0  2      0 400268 1510160 10224804    0    0     0  8416 4619 7006  1  1 96  3  0
- 0  2      0 399512 1510176 10225688    0    0     0  8528 4678 7116  1  1 96  3  0
- 0  1      0 398252 1510188 10226728    0    0     0  8616 4685 7272  1  1 96  3  0
- 0  1      0 397496 1510192 10227676    0    0     0  8352 4607 6950  1  1 96  3  0
- 0  2      0 396248 1510216 10228632    0    0     0  8152 4617 6874  1  1 96  3  0
- 0  1      0 395492 1510240 10229616    0    0     0  8416 4500 6934  1  1 96  3  0
- 0  1      0 394484 1510256 10230588    0    0     0  8324 4754 7132  1  1 96  3  0
- 1  1      0 393476 1510268 10231580    0    0     0  8232 4563 6980  1  1 96  3  0
- 3  0      0 392720 1510272 10232472    0    0     0  8376 4634 6923  1  1 96  3  0
- 0  3      0 391460 1510272 10233476    0    0     0  8392 4765 6925  1  1 96  3  0
- 3  1      0 360720 1510284 10234436    0    0     0  8540 5008 7493  1  1 95  3  0
-
-
-
-
-
-
-
+pvellanki@orsa01:/data/pvellanki/orsa-package-2$ cat run_trades.sh 
 #!/bin/bash
 date="$1"
 db_name="$date.db"
@@ -170,10 +8,7 @@ python3 split_v4.py orsa_trades_2023-"$date".xml "$date"
 
 # Step 2: Process each split file using xml_to_db.py
 for split_file in "$date"_*; do
-    log_file="${split_file%.xml}.log"  # Create a log file with the same name as the split file
-
-    # Redirect the output of python3 to the log file
-    python3 xml_2_db_v5.py "$split_file" "$db_name" > "$log_file" &
+    python3 xml_2_db_v5.py "$split_file" "$db_name" > log.txt &
 
     # Capture the PID of the last background process
     pid=$!
@@ -181,7 +16,7 @@ for split_file in "$date"_*; do
     # Wait for the background process to complete
     wait "$pid"
 
-    echo "Processing of $split_file completed. Log saved to $log_file"
+    echo "Processing of $split_file completed."
 done
 
 # Step 3: Group the data in the database using groupedexcel.py
@@ -194,4 +29,61 @@ wait "$grouped_pid"
 echo "Grouping of data completed."
 
 # Step 4: Perform further processing using furtherstreaming.py
-#python3 streamfurther_v4.py "$db_name"
+python3 streamfurther_v4.py "$db_name"
+
+streamfurther_pid=$!
+# Wait for groupedexcel.py to complete
+wait "$streamfurther_pid"
+
+echo "Grouping summary of data completed."
+
+
+
+
+
+
+
+pvellanki@orsa01:/data/pvellanki/orsa-package-2$ cat run_exchange_recon.sh 
+#!/bin/bash
+date="$1"
+db_name="$date.db"
+
+
+
+# Step 1: Group the data in the database using groupedexcel.py
+python3 groupbyexchange.py "$db_name"
+
+groupedbyexch_pid=$!
+# Wait for groupedexcel.py to complete
+wait "$groupedbyexch_pid"
+
+echo "Grouping by exchange completed."
+
+# Step 4: Perform further processing using furtherstreaming.py
+python3 streamfurther_v5.py "$db_name"
+
+SF5_pid=$!
+wait "$SF5_pid"
+
+echo "grouping summary bu exchange completed"
+
+python3 exchangerecon.py "$db_name"
+
+exchangerecon_pid=$!
+wait "$exchangerecon_pid"
+
+echo "exchange recon against OCC Completed"
+
+python3 excel.py "$db_name"
+
+excel_pid=$!
+wait "$excel_pid"
+
+echo "Common aggregates file generated"
+
+
+
+
+
+
+
