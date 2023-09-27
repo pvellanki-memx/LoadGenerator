@@ -9,4 +9,15 @@ drwxrwsr-x 4 root                   operators          0 Sep 26 15:15 ../
 
 
 
- can you please update permissions on this trades file for me to access it.
+quantity	underlying	symbol	actype	porc	exchange	actdate
+7550	ACRX	2ACRX	C	C	CBOE	9/26/23
+7550	ACRX	2ACRX	C	P	CBOE	9/26/23
+2500	AMZN	2AMZN	C	C	AMEX	9/26/23
+2500	AMZN	2AMZN	C	P	AMEX	9/26/23
+37000	CM	2CM	C	C	CBOE	9/26/23
+37000	CM	2CM	C	P	CBOE	9/26/23
+1789	EEM	2EEM	C	P	CBOE	9/26/23
+6	EFA	2EFA	C	C	CBOE	9/26/23
+13135	EFA	2EFA	C	P	CBOE	9/26/23
+117	HYG	2HYG	C	C	CBOE	9/26/23
+113	IBM	2IBM	C	C	CBOE	9/26/23
