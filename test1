@@ -24,33 +24,19 @@ def update_batch(batch):
             ) AND g1.Pty_R = '1';
         """
 
-        retry_attempts = 3  # Number of retry attempts
-        while retry_attempts > 0:
-            try:
-                # Now, execute the query with parameters
-                cursor.execute(query_update, rpt_id)
-                conn.commit()
-                break  # If successful, exit the retry loop
-            except sqlite3.OperationalError as e:
-                # Handle database lock error
-                if "database is locked" in str(e):
-                    print("Database is locked. Retrying...")
-                    time.sleep(1)  # Wait for 1 second before retrying
-                    retry_attempts -= 1
-                    if retry_attempts == 0:
-                        print("Retry attempts exhausted. Exiting.")
-                        conn.rollback()  # Rollback the transaction
-                        conn.close()
-                        return  # Exit the function
-                else:
-                    raise  # If it's not a lock error, raise the exception
-
+        # Now, execute the query with parameters
+        cursor.execute(query_update, rpt_id)
+      
+    conn.commit()
     conn.close()
-
 
 # Connect to the original SQLite database
 db_name = sys.argv[1]
 conn = sqlite3.connect(db_name)
+conn.execute('pragma journal_mode=wal')
+conn.execute('pragma synchronous=normal')
+conn.execute('pragma temp_store=memory')
+conn.execute('pragma wal_autocheckpoint=10000')
 
 # Define the batch size (adjust as needed)
 batch_size = 1000
@@ -95,7 +81,7 @@ conn.close()
 overall_pbar = tqdm(total=num_batches, desc='Updating rows', dynamic_ncols=True)
 
 # Use multiprocessing to update the data in parallel
-with Pool(processes=cpu_count()) as pool:
+with Pool(processes=10) as pool:
     for _ in pool.imap_unordered(update_batch, [rpt_ids_to_update[i:i+batch_size] for i in range(0, total_rows_to_update, batch_size)]):
         overall_pbar.update(1)
 
@@ -103,34 +89,3 @@ with Pool(processes=cpu_count()) as pool:
 overall_pbar.close()
 
 print("Data has been successfully updated.")
-
-
-
-
-
-
-
-
-
-
-
-pvellanki@orsa01:/data/pvellanki/orsa-package-2$ python3 update_grouped_trades.py 2023-09-26_postmove.db
-Updating rows:   0%|                                                                                                                                                  | 0/2 [00:00<?, ?it/s]multiprocessing.pool.RemoteTraceback: 
-"""
-Traceback (most recent call last):
-  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
-    result = (True, func(*args, **kwds))
-  File "/data/pvellanki/orsa-package-2/update_grouped_trades.py", line 28, in update_batch
-    cursor.execute(query_update, rpt_id)
-sqlite3.OperationalError: database is locked
-"""
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/data/pvellanki/orsa-package-2/update_grouped_trades.py", line 81, in <module>
-    for _ in pool.imap_unordered(update_batch, [rpt_ids_to_update[i:i+batch_size] for i in range(0, total_rows_to_update, batch_size)]):
-  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
-    raise value
-sqlite3.OperationalError: database is locked
-Updating rows:   0%|          | 0/2 [00:05<?, ?it/s]    
