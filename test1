@@ -44,4 +44,5 @@ PHLX
 ARCA
 
 
-and in the same order.
+=SUMIFS(A2:A11, D2:D11, "C", F2:F11, G1)
+
