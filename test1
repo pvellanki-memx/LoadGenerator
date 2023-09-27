@@ -103,3 +103,34 @@ with Pool(processes=cpu_count()) as pool:
 overall_pbar.close()
 
 print("Data has been successfully updated.")
+
+
+
+
+
+
+
+
+
+
+
+pvellanki@orsa01:/data/pvellanki/orsa-package-2$ python3 update_grouped_trades.py 2023-09-26_postmove.db
+Updating rows:   0%|                                                                                                                                                  | 0/2 [00:00<?, ?it/s]multiprocessing.pool.RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 125, in worker
+    result = (True, func(*args, **kwds))
+  File "/data/pvellanki/orsa-package-2/update_grouped_trades.py", line 28, in update_batch
+    cursor.execute(query_update, rpt_id)
+sqlite3.OperationalError: database is locked
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/data/pvellanki/orsa-package-2/update_grouped_trades.py", line 81, in <module>
+    for _ in pool.imap_unordered(update_batch, [rpt_ids_to_update[i:i+batch_size] for i in range(0, total_rows_to_update, batch_size)]):
+  File "/usr/lib/python3.10/multiprocessing/pool.py", line 873, in next
+    raise value
+sqlite3.OperationalError: database is locked
+Updating rows:   0%|          | 0/2 [00:05<?, ?it/s]    
