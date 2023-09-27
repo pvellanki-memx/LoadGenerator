@@ -33,6 +33,14 @@ fi
 
 echo "Found $file_to_watch"
 
+# Check if the XML file is complete by examining the last two lines
+last_two_lines=$(tail -n 2 "$monitor_folder/$file_to_watch")
+
+if [[ $last_two_lines != *"</FIXML>"* ]]; then
+    echo "XML file is not complete. Missing </FIXML> tag."
+    exit 1
+fi
+
 # Create the output directory if it doesn't exist
 current_dir="/data/pvellanki"
 output_dir="$date"
