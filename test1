@@ -21,3 +21,27 @@ quantity	underlying	symbol	actype	porc	exchange	actdate
 13135	EFA	2EFA	C	P	CBOE	9/26/23
 117	HYG	2HYG	C	C	CBOE	9/26/23
 113	IBM	2IBM	C	C	CBOE	9/26/23
+
+
+
+
+
+EMLD
+BATS
+C2
+EDGX
+GEM
+MCRY
+MPRL
+AMEX
+BOX
+NOBO
+CBOE
+ISE
+MIAX
+NSDQ
+PHLX
+ARCA
+
+
+and in the same order.
