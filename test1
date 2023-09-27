@@ -24,11 +24,29 @@ def update_batch(batch):
             ) AND g1.Pty_R = '1';
         """
 
-        # Now, execute the query with parameters
-        cursor.execute(query_update, rpt_id)
-      
-    conn.commit()
+        retry_attempts = 3  # Number of retry attempts
+        while retry_attempts > 0:
+            try:
+                # Now, execute the query with parameters
+                cursor.execute(query_update, rpt_id)
+                conn.commit()
+                break  # If successful, exit the retry loop
+            except sqlite3.OperationalError as e:
+                # Handle database lock error
+                if "database is locked" in str(e):
+                    print("Database is locked. Retrying...")
+                    time.sleep(1)  # Wait for 1 second before retrying
+                    retry_attempts -= 1
+                    if retry_attempts == 0:
+                        print("Retry attempts exhausted. Exiting.")
+                        conn.rollback()  # Rollback the transaction
+                        conn.close()
+                        return  # Exit the function
+                else:
+                    raise  # If it's not a lock error, raise the exception
+
     conn.close()
+
 
 # Connect to the original SQLite database
 db_name = sys.argv[1]
