@@ -1,5 +1,14 @@
-# Create the output directory if it doesn't exist
-current_dir="/data/pvellanki/orsa-package-2"
-output_dir="$date"
-cd "$current_dir"  # Use the variable here
+#!/bin/bash
+
+# Get the script's directory
+script_dir="$(dirname "$0")"
+
+# Get yesterday's date in the "mm-dd" format
+date=$(date -d "yesterday" +"%m-%d")
+
+# Create the output directory in the script's directory if it doesn't exist
+output_dir="$script_dir/$date"
 mkdir -p "$output_dir"
+
+# Move files matching the pattern "*mm-dd.csv" to the output directory
+mv "$script_dir"/*"$date.csv" "$output_dir/"
