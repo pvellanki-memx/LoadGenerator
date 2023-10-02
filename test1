@@ -14,3 +14,6 @@ mkdir -p "$output_dir"
 
 # Move files matching the pattern "*mm-dd.csv" to the output directory
 mv /data/pvellanki/orsa-package-2/*"$mm_dd.csv" "$output_dir/"
+
+
+mv *"$mm_dd.csv" "$output_dir/"
