@@ -1,13 +1,5 @@
-#!/bin/bash
-
-# Get the current system date in yyyy-mm-dd format
-current_date=$(date +"%Y-%m-%d")
-
-# Calculate yesterday's date by subtracting 1 day
-yesterday_date=$(date -d "$current_date - 1 day" +"%Y-%m-%d")
-
-# Print yesterday's date
-echo "Yesterday's Date: $yesterday_date"
-
-# Now you can use $yesterday_date as an argument for your script
-# ./your_script.sh "$yesterday_date"
+# Create the output directory if it doesn't exist
+current_dir="/data/pvellanki/orsa-package-2"
+output_dir="$date"
+cd "$current_dir"  # Use the variable here
+mkdir -p "$output_dir"
