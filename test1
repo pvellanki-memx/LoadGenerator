@@ -1,4 +1,13 @@
-=SUMIFS(A:A, D:D, "C", F:F, G1)
+#!/bin/bash
 
+# Get the current system date in yyyy-mm-dd format
+current_date=$(date +"%Y-%m-%d")
 
-https://www.theocc.com/market-data/market-data-reports/volume-and-open-interest/volume-query
+# Calculate yesterday's date by subtracting 1 day
+yesterday_date=$(date -d "$current_date - 1 day" +"%Y-%m-%d")
+
+# Print yesterday's date
+echo "Yesterday's Date: $yesterday_date"
+
+# Now you can use $yesterday_date as an argument for your script
+# ./your_script.sh "$yesterday_date"
