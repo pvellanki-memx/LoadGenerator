@@ -1,141 +1,51 @@
+import sqlite3
+import sys
 
+# Connect to the original SQLite database
+db_name = sys.argv[1]
+conn = sqlite3.connect(db_name)
 
-#!/bin/bash
+# Drop the 'grouped_trades' table if it exists
+conn.execute('DROP TABLE IF EXISTS grouped_trades')
 
+# Create a new table for the current exchange to store the query results
+conn.execute(f'''CREATE TABLE IF NOT EXISTS grouped_trades (
+                    Side TEXT,
+                    Sub_ID TEXT,
+                    Rpt_ID TEXT,
+                    Pty_R TEXT,
+                    Ultimate_Clearing_Firm TEXT,
+                    EXCH TEXT,
+                    TRANS_TYPE TEXT,
+                    ORFInd TEXT,
+                    TRD_DT TEXT,
+                    Quantity INTEGER
+                    )''')
 
-current_date=$(date +"%Y-%m-%d")
-date=$(date -d "$current_date - 1 day" +"%Y-%m-%d")
+# Query the data from the original table for the current exchange with grouping
+query = f"""
+    INSERT INTO grouped_trades (Side, Sub_ID, Rpt_ID, Pty_R, Ultimate_Clearing_Firm, EXCH, TRANS_TYPE, ORFInd, Quantity)
+    SELECT
+        t.Side,
+        MAX(CASE WHEN t.Sub_ID != '' AND t.Sub_ID IS NOT NULL THEN t.Sub_ID END) AS Sub_ID,
+        t.Rpt_ID,
+        t.Pty_R,
+        MAX(CASE WHEN t.Ultimate_Clearing_Firm != '' AND t.Ultimate_Clearing_Firm IS NOT NULL THEN t.Ultimate_Clearing_Firm END) AS Ultimate_Clearing_Firm,
+        t.EXCH,
+        t.TRANS_TYPE,
+        t.ORFInd,
+        t.TRD_DT,
+        t.Quantity
+    FROM trades t
+    WHERE t.Pty_R in (1,18)  -- Exclude rows where Pty_R is equal to 21
+    GROUP BY t.Rpt_ID, t.Side, t.Quantity, t.TRANS_TYPE, t.ORFInd, t.Pty_R, t.TRD_DT
+"""
 
-mm_dd=$(date -d "$date" +"%m-%d")
+# Execute the query to insert the data into the new table for the current exchange
+conn.execute(query)
 
-# Create the output directory if it doesn't exist
-output_dir="/data/orsa-intermediate"
+# Commit the changes and close the connection to the original database
+conn.commit()
+conn.close()
 
-# Define the directory where the files are located
-base_dir="/mnt/occ/downloads/prod"
-
-# Construct the file name using the provided date
-file_to_watch="memx_orsa_trades_$date.xml"
-
-# Define the monitor folder
-monitor_folder="$base_dir"
-
-# Check if the file exists, wait up to 10 times
-retries=10
-while [ ! -e "$monitor_folder/$file_to_watch" ] && [ $retries -gt 0 ]; do
-    echo "$file_to_watch not found in $monitor_folder. Waiting..."
-    sleep 10  # Adjust the interval as needed
-    ((retries--))
-done
-
-if [ $retries -eq 0 ]; then
-    echo "File not found after 10 retries. Exiting."
-    exit 1
-fi
-
-echo "Found $file_to_watch"
-
-# Check if the XML file is complete by examining the last two lines
-last_two_lines=$(tail -n 2 "$monitor_folder/$file_to_watch")
-
-if [[ $last_two_lines != *"</FIXML>"* ]]; then
-    echo "XML file is not complete. Missing </FIXML> tag."
-    exit 1
-fi
-
-
-
-# Define a function to execute trades and exchange recon
-execute_trades_and_recon() {
-    # Add the content of run_trades.sh here
-    echo "Executing run_trades.sh..."
-    db_name="$date.db"
-
-    # Step 1: Split the big XML file using split.py
-    python3 split_v4.py "$base_dir"/memx_orsa_trades_"$date".xml "$date"
-
-    # Step 2: Process each split file using xml_to_db.py
-    for split_file in "$date"_*; do
-        python3 xml_2_db_v5.py "$split_file" "$db_name" > log.txt &
-
-        # Capture the PID of the last background process
-        pid=$!
-
-        # Wait for the background process to complete
-        wait "$pid"
-
-        echo "Processing of $split_file completed."
-    done
-
-    # Step 3: Group the data in the database using groupedexcel.py
-    python3 groupedexcel_v5.py "$db_name"
-
-    grouped_pid=$!
-    # Wait for groupedexcel.py to complete
-    wait "$grouped_pid"
-
-    echo "Grouping of data completed."
-
-    # Step 4: Perform further processing using furtherstreaming.py
-    python3 streamfurther_v4.py "$db_name"
-
-    streamfurther_pid=$!
-    # Wait for groupedexcel.py to complete
-    wait "$streamfurther_pid"
-
-    echo "Grouping summary of data completed."
-
-
-    # Step 4: Perform further processing using furtherstreaming.py
-    python3 dump2excel.py "$db_name"
-
-    dump2excel_pid=$!
-    # Wait for groupedexcel.py to complete
-    wait "$dump2excel_pid"
-
-    echo "Grouping summary csv generated."
-
-    
-    echo "Executing run_exchange_recon.sh..."
-    db_name="$date.db"
-
-
-
-    # Step 1: Group the data in the database using groupedexcel.py
-    python3 grouptradesbyexch.py "$db_name"
-
-    groupedbyexch_pid=$!
-    # Wait for groupedexcel.py to complete
-    wait "$groupedbyexch_pid"
-
-    echo "Grouping by exchange completed."
-
-    # Step 4: Perform further processing using furtherstreaming.py
-    python3 streamfurther_v5.py "$db_name"
-
-    SF5_pid=$!
-    wait "$SF5_pid"
-
-    echo "grouping summary bu exchange completed"
-
-    python3 exchangrecon.py "$db_name"
-
-    exchangerecon_pid=$!
-    wait "$exchangerecon_pid"
-
-    echo "exchange recon against OCC Completed"
-
-    python3 excel.py "$db_name"
-
-    excel_pid=$!
-    wait "$excel_pid"
-
-    echo "Common aggregates file generated"
-}
-
-# Execute the combined trades and exchange recon function
-execute_trades_and_recon
-
-echo "Scripts executed successfully."
-
-mv *"$mm_dd.csv" "$output_dir/"
+print("Data with Pty_R=21 removed and successfully inserted into the grouped_trades table.")
