@@ -4,6 +4,7 @@ from struct import pack, unpack_from
 class SBEHeader:
     
 
+
     def __init__(self, block_length, template_id, schema_id, version, num_groups):
         self.block_length = block_length
         self.template_id = template_id
@@ -19,18 +20,6 @@ class SBEHeader:
         return block_length, template_id, schema_id, version, num_groups
 
 
-class PriceType:
-    def __init__(self, mantissa, exponent=None):
-        self.mantissa = mantissa
-        self.exponent = exponent
-
-    def encode(self):
-        buffer = pack('>Q',self.mantissa)
-        return buffer
-
-    def decode(self, buffer):
-        self.exponent, _, self.mantissa = unpack_from('>Q', buffer)
-
 class OrdType:
     MARKET = '1'
     LIMIT = '2'
@@ -40,7 +29,8 @@ class OrdType:
         self.value = value
 
     def encode(self):
-        return self.value.encode
+        buffer = pack('s', self.value.encode())
+        return buffer
 
     def decode(self, buffer):
         self.value = unpack_from('>B', buffer)[0]
@@ -64,12 +54,14 @@ class BooleanType:
 class SideType:
     BUY = '1'
     SELL = '2'
-    SIZE = 1
+    SIZE = '1'
     def __init__(self, value):
         self.value = value
+        print()
 
     def encode(self):
-        return self.value.encode
+        buffer = pack('s', self.value.encode())
+        return buffer
 
     def decode(self, buffer):
         self.value = unpack_from('>B', buffer)[0]
@@ -99,24 +91,130 @@ class UINT8:
         self.value = unpack_from('>B', buffer)[0]
 
 
-    
-
-class ShortPriceType:
-    def __init__(self, mantissa, exponent):
-        self.mantissa = mantissa
-        self.exponent = exponent
+class AllocType:
+    def __init__(self, value):
+        self.value = value
 
     def encode(self):
-        buffer = pack('>H',self.mantissa)
+        buffer = pack('>B', self.value)
         return buffer
 
+class AllocTransType:
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        buffer = pack('>B', self.value)
+        return buffer
+    
+class ExecutionAllocationsGroup:
+    def __init__(self, trade_id, last_qty, last_px):
+        self.trade_id = trade_id
+        self.last_qty = last_qty
+        self.last_px = last_px
+
+    def encode(self):
+        return pack('!QIq', self.trade_id, self.last_qty, self.last_px)
+
+class NestedPartiesGroup:
+    def __init__(self, nested_party_id, nested_party_id_source, nested_party_role):
+        self.nested_party_id = nested_party_id
+        self.nested_party_id_source = nested_party_id_source
+        self.nested_party_role = nested_party_role
+
+    def encode(self):
+        return pack('16s1s1B', self.nested_party_id.encode('utf-8'), self.nested_party_id_source.encode('utf-8'), self.nested_party_role.value)
+
+class RequestedAllocationsGroup:
+    def __init__(self, alloc_qty, alloc_position_effect, nested_parties):
+        self.alloc_qty = alloc_qty
+        self.alloc_position_effect = alloc_position_effect
+        self.nested_parties = nested_parties
+
+    def encode(self):
+        nested_parties_data = b''.join([np.encode() for np in self.nested_parties])
+        return pack('IB', self.alloc_qty, self.alloc_position_effect.value) + nested_parties_data
+
+
+
+    
+
+class PriceType:
+    MANTISSA_SIZE = 8
+    EXPONENT = -8
+
+    def __init__(self, mantissa=None, exponent=None):
+        self.mantissa = mantissa
+
+    def encode(self):
+        price_value = self.mantissa * (10 ** self.EXPONENT)
+        return pack('>Q', int(price_value))
+
     def decode(self, buffer):
-        self.exponent, _, self.mantissa = unpack_from('>H', buffer)
-
-    def __str__(self):
-        return f"Exponent: {self.exponent}, Mantissa: {self.mantissa}"
+        self.mantissa = unpack_from('>Q', buffer)[0]
 
 
+
+class ShortPriceType:
+    MANTISSA_SIZE = 2
+    EXPONENT = -2
+
+    def __init__(self, mantissa=None, exponent=None):
+        self.mantissa = mantissa
+
+    def encode(self):
+        price_value = self.mantissa * (10 ** self.EXPONENT)
+        return pack('>H', int(price_value))
+
+    def decode(self, buffer):
+        self.mantissa = unpack_from('>H', buffer)[0] >> 48  # Shift the mantissa back to its original position
+
+
+'''
+class PriceType:
+    MANTISSA_SIZE = 8
+    EXPONENT = -8
+
+    def __init__(self, mantissa=None, exponent=None):
+        self.mantissa = mantissa
+
+    def encode(self):
+        if self.mantissa is None:
+            return b'\xff' * self.MANTISSA_SIZE  # Represent null value with 0xFF bytes
+        else:
+            price_value = int(self.mantissa * (10 ** self.EXPONENT))
+            return pack('>Q', price_value)
+
+    def decode(self, buffer):
+        if buffer == b'\xff' * self.MANTISSA_SIZE:
+            self.mantissa = None
+        else:
+            price_value, = unpack_from('>Q', buffer)
+            self.mantissa = price_value / (10 ** self.EXPONENT)
+
+
+class ShortPriceType:
+    MANTISSA_SIZE = 2
+    EXPONENT = -2
+
+    def __init__(self, mantissa=None, exponent=None):
+        self.mantissa = mantissa
+
+    def encode(self):
+        if self.mantissa is None:
+            return b'\xff' * self.MANTISSA_SIZE  # Represent null value with 0xFF bytes
+        else:
+            price_value = int(self.mantissa * (10 ** self.EXPONENT))
+            return pack('>H', price_value)
+
+    def decode(self, buffer):
+        if buffer == b'\xff' * self.MANTISSA_SIZE:
+            self.mantissa = None
+        else:
+            price_value, = unpack_from('>H', buffer)
+            self.mantissa = price_value / (10 ** self.EXPONENT)
+
+'''
 
 class UTCTimestampNanos:
     SIZE = 8
@@ -178,6 +276,25 @@ class OptionsSecurityID:
 
     def __str__(self):
         return self.value
+    
+
+class UnderlierType:
+    SIZE = 6
+
+    def __init__(self, value=''):
+        self.value = value
+
+    def encode(self):
+        encoded_value = self.value.encode('utf-8')
+        padding = b'\x00' * (self.SIZE - len(encoded_value))
+        return encoded_value + padding
+
+    def decode(self, buffer):
+        encoded_value = buffer[:self.SIZE].rstrip(b'\x00')
+        self.value = encoded_value.decode('utf-8')
+
+    def __str__(self):
+        return self.value
 
 
 class OpenOrCloseType:
@@ -208,10 +325,10 @@ class TimeInForceType:
         self.value = value
 
     def encode(self):
-        return self.value.encode
+        return pack('s', self.value.encode())
 
     def decode(self, buffer):
-        self.value, = unpack_from('B', buffer)
+        self.value, = unpack_from('s', buffer)
 
 
 class ExecInstType:
@@ -321,6 +438,7 @@ class RepriceBehaviorType:
 
 class UINT16:
     SIZE = 2
+    NULL_VALUE = 65535
 
     def __init__(self, value):
         self.value = value
@@ -344,6 +462,7 @@ class RepeatingGroupDimensions:
 
     def decode(self, buffer):
         self.block_length,self.num_groups = unpack_from('>BB', buffer)
+
 
 class PartyID:
 
@@ -378,17 +497,18 @@ class PartyRoleType:
         self.value = value
 
     def encode(self):
-        return self.value.encode()
+        buffer = pack('>B', self.value)
+        return buffer
 
     def decode(self, buffer):
-        self.value = buffer.decode()
+        self.value = unpack_from('>B', buffer)[0]
 
 
 class PartiesGroup:
     def __init__(self, party_ids=None):
         self.party_ids = party_ids or []
         print(party_ids)
-
+     
 
     def encode(self):
         encoded_parties = b''.join(b''.join(party_obj.encode() for party_obj in nested_list) for nested_list in self.party_ids)
@@ -454,12 +574,73 @@ class UINT64:
 
 
 
+	
+class OrdStatusType:
+    SIZE = 1
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return self.value.encode()
+
+    def decode(self, buffer):
+        self.value = buffer.decode()
+
+
+
+
+		
+class LastLiquidityIndType:
+    SIZE = 1
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('>B', self.value)
+
+    def decode(self, buffer):
+        self.value = unpack_from('>B', buffer)[0]
+
+
+
+
+
+class OrdRejReason:
+    SIZE = 2
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return pack('>H', self.value)
+
+    def decode(self, buffer):
+        self.value = unpack_from('>H', buffer)[0]
+
+
+
+class ExchangeCode:
+    SIZE = 4
+
+    def __init__(self, value):
+        self.value = value
+
+    def encode(self):
+        return self.value.encode()
+
+    def decode(self, buffer):
+        self.value = buffer.decode()
+
+
+
 
 class NewOrderSingle:
     TEMPLATE_ID = 1
     num_groups = 1
     schema_id = 9
-    version = 259
+    version = 261
     BLOCK_LENGTH = 64
 
     def __init__(self, **kwargs):
@@ -475,14 +656,17 @@ class NewOrderSingle:
         self.open_or_close = kwargs.get('open_or_close', OpenOrCloseType('O'))
         self.exec_inst = kwargs.get('exec_inst', ExecInstType(0))
         self.trading_capacity = kwargs.get('trading_capacity', TradingCapacityType(0))
-        self.reprice_frequency = kwargs.get('reprice_frequency', RepriceFrequencyType(0))
-        self.reprice_behavior = kwargs.get('reprice_behavior', RepriceBehaviorType(0))
+        self.reprice_frequency = kwargs.get('reprice_frequency', RepriceFrequencyType(255))
+        self.reprice_behavior = kwargs.get('reprice_behavior', RepriceBehaviorType(255))
         self.mtp_group_id = kwargs.get('mtp_group_id', MtpGroupIDType(0))
         self.match_trade_prevention = kwargs.get('match_trade_prevention', MatchTradePreventionType(0))
         self.cancel_group_id = kwargs.get('cancel_group_id', UINT16(0))
         self.risk_group_id = kwargs.get('risk_group_id', UINT16(0))
-        self.RepeatingGroupDimensions = kwargs.get('repeating_group_dimensions', RepeatingGroupDimensions(18,1))
+        party_entries = kwargs.get('party_entries', int())
+        print(party_entries)
+        self.RepeatingGroupDimensions = kwargs.get('repeating_group_dimensions', RepeatingGroupDimensions(18,int(party_entries)))
         self.parties_group = kwargs.get('parties_group',PartiesGroup())
+        
         
 
     def encode(self):
@@ -508,8 +692,6 @@ class NewOrderSingle:
         encoded_parties = b''
         for party in self.parties_group:
                 encoded_parties += party.encode()
-
-        print(encoded_RepeatingGroupDimensions,encoded_parties)
 
         encoded_message = (
             encoded_header +
@@ -670,9 +852,9 @@ class ShortTwoSideBulkQuote:
     TEMPLATE_ID = 2
     num_groups = 2
     schema_id = 9
-    version = 259
+    version = 261
     #BLOCK_LENGTH = 39
-    BLOCK_LENGTH = 95
+    BLOCK_LENGTH = 39
 
     def __init__(self, **kwargs):
         self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups)
@@ -687,9 +869,9 @@ class ShortTwoSideBulkQuote:
         self.risk_group_id = kwargs.get('risk_group_id', UINT16(0))
         quote_entries = len(kwargs.get('quotes', []))
         party_entries = len(kwargs.get('parties', []))
-        self.no_party_ids = kwargs.get('repeating_group_dimensions', RepeatingGroupDimensions(18, party_entries))
+        self.no_party_ids = kwargs.get('repeating_group_dimensions', RepeatingGroupDimensions(18, 2))
         self.parties = kwargs.get('parties', PartiesGroup())
-        self.no_quote_entries = kwargs.get('no_quote_entries', RepeatingGroupDimensions(15, quote_entries))
+        self.no_quote_entries = kwargs.get('no_quote_entries', RepeatingGroupDimensions(17, quote_entries))
         self.quotes = kwargs.get('quotes',ShortTwoSidedQuote())
 
     def encode(self):
@@ -857,7 +1039,7 @@ class LongTwoSideBulkQuote:
     TEMPLATE_ID = 3
     num_groups = 2
     schema_id = 9
-    version = 259
+    version = 261
     BLOCK_LENGTH = 39
 
     def __init__(self, **kwargs):
@@ -873,7 +1055,7 @@ class LongTwoSideBulkQuote:
         self.risk_group_id = kwargs.get('risk_group_id', UINT16(0))
         quote_entries = len(kwargs.get('quotes', []))
         party_entries = len(kwargs.get('parties', []))
-        self.no_party_ids = kwargs.get('repeating_group_dimensions', RepeatingGroupDimensions(18, party_entries))
+        self.no_party_ids = kwargs.get('repeating_group_dimensions', RepeatingGroupDimensions(18, 2))
         self.parties = kwargs.get('parties', PartiesGroup())
         self.no_quote_entries = kwargs.get('no_quote_entries', RepeatingGroupDimensions(33, quote_entries))
         self.quotes = kwargs.get('quotes',LongTwoSidedQuote())
@@ -997,7 +1179,7 @@ class ShortOneSideQuote:
         self.list_seq_no = UINT8(list_seq_no)
         self.options_security_id = OptionsSecurityID(options_security_id)
         self.side = SideType(side)
-        self.quantity = UINT32(quantity)
+        self.quantity = UINT16(quantity)
         self.price = ShortPriceType(price,0)
 
     def encode(self):
@@ -1037,7 +1219,7 @@ class ShortOneSideBulkQuote:
     TEMPLATE_ID = 4
     num_groups = 2
     schema_id = 9
-    version = 259
+    version = 261
     BLOCK_LENGTH = 39
 
     def __init__(self, **kwargs):
@@ -1053,7 +1235,7 @@ class ShortOneSideBulkQuote:
         self.risk_group_id = kwargs.get('risk_group_id', UINT16(0))
         quote_entries = len(kwargs.get('quotes', []))
         party_entries = len(kwargs.get('parties', []))
-        self.no_party_ids = kwargs.get('repeating_group_dimensions', RepeatingGroupDimensions(18, party_entries))
+        self.no_party_ids = kwargs.get('repeating_group_dimensions', RepeatingGroupDimensions(18, 2))
         self.parties = kwargs.get('parties', PartiesGroup())
         self.no_quote_entries = kwargs.get('no_quote_entries', RepeatingGroupDimensions(14, quote_entries))
         self.quotes = kwargs.get('quotes',ShortOneSideQuote())
@@ -1201,7 +1383,7 @@ class LongOneSideBulkQuote:
     TEMPLATE_ID = 5
     num_groups = 2
     schema_id = 9
-    version = 259
+    version = 261
     BLOCK_LENGTH = 39
 
     def __init__(self, **kwargs):
@@ -1217,9 +1399,9 @@ class LongOneSideBulkQuote:
         self.risk_group_id = kwargs.get('risk_group_id', UINT16(0))
         quote_entries = len(kwargs.get('quotes', []))
         party_entries = len(kwargs.get('parties', []))
-        self.no_party_ids = kwargs.get('repeating_group_dimensions', RepeatingGroupDimensions(18, party_entries))
+        self.no_party_ids = kwargs.get('repeating_group_dimensions', RepeatingGroupDimensions(18, 2))
         self.parties = kwargs.get('parties', PartiesGroup())
-        self.no_quote_entries = kwargs.get('no_quote_entries', RepeatingGroupDimensions(22, quote_entries))
+        self.no_quote_entries = kwargs.get('no_quote_entries', RepeatingGroupDimensions(22, 5))
         self.quotes = kwargs.get('quotes',LongOneSideQuote())
 
     def encode(self):
@@ -1337,8 +1519,8 @@ class MassCancelRequest:
     TEMPLATE_ID = 8
     num_groups = 0
     schema_id = 9
-    version = 259
-    BLOCK_LENGTH = 57
+    version = 261
+    BLOCK_LENGTH = 50
 
     def __init__(self, **kwargs):
         self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups)
@@ -1346,10 +1528,12 @@ class MassCancelRequest:
         self.cl_ord_id = kwargs.get('cl_ord_id', Char(''))
         self.efid = kwargs.get('efid', Char(''))
         self.underlying_or_series = kwargs.get('underlying_or_series', UnderlyingOrSeriesType(0))
-        self.underlier = kwargs.get('underlier', Char(''))
-        self.options_security_id = kwargs.get('options_security_id', Char(''))
+        self.underlier = kwargs.get('underlier', UnderlierType(''))
+        self.options_security_id = kwargs.get('options_security_id', OptionsSecurityID(''))
         self.cancel_group_id = kwargs.get('cancel_group_id', UINT16(0))
         self.mass_cancel_inst = kwargs.get('mass_cancel_inst', MassCancelInstType(0))
+
+        print(self.sending_time,self.underlying_or_series,self.mass_cancel_inst)
 
     def encode(self):
         encoded_header = self.sbe_header.encode()
@@ -1399,15 +1583,17 @@ class MassCancelRequest:
             cancel_group_id=cancel_group_id,
             mass_cancel_inst=mass_cancel_inst
         )
+    
+
 
 
 
 class OrderCancelRequest:
-    TEMPLATE_ID = 2
+    TEMPLATE_ID = 7
     num_groups = 0
     schema_id = 9
-    version = 259
-    BLOCK_LENGTH = 73
+    version = 261
+    BLOCK_LENGTH = 66
 
     def __init__(self, **kwargs):
         self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups)
@@ -1442,6 +1628,8 @@ class OrderCancelRequest:
 
         return encoded_message
 
+
+
     @classmethod
     def decode(cls, buffer):
         sbe_header = SBEHeader.decode(buffer[0:8])
@@ -1468,7 +1656,7 @@ class OrderReplaceRequest:
     TEMPLATE_ID = 6
     num_groups = 1
     schema_id = 9
-    version = 259
+    version = 261
     BLOCK_LENGTH = 86
 
     def __init__(self, **kwargs):
@@ -1557,3 +1745,625 @@ class OrderReplaceRequest:
 
         self.price = PriceType(0, 0)
         self.price.decode(buffer[offset:offset + PriceType.SIZE])
+
+
+class AllocationInstruction:
+    TEMPLATE_ID = 10
+    num_groups = 1
+    schema_id = 9
+    version = 261
+    BLOCK_LENGTH = 86
+
+    def __init__(self, **kwargs):
+        self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups)
+        self.sending_time = kwargs.get('sending_time', UTCTimestampNanos(0))
+        self.alloc_id = kwargs.get('alloc_id', Char(''))
+        self.alloc_type = kwargs.get('alloc_type',AllocType())
+        self.alloc_trans_type = kwargs.get('alloc_trans_type',AllocTransType())
+        self.ref_alloc_id = kwargs.get('ref_alloc_id',Char(''))
+        self.options_security_id = kwargs.get('options_security_id', OptionsSecurityID(''))
+        self.side = kwargs.get('side',SideType())
+        self.no_execs = kwargs.get('repeating_group_dimensions', RepeatingGroupDimensions(18, 2))
+        self.execution_allocations = kwargs.get('execution_allocations',ExecutionAllocationsGroup())
+        self.no_allocs = kwargs.get('repeating_group_dimensions', RepeatingGroupDimensions(18, 2))
+        self.requested_allocations = kwargs.get('requested_allocations', RequestedAllocationsGroup())
+
+    def encode(self):
+        encoded_header = self.sbe_header.encode()
+        encoded_sending_time = self.sending_time.encode()
+        encoded_alloc_id = self.alloc_id.encode()
+        encoded_alloc_type_value =  self.alloc_type.value.encode('utf-8')
+        encoded_alloc_trans_type =    self.alloc_trans_type.value.encode('utf-8')
+        encoded_ref_alloc_id =    self.ref_alloc_id.encode() 
+        encoded_options_security_id =     self.options_security_id.encode() 
+        encoded_side =    self.side.value.encode('utf-8') 
+        encoded_no_execs =    self.no_execs.encode() 
+        for execution_allocation in self.execution_allocations:
+                encoded_execution_allocations += execution_allocation.encode()
+        encoded_no_allocs = self.no_allocs.encode()
+        for requested_allocation in self.requested_allocations:
+                encoded_requested_allocations += requested_allocation.encode()
+
+        encoded_message = (
+            encoded_header +
+            encoded_sending_time +
+            encoded_alloc_id +
+            encoded_alloc_type_value +
+            encoded_alloc_trans_type +
+            encoded_ref_alloc_id +
+            encoded_options_security_id +
+            encoded_side +
+            encoded_no_execs +
+            encoded_execution_allocations +
+            encoded_no_allocs +
+            encoded_requested_allocations
+
+        )
+
+        return encoded_message
+
+
+class ExecutionReportNew:
+    TEMPLATE_ID = 11
+    num_groups = 1
+    schema_id = 1
+    version = 261
+    BLOCK_LENGTH = 105
+
+    def __init__(self):
+        self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups)
+        self.order_id = UINT64(0)
+        self.cl_ord_id = Char('')
+        self.list_seq_no = UINT8(0)
+        self.exec_id = UINT64(0)
+        self.ord_status = OrdStatusType('')
+        self.options_security_id = Char('')
+        self.side = SideType('')
+        self.order_qty = UINT32(0)
+        self.ord_type = OrdType('')
+        self.price = PriceType(0, 0)
+        self.time_in_force = TimeInForceType(0)
+        self.open_or_close = OpenOrCloseType('')
+        self.exec_inst = ExecInstType(0)
+        self.trading_capacity = TradingCapacityType('')
+        self.reprice_frequency = RepriceFrequencyType(0)
+        self.reprice_behavior = RepriceBehaviorType(0)
+        self.leaves_qty = UINT32(0)
+        self.cum_qty = UINT32(0)
+        self.sending_time = UTCTimestampNanos(0)
+        self.transact_time = UTCTimestampNanos(0)
+        self.mtp_group_id = MtpGroupIDType(0)
+        self.match_trade_prevention = MatchTradePreventionType(0)
+        self.cancel_group_id = UINT16(0)
+        self.risk_group_id = UINT16(0)
+        self.RepeatingGroupDimensions = RepeatingGroupDimensions(18, 3)
+        self.parties_group = PartiesGroup()
+
+    def decode(self, buffer):
+        offset = 0
+
+        block_length, template_id = self.sbe_header.decode(buffer[offset:offset + SBEHeader.BLOCK_LENGTH])
+        offset += SBEHeader.BLOCK_LENGTH
+
+        self.order_id = UINT64(0)
+        self.order_id.decode(buffer[offset:])
+        offset += UINT64.SIZE
+
+        self.cl_ord_id = Char('')
+        self.cl_ord_id.decode(buffer[offset:])
+        offset += Char.SIZE
+
+        self.list_seq_no = UINT8(0)
+        self.list_seq_no.decode(buffer[offset:])
+        offset += UINT8.SIZE
+
+        self.exec_id = UINT64(0)
+        self.exec_id.decode(buffer[offset:])
+        offset += UINT64.SIZE
+
+        self.ord_status = OrdStatusType('')
+        self.ord_status.decode(buffer[offset:])
+        offset += OrdStatusType.SIZE
+
+        self.options_security_id = Char('')
+        self.options_security_id.decode(buffer[offset:])
+        offset += Char.SIZE
+
+        self.side = SideType('')
+        self.side.decode(buffer[offset:])
+        offset += SideType.SIZE
+
+        self.order_qty = UINT32(0)
+        self.order_qty.decode(buffer[offset:])
+        offset += UINT32.SIZE
+
+        self.ord_type = OrdType('')
+        self.ord_type.decode(buffer[offset:])
+        offset += OrdType.SIZE
+
+        self.price = PriceType(0, 0)
+        self.price.decode(buffer[offset:])
+        offset += PriceType.SIZE
+
+        self.time_in_force = TimeInForceType(0)
+        self.time_in_force.decode(buffer[offset:])
+        offset += TimeInForceType.SIZE
+
+        self.open_or_close = OpenOrCloseType('')
+        self.open_or_close.decode(buffer[offset:])
+        offset += OpenOrCloseType.SIZE
+
+        self.exec_inst = ExecInstType(0)
+        self.exec_inst.decode(buffer[offset:])
+        offset += ExecInstType.SIZE
+
+        self.trading_capacity = TradingCapacityType('')
+        self.trading_capacity.decode(buffer[offset:])
+        offset += TradingCapacityType.SIZE
+
+        self.reprice_frequency = RepriceFrequencyType(0)
+        self.reprice_frequency.decode(buffer[offset:])
+        offset += RepriceFrequencyType.SIZE
+
+        self.reprice_behavior = RepriceBehaviorType(0)
+        self.reprice_behavior.decode(buffer[offset:])
+        offset += RepriceBehaviorType.SIZE
+
+        self.leaves_qty = UINT32(0)
+        self.leaves_qty.decode(buffer[offset:])
+        offset += UINT32.SIZE
+
+        self.cum_qty = UINT32(0)
+        self.cum_qty.decode(buffer[offset:])
+        offset += UINT32.SIZE
+
+        self.sending_time = UTCTimestampNanos(0)
+        self.sending_time.decode(buffer[offset:])
+        offset += UTCTimestampNanos.SIZE
+
+        self.transact_time = UTCTimestampNanos(0)
+        self.transact_time.decode(buffer[offset:])
+        offset += UTCTimestampNanos.SIZE
+
+        self.mtp_group_id = MtpGroupIDType(0)
+        self.mtp_group_id.decode(buffer[offset:])
+        offset += MtpGroupIDType.SIZE
+
+        self.match_trade_prevention = MatchTradePreventionType(0)
+        self.match_trade_prevention.decode(buffer[offset:])
+        offset += MatchTradePreventionType.SIZE
+
+        self.cancel_group_id = UINT16(0)
+        self.cancel_group_id.decode(buffer[offset:])
+        offset += UINT16.SIZE
+
+        self.risk_group_id = UINT16(0)
+        self.risk_group_id.decode(buffer[offset:])
+        offset += UINT16.SIZE
+
+        self.RepeatingGroupDimensions = RepeatingGroupDimensions(0, 0)
+        self.RepeatingGroupDimensions.decode(buffer[offset:])
+        offset += RepeatingGroupDimensions.SIZE
+
+        self.parties_group = PartiesGroup()
+        self.parties_group.decode(buffer[offset:])
+        offset += len(buffer) - offset
+
+    def __str__(self):
+        return (
+            f"OrderID: {self.order_id.value}, ClOrdID: {self.cl_ord_id.value}, ListSeqNo: {self.list_seq_no.value}, "
+            f"ExecID: {self.exec_id.value}, OrdStatus: {self.ord_status.value}, OptionsSecurityID: {self.options_security_id.value}, "
+            f"Side: {self.side.value}, OrderQty: {self.order_qty.value}, OrdType: {self.ord_type.value}, Price: {self.price.mantissa}, "
+            f"TimeInForce: {self.time_in_force.value}, OpenOrClose: {self.open_or_close.value}, ExecInst: {self.exec_inst.value}, "
+            f"TradingCapacity: {self.trading_capacity.value}, RepriceFrequency: {self.reprice_frequency.value}, "
+            f"RepriceBehavior: {self.reprice_behavior.value}, LeavesQty: {self.leaves_qty.value}, CumQty: {self.cum_qty.value}, "
+            f"SendingTime: {self.sending_time.value}, TransactTime: {self.transact_time.value}, "
+            f"MtpGroupID: {self.mtp_group_id.value}, MatchTradePrevention: {self.match_trade_prevention.value}, "
+            f"CancelGroupID: {self.cancel_group_id.value}, RiskGroupID: {self.risk_group_id.value}, "
+            f"RepeatingGroupDimensions: BlockLength={self.RepeatingGroupDimensions.block_length}, NumGroups={self.RepeatingGroupDimensions.num_groups}, "
+            f"Parties: {self.parties_group.party_ids}"
+        )
+
+
+
+
+#ER_BulkQuoteNew:
+
+
+class ExecutionReportBulkQuoteNew:
+    TEMPLATE_ID = 12
+    num_groups = 1
+    schema_id = 1
+    version = 261
+    BLOCK_LENGTH = 68
+
+    def __init__(self):
+        self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups)
+        self.cl_ord_id = Char('')
+        self.symbol = Char('')
+        self.time_in_force = TimeInForceType(0)
+        self.exec_inst = ExecInstType(0)
+        self.trading_capacity = TradingCapacityType('')
+        self.sending_time = UTCTimestampNanos(0)
+        self.transact_time = UTCTimestampNanos(0)
+        self.mtp_group_id = MtpGroupIDType(0)
+        self.match_trade_prevention = MatchTradePreventionType(0)
+        self.cancel_group_id = UINT16(0)
+        self.risk_group_id = UINT16(0)
+        self.number_of_orders = UINT8(0)
+        self.RepeatingGroupDimensions = RepeatingGroupDimensions(0, 0)
+        self.parties_group = PartiesGroup()
+
+    def decode(self, buffer):
+        offset = 0
+
+        block_length, template_id = self.sbe_header.decode(buffer[offset:offset + SBEHeader.BLOCK_LENGTH])
+        offset += SBEHeader.BLOCK_LENGTH
+
+        self.cl_ord_id = Char('')
+        self.cl_ord_id.decode(buffer[offset:])
+        offset += Char.SIZE
+
+        self.symbol = Char('')
+        self.symbol.decode(buffer[offset:])
+        offset += Char.SIZE
+
+        self.time_in_force = TimeInForceType(0)
+        self.time_in_force.decode(buffer[offset:])
+        offset += TimeInForceType.SIZE
+
+        self.exec_inst = ExecInstType(0)
+        self.exec_inst.decode(buffer[offset:])
+        offset += ExecInstType.SIZE
+
+        self.trading_capacity = TradingCapacityType('')
+        self.trading_capacity.decode(buffer[offset:])
+        offset += TradingCapacityType.SIZE
+
+        self.sending_time = UTCTimestampNanos(0)
+        self.sending_time.decode(buffer[offset:])
+        offset += UTCTimestampNanos.SIZE
+
+        self.transact_time = UTCTimestampNanos(0)
+        self.transact_time.decode(buffer[offset:])
+        offset += UTCTimestampNanos.SIZE
+
+        self.mtp_group_id = MtpGroupIDType(0)
+        self.mtp_group_id.decode(buffer[offset:])
+        offset += MtpGroupIDType.SIZE
+
+        self.match_trade_prevention = MatchTradePreventionType(0)
+        self.match_trade_prevention.decode(buffer[offset:])
+        offset += MatchTradePreventionType.SIZE
+
+        self.cancel_group_id = UINT16(0)
+        self.cancel_group_id.decode(buffer[offset:])
+        offset += UINT16.SIZE
+
+        self.risk_group_id = UINT16(0)
+        self.risk_group_id.decode(buffer[offset:])
+        offset += UINT16.SIZE
+
+        self.number_of_orders = UINT8(0)
+        self.number_of_orders.decode(buffer[offset:])
+        offset += UINT8.SIZE
+
+        self.RepeatingGroupDimensions = RepeatingGroupDimensions(0, 0)
+        self.RepeatingGroupDimensions.decode(buffer[offset:])
+        offset += RepeatingGroupDimensions.SIZE
+
+        self.parties_group = PartiesGroup()
+        self.parties_group.decode(buffer[offset:])
+        offset += len(buffer) - offset
+
+    def __str__(self):
+        return (
+            f"ClOrdID: {self.cl_ord_id.value}, Symbol: {self.symbol.value}, TimeInForce: {self.time_in_force.value}, "
+            f"ExecInst: {self.exec_inst.value}, TradingCapacity: {self.trading_capacity.value}, SendingTime: {self.sending_time.value}, "
+            f"TransactTime: {self.transact_time.value}, MtpGroupID: {self.mtp_group_id.value}, MatchTradePrevention: {self.match_trade_prevention.value}, "
+            f"CancelGroupID: {self.cancel_group_id.value}, RiskGroupID: {self.risk_group_id.value}, NumberOfOrders: {self.number_of_orders.value}, "
+            f"RepeatingGroupDimensions: BlockLength={self.RepeatingGroupDimensions.block_length}, NumGroups={self.RepeatingGroupDimensions.num_groups}, "
+            f"Parties: {self.parties_group.party_ids}"
+        )
+
+
+
+#ER_ComponentNew:
+
+
+class ExecutionReportBulkQuoteNew:
+    TEMPLATE_ID = 12
+    num_groups = 1
+    schema_id = 1
+    version = 261
+    BLOCK_LENGTH = 68
+
+    def __init__(self):
+        self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups)
+        self.cl_ord_id = Char('')
+        self.symbol = Char('')
+        self.time_in_force = TimeInForceType(0)
+        self.exec_inst = ExecInstType(0)
+        self.trading_capacity = TradingCapacityType('')
+        self.sending_time = UTCTimestampNanos(0)
+        self.transact_time = UTCTimestampNanos(0)
+        self.mtp_group_id = MtpGroupIDType(0)
+        self.match_trade_prevention = MatchTradePreventionType(0)
+        self.cancel_group_id = UINT16(0)
+        self.risk_group_id = UINT16(0)
+        self.number_of_orders = UINT8(0)
+        self.RepeatingGroupDimensions = RepeatingGroupDimensions(0, 0)
+        self.parties_group = PartiesGroup()
+
+    def decode(self, buffer):
+        offset = 0
+
+        block_length, template_id = self.sbe_header.decode(buffer[offset:offset + SBEHeader.BLOCK_LENGTH])
+        offset += SBEHeader.BLOCK_LENGTH
+
+        self.cl_ord_id = Char('')
+        self.cl_ord_id.decode(buffer[offset:])
+        offset += Char.SIZE
+
+        self.symbol = Char('')
+        self.symbol.decode(buffer[offset:])
+        offset += Char.SIZE
+
+        self.time_in_force = TimeInForceType(0)
+        self.time_in_force.decode(buffer[offset:])
+        offset += TimeInForceType.SIZE
+
+        self.exec_inst = ExecInstType(0)
+        self.exec_inst.decode(buffer[offset:])
+        offset += ExecInstType.SIZE
+
+        self.trading_capacity = TradingCapacityType('')
+        self.trading_capacity.decode(buffer[offset:])
+        offset += TradingCapacityType.SIZE
+
+        self.sending_time = UTCTimestampNanos(0)
+        self.sending_time.decode(buffer[offset:])
+        offset += UTCTimestampNanos.SIZE
+
+        self.transact_time = UTCTimestampNanos(0)
+        self.transact_time.decode(buffer[offset:])
+        offset += UTCTimestampNanos.SIZE
+
+        self.mtp_group_id = MtpGroupIDType(0)
+        self.mtp_group_id.decode(buffer[offset:])
+        offset += MtpGroupIDType.SIZE
+
+        self.match_trade_prevention = MatchTradePreventionType(0)
+        self.match_trade_prevention.decode(buffer[offset:])
+        offset += MatchTradePreventionType.SIZE
+
+        self.cancel_group_id = UINT16(0)
+        self.cancel_group_id.decode(buffer[offset:])
+        offset += UINT16.SIZE
+
+        self.risk_group_id = UINT16(0)
+        self.risk_group_id.decode(buffer[offset:])
+        offset += UINT16.SIZE
+
+        self.number_of_orders = UINT8(0)
+        self.number_of_orders.decode(buffer[offset:])
+        offset += UINT8.SIZE
+
+        self.RepeatingGroupDimensions = RepeatingGroupDimensions(0, 0)
+        self.RepeatingGroupDimensions.decode(buffer[offset:])
+        offset += RepeatingGroupDimensions.SIZE
+
+        self.parties_group = PartiesGroup()
+        self.parties_group.decode(buffer[offset:])
+        offset += len(buffer) - offset
+
+    def __str__(self):
+        return (
+            f"ClOrdID: {self.cl_ord_id.value}, Symbol: {self.symbol.value}, TimeInForce: {self.time_in_force.value}, "
+            f"ExecInst: {self.exec_inst.value}, TradingCapacity: {self.trading_capacity.value}, SendingTime: {self.sending_time.value}, "
+            f"TransactTime: {self.transact_time.value}, MtpGroupID: {self.mtp_group_id.value}, MatchTradePrevention: {self.match_trade_prevention.value}, "
+            f"CancelGroupID: {self.cancel_group_id.value}, RiskGroupID: {self.risk_group_id.value}, NumberOfOrders: {self.number_of_orders.value}, "
+            f"RepeatingGroupDimensions: BlockLength={self.RepeatingGroupDimensions.block_length}, NumGroups={self.RepeatingGroupDimensions.num_groups}, "
+            f"Parties: {self.parties_group.party_ids}"
+        )
+
+
+#ER_Rejected:
+
+class ExecutionReportRejected:
+    TEMPLATE_ID = 14
+    num_groups = 1
+    schema_id = 1
+    version = 260
+    BLOCK_LENGTH = 64
+
+    def __init__(self):
+        self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups)
+        self.cl_ord_id = Char('')
+        self.list_seq_no = UINT8(0)
+        self.exec_id = UINT64(0)
+        self.ord_status = OrdStatusType(0)
+        self.reject_reason = OrderRejectReasonCode(0)
+        self.options_security_id = OptionsSecurityID('')
+        self.side = SideType('')
+        self.leaves_qty = UINT32(0)
+        self.cum_qty = UINT32(0)
+        self.sending_time = UTCTimestampNanos(0)
+
+    def decode(self, buffer):
+        offset = 0
+
+        block_length, template_id = self.sbe_header.decode(buffer[offset:offset + SBEHeader.BLOCK_LENGTH])
+        offset += SBEHeader.BLOCK_LENGTH
+
+        self.cl_ord_id = Char('')
+        self.cl_ord_id.decode(buffer[offset:])
+        offset += Char.SIZE
+
+        self.list_seq_no = UINT8(0)
+        self.list_seq_no.decode(buffer[offset:])
+        offset += UINT8.SIZE
+
+        self.exec_id = UINT64(0)
+        self.exec_id.decode(buffer[offset:])
+        offset += UINT64.SIZE
+
+        self.ord_status = OrdStatusType(0)
+        self.ord_status.decode(buffer[offset:])
+        offset += OrdStatusType.SIZE
+
+        self.reject_reason = OrderRejectReasonCode(0)
+        self.reject_reason.decode(buffer[offset:])
+        offset += OrderRejectReasonCode.SIZE
+
+        self.options_security_id = OptionsSecurityID('')
+        self.options_security_id.decode(buffer[offset:])
+        offset += OptionsSecurityID.SIZE
+
+        self.side = SideType('')
+        self.side.decode(buffer[offset:])
+        offset += SideType.SIZE
+
+        self.leaves_qty = UINT32(0)
+        self.leaves_qty.decode(buffer[offset:])
+        offset += UINT32.SIZE
+
+        self.cum_qty = UINT32(0)
+        self.cum_qty.decode(buffer[offset:])
+        offset += UINT32.SIZE
+
+        self.sending_time = UTCTimestampNanos(0)
+        self.sending_time.decode(buffer[offset:])
+        offset += UTCTimestampNanos.SIZE
+
+    def __str__(self):
+        return (
+            f"ClOrdID: {self.cl_ord_id.value}, ListSeqNo: {self.list_seq_no.value}, ExecID: {self.exec_id.value}, "
+            f"OrdStatus: {self.ord_status.value}, RejectReason: {self.reject_reason.value}, OptionsSecurityID: {self.options_security_id.value}, "
+            f"Side: {self.side.value}, LeavesQty: {self.leaves_qty.value}, CumQty: {self.cum_qty.value}, SendingTime: {self.sending_time.value}"
+        )
+
+
+
+#ER_Trade:
+
+class ExecutionReportTrade:
+    TEMPLATE_ID = 15
+    num_groups = 1
+    schema_id = 1
+    version = 0
+    BLOCK_LENGTH = 106
+
+    def __init__(self):
+        self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, self.version, self.num_groups)
+        self.order_id = UINT64(0)
+        self.cl_ord_id = Char('')
+        self.list_seq_no = UINT8(0)
+        self.trd_match_id = UINT64(0)
+        self.exec_id = UINT64(0)
+        self.ord_status = OrdStatusType(0)
+        self.options_security_id = OptionsSecurityID('')
+        self.side = SideType('')
+        self.last_qty = UINT32(0)
+        self.last_px = PriceType(0)
+        self.leaves_qty = UINT32(0)
+        self.cum_qty = UINT32(0)
+        self.sending_time = UTCTimestampNanos(0)
+        self.transact_time = UTCTimestampNanos(0)
+        self.last_liquidity_ind = LastLiquidityIndType(0)
+        self.last_mkt = ExchangeCode(0)
+        self.open_or_close = OpenOrCloseType('O')
+        self.trading_capacity = TradingCapacityType(0)
+        self.contra_trading_capacity = TradingCapacityType(0)
+
+    def decode(self, buffer):
+        offset = 0
+
+        block_length, template_id = self.sbe_header.decode(buffer[offset:offset + SBEHeader.BLOCK_LENGTH])
+        offset += SBEHeader.BLOCK_LENGTH
+
+        self.order_id = UINT64(0)
+        self.order_id.decode(buffer[offset:])
+        offset += UINT64.SIZE
+
+        self.cl_ord_id = Char('')
+        self.cl_ord_id.decode(buffer[offset:])
+        offset += Char.SIZE
+
+        self.list_seq_no = UINT8(0)
+        self.list_seq_no.decode(buffer[offset:])
+        offset += UINT8.SIZE
+
+        self.trd_match_id = UINT64(0)
+        self.trd_match_id.decode(buffer[offset:])
+        offset += UINT64.SIZE
+
+        self.exec_id = UINT64(0)
+        self.exec_id.decode(buffer[offset:])
+        offset += UINT64.SIZE
+
+        self.ord_status = OrdStatusType(0)
+        self.ord_status.decode(buffer[offset:])
+        offset += OrdStatusType.SIZE
+
+        self.options_security_id = OptionsSecurityID('')
+        self.options_security_id.decode(buffer[offset:])
+        offset += OptionsSecurityID.SIZE
+
+        self.side = SideType('')
+        self.side.decode(buffer[offset:])
+        offset += SideType.SIZE
+
+        self.last_qty = UINT32(0)
+        self.last_qty.decode(buffer[offset:])
+        offset += UINT32.SIZE
+
+        self.last_px = PriceType(0)
+        self.last_px.decode(buffer[offset:])
+        offset += PriceType.MANTISSA_SIZE
+
+        self.leaves_qty = UINT32(0)
+        self.leaves_qty.decode(buffer[offset:])
+        offset += UINT32.SIZE
+
+        self.cum_qty = UINT32(0)
+        self.cum_qty.decode(buffer[offset:])
+        offset += UINT32.SIZE
+
+        self.sending_time = UTCTimestampNanos(0)
+        self.sending_time.decode(buffer[offset:])
+        offset += UTCTimestampNanos.SIZE
+
+        self.transact_time = UTCTimestampNanos(0)
+        self.transact_time.decode(buffer[offset:])
+        offset += UTCTimestampNanos.SIZE
+
+        self.last_liquidity_ind = LastLiquidityIndType(0)
+        self.last_liquidity_ind.decode(buffer[offset:])
+        offset += LastLiquidityIndType.SIZE
+
+        self.last_mkt = ExchangeCode(0)
+        self.last_mkt.decode(buffer[offset:])
+        offset += ExchangeCode.SIZE
+
+        self.open_or_close = OpenOrCloseType('O')
+        self.open_or_close.decode(buffer[offset:])
+        offset += OpenOrCloseType.SIZE
+
+        self.trading_capacity = TradingCapacityType(0)
+        self.trading_capacity.decode(buffer[offset:])
+        offset += TradingCapacityType.SIZE
+
+        self.contra_trading_capacity = TradingCapacityType(0)
+        self.contra_trading_capacity.decode(buffer[offset:])
+        offset += TradingCapacityType.SIZE
+
+    def __str__(self):
+        return (
+            f"OrderID: {self.order_id.value}, ClOrdID: {self.cl_ord_id.value}, ListSeqNo: {self.list_seq_no.value}, "
+            f"TrdMatchID: {self.trd_match_id.value}, ExecID: {self.exec_id.value}, OrdStatus: {self.ord_status.value}, "
+            f"OptionsSecurityID: {self.options_security_id.value}, Side: {self.side.value}, LastQty: {self.last_qty.value}, "
+            f"LastPx: {self.last_px.value}, LeavesQty: {self.leaves_qty.value}, CumQty: {self.cum_qty.value}, SendingTime: {self.sending_time.value}, "
+            f"TransactTime: {self.transact_time.value}, LastLiquidityInd: {self.last_liquidity_ind.value}, LastMkt: {self.last_mkt.value}, "
+            f"OpenOrClose: {self.open_or_close.value}, TradingCapacity: {self.trading_capacity.value}, ContraTradingCapacity: {self.contra_trading_capacity.value}"
+        )
