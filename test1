@@ -1,1 +1,23 @@
-AND DATE(t.TRD_DT) >= DATE('2023-09-27')  -- Filter by date condition
+2023-10-05T07:00:01-04:00 orsa01.options.ny4.memx.tech systemd[1]: auto_orsa_file_process.service: Main process exited, code=exited, status=1/FAILURE
+2023-10-05T07:00:01-04:00 orsa01.options.ny4.memx.tech systemd[1]: auto_orsa_file_process.service: Failed with result 'exit-code'.
+2023-10-05T07:00:01-04:00 orsa01.options.ny4.memx.tech systemd[1]: Failed to start Orsa file process.
+2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[1]: Created slice User Slice of UID 5012.
+2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[1]: Starting User Runtime Directory /run/user/5012...
+2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[1]: Finished User Runtime Directory /run/user/5012.
+2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[1]: Starting User Manager for UID 5012...
+2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd: pam_unix(systemd-user:session): session opened for user pvellanki(uid=5012) by (uid=0)
+2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[12269]: Queued start job for default target Main User Target.
+2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[12269]: Created slice User Application Slice.
+2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[12269]: Reached target Paths.
+2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[12269]: Reached target Timers.
+2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[12269]: Starting D-Bus User Message Bus Socket...
+2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[12269]: Listening on D-Bus User Message Bus Socket.
+2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[12269]: Reached target Sockets.
+2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[12269]: Reached target Basic System.
+2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[12269]: Reached target Main User Target.
+2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[12269]: Startup finished in 61ms.
+2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[1]: Started User Manager for UID 5012.
+2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[1]: Started Session 133 of User pvellanki.
+2023-10-05T08:30:01-04:00 orsa01.options.ny4.memx.tech systemd[1]: Starting Orsa file process...
+2023-10-05T08:30:01-04:00 orsa01.options.ny4.memx.tech systemd[1]: auto_orsa_file_process_postmove.service: Main process exited, code=exited, status=1/FAILURE
+2023-10-05T08:30:01-04:00 orsa01.options.ny4.memx.tech systemd[1]: auto_orsa_file_process_postmove.service: Failed with result 'exit-code'.
