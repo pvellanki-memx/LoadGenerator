@@ -1,23 +1,13 @@
-2023-10-05T07:00:01-04:00 orsa01.options.ny4.memx.tech systemd[1]: auto_orsa_file_process.service: Main process exited, code=exited, status=1/FAILURE
-2023-10-05T07:00:01-04:00 orsa01.options.ny4.memx.tech systemd[1]: auto_orsa_file_process.service: Failed with result 'exit-code'.
-2023-10-05T07:00:01-04:00 orsa01.options.ny4.memx.tech systemd[1]: Failed to start Orsa file process.
-2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[1]: Created slice User Slice of UID 5012.
-2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[1]: Starting User Runtime Directory /run/user/5012...
-2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[1]: Finished User Runtime Directory /run/user/5012.
-2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[1]: Starting User Manager for UID 5012...
-2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd: pam_unix(systemd-user:session): session opened for user pvellanki(uid=5012) by (uid=0)
-2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[12269]: Queued start job for default target Main User Target.
-2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[12269]: Created slice User Application Slice.
-2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[12269]: Reached target Paths.
-2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[12269]: Reached target Timers.
-2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[12269]: Starting D-Bus User Message Bus Socket...
-2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[12269]: Listening on D-Bus User Message Bus Socket.
-2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[12269]: Reached target Sockets.
-2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[12269]: Reached target Basic System.
-2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[12269]: Reached target Main User Target.
-2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[12269]: Startup finished in 61ms.
-2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[1]: Started User Manager for UID 5012.
-2023-10-05T08:14:01-04:00 orsa01.options.ny4.memx.tech systemd[1]: Started Session 133 of User pvellanki.
-2023-10-05T08:30:01-04:00 orsa01.options.ny4.memx.tech systemd[1]: Starting Orsa file process...
-2023-10-05T08:30:01-04:00 orsa01.options.ny4.memx.tech systemd[1]: auto_orsa_file_process_postmove.service: Main process exited, code=exited, status=1/FAILURE
-2023-10-05T08:30:01-04:00 orsa01.options.ny4.memx.tech systemd[1]: auto_orsa_file_process_postmove.service: Failed with result 'exit-code'.
+pvellanki@orsa01:/etc/systemd/system$ pip install pandas
+Defaulting to user installation because normal site-packages is not writeable
+Looking in indexes: http://10.0.28.1/artifactory/api/pypi/pypi-remote/simple
+Requirement already satisfied: pandas in /home/pvellanki/.local/lib/python3.10/site-packages (2.0.3)
+Requirement already satisfied: tzdata>=2022.1 in /home/pvellanki/.local/lib/python3.10/site-packages (from pandas) (2023.3)
+Requirement already satisfied: python-dateutil>=2.8.2 in /usr/local/lib/python3.10/dist-packages (from pandas) (2.8.2)
+Requirement already satisfied: pytz>=2020.1 in /usr/lib/python3/dist-packages (from pandas) (2022.1)
+Requirement already satisfied: numpy>=1.21.0 in /home/pvellanki/.local/lib/python3.10/site-packages (from pandas) (1.25.2)
+Requirement already satisfied: six>=1.5 in /usr/lib/python3/dist-packages (from python-dateutil>=2.8.2->pandas) (1.16.0)
+pvellanki@orsa01:/etc/systemd/system$ which python3
+/usr/bin/python3
+pvellanki@orsa01:/etc/systemd/system$ ls -l /usr/bin/python3
+lrwxrwxrwx 1 root root 10 Aug 18  2022 /usr/bin/python3 -> python3.10
