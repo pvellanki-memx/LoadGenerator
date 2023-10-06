@@ -1,42 +1,18 @@
 #!/bin/bash
 
-# Define the recipient's email address
+# Email details
 recipient="recipient@example.com"
+subject="ORSA process files - $(date -d 'yesterday' '+%Y-%m-%d')"
+body="Please find attached the ORSA process files for $(date -d 'yesterday' '+%Y-%m-%d')."
+attachments_dir="/path/to/attachments"  # Replace with the actual path to your attachments directory
 
-# Define yesterday's date in the format yyyy-mm-dd
-yesterday_date=$(date -d "yesterday" +"%Y-%m-%d")
+# Prepare the attachments
+attachments=""
+for file in "$attachments_dir"/*; do
+    if [ -f "$file" ]; then
+        attachments+="-a $file "
+    fi
+done
 
-# Define the subject of the email
-subject="ORSA process files - $yesterday_date"
-
-# Define the directory where attachments are located
-attachment_dir="/path/to/attachments/"
-
-# Check if mutt is installed
-if ! command -v mutt &>/dev/null; then
-    echo "Error: Mutt is not installed. Please install mutt and try again."
-    exit 1
-fi
-
-# Create an array of attachment file paths from the specified directory
-attachments=("$attachment_dir"/*)
-
-# Check if there are any files in the specified directory
-if [ ${#attachments[@]} -eq 0 ]; then
-    echo "Error: No attachments found in the directory: $attachment_dir"
-    exit 1
-fi
-
-# Compose and send the email
-mutt -s "$subject" -a "${attachments[@]}" -- "$recipient" < /dev/null
-
-# Exit the script
-exit 0
-
-
-
-
-attachments=(
-    "/path/to/attachment1"
-    "/path/to/attachment2"
-)
+# Send the email
+echo "$body" | mailx -s "$subject" $attachments "$recipient"
