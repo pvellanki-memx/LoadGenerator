@@ -1,6 +1,5 @@
- curl --location 'https://www.memxtrading.dev/api/docs/folder?folder=Finance' \
---header 'Institution: MEMX' \
---header 'market: US Options' \
---form 'folder="Finance/"' \
---form 'uploads=@"/Users/pvellanki/Downloads/06-28.xlsx"'
-{"error":"Request failed due to a server error"}%   
+pvellanki@orsa01:/data/pvellanki/orsa-package-2$ python3 groupedexcel_v5.py 2023-10-05.db
+Traceback (most recent call last):
+  File "/data/pvellanki/orsa-package-2/groupedexcel_v5.py", line 44, in <module>
+    conn.execute(query)
+sqlite3.OperationalError: database or disk is full
