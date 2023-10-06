@@ -1,172 +1,38 @@
-Overview
-CR-5 is a project to design and build exchange enhancements to manage and track cryptographic token positions for the Cryptographic Token Exchange.
+#!/bin/bash
 
-Description of Solution
-The “Core” solution includes the changes required to the Exchange Matching Complex to manage and track positions and limits. The Matching Complex will track and manage positions and limits during the Logical Trading Session and only allow orders to buy and sell to be processed if the firm placing such order has the necessary cryptographic tokens and/or dollars to fully fund the transaction within the limits tracked and managed by the Matching Complex.
+# Specify the directory containing attachment files
+attachment_dir="/path/to/attachment_directory"
 
-Each unique firm in the system can be configured to use one method, either the existing bi-lateral mechanism or this new centralized clearing method.
+# Temporary directory for storing attachments
+temp_dir=$(mktemp -d)
 
-User Portal and File Based System for Positions and Limits
-User Portal
-The User Portal will be enhanced to include support for the new position tracking function. This includes functionality to adjust positions and limits per firm, per cryptographic token in USD. Changes entered via the User Portal will be entered into the exchange automatically.
+# Check if the attachment directory exists
+if [ ! -d "$attachment_dir" ]; then
+  echo "Attachment directory not found: $attachment_dir"
+  exit 1
+fi
 
-The User Portal will also accept file based data for both positions and limits. The file based data will be initialized in the Matching Complex at the start of each Logical Trading Session by the Operations team prior to any order processing. 
+# Copy attachment files to the temporary directory
+cp "$attachment_dir"/* "$temp_dir"
 
-Intra-day changes to the position and limit information can be adjusted by updating the reference data files. This can be accomplish by uploading new files to the User Portal, and notifying the MEMX Market Operations staff of pending changes to be applied. The MEMX Market Operations team will provide a disposition for each change requested via the Market Operations ticketing system. There is no service level guarantee for this method of update.
+# Email configuration
+recipient="recipient@example.com"
+subject="Email Subject"
+body="Email body text"
+sender="sender@example.com"
+smtp_server="smtp.example.com"
+smtp_port="587"
+smtp_user="your_username"
+smtp_password="your_password"
 
-At system shutdown, a flat file indicating the ending positions for each firm, inclusive of any persisted GTT orders, will be generated and provided via the User Portal Document Center.
+# Compress the attachments
+zip_file="$temp_dir/attachments.zip"
+zip -rj "$zip_file" "$temp_dir"/*
 
-Reference Data File Formats
-All files are formatted as JSON object arrays.
+# Sending email with attachments using mutt
+mutt -s "$subject" -a "$zip_file" -- "$recipient" <<< "$body" \
+  -e "set from=$sender" \
+  -e "set smtp_url=smtp://$smtp_user:$smtp_password@$smtp_server:$smtp_port"
 
- Position Status Record Format: (MEMX->EDX)
-
-
-[
-  {
-      "recordType" : "PositionStatusRecord",
-      “firmId” : “ABC”,
-      "sessionId" : "EDX1.12345",
-      "sequence" : 12345,
-      "asOfTimestamp" : 213451616, (unix timestamp)
-      "currency" : "USD", (or BTC, ETH, ...)
-      "currentPosition" : 12345.1234, (positive value for "long", negative value for "short" – this is the current value of the position as of the sequence/timestamp/sessionId in the record)
-      "longLimit" : 100000.00,
-      "shortLimit" : -10000.00
-  },
-  {
-      "recordType" : "PositionStatusRecord",
-      “firmId” : “ABC”,
-      "sessionId" : "EDX1.12345",
-      "sequence" : 12345,
-      "asOfTimestamp" : 213451616, (unix timestamp)
-      "currency" : "BTC",
-      "currentPosition" : 115.75, (positive value for "long", negative value for "short" – this is the current value of the position as of the sequence/timestamp/sessionId in the record)
-      "longLimit" : 200.0,
-      "shortLimit" : -100.0
-  }
-]
-Position Adjustment File Record Format (EDX -> MEMX) 
-Used for adjusting positions after settlement.
-
-
-
-[
-  {
-      "recordType" : "UnilateralCreditPositionAdjustRecord",
-      "firmId" : "ABC",
-      "currency" : "USD", (or BTC, ETH, ...)
-      "side" : "Buy", (Buy or Sell)
-      "deltaPosition" : 12345.12, ##the CHANGE to add to the position 
-(to reduce a position use a negative value), not the value to set it the position to.
-MEMX will only accept up to 8 decimal digits in the deltaPosition. ##
-  },
-  {
-      "recordType" : "UnilateralCreditPositionAdjustRecord",
-      "firmId" : "ABC",
-      "currency" : "BTC",
-      "side" : "Sell",
-      "deltaPosition" : 15.8765
-  }
-]
-Limit Settings File Record Format (EDX -> MEMX)
-Used for changing limits.
-
-
-
-[
-  {
-      "recordType" : "UnilateralCreditLimitRecord",
-      "firmId" : "ABC",
-      "currency" : "USD", (or BTC, ETH, ...)
-      "longLimit" : 100000.00, ## MEMX will only accept up to 8 decimal digits for a limit. ##
-      "shortLimit" : -10000.00
-  },
-  {
-      "recordType" : "UnilateralCreditLimitRecord",
-      "firmId" : "ABC",
-      "currency" : "BTC",
-      "longLimit" : 10.5,
-      "shortLimit" : -7.5
-  }
-]
-FIX Clearing Drop Specification Updates
-The FIX Clearing Drop specification was updated to include 2 additional PartyId (tag 448) for firm in the repeating group, in addition to the existing CPID. The exchange will generate an Execution Report for each participant of the trade.
-
-As per discussion with EDX: You cannot infer liquidity status from the Execution Report messages. The Entering Firm will be the party that the OrderID and ClOrdID are in the report, the Contra Firm will always be the other side of the trad.  I.E for each pair of messages, the contra will be the party that the OrderID and ClOrdID are NOT in the report.
-
- 
-
-
-FIX Clearing Drop for Crypto-v1.1.pdf
-01 Aug 2023, 03:39 PM
-Match Engine Limit/Position Tracking Behavior
-There are 3 fundamental areas where we check or modify limits in the matching engine.
-
-Booking credit
-Credit is booked per side given a positive qty in MEMX units or notional(depending on token vs USD booking). Partial bookings ARE NOT ALLOWED. The calculation is as follows:
-
-
-
-if (side is Buy) {
-    bookedLongMagnitude = bookedLongMagnitude + qty;
-} else if (side is Sell) {
-    bookedShortMagnitude = bookedShortMagnitude + qty;
-}
-Applying execution
-For an execution, credit is tracked per side and can reduce the side opposite the transaction to a minimum of zero. Partial executions ARE ALLOWED. The calculation is as follows:
-
-
-
-if (side is Buy) {
-    longPositionMagnitude = longPositionMagnitude + qty;
-    shortPositionMagnitude = max(0, shortPositionMagnitude - qty);
-} else if (side is Sell) {
-    shortPositionMagnitude = shortPositionMagnitude + qty;
-    longPositionMagnitude = max(0, longPositionMagnitude - qty);
-}
-If this was applied to BTC as a buy, the calculation would also be applied to USD as a sell.
-
-If this was applied to BTC as a sell, the calculation would also be applied to USD as a buy.
-
-Additionally booked credit for the “passive” or resting order is backed out and applied again as described above.
-
-Credit Check:
-For a credit check on a given currency the calculation is as follows:
-
-
-
-if (side is Buy) {
-    return longLimit - bookedLongMagnitude - longPositionMagnitude;
-} else if (side is Sell) {
-    return shortLimit - bookedShortMagnitude - shortPositionMagnitude;
-}
-If this was applied to BTC as a buy, the calculation would also be applied to USD as a sell.
-
-If this was applied to BTC as a sell, the calculation would also be applied to USD as a buy.
-
-Limit Breach Behavior
-The system will perform pre trade checks to prevent accepting orders that would result in breach of the Long/Short Position Limits. Orders that exceed the limits will be canceled with the following reason codes.
-
-Description 
-
-Date
-
-Added new values for CancelReasonCode:
-
-15 NoPositionLimits
-
-16 OrderBreachesBasePositionLimit
-
-17 OrderBreachesQuotePositionLimit
-
-08/29/2023
-
- Added new values for CxlRejReason:
-
-314 InsufficientUnilateralCredit
-
-08/29/2023
-
-If limits are modified that cause existing open orders to exceed the new limits, the existing orders in excess of the new limit will be cancelled.
-
+# Clean up the temporary directory and its contents
+rm -r "$temp_dir"
