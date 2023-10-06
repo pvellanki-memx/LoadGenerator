@@ -1,38 +1,34 @@
 #!/bin/bash
 
-# Specify the directory containing attachment files
-attachment_dir="/path/to/attachment_directory"
+# Define the recipient's email address
+recipient="recipient@example.com"
 
-# Temporary directory for storing attachments
-temp_dir=$(mktemp -d)
+# Define yesterday's date in the format yyyy-mm-dd
+yesterday_date=$(date -d "yesterday" +"%Y-%m-%d")
 
-# Check if the attachment directory exists
-if [ ! -d "$attachment_dir" ]; then
-  echo "Attachment directory not found: $attachment_dir"
-  exit 1
+# Define the subject of the email
+subject="ORSA process files - $yesterday_date"
+
+# Define the directory where attachments are located
+attachment_dir="/path/to/attachments/"
+
+# Check if mutt is installed
+if ! command -v mutt &>/dev/null; then
+    echo "Error: Mutt is not installed. Please install mutt and try again."
+    exit 1
 fi
 
-# Copy attachment files to the temporary directory
-cp "$attachment_dir"/* "$temp_dir"
+# Create an array of attachment file paths from the specified directory
+attachments=("$attachment_dir"/*)
 
-# Email configuration
-recipient="recipient@example.com"
-subject="Email Subject"
-body="Email body text"
-sender="sender@example.com"
-smtp_server="smtp.example.com"
-smtp_port="587"
-smtp_user="your_username"
-smtp_password="your_password"
+# Check if there are any files in the specified directory
+if [ ${#attachments[@]} -eq 0 ]; then
+    echo "Error: No attachments found in the directory: $attachment_dir"
+    exit 1
+fi
 
-# Compress the attachments
-zip_file="$temp_dir/attachments.zip"
-zip -rj "$zip_file" "$temp_dir"/*
+# Compose and send the email
+mutt -s "$subject" -a "${attachments[@]}" -- "$recipient" < /dev/null
 
-# Sending email with attachments using mutt
-mutt -s "$subject" -a "$zip_file" -- "$recipient" <<< "$body" \
-  -e "set from=$sender" \
-  -e "set smtp_url=smtp://$smtp_user:$smtp_password@$smtp_server:$smtp_port"
-
-# Clean up the temporary directory and its contents
-rm -r "$temp_dir"
+# Exit the script
+exit 0
