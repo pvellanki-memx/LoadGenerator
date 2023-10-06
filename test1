@@ -32,3 +32,11 @@ mutt -s "$subject" -a "${attachments[@]}" -- "$recipient" < /dev/null
 
 # Exit the script
 exit 0
+
+
+
+
+attachments=(
+    "/path/to/attachment1"
+    "/path/to/attachment2"
+)
