@@ -1,42 +1,44 @@
 import sqlite3
+import pandas as pd
 import glob
 import re
+import argparse
+
+# Define a command-line argument for the month
+parser = argparse.ArgumentParser()
+parser.add_argument('--month', required=True, help='The month (YYYY-MM) to consolidate and export.')
+args = parser.parse_args()
 
 # Define the regular expression pattern for matching .db files
-db_pattern = r'*10-*.db'
+db_pattern = f'*{args.month}-*.db'
 
-# Specify the output consolidated database file
-consolidated_db_file = 'consolidated_data.db'
+# Specify the output CSV file
+output_csv_file = f'Monthly_{args.month}_Trades.csv'
 
 # Connect to the consolidated database
-consolidated_conn = sqlite3.connect(consolidated_db_file)
-
-# Create a cursor
+consolidated_conn = sqlite3.connect(':memory:')  # Use an in-memory database for consolidation
 consolidated_cursor = consolidated_conn.cursor()
+
+# Create the consolidated data table
+consolidated_cursor.execute('''CREATE TABLE consolidated_data AS
+                            SELECT * FROM grouped_trades_summary WHERE 0''')
 
 # Iterate through database files matching the pattern
 for db_file in glob.glob(db_pattern):
-    # Extract the month and year from the file name (assuming the format is YYYY-MM.db)
-    match = re.match(r'(\d{4}-\d{2}).db', db_file)
-    if match:
-        month_year = match.group(1)
-        # Connect to the individual database
-        conn = sqlite3.connect(db_file)
-        cursor = conn.cursor()
+    # Connect to the individual database
+    conn = sqlite3.connect(db_file)
+    cursor = conn.cursor()
 
-        # Attach the individual database to the consolidated database
-        cursor.execute(f"ATTACH DATABASE '{db_file}' AS {month_year}")
+    # Attach the individual database to the consolidated database
+    cursor.execute(f"ATTACH DATABASE '{db_file}' AS {args.month}")
 
-        # Copy data from the individual database to the consolidated database
-        query = f"INSERT INTO consolidated_data SELECT * FROM {month_year}.grouped_trades_summary"
-        consolidated_cursor.execute(query)
+    # Copy data from the individual database to the consolidated database
+    query = f"INSERT INTO consolidated_data SELECT * FROM {args.month}.grouped_trades_summary"
+    consolidated_cursor.execute(query)
 
-        # Detach the individual database
-        cursor.execute(f"DETACH DATABASE {month_year}")
-        conn.close()
-
-# Commit changes to the consolidated database
-consolidated_conn.commit()
+    # Detach the individual database
+    cursor.execute(f"DETACH DATABASE {args.month}")
+    conn.close()
 
 # Group data by the specified columns
 query = """
@@ -44,11 +46,17 @@ SELECT Side, Sub_ID, Ultimate_Clearing_Firm, Entering_Firm_Col1, EXCH, TRANS_TYP
 FROM consolidated_data
 GROUP BY Side, Sub_ID, Ultimate_Clearing_Firm, Entering_Firm_Col1, EXCH, TRANS_TYPE
 """
+
+# Execute the query
 result = consolidated_cursor.execute(query)
 
-# Print or process the grouped data as needed
-for row in result:
-    print(row)  # You can replace this with your desired handling of the data
+# Convert the result to a pandas DataFrame
+df = pd.DataFrame(result.fetchall(), columns=['Side', 'Sub_ID', 'Ultimate_Clearing_Firm', 'Entering_Firm_Col1', 'EXCH', 'TRANS_TYPE', 'Total_Quantity'])
+
+# Export the grouped data to a CSV file
+df.to_csv(output_csv_file, index=False)
 
 # Close the consolidated database connection
 consolidated_conn.close()
+
+print(f'Data exported to {output_csv_file}')
