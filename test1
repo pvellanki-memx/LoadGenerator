@@ -60,3 +60,32 @@ df.to_csv(output_csv_file, index=False)
 consolidated_conn.close()
 
 print(f'Data exported to {output_csv_file}')
+
+
+
+
+
+
+
+
+
+
+
+
+
+#!/bin/bash
+
+# Specify the name of the compressed file
+compressed_file="file.Z"
+
+# Uncompress the file in the background
+uncompress "$compressed_file" &
+
+# Wait for the uncompression process to complete
+wait
+
+# Continue with the next steps
+echo "Uncompression is complete, proceeding with the next steps."
+
+# Add your additional commands here
+
