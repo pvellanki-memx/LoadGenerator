@@ -99,6 +99,9 @@ echo "Uncompression is complete, proceeding with the next steps."
 https://marketdata.theocc.com/volume-query?reportDate=20221020&format=csv&volumeQueryTy[…]pe=D&accountType=ALL&productKind=ALL&porc=BOTH&contractDt=
 
 
+https://marketdata.theocc.com/volume-query?reportDate=20231012&format=csv&volumeQueryType=O&symbolType=ALL&symbol=&reportType=D&accountType=ALL&productKind=ALL&porc=BOTH&contractDt=
+
+
 
 “https://marketdata.theocc.com/volume-query?reportDate=” + DBTimeUtils.lastBusinessDateNy().replace(“-”,“”) + “&format=csv&volumeQueryType=O&symbolType=ALL&symbol=&reportType=D&accountType=ALL&productKind=ALL&porc=BOTH&contractDt=”
 
