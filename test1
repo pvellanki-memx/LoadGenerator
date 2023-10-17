@@ -115,3 +115,11 @@ pvellanki@orsa01:/data/pvellanki/orsa-package-2$ ls *.db
 06-28.db       2023-09-28.db  2023-10-03.db  postmove_2023-09-07.db  postmove_2023-09-29.db  postmove_2023-10-04.db
 2023-09-26.db  2023-09-29.db  2023-10-04.db  postmove_2023-09-27.db  postmove_2023-10-02.db  postmove_2023-10-05.db
 2023-09-27.db  2023-10-02.db  2023-10-05.db  postmove_2023-09-28.db  postmove_2023-10-03.db  postmove_2023-10-16.db
+
+
+
+
+
+
+
+db_pattern = f'{args.month}-\\w+\\.db'
