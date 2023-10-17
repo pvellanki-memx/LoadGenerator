@@ -106,15 +106,6 @@ https://marketdata.theocc.com/volume-query?reportDate=20231012&format=csv&volume
 “https://marketdata.theocc.com/volume-query?reportDate=” + DBTimeUtils.lastBusinessDateNy().replace(“-”,“”) + “&format=csv&volumeQueryType=O&symbolType=ALL&symbol=&reportType=D&accountType=ALL&productKind=ALL&porc=BOTH&contractDt=”
 
 
-pvellanki@orsa01:/data/pvellanki/orsa-package-2$ python3 monthly-report.py --month 10-05
-Traceback (most recent call last):
-  File "/data/pvellanki/orsa-package-2/monthly-report.py", line 23, in <module>
-    consolidated_cursor.execute('''CREATE TABLE consolidated_data AS
-sqlite3.OperationalError: no such table: grouped_trades_summary
-pvellanki@orsa01:/data/pvellanki/orsa-package-2$ ls *.db
-06-28.db       2023-09-28.db  2023-10-03.db  postmove_2023-09-07.db  postmove_2023-09-29.db  postmove_2023-10-04.db
-2023-09-26.db  2023-09-29.db  2023-10-04.db  postmove_2023-09-27.db  postmove_2023-10-02.db  postmove_2023-10-05.db
-2023-09-27.db  2023-10-02.db  2023-10-05.db  postmove_2023-09-28.db  postmove_2023-10-03.db  postmove_2023-10-16.db
 
 
 
@@ -122,4 +113,68 @@ pvellanki@orsa01:/data/pvellanki/orsa-package-2$ ls *.db
 
 
 
-db_pattern = f'{args.month}-\\w+\\.db'
+
+
+
+
+
+
+import sqlite3
+import pandas as pd
+import glob
+import re
+import argparse
+
+# Define a command-line argument for the month
+parser = argparse.ArgumentParser()
+parser.add_argument('--month', required=True, help='The month (YYYY-MM) to consolidate and export.')
+args = parser.parse_args()
+
+# Define the regular expression pattern for matching .db files for the specified month
+db_pattern = fr'{args.month}-\w+\.db'
+
+# Specify the output CSV file
+output_csv_file = f'Monthly_{args.month}_Trades.csv'
+
+# Connect to the consolidated database
+consolidated_conn = sqlite3.connect(':memory:')  # Use an in-memory database for consolidation
+consolidated_cursor = consolidated_conn.cursor()
+
+# Iterate through database files matching the pattern
+for db_file in glob.glob(db_pattern):
+    # Connect to the individual database
+    conn = sqlite3.connect(db_file)
+    cursor = conn.cursor()
+
+    # Attach the individual database to the consolidated database
+    cursor.execute(f"ATTACH DATABASE '{db_file}' AS {args.month}")
+
+    # Copy data from the individual database to the consolidated database
+    query = f"INSERT INTO consolidated_data SELECT * FROM {args.month}.grouped_trades_summary"
+    consolidated_cursor.execute(query)
+
+    # Detach the individual database
+    cursor.execute(f"DETACH DATABASE {args.month}")
+    conn.close()
+
+# Group data by the specified columns
+query = """
+SELECT Side, Sub_ID, Ultimate_Clearing_Firm, Entering_Firm_Col1, EXCH, TRANS_TYPE, SUM(Total_Quantity)
+FROM consolidated_data
+GROUP BY Side, Sub_ID, Ultimate_Clearing_Firm, Entering_Firm_Col1, EXCH, TRANS_TYPE
+"""
+
+# Execute the query
+result = consolidated_cursor.execute(query)
+
+# Convert the result to a pandas DataFrame
+df = pd.DataFrame(result.fetchall(), columns=['Side', 'Sub_ID', 'Ultimate_Clearing_Firm', 'Entering_Firm_Col1', 'EXCH', 'TRANS_TYPE', 'Total_Quantity'])
+
+# Export the grouped data to a CSV file
+df.to_csv(output_csv_file, index=False)
+
+# Close the consolidated database connection
+consolidated_conn.close()
+
+print(f'Data exported to {output_csv_file}')
+
