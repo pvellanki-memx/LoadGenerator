@@ -1,6 +1,11 @@
-pvellanki@orsa01:/data/pvellanki/orsa-package-2$ python3 monthly-report.py --month 2023-10
-2023-10-\d2\.db
-Traceback (most recent call last):
-  File "/data/pvellanki/orsa-package-2/monthly-report.py", line 59, in <module>
-    result = consolidated_cursor.execute(query)
-sqlite3.OperationalError: no such table: consolidated_data
+# List the files in the current directory
+files = os.listdir()
+
+# Filter files based on the pattern
+matching_files = [file for file in files if fnmatch.fnmatch(file, db_pattern)]
+
+# Iterate through matching database files
+for db_file in matching_files:
+    # Connect to the individual database
+    conn = sqlite3.connect(db_file)
+    cursor = conn.cursor()
