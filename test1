@@ -1,19 +1,6 @@
-pvellanki@orsa01:/data/pvellanki/orsa-package-2$ ls -lrt *.db
--rw-r--r-- 1 pvellanki pvellanki          0 Sep 25 17:01 06-28.db
--rw-r--r-- 1 pvellanki pvellanki 8009555968 Sep 27 18:21 2023-09-26.db
--rw-r--r-- 1 pvellanki pvellanki 8900112384 Sep 28 14:50 2023-09-27.db
--rw-r--r-- 1 pvellanki pvellanki      20480 Sep 28 14:52 postmove_2023-09-07.db
--rw-r--r-- 1 pvellanki pvellanki 8599941120 Sep 29 16:50 2023-09-28.db
--rw-r--r-- 1 pvellanki pvellanki 9469476864 Oct  2 11:50 2023-09-29.db
--rw-r--r-- 1 pvellanki pvellanki   54239232 Oct  2 16:41 postmove_2023-09-28.db
--rw-r--r-- 1 pvellanki pvellanki   78331904 Oct  2 16:45 postmove_2023-09-27.db
--rw-r--r-- 1 pvellanki pvellanki   38715392 Oct  2 16:46 postmove_2023-09-29.db
--rw-r--r-- 1 pvellanki pvellanki 8149041152 Oct  3 09:50 2023-10-02.db
--rw-r--r-- 1 pvellanki pvellanki   28725248 Oct  3 10:00 postmove_2023-10-02.db
--rw-r--r-- 1 pvellanki pvellanki 8799559680 Oct  4 09:24 2023-10-03.db
--rw-r--r-- 1 pvellanki pvellanki   40177664 Oct  4 09:26 postmove_2023-10-03.db
--rw-r--r-- 1 pvellanki pvellanki 8304705536 Oct  5 10:19 2023-10-04.db
--rw-r--r-- 1 pvellanki pvellanki   32636928 Oct  5 10:20 postmove_2023-10-04.db
--rw-r--r-- 1 pvellanki pvellanki 7788494848 Oct  9 15:24 2023-10-05.db
--rw-r--r-- 1 pvellanki pvellanki   35778560 Oct  9 17:05 postmove_2023-10-05.db
--rw-r--r-- 1 pvellanki pvellanki   28082176 Oct 17 11:02 postmove_2023-10-16.db
+pvellanki@orsa01:/data/pvellanki/orsa-package-2$ python3 monthly-report.py --month 2023-10
+2023-10-\d2\.db
+Traceback (most recent call last):
+  File "/data/pvellanki/orsa-package-2/monthly-report.py", line 59, in <module>
+    result = consolidated_cursor.execute(query)
+sqlite3.OperationalError: no such table: consolidated_data
