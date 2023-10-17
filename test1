@@ -1,11 +1,1 @@
-# List the files in the current directory
-files = os.listdir()
-
-# Filter files based on the pattern
-matching_files = [file for file in files if fnmatch.fnmatch(file, db_pattern)]
-
-# Iterate through matching database files
-for db_file in matching_files:
-    # Connect to the individual database
-    conn = sqlite3.connect(db_file)
-    cursor = conn.cursor()
+matching_files = [file for file in files if re.match(db_pattern, file)]
