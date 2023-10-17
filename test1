@@ -9,127 +9,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--month', required=True, help='The month (YYYY-MM) to consolidate and export.')
 args = parser.parse_args()
 
-# Define the regular expression pattern for matching .db files
-db_pattern = f'*{args.month}-*.db'
-
-# Specify the output CSV file
-output_csv_file = f'Monthly_{args.month}_Trades.csv'
-
-# Connect to the consolidated database
-consolidated_conn = sqlite3.connect(':memory:')  # Use an in-memory database for consolidation
-consolidated_cursor = consolidated_conn.cursor()
-
-# Create the consolidated data table
-consolidated_cursor.execute('''CREATE TABLE consolidated_data AS
-                            SELECT * FROM grouped_trades_summary WHERE 0''')
-
-# Iterate through database files matching the pattern
-for db_file in glob.glob(db_pattern):
-    # Connect to the individual database
-    conn = sqlite3.connect(db_file)
-    cursor = conn.cursor()
-
-    # Attach the individual database to the consolidated database
-    cursor.execute(f"ATTACH DATABASE '{db_file}' AS {args.month}")
-
-    # Copy data from the individual database to the consolidated database
-    query = f"INSERT INTO consolidated_data SELECT * FROM {args.month}.grouped_trades_summary"
-    consolidated_cursor.execute(query)
-
-    # Detach the individual database
-    cursor.execute(f"DETACH DATABASE {args.month}")
-    conn.close()
-
-# Group data by the specified columns
-query = """
-SELECT Side, Sub_ID, Ultimate_Clearing_Firm, Entering_Firm_Col1, EXCH, TRANS_TYPE, SUM(Total_Quantity)
-FROM consolidated_data
-GROUP BY Side, Sub_ID, Ultimate_Clearing_Firm, Entering_Firm_Col1, EXCH, TRANS_TYPE
-"""
-
-# Execute the query
-result = consolidated_cursor.execute(query)
-
-# Convert the result to a pandas DataFrame
-df = pd.DataFrame(result.fetchall(), columns=['Side', 'Sub_ID', 'Ultimate_Clearing_Firm', 'Entering_Firm_Col1', 'EXCH', 'TRANS_TYPE', 'Total_Quantity'])
-
-# Export the grouped data to a CSV file
-df.to_csv(output_csv_file, index=False)
-
-# Close the consolidated database connection
-consolidated_conn.close()
-
-print(f'Data exported to {output_csv_file}')
-
-
-
-
-
-
-
-
-
-
-
-
-
-#!/bin/bash
-
-# Specify the name of the compressed file
-compressed_file="file.Z"
-
-# Uncompress the file in the background
-uncompress "$compressed_file" &
-
-# Wait for the uncompression process to complete
-wait
-
-# Continue with the next steps
-echo "Uncompression is complete, proceeding with the next steps."
-
-# Add your additional commands here
-
-
-
-
-
-
-
-
-https://marketdata.theocc.com/volume-query?reportDate=20221020&format=csv&volumeQueryTy[…]pe=D&accountType=ALL&productKind=ALL&porc=BOTH&contractDt=
-
-
-https://marketdata.theocc.com/volume-query?reportDate=20231012&format=csv&volumeQueryType=O&symbolType=ALL&symbol=&reportType=D&accountType=ALL&productKind=ALL&porc=BOTH&contractDt=
-
-
-
-“https://marketdata.theocc.com/volume-query?reportDate=” + DBTimeUtils.lastBusinessDateNy().replace(“-”,“”) + “&format=csv&volumeQueryType=O&symbolType=ALL&symbol=&reportType=D&accountType=ALL&productKind=ALL&porc=BOTH&contractDt=”
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-import sqlite3
-import pandas as pd
-import glob
-import re
-import argparse
-
-# Define a command-line argument for the month
-parser = argparse.ArgumentParser()
-parser.add_argument('--month', required=True, help='The month (YYYY-MM) to consolidate and export.')
-args = parser.parse_args()
-
 # Define the regular expression pattern for matching .db files for the specified month
 db_pattern = fr'{args.month}-\w+\.db'
 
@@ -140,6 +19,7 @@ output_csv_file = f'Monthly_{args.month}_Trades.csv'
 consolidated_conn = sqlite3.connect(':memory:')  # Use an in-memory database for consolidation
 consolidated_cursor = consolidated_conn.cursor()
 
+
 # Iterate through database files matching the pattern
 for db_file in glob.glob(db_pattern):
     # Connect to the individual database
@@ -148,6 +28,15 @@ for db_file in glob.glob(db_pattern):
 
     # Attach the individual database to the consolidated database
     cursor.execute(f"ATTACH DATABASE '{db_file}' AS {args.month}")
+
+    # Get the structure of the grouped_trades_summary table
+    cursor.execute(f"PRAGMA table_info({args.month}.grouped_trades_summary)")
+    table_info = cursor.fetchall()
+    column_names = [info[1] for info in table_info]
+
+    # Generate the CREATE TABLE statement for the consolidated_data table
+    create_table_query = f"CREATE TABLE IF NOT EXISTS consolidated_data ({', '.join(column_names)})"
+    consolidated_cursor.execute(create_table_query)
 
     # Copy data from the individual database to the consolidated database
     query = f"INSERT INTO consolidated_data SELECT * FROM {args.month}.grouped_trades_summary"
@@ -177,4 +66,3 @@ df.to_csv(output_csv_file, index=False)
 consolidated_conn.close()
 
 print(f'Data exported to {output_csv_file}')
-
