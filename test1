@@ -1,8 +1,141 @@
-        # Fetch data from the individual database
-        cursor.execute(f"SELECT * FROM {args.month}.grouped_trades_summary")
-        data_to_insert = cursor.fetchall()
 
-        # Insert fetched data into the consolidated database
-        for row in data_to_insert:
-            insert_query = f"INSERT INTO consolidated_data VALUES ({', '.join(['?'] * len(row))})"
-            consolidated_cursor.execute(insert_query, row)
+
+#!/bin/bash
+
+
+current_date=$(date +"%Y-%m-%d")
+date=$(date -d "$current_date - 1 day" +"%Y-%m-%d")
+
+mm_dd=$(date -d "$date" +"%m-%d")
+
+# Create the output directory if it doesn't exist
+output_dir="/data/orsa-intermediate"
+
+# Define the directory where the files are located
+base_dir="/mnt/occ/downloads/prod"
+
+# Construct the file name using the provided date
+file_to_watch="memx_orsa_trades_$date.xml"
+
+# Define the monitor folder
+monitor_folder="$base_dir"
+
+# Check if the file exists, wait up to 10 times
+retries=10
+while [ ! -e "$monitor_folder/$file_to_watch" ] && [ $retries -gt 0 ]; do
+    echo "$file_to_watch not found in $monitor_folder. Waiting..."
+    sleep 10  # Adjust the interval as needed
+    ((retries--))
+done
+
+if [ $retries -eq 0 ]; then
+    echo "File not found after 10 retries. Exiting."
+    exit 1
+fi
+
+echo "Found $file_to_watch"
+
+# Check if the XML file is complete by examining the last two lines
+last_two_lines=$(tail -n 2 "$monitor_folder/$file_to_watch")
+
+if [[ $last_two_lines != *"</FIXML>"* ]]; then
+    echo "XML file is not complete. Missing </FIXML> tag."
+    exit 1
+fi
+
+
+
+# Define a function to execute trades and exchange recon
+execute_trades_and_recon() {
+    # Add the content of run_trades.sh here
+    echo "Executing run_trades.sh..."
+    db_name="$date.db"
+
+    # Step 1: Split the big XML file using split.py
+    python3 split_v4.py "$base_dir"/memx_orsa_trades_"$date".xml "$date"
+
+    # Step 2: Process each split file using xml_to_db.py
+    for split_file in "$date"_*; do
+        python3 xml_2_db_v5.py "$split_file" "$db_name" > log.txt &
+
+        # Capture the PID of the last background process
+        pid=$!
+
+        # Wait for the background process to complete
+        wait "$pid"
+
+        echo "Processing of $split_file completed."
+    done
+
+    # Step 3: Group the data in the database using groupedexcel.py
+    python3 groupedexcel_v5.py "$db_name"
+
+    grouped_pid=$!
+    # Wait for groupedexcel.py to complete
+    wait "$grouped_pid"
+
+    echo "Grouping of data completed."
+
+    # Step 4: Perform further processing using furtherstreaming.py
+    python3 streamfurther_v4.py "$db_name"
+
+    streamfurther_pid=$!
+    # Wait for groupedexcel.py to complete
+    wait "$streamfurther_pid"
+
+    echo "Grouping summary of data completed."
+
+
+    # Step 4: Perform further processing using furtherstreaming.py
+    python3 dump2excel.py "$db_name"
+
+    dump2excel_pid=$!
+    # Wait for groupedexcel.py to complete
+    wait "$dump2excel_pid"
+
+    echo "Grouping summary csv generated."
+
+    
+    echo "Executing run_exchange_recon.sh..."
+    db_name="$date.db"
+
+
+
+    # Step 1: Group the data in the database using groupedexcel.py
+    python3 grouptradesbyexch.py "$db_name"
+
+    groupedbyexch_pid=$!
+    # Wait for groupedexcel.py to complete
+    wait "$groupedbyexch_pid"
+
+    echo "Grouping by exchange completed."
+
+    # Step 4: Perform further processing using furtherstreaming.py
+    python3 streamfurther_v5.py "$db_name"
+
+    SF5_pid=$!
+    wait "$SF5_pid"
+
+    echo "grouping summary bu exchange completed"
+
+    python3 exchangrecon.py "$db_name"
+
+    exchangerecon_pid=$!
+    wait "$exchangerecon_pid"
+
+    echo "exchange recon against OCC Completed"
+
+    python3 excel.py "$db_name"
+
+    excel_pid=$!
+    wait "$excel_pid"
+
+    echo "Common aggregates file generated"
+}
+
+# Execute the combined trades and exchange recon function
+execute_trades_and_recon
+
+echo "Scripts executed successfully."
+
+mv *"$mm_dd.csv" "$output_dir/"
