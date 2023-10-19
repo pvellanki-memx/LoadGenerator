@@ -1,142 +1,354 @@
-#!/bin/bash
+---
+  - hosts: localhost
+    gather_facts: True
 
+    vars:
+      local_spin_dir: "{{ playbook_dir }}/exchange_spins"
+      date: "{{ lookup('pipe', 'date +%u') }}"
+      hour: "{{ ansible_date_time.hour }}"
+      todays_date: "{{ ansible_date_time.year|string + ansible_date_time.month|string + ansible_date_time.day|string }}"
 
-current_date=$(date +"%Y-%m-%d")
-date=$(date -d "$current_date - 1 day" +"%Y-%m-%d")
+    vars_files:
+      - "{{ local_spin_dir }}/skipped_holidays.yml"
 
-mm_dd=$(date -d "$date" +"%m-%d")
+    vars_prompt:
+      - name: datacenter
+        prompt: "Which datacenter would you like to bring up?"
+        private: false
 
-# Create the output directory if it doesn't exist
-output_dir="/data/orsa-intermediate"
+    tasks:
+      - name:
+        debug:
+          msg: "This script will run in {{ datacenter }}"
+        failed_when: datacenter|lower != environment_dc
 
-# Define the directory where the files are located
-base_dir="/mnt/occ/downloads/prod"
+      - name: Prod - Copy spins from exchange_spins to NFS mount
+        copy:
+          src: "{{ local_spin_dir }}/{{ item }}.{{ env_spin_extension }}.json"
+          dest: "{{ nfs_spinfile_location_jump }}/{{ item }}.{{ env_spin_extension }}.json"
+          mode: "2666"
+        loop:
+          - 'riskrules'
+          - 'credit_limits'
+          - 'scheduled_events'
+          - 'unilateral_credit_limits'
+        when: datacenter|lower == "ny4" or datacenter|lower == "ord1"
 
-# Construct the file name using the provided date
-compressed_file_to_watch="memx_orsa_trades_$date.xml.Z"
+      - name: EWR2 - Copy spins from exchange_spins to NFS mount
+        copy:
+          src: "{{ local_spin_dir }}/{{ item }}.{{ env_spin_extension }}.json"
+          dest: "{{ nfs_spinfile_location_jump }}/{{ item }}.{{ env_spin_extension }}.json"
+          mode: "2666"
+        loop:
+          - 'riskrules'
+          - 'credit_limits'
+          - 'unilateral_credit_limits'
+        when: datacenter|lower == "ewr2"
 
-# Define the monitor folder
-monitor_folder="$base_dir"
+      - name: Check states of all serializers
+        shell: "echo actors.MM_SERIALIZER.status | {{ admin_script }} \\^crypto_serializer -m all --filter {{ datacenter }} --parsejson actor.state | grep -v 'crypto_serializer'"
+        register: serializer_states
 
-# Check if the file exists, wait up to 10 times
-retries=10
-while [ ! -e "$monitor_folder/$compressed_file_to_watch" ] && [ $retries -gt 0 ]; do
-    echo "$compressed_file_to_watch not found in $monitor_folder. Waiting..."
-    sleep 10  # Adjust the interval as needed
-    ((retries--))
-done
+      - name: End the play if any are not "Idle"
+        fail:
+          msg: "Serializer in non-idle state. Ending startup. Please investigate"
+        when: '"Idle" not in serializer_states.stdout'
+        any_errors_fatal: true
 
-if [ $retries -eq 0 ]; then
-    echo "Compressed file not found after 10 retries. Exiting."
-    exit 1
-fi
+      - name: Set some actors passive. Will set exactly one active in next task.
+        shell:
+          cmd: yes | {{ set_passive_script }} --filter {{ datacenter }} {{ item }} --multi all
+        loop: "{{ crypto_single_active_actors_mde }}"
+        when: datacenter|lower == "ewr2"
 
-echo "Found $compressed_file_to_watch"
+      - name: Set some actors passive. Will set exactly one active in next task.
+        shell:
+          cmd: yes | {{ set_passive_script }} --filter ny4\|ord1 {{ item }} --multi all
+        loop: "{{ crypto_single_active_actors_prod }}"
+        when: datacenter|lower == "ny4" or datacenter|lower == "ord1"
 
-# Uncompress the file and wait for it to complete
-echo "Uncompressing $compressed_file_to_watch..."
-zcat "$monitor_folder/$compressed_file_to_watch" > "$monitor_folder/memx_orsa_trades_$date.xml"
+      - name: Set exactly one copy of each of these actors active, skipping crypto_spinner.
+        shell:
+          cmd: yes | {{ set_active_script }} --filter {{ datacenter }} {{ item }} --multi justone
+        loop: "{{ crypto_single_active_actors_mde }}"
+        when: datacenter|lower == "ewr2" and item != "crypto_spinner"
 
-# Check if the XML file is complete by examining the last two lines
-last_two_lines=$(zcat "$monitor_folder/$compressed_file_to_watch" | tail -n 2)
+      - name: Set exactly one copy of each of these actors active, skipping crypto_spinner.
+        shell:
+          cmd: yes | {{ set_active_script }} --filter {{ datacenter }} {{ item }} --multi justone
+        loop: "{{ crypto_single_active_actors_prod }}"
+        when: (datacenter|lower == "ny4" or datacenter|lower == "ord1") and item != "crypto_spinner"
 
-if [[ $last_two_lines != *"</FIXML>"* ]]; then
-    echo "XML file is not complete. Missing </FIXML> tag."
-    exit 1
-fi
+      - name: Set all copies of each of these actors passive.
+        shell:
+          cmd: yes | {{ set_passive_script }} --filter {{ datacenter }} {{ item }} --multi all
+        loop: "{{ crypto_multi_active_actors_mde }}"
+        when: datacenter|lower == "ewr2"
 
+      - name: Set all copies of each of these actors passive.
+        shell:
+          cmd: yes | {{ set_passive_script }} --filter ny4\|ord1 {{ item }} --multi all
+        loop: "{{ crypto_multi_active_actors_prod }}"
+        when: (datacenter|lower == "ny4" or datacenter|lower == "ord1")
 
-# Define a function to execute trades and exchange recon
-execute_trades_and_recon() {
-    # Add the content of run_trades.sh here
-    echo "Executing run_trades.sh..."
-    db_name="$date.db"
+      - name: Set all copies of each of the order entry actors passive.
+        shell:
+          cmd: yes | {{ set_passive_script }} --filter ny4\|ord1 {{ item }} --multi all
+        loop: "{{ crypto_oe_active_actors_prod }}"
+        when: (datacenter|lower == "ny4" or datacenter|lower == "ord1")
 
-    # Step 1: Split the big XML file using split.py
-    python3 split_v4.py "$base_dir"/memx_orsa_trades_"$date".xml "$date"
+      - name: Set all copies of each of these actors active.
+        shell:
+          cmd: yes | {{ set_active_script }} --filter {{ datacenter }} {{ item }} --multi all
+        loop: "{{ crypto_multi_active_actors_mde }}"
+        when: datacenter|lower == "ewr2" and item != "crypto_spinner"
 
-    # Step 2: Process each split file using xml_to_db.py
-    for split_file in "$date"_*; do
-        python3 xml_2_db_v5.py "$split_file" "$db_name" > log.txt &
+      - name: Set all copies of each of these actors active.
+        shell:
+          cmd: yes | {{ set_active_script }} --filter {{ datacenter }} {{ item }} --multi all
+        loop: "{{ crypto_multi_active_actors_prod }}"
+        when: (datacenter|lower == "ny4" or datacenter|lower == "ord1") and item != "crypto_spinner"
 
-        # Capture the PID of the last background process
-        pid=$!
+      - name: Set all copies of each of the order entry actors active.
+        shell:
+          cmd: yes | {{ set_active_script }} --filter ny4\|ord1 {{ item }} --multi all
+        loop: "{{ crypto_oe_active_actors_prod }}"
+        when: (datacenter|lower == "ny4" or datacenter|lower == "ord1")
 
-        # Wait for the background process to complete
-        wait "$pid"
+      - name: Get spinner host + port
+        shell: "{{ list_script }} --filter {{ datacenter }} --output_fmt '%h:%p' \\^crypto_spinner | shuf -n 1"
+        register: hostport
 
-        echo "Processing of $split_file completed."
-    done
+      - name: Set crypto spinner
+        set_fact:
+          crypto_spinner: "{{ hostport.stdout }}"
 
-    # Step 3: Group the data in the database using groupedexcel.py
-    python3 groupedexcel_v5.py "$db_name"
+      - name: Set exactly one copy of the crypto_spinner actor active.
+        shell:
+          cmd: yes | {{ set_active_script }} --filter {{ datacenter }} crypto_spinner --multi justone
 
-    grouped_pid=$!
-    # Wait for groupedexcel.py to complete
-    wait "$grouped_pid"
+      - name: Get a list of serializer hosts + ports
+        shell: "{{ list_script }} --filter {{ datacenter }} --output_fmt '%h:%p' \\^crypto_serializer"
+        register: hostport
 
-    echo "Grouping of data completed."
+      - name: Randomize list of crypto_serializers and assign to a variable
+        set_fact:
+          crypto_serializers: "{{ hostport.stdout.split('\n') | shuffle }}"
 
-    # Step 4: Perform further processing using furtherstreaming.py
-    python3 streamfurther_v4.py "$db_name"
+      - name: Pick a primary serializer
+        set_fact:
+          primary_serializer: "{{ crypto_serializers[0] }}"
 
-    streamfurther_pid=$!
-    # Wait for groupedexcel.py to complete
-    wait "$streamfurther_pid"
+      - name: remove primary serializer from list of serializers
+        set_fact:
+          remaining_serializers: "{{ crypto_serializers | difference( [ primary_serializer ] ) }}"
 
-    echo "Grouping summary of data completed."
+      - name: Set primary serializer hostname as variable
+        set_fact:
+          primary_serializer_host: "{{ primary_serializer.split(':')[0] }}"
 
+      - name: Setting the crypto_serializer on this host Primary
+        debug:
+          msg: "{{ primary_serializer_host }}"
 
-    # Step 4: Perform further processing using furtherstreaming.py
-    python3 dump2excel.py "$db_name"
+      - name: lock in gc20301.ny4.edx.local as NY4 serializer
+        set_fact:
+          primary_serializer: "gc20301.ny4.edx.local:2001"
+        when: datacenter|lower == "ny4"
 
-    dump2excel_pid=$!
-    # Wait for groupedexcel.py to complete
-    wait "$dump2excel_pid"
+      - name: lock in gc21210.ord1.edx.local as ORD1 serializer
+        set_fact:
+          primary_serializer: "gc21210.ord1.edx.local:2001"
+        when: datacenter|lower == "ord1"
 
-    echo "Grouping summary csv generated."
+      - name: lock in gc22041.edx.ewr2.memx.tech as EWR2 serializer
+        set_fact:
+          primary_serializer: "gc22041.edx.ewr2.memx.tech:2001"
+        when: datacenter|lower == "ewr2"
 
-    
-    echo "Executing run_exchange_recon.sh..."
-    db_name="$date.db"
+      - name: Set passive to matching engines
+        shell:
+          cmd: yes | {{ set_passive_script }} -f {{ datacenter }} {{ item }}
+        loop: "{{ matching_engine_group1 }}"
 
+      - name: Set active to matching engines
+        shell:
+          cmd: yes | {{ set_active_script }} -f {{ primary_matching_engine_host }} {{ item }}
+        loop: "{{ matching_engine_group1 }}"
 
+      - name: Get Status of Session
+        shell: echo actors.MM_SERIALIZER.status | {{ admin_script }} {{ primary_serializer }}
+        register: serializerStatus
 
-    # Step 1: Group the data in the database using groupedexcel.py
-    python3 grouptradesbyexch.py "$db_name"
+      - name: Set fact in order to grab state from next step
+        set_fact:
+          state: "{{ serializerStatus.stdout }}"
 
-    groupedbyexch_pid=$!
-    # Wait for groupedexcel.py to complete
-    wait "$groupedbyexch_pid"
+      - name: Get current session
+        shell: echo actors.MM_SERIALIZER.getCurrentSession | {{ admin_script }} {{ primary_serializer }}
+        register: serializerSession
 
-    echo "Grouping by exchange completed."
+      - name: Pause if there is a session running
+        pause:
+          prompt: Session is not None. Contact DEVs as this is a BUG where Idle State has a running session. Press enter to continue, Ctrl+C to interrupt
+        when: '"not in session" not in serializerSession.stdout|lower'
 
-    # Step 4: Perform further processing using furtherstreaming.py
-    python3 streamfurther_v5.py "$db_name"
+#      - name: Pause to check that all actors are active
+#        pause:
+#          prompt: Please check that all actors that should be active are active before calling openSession
 
-    SF5_pid=$!
-    wait "$SF5_pid"
+      - name: Execute openSession admin command
+        shell: echo actors.MM_SERIALIZER.openSession | {{ admin_script }} {{ primary_serializer }}
 
-    echo "grouping summary bu exchange completed"
+      - name: Wait for openSession to complete and state to change
+        pause:
+          seconds: 30
 
-    python3 exchangrecon.py "$db_name"
+      - name: Get Status of Session again
+        shell: echo actors.MM_SERIALIZER.status | {{ admin_script }} {{ primary_serializer }}
+        register: serializerStatus
 
-    exchangerecon_pid=$!
-    wait "$exchangerecon_pid"
+      - name: Set fact in order to grab state from next step
+        set_fact:
+          state: "{{ serializerStatus.stdout }}"
 
-    echo "exchange recon against OCC Completed"
+      - name: Confirm Session-ID
+        block:
+          - name: Get Session-ID
+            shell: echo actors.MM_SERIALIZER.getCurrentSession | {{ admin_script }} {{ primary_serializer }}
+            register: sessionID
+          - name: Print out Sessiond-ID
+            debug:
+              msg: The SESSION-ID={{sessionID.stdout}}
 
-    python3 excel.py "$db_name"
+      - name: Check if sequence numbers are increasing
+        block:
+          - name: Grab first sequencedMessages number to set as a base value
+            shell: echo actors.MM_SERIALIZER.status | {{ admin_script }} {{ primary_serializer }} --parsejson actor.stats.processedMessages
+            register: sequencedMessages_base
+          - name: Wait for sequence numbers to increase
+            pause:
+              seconds: 5
+          - name: Grab second sequencedMessages number to compare against base value
+            shell: echo actors.MM_SERIALIZER.status | {{ admin_script }} {{ primary_serializer }} --parsejson actor.stats.processedMessages
+            register: sequencedMessages_compare
+          - name: Confirm sequence numbers are increasing
+            debug:
+              msg: "Confirmed sequence numbers are increasing: {{ sequencedMessages_compare.stdout }}>{{ sequencedMessages_base.stdout }}"
+            when: (sequencedMessages_compare.stdout|int) > (sequencedMessages_base.stdout|int)
 
-    excel_pid=$!
-    wait "$excel_pid"
+      - name: Check if spins have completed successfully
+        block:
+          - name: Command to store event scheduler spin status
+            shell: echo actors.STREAM.actors.SCHEDULED_EVENT_SPINNER.status | {{ admin_script }} {{ crypto_spinner }}
+            register: eventSpin
+          - name: Set fact
+            set_fact:
+              eventSpinner: "{{ eventSpin.stdout | from_json }}"
+          - name: Check if event spin completed successfully
+            pause:
+              prompt: Event spin did not complete successfully. Event spin state is {{ eventSpinner.actor.state }}. Press enter to continue, Ctrl+C to interrupt
+            when: '"succeeded" not in eventSpinner.actor.state|lower'
 
-    echo "Common aggregates file generated"
-}
+          - name: Command to store firm spin status
+            shell: echo actors.STREAM.actors.FIRM_SPINNER.status | {{ admin_script }} {{ crypto_spinner }}
+            register: firmSpin
+          - name: Set fact
+            set_fact:
+              firmSpinner: "{{ firmSpin.stdout | from_json }}"
+          - name: Check if firm spin completed successfully
+            pause:
+              prompt: Firm spin did not complete successfully. Firm spin state is {{ firmSpinner.actor.state }}. Press enter to continue, Ctrl+C to interrupt
+            when: '"succeeded" not in firmSpinner.actor.state|lower'
 
-# Execute the combined trades and exchange recon function
-execute_trades_and_recon
+          - name: Command to store account spin status
+            shell: echo actors.STREAM.actors.ACCOUNT_SPINNER.status | {{ admin_script }} {{ crypto_spinner }}
+            register: accountSpin
+          - name: Set fact
+            set_fact:
+              accountSpinner: "{{ accountSpin.stdout | from_json }}"
+          - name: Check if account spin completed successfully
+            pause:
+              prompt: Account spin did not complete successfully. Account spin state is {{ accountSpinner.actor.state }}. Press enter to continue, Ctrl+C to interrupt
+            when: '"succeeded" not in accountSpinner.actor.state|lower'
 
-echo "Scripts executed successfully."
+          - name: Command to store cpid spin status
+            shell: echo actors.STREAM.actors.CPID_SPINNER.status | {{ admin_script }} {{ crypto_spinner }}
+            register: cpidSpin
+          - name: Set fact
+            set_fact:
+              cpidSpinner: "{{ cpidSpin.stdout | from_json }}"
+          - name: Check if mpid spin completed successfully
+            pause:
+              prompt: CPID spin did not complete successfully. CPID spin state is {{ cpidSpinner.actor.state }}. Press enter to continue, Ctrl+C to interrupt
+            when: '"succeeded" not in cpidSpinner.actor.state|lower'
 
-mv *"$mm_dd.csv" "$output_dir/"
+          - name: Command to store token spin status
+            shell: echo actors.STREAM.actors.TOKEN_SPINNER.status | {{ admin_script }} {{ crypto_spinner }}
+            register: tokenSpin
+          - name: Set fact
+            set_fact:
+              tokenSpinner: "{{ tokenSpin.stdout | from_json }}"
+          - name: Check if token spin completed successfully
+            pause:
+              prompt: TOKEN spin did not complete successfully. TOKEN spin state is {{ tokenSpinner.actor.state }}. Press enter to continue, Ctrl+C to interrupt
+            when: '"succeeded" not in tokenSpinner.actor.state|lower'
+
+          - name: Command to store risk spin status
+            shell: echo actors.STREAM.actors.RISK_SPINNER.status | {{ admin_script }} {{ crypto_spinner }}
+            register: riskSpin
+          - name: Set fact
+            set_fact:
+              riskSpinner: "{{ riskSpin.stdout | from_json }}"
+          - name: Check if risk spin completed successfully
+            pause:
+              prompt: Risk spin did not complete successfully. Risk spin state is {{ riskSpinner.actor.state }}. Press enter to continue, Ctrl+C to interrupt
+            when: '"succeeded" not in riskSpinner.actor.state|lower'
+
+          - name: Command to store credit_limit spin status
+            shell: echo actors.STREAM.actors.CREDIT_LIMIT_SPINNER.status | {{ admin_script }} {{ crypto_spinner }}
+            register: creditSpin
+          - name: Set fact
+            set_fact:
+              creditSpinner: "{{ creditSpin.stdout | from_json }}"
+          - name: Check if credit spin completed successfully
+            pause:
+              prompt: CREDIT_LIMIT spin did not complete successfully. Credit spin state is {{ creditSpinner.actor.state }}. Press enter to continue, Ctrl+C to interrupt
+            when: '"succeeded" not in creditSpinner.actor.state|lower'
+
+          - name: Command to store open_orders spin status
+            shell: echo actors.STREAM.actors.OPEN_ORDER_SPINNER.status | {{ admin_script }} {{ crypto_spinner }}
+            register: openOrderSpin
+          - name: Set fact
+            set_fact:
+              openOrderSpinner: "{{ openOrderSpin.stdout | from_json }}"
+          - name: Check if open orders spin completed successfully
+            pause:
+              prompt: OPEN_ORDERS spin did not complete successfully. Open Order spin state is {{ openOrderSpinner.actor.state }}. Press enter to continue, Ctrl+C to interrupt
+            when: '"succeeded" not in openOrderSpinner.actor.state|lower'
+
+          # - name: Command to store UNILATERAL_CREDIT_LIMIT_SPINNER  spin status
+          #   shell: echo actors.STREAM.actors.UNILATERAL_CREDIT_LIMIT_SPINNER.status | {{ admin_script }} {{ crypto_spinner }}
+          #   register: creditlimtSpin
+          # - name: Set fact
+          #   set_fact:
+          #     creditLimitSpinner: "{{ creditlimtSpin.stdout | from_json }}"
+          # - name: Check if open orders spin completed successfully
+          #   pause:
+          #     prompt: Credit limit spin did not complete successfully. Credit limit spin state is {{ creditLimitSpinner.actor.state }}. Press enter to continue, Ctrl+C to interrupt
+          #   when: '"succeeded" not in creditLimitSpinner.actor.state|lower
+
+      - name: Set Tokens to Quoting
+        shell: "echo actors.STREAM.actors.TOKEN_INSTRUMENT_ADMIN.requestTokenInstrumentTradingStateUpdate TOKEN-INSTRUMENT={{ item }} TRADING-STATE=Quoting | {{ admin_script }} -f {{ environment_dc }} crypto_admin"
+        loop:
+          - "BCH/USD"
+          - "BTC/USD"
+          - "ETH/USD"
+          - "LTC/USD"
+          - "TST/USD"
+        when: datacenter|lower == "ny4" or datacenter|lower == "ord1"
+
+      - name: "Cancel SDSC event on weekends and holidays in EWR2"
+        shell:
+          cmd: "echo actors.STREAM.actors.SYSTEM_ADMIN.cancelScheduledEvent EVENT=SDSC | {{ admin_script }} \\^crypto_admin -m justone --filter {{ datacenter }}"
+        when: "(todays_date in skipped_holidays or date|int > 5) and hour|int < 12"
