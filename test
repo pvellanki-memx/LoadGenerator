@@ -38,7 +38,7 @@ def send_and_receive(self, message_type, message):
             # Process the complete message
             handle_sbe_message(complete_message, message_type)
 
-    # TODO: Implement the logic to handle the response message based on message_type
+  
 
 def handle_sbe_message(message_data, message_type):
     # Extract the SBE header and determine template ID
@@ -53,7 +53,7 @@ def handle_sbe_message(message_data, message_type):
             break
 
     if message_type is not None:
-        # Decode the message based on its type
+        # Call the decode function based on message_type
         decode_message(message_data[7:], message_type)
 
-# The rest of your test case implementation remains the same.
+
