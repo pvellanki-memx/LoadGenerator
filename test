@@ -1,61 +1,49 @@
-SBE Load Generator Documentation
-Introduction
-The SBE Load Generator is a tool designed to simulate and send various SBE (Simple Binary Encoding) messages to a trading system. It allows you to test the performance and resilience of your trading platform by generating a configurable load of SBE messages.
+import struct
 
-Prerequisites
-Before using the SBE Load Generator, make sure you have the following prerequisites:
+# Define your MESSAGE_TYPES dictionary
+MESSAGE_TYPES = {
+    "NewOrderSingle": 1,
+    "ShortTwoSidedBulkQuote": 2,
+    "LongTwoSidedBulkQuote": 3,
+    # ... (your other message types)
+    "MassCancelClearLockoutDone": 31
+}
 
-Python: Ensure that you have Python 3.x installed on your system.
+def extract_messages_from_tcp_connection(client_socket):
+    while True:
+        # Read the header to determine message length (3 bytes)
+        header = client_socket.recv(3)
+        if len(header) < 3:
+            # If the header is incomplete, exit the loop
+            break
 
-Configuration Files: Create configuration files config.ini and connections.cfg with appropriate settings. These files define parameters such as message rates, message types, and connection details.
+        # Unpack the header
+        message_length = struct.unpack('!H', header[1:3])[0]
 
-Installation
-Clone the SBE Load Generator repository from the GitHub repository link.
+        # Read the message data based on the message length
+        message_data = client_socket.recv(message_length)
 
-Install required Python packages using pip:
+        # Ensure we have enough data for the SBE header
+        while len(message_data) >= 7:
+            # Unpack SBE header from message_data
+            block_length, template_id, schema_id, version, num_groups = struct.unpack('!HBBHb', message_data[:7])
 
-Copy code
-pip install configparser sbe_encoder_decoder
-Configuration
-config.ini
-The config.ini file contains various configuration settings for the SBE Load Generator. Key parameters include:
+            # Determine the message type based on TemplateID
+            message_type = None
+            for msg_type, template_id_val in MESSAGE_TYPES.items():
+                if template_id_val == template_id:
+                    message_type = msg_type
+                    break
 
-message_rate: The rate at which messages are generated and sent.
-duration: The duration for which messages should be generated.
-Weights: Weighted probabilities for different message types.
-OptionsSecurityIDs: Mapping of underliers to their associated options security IDs.
-connections.cfg
-The connections.cfg file specifies the connection details for the trading sessions. Each section in this file represents a different trading session, with details like host, port, user, and password.
+            if message_type is not None:
+                # Decode the message based on its type
+                decode_message(message_data[7:], message_type)
 
-Usage
-Start the SBE Load Generator by running the load_generator.py script:
+            # Remove the processed message from the message_data
+            message_data = message_data[7 + block_length:]
 
-Copy code
-python load_generator.py
-The generator will read the configuration files and initiate one or more trading sessions based on the settings in connections.cfg.
+# Implement the decode_message function as shown in the previous response
 
-During the specified duration, the generator will send messages according to the configured message rates and types.
-
-You can monitor the progress and output of each session in the console.
-
-Message Types
-The SBE Load Generator supports the following message types:
-
-NewOrderSingle: Simulates new order placement.
-NewOrderSingle_mkt: Simulates market orders.
-ShortTwoSideBulkQuote: Simulates short two-sided bulk quotes.
-LongTwoSideBulkQuote: Simulates long two-sided bulk quotes.
-ShortOneSideBulkQuote: Simulates short one-sided bulk quotes.
-LongOneSideBulkQuote: Simulates long one-sided bulk quotes.
-Extending Message Types
-You can extend the message types supported by the SBE Load Generator by modifying the code and adding new message generation functions.
-
-Customization
-You can customize various parameters such as message rates, duration, and message types by editing the config.ini file.
-
-Error Handling
-The SBE Load Generator includes basic error handling for login and session establishment. It will exit gracefully if login is rejected.
-
-Conclusion
-The SBE Load Generator is a versatile tool for stress testing trading systems and assessing their performance under load. It allows you to simulate different types of SBE messages and customize testing parameters.
-
+# Example usage
+# Replace client_socket with your established TCP connection socket
+# extract_messages_from_tcp_connection(client_socket)
