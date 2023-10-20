@@ -1,4 +1,33 @@
-tag_release="63_22"
+pvellanki@qa2434:~/Options$ ll
+total 84
+drwxr-xr-x 21 root      root      4096 Oct 20 12:03  ./
+drwxr-x--- 16 pvellanki pvellanki 4096 Oct 20 18:36  ../
+drwxr-xr-x  4 root      root      4096 Oct 20 12:03  BookOnly/
+drwxr-xr-x  4 root      root      4096 Oct 20 12:03  BulkQuote/
+drwxr-xr-x  2 root      root      4096 Oct 20 12:03  CancelOnDisconnect/
+drwxr-xr-x  2 root      root      4096 Oct 20 12:03  Cancellation/
+drwxr-xr-x  4 root      root      4096 Oct 20 12:03  Connectivity/
+drwxr-xr-x  4 root      root      4096 Oct 20 12:03  ISO/
+drwxr-xr-x  2 root      root      4096 Oct 20 12:03  LastLiquidityIndicator/
+drwxr-xr-x  2 root      root      4096 Oct 20 12:03  MassCancellation/
+drwxr-xr-x  2 root      root      4096 Oct 20 12:03  MatchTradePrevention/
+drwxr-xr-x  4 root      root      4096 Oct 20 12:03  OrderAcceptance/
+drwxr-xr-x  4 root      root      4096 Oct 20 12:03  OrderAmendments/
+drwxr-xr-x  4 root      root      4096 Oct 20 12:03  OrderExecution/
+drwxr-xr-x  2 root      root      4096 Oct 20 12:03 'PartyBlock Testing'/
+drwxr-xr-x  2 root      root      4096 Oct 20 12:03  PostOnly/
+drwxr-xr-x  4 root      root      4096 Oct 20 12:03 'Price Validation'/
+drwxr-xr-x  2 root      root      4096 Oct 20 12:03  Replay_Snapshot/
+drwxr-xr-x  2 root      root      4096 Oct 20 12:03  Repricing/
+drwxr-xr-x  4 root      root      4096 Oct 20 12:03  Risk/
+drwxr-xr-x  4 root      root      4096 Oct 20 12:03 'Smoke Tests'/
+pvellanki@qa2434:~/Options$ c
+
+
+
+
+
+tag_release="86_14"
 tag_session="MarketSession"
 curl "http://10.2.23.112:8093/sfgui/sfapi/statistics/register_tag?name=$ag_release"
 curl "http://10.2.23.112:8093/sfgui/sfapi/statistics/register_tag?name=$tag_session"
@@ -8,16 +37,16 @@ curl "http://10.2.23.112:8093/sfgui/sfapi/statistics/register_tag?name=$tag_sess
 #sleep 1
 #curl 'http://10.2.23.112:8093/sfgui/sfapi/scripts/delete'
 
-directory="/home/exactpro_tools/BB/TestLibrary/Scripts/Market/Matching/toRun"  # Updated to "toRun"
+directory="/home/pvellanki/Options/OrderAcceptance/Market/SBE"  # Updated to "toRun"
 tag_area="repricing"
 curl "http://10.2.23.112:8093/sfgui/sfapi/statistics/register_tag?name=$tag_area"
 cd "$directory"  # Move to the "toRun" directory
 
 for f in *; do
     if [ -f "$f" ]; then  # Check if it's a file
-        curl -i -X POST -F file=@"$f" 'http://10.2.23.112:8093/sfgui/sfapi/scripts/upload'
+        curl -i -X POST -F file=@"$f" 'http://10.2.23.112:8100/sfgui/sfapi/scripts/upload'
         sleep 1
-        curl "http://10.2.23.112:8093/sfgui/sfapi/scripts/name_$f?action=start&aml=3&autostart=true&continueonfailed=true&ignoreaskforcontinue=true&environment=New_Acc&tag=$ag_release&tag=$tag_area&tag=$tag_session"
+        curl "http://10.2.23.112:8100/sfgui/sfapi/scripts/name_$f?action=start&aml=3&autostart=true&continueonfailed=true&ignoreaskforcontinue=true&environment=EWR2&tag=$ag_release&tag=$tag_area&tag=$tag_session"
         sleep 1
     fi
 done
