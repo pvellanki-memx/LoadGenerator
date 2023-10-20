@@ -1,59 +1,24 @@
-def send_and_receive(self, message_type, message):
-    # Send the message over the TCP connection
-    send_message(self.client_socket, message)
+ag_release="63_22";
+tag_session="MarketSession"
+curl "http://10.2.23.112:8093/sfgui/sfapi/statistics/register_tag?name=$tag_release";
+curl "http://10.2.23.112:8093/sfgui/sfapi/statistics/register_tag?name=$tag_session";
 
-    # Initialize a buffer to store received data
-    receive_buffer = b""
+#curl 'http://10.2.23.112:8093/sfgui/sfapi/scripts/all?action=stop';
+#sleep 1;
+#curl 'http://10.2.23.112:8093/sfgui/sfapi/scripts/delete';
 
-    while True:
-        # Receive data from the socket
-        received_data = self.client_socket.recv(4096)
 
-        if not received_data:
-            # If no more data is received, exit the loop
-            break
 
-        # Add the received data to the receive buffer
-        receive_buffer += received_data
-
-        # Process messages in the receive buffer
-        while True:
-            # Read the header to determine message length (3 bytes)
-            if len(receive_buffer) < 3:
-                break
-
-            # Unpack the header
-            message_length = struct.unpack('!H', receive_buffer[1:3])[0]
-
-            if len(receive_buffer) < 3 + message_length:
-                # If the full message is not yet in the buffer, exit the loop
-                break
-
-            # Extract the complete message
-            complete_message = receive_buffer[:3 + message_length]
-
-            # Update the receive buffer
-            receive_buffer = receive_buffer[3 + message_length:]
-
-            # Process the complete message
-            handle_sbe_message(complete_message, message_type)
-
-  
-
-def handle_sbe_message(message_data, message_type):
-    # Extract the SBE header and determine template ID
-    sbe_header = message_data[:7]
-    block_length, template_id, schema_id, version, num_groups = struct.unpack('!HBBHb', sbe_header)
-
-    # Determine the message type based on TemplateID
-    message_type = None
-    for msg_type, template_id_val in MESSAGE_TYPES.items():
-        if template_id_val == template_id:
-            message_type = msg_type
-            break
-
-    if message_type is not None:
-        # Call the decode function based on message_type
-        decode_message(message_data[7:], message_type)
-
+directory="/home/exactpro_tools/BB/TestLibrary/Scripts/Market/Matching";
+tag_area="repricing"
+curl "http://10.2.23.112:8093/sfgui/sfapi/statistics/register_tag?name=$tag_area";
+cd $directory  
+for f in ./*; do
+	f_tmp=`echo  $f | sed 's/^..//'`;
+	f=$f_tmp
+	curl -i -X POST -F file=@$f 'http://10.2.23.112:8093/sfgui/sfapi/scripts/upload';
+	sleep 1;
+	curl "http://10.2.23.112:8093/sfgui/sfapi/scripts/name_$f?action=start&aml=3&autostart=true&continueonfailed=true&ignoreaskforcontinue=true&environment=New_Acc&tag=$tag_release&tag=$tag_area&tag=$tag_session";
+	sleep 1;
+done
 
