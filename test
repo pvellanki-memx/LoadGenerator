@@ -1,24 +1,23 @@
-ag_release="63_22";
+tag_release="63_22"
 tag_session="MarketSession"
-curl "http://10.2.23.112:8093/sfgui/sfapi/statistics/register_tag?name=$tag_release";
-curl "http://10.2.23.112:8093/sfgui/sfapi/statistics/register_tag?name=$tag_session";
+curl "http://10.2.23.112:8093/sfgui/sfapi/statistics/register_tag?name=$ag_release"
+curl "http://10.2.23.112:8093/sfgui/sfapi/statistics/register_tag?name=$tag_session"
 
-#curl 'http://10.2.23.112:8093/sfgui/sfapi/scripts/all?action=stop';
-#sleep 1;
-#curl 'http://10.2.23.112:8093/sfgui/sfapi/scripts/delete';
+# Uncomment these lines if you want to stop existing scripts before running new ones
+#curl 'http://10.2.23.112:8093/sfgui/sfapi/scripts/all?action=stop'
+#sleep 1
+#curl 'http://10.2.23.112:8093/sfgui/sfapi/scripts/delete'
 
-
-
-directory="/home/exactpro_tools/BB/TestLibrary/Scripts/Market/Matching";
+directory="/home/exactpro_tools/BB/TestLibrary/Scripts/Market/Matching/toRun"  # Updated to "toRun"
 tag_area="repricing"
-curl "http://10.2.23.112:8093/sfgui/sfapi/statistics/register_tag?name=$tag_area";
-cd $directory  
-for f in ./*; do
-	f_tmp=`echo  $f | sed 's/^..//'`;
-	f=$f_tmp
-	curl -i -X POST -F file=@$f 'http://10.2.23.112:8093/sfgui/sfapi/scripts/upload';
-	sleep 1;
-	curl "http://10.2.23.112:8093/sfgui/sfapi/scripts/name_$f?action=start&aml=3&autostart=true&continueonfailed=true&ignoreaskforcontinue=true&environment=New_Acc&tag=$tag_release&tag=$tag_area&tag=$tag_session";
-	sleep 1;
-done
+curl "http://10.2.23.112:8093/sfgui/sfapi/statistics/register_tag?name=$tag_area"
+cd "$directory"  # Move to the "toRun" directory
 
+for f in *; do
+    if [ -f "$f" ]; then  # Check if it's a file
+        curl -i -X POST -F file=@"$f" 'http://10.2.23.112:8093/sfgui/sfapi/scripts/upload'
+        sleep 1
+        curl "http://10.2.23.112:8093/sfgui/sfapi/scripts/name_$f?action=start&aml=3&autostart=true&continueonfailed=true&ignoreaskforcontinue=true&environment=New_Acc&tag=$ag_release&tag=$tag_area&tag=$tag_session"
+        sleep 1
+    fi
+done
