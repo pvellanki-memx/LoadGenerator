@@ -111,3 +111,25 @@
 55765	6.017864	10.1.131.12	10.3.44.2	TCP	64	31357 → 50356 [RST, ACK] Seq=179642 Ack=1048555 Win=0 Len=0
 55766	6.021718	10.1.130.38	10.3.44.2	TCP	64	31038 → 35614 [RST, ACK] Seq=159788 Ack=1048555 Win=0 Len=0
 55767	6.023863	10.1.131.10	10.3.44.2	TCP	64	31077 → 42028 [RST, ACK] Seq=162518 Ack=1048555 Win=0 Len=0
+
+
+
+
+
+
+
+
+
+
+
+New orders + Quotes ( 100k + 1 min) -- Stream messages: 2.2M
+
+New orders + Quotes ( 200k + 1 min) -- Stream messages: 2.9M
+
+New orders (200K + 1 min) -- Stream messages: 3.3M
+
+Quotes only (200K + 1 min) -- Stream messages: 3.1M
+
+New orders (200K + 2 min) -- Stream messages: 41M
+
+New orders (200K + 2 min) -- Stream messages: 23M (Go Lang slammer)
