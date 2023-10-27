@@ -1,27 +1,61 @@
-pvellanki@qa2434:~/Options$ ll
-total 84
-drwxr-xr-x 21 root      root      4096 Oct 20 12:03  ./
-drwxr-x--- 16 pvellanki pvellanki 4096 Oct 20 18:36  ../
-drwxr-xr-x  4 root      root      4096 Oct 20 12:03  BookOnly/
-drwxr-xr-x  4 root      root      4096 Oct 20 12:03  BulkQuote/
-drwxr-xr-x  2 root      root      4096 Oct 20 12:03  CancelOnDisconnect/
-drwxr-xr-x  2 root      root      4096 Oct 20 12:03  Cancellation/
-drwxr-xr-x  4 root      root      4096 Oct 20 12:03  Connectivity/
-drwxr-xr-x  4 root      root      4096 Oct 20 12:03  ISO/
-drwxr-xr-x  2 root      root      4096 Oct 20 12:03  LastLiquidityIndicator/
-drwxr-xr-x  2 root      root      4096 Oct 20 12:03  MassCancellation/
-drwxr-xr-x  2 root      root      4096 Oct 20 12:03  MatchTradePrevention/
-drwxr-xr-x  4 root      root      4096 Oct 20 12:03  OrderAcceptance/
-drwxr-xr-x  4 root      root      4096 Oct 20 12:03  OrderAmendments/
-drwxr-xr-x  4 root      root      4096 Oct 20 12:03  OrderExecution/
-drwxr-xr-x  2 root      root      4096 Oct 20 12:03 'PartyBlock Testing'/
-drwxr-xr-x  2 root      root      4096 Oct 20 12:03  PostOnly/
-drwxr-xr-x  4 root      root      4096 Oct 20 12:03 'Price Validation'/
-drwxr-xr-x  2 root      root      4096 Oct 20 12:03  Replay_Snapshot/
-drwxr-xr-x  2 root      root      4096 Oct 20 12:03  Repricing/
-drwxr-xr-x  4 root      root      4096 Oct 20 12:03  Risk/
-drwxr-xr-x  4 root      root      4096 Oct 20 12:03 'Smoke Tests'/
-pvellanki@qa2434:~/Options$ c
+import socket
+import time
+from multiprocessing import Process
+
+# Define the receive buffer size
+RECV_BUFFER_SIZE = 8192  # You can adjust this size as needed
+
+# Send the generated message over the TCP connection
+def send_message(client_socket, message):
+    # Send the message
+    client_socket.sendall(message)
+    # Sleep for a short period to control the message rate
+    time.sleep(1 / message_rate)
+
+def session_worker(session_name):
+    try:
+        # Establish SBE TCP session for the current session name
+        client_socket, session_id = establish_session(session_name)
+
+        # Set the receive buffer size
+        client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, RECV_BUFFER_SIZE)
+
+        # Start time for calculating duration
+        start_time = time.time()
+
+        # Generate and send messages for the specified duration
+        while time.time() - start_time < duration:
+            # Generate a random message type
+            message_type = generate_message_type()
+
+            # Generate one or two messages
+            new_order_single_message, order_cancel_message = generate_message(message_type, session_name, send_cancels=config.getboolean('Load', 'SendCancels'))
+
+            # Send the NewOrderSingle message
+            if new_order_single_message:
+                send_message(client_socket, new_order_single_message)
+
+            # Send the OrderCancelRequest message if it's generated
+            if order_cancel_message:
+                send_message(client_socket, order_cancel_message)
+
+            # Receive and discard data from the socket
+            response_data = client_socket.recv(RECV_BUFFER_SIZE)
+
+            # Sleep for a short period to control the message rate
+            time.sleep(1 / message_rate)
+
+        # Close the TCP connection for the current session
+        client_socket.close()
+
+    except Exception as e:
+        print(f"Failed to establish session for {session_name}: {str(e}")
+
+# Rest of your code remains the same
+
+if __name__ == '__main__':
+    main()
+
 
 
 
