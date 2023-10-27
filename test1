@@ -1,17 +1,19 @@
-echo actors.STREAM_CNC.actors.PRODUCT_ADMIN.setUnderlyingInstrumentIsActive UNDERLYING-SYMBOL=BUD IS-ACTIVE=True|nc localhost 2008
+#!/bin/bash
+
+# List of symbols
+symbols=("AI" "AMD" "BUD" "F" "GLD" "IMGN" "INTC" "IWM" "MOO" "NFLX" "NUE" "SBUX" "TGTX" "UNG")
+
+# Command template
+command_template="echo actors.STREAM_CNC.actors.PRODUCT_ADMIN.setUnderlyingInstrumentIsActive UNDERLYING-SYMBOL=UNDERLYING IS-ACTIVE=True|nc localhost 2008"
+
+# Loop through the symbols and run the command
+for symbol in "${symbols[@]}"; do
+    # Replace UNDERLYING in the command template with the current symbol
+    command="${command_template/UNDERLYING/$symbol}"
+    # Run the command
+    echo "Running command for $symbol"
+    eval "$command"
+    echo "Command completed for $symbol"
+done
 
 
-AI
-AMD
-BUD
-F
-GLD
-IMGN
-INTC
-IWM
-MOO
-NFLX
-NUE
-SBUX
-TGTX
-UNG
