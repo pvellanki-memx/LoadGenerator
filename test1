@@ -1,97 +1,18 @@
 #!/bin/bash
 
-current_date=$(date +"%Y-%m-%d")
-date=$(date -d "$current_date - 1 day" +"%Y-%m-%d")
-db_name="postmove_$date.db"
+# Replace these with your specific values
+output_dir="/data/orsa-intermediate"  # Directory containing the .csv files
+target_server="your_username@your_server_ip_or_hostname"  # SSH username and server address
+target_dir="/path/to/target/directory"  # Remote directory where you want to copy the files
 
-# Define the directory where the files are located
-base_dir="/mnt/occ/downloads/prod"
+# Define the date format to match
+mm_dd="10-27"
 
+# Use SCP to copy .csv files with the specified date format to the target server
+scp "$output_dir"/*"$mm_dd.csv" "$target_server:$target_dir/"
 
-# Construct the file name using the provided date
-file_to_watch="memx_orsa_postmove_$date.xml"
-
-# Construct the file name using the provided date
-compressed_file_to_watch="memx_orsa_postmove_$date.xml.Z"
-
-# Define the monitor folder
-monitor_folder="$base_dir"
-
-# Check if the file exists, wait up to 10 times
-retries=10
-while [ ! -e "$monitor_folder/$compressed_file_to_watch" ] && [ $retries -gt 0 ]; do
-    echo "$compressed_file_to_watch not found in $monitor_folder. Waiting..."
-    sleep 10  # Adjust the interval as needed
-    ((retries--))
-done
-
-if [ $retries -eq 0 ]; then
-    echo "Compressed file not found after 10 retries. Exiting."
-    exit 1
+if [ $? -eq 0 ]; then
+    echo "Files copied successfully to $target_server:$target_dir"
+else
+    echo "Error copying files to $target_server:$target_dir"
 fi
-
-echo "Found $compressed_file_to_watch"
-
-# Uncompress the file and wait for it to complete
-echo "Uncompressing $compressed_file_to_watch..."
-zcat "$monitor_folder/$compressed_file_to_watch" > "$monitor_folder/memx_orsa_postmove_$date.xml"
-uncompress_pid=$!
-wait "$uncompress_pid"
-
-# Check if the XML file is complete by examining the last two lines
-last_two_lines=$(zcat "$monitor_folder/$compressed_file_to_watch" | tail -n 2)
-
-if [[ $last_two_lines != *"</FIXML>"* ]]; then
-    echo "XML file is not complete. Missing </FIXML> tag."
-    exit 1
-fi
-
-# Step 1: Parse and dump postmove XML file to db.
-#python3 postmove.py /data/pvellanki/orsa-package-2/memx_orsa_postmove_"$date".xml $db_name
-python3 postmove.py /mnt/occ/downloads/prod/memx_orsa_postmove_"$date".xml $db_name
-
-# Capture the PID of the last background process
-pid=$!
-# Wait for the background process to complete
-wait "$pid"
-
-echo "Processing of postmove file  completed."
-
-# Step 3: Group the data in the database using groupedexcel.py
-python3 groupedexcel_postmove_v3.py "$db_name"
-
-groupedtrades_pid=$!
-wait "$groupedtrades_pid"
-
-echo "Grouped trades table created"
-
-python3 update_grouped_trades_v2.py "$db_name"
-
-updatetrades_pid=$!
-wait "$updatetrades_pid"
-
-echo "Updated trades table created"
-
-python3 streamfurther_postmove_v4.py "$db_name"
-
-streamfurther_pid=$!
-wait "$streamfurther_pid"
-
-echo "Grouped trades summary table created"
-
-python3 dump2excel_postmove.py "$db_name"
-
-dump2excel_pid=$!
-wait "$dump2excel_pid"
-
-echo "postmove summary file generated"
-
-mv *"$mm_dd.csv" "$output_dir/"
-
-# Remove all XML files in the current directory
-rm -f *.xml
-
-output_dir="/data/orsa-intermediate"
-
-# Move all *.db files to the "/data/orsa-intermediate" directory
-mv *.db "$output_dir/"
