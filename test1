@@ -1,19 +1,13 @@
 #!/bin/bash
 
-# List of symbols
-symbols=("AI" "AMD" "BUD" "F" "GLD" "IMGN" "INTC" "IWM" "MOO" "NFLX" "NUE" "SBUX" "TGTX" "UNG")
+# Define the source and destination server details
+source_user="your_username"
+source_server="source_server_ip_or_hostname"
+source_file="/path/to/source/file"
 
-# Command template
-command_template="echo actors.STREAM_CNC.actors.PRODUCT_ADMIN.setUnderlyingInstrumentIsActive UNDERLYING-SYMBOL=UNDERLYING IS-ACTIVE=True|nc localhost 2008"
+destination_user="your_username"
+destination_server="destination_server_ip_or_hostname"
+destination_path="/path/to/destination/directory"
 
-# Loop through the symbols and run the command
-for symbol in "${symbols[@]}"; do
-    # Replace UNDERLYING in the command template with the current symbol
-    command="${command_template/UNDERLYING/$symbol}"
-    # Run the command
-    echo "Running command for $symbol"
-    eval "$command"
-    echo "Command completed for $symbol"
-done
-
-
+# Use scp to copy the file from the source to the destination
+scp "${source_user}@${source_server}:${source_file}" "${destination_user}@${destination_server}:${destination_path}"
