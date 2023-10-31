@@ -1,5 +1,5 @@
-# Specify the output directory where the database files are located
-output_dir = '/path/to/your/output/directory'  # Replace with the actual directory
-
-# List the files in the output directory
-matching_files = [file for file in os.listdir(output_dir) if fnmatch.fnmatch(file, db_pattern)]
+24 
+     25 # List the files in the output directory
+     26 matching_files = [file for file in os.listdir(output_dir) if re.match(db_pattern, file)]
+     27 
+     28 print(matching_files)
