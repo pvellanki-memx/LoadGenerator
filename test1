@@ -1,5 +1,12 @@
-24 
-     25 # List the files in the output directory
-     26 matching_files = [file for file in os.listdir(output_dir) if re.match(db_pattern, file)]
-     27 
-     28 print(matching_files)
+pvellanki@orsa01:/data/pvellanki/orsa-package-2$ python3 monthly-report.py --month 2023-10
+2023-10-\d{2}\.db
+['2023-10-05.db', '2023-10-06.db', '2023-10-12.db', '2023-10-24.db', '2023-10-25.db', '2023-10-18.db', '2023-10-11.db', '2023-10-10.db', '2023-10-26.db', '2023-10-23.db', '2023-10-13.db', '2023-10-20.db', '2023-10-30.db', '2023-10-16.db', '2023-10-09.db', '2023-10-19.db', '2023-10-27.db']
+2023-10-05.db
+2023-10-06.db
+2023-10-12.db
+2023-10-24.db
+2023-10-25.db
+Traceback (most recent call last):
+  File "/data/pvellanki/orsa-package-2/monthly-report.py", line 56, in <module>
+    consolidated_cursor.execute(create_table_query)
+sqlite3.OperationalError: near ")": syntax error
