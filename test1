@@ -1,70 +1,40 @@
-https://www.memxtrading.dev/api/docs/folder?folder=Finance%2FTradeDetails%2F2023%2F10%2F26
+import os
+import requests
 
-curl -v -kX POST 'https://www.memxtrading.dev/secure-api/docs' \
---header 'Institution: MEMX' \
---header 'market: US Options' \
---header 'Authorization: Token testtoken1234' \
---form 'folder="Finance/"' \
---form 'uploads=@"/Users/pvellanki/Downloads/06-28.xlsx"'
+# Define the URL of the web server endpoint
+url = 'https://www.memxtrading.dev/secure-api/docs'
 
+# Define the headers for the request
+headers = {
+    'Institution': 'MEMX',
+    'market': 'US Options',
+    'Authorization': 'Token testtoken1234',
+}
 
---header 'Institution: MEMX' \
---header 'market: US Options' \
---header 'Authorization: Token testtoken1234' \
---form 'folder="Finance/"' \
---form 'uploads=@"/Users/pvellanki/Downloads/06-28.xlsx"'
-Note: Unnecessary use of -X or --request, POST is already inferred.
-*   Trying 240.0.183.231:443...
-* Connected to www.memxtrading.dev (240.0.183.231) port 443 (#0)
-* ALPN: offers h2,http/1.1
-* (304) (OUT), TLS handshake, Client hello (1):
-* (304) (IN), TLS handshake, Server hello (2):
-* (304) (IN), TLS handshake, Unknown (8):
-* (304) (IN), TLS handshake, Certificate (11):
-* (304) (IN), TLS handshake, CERT verify (15):
-* (304) (IN), TLS handshake, Finished (20):
-* (304) (OUT), TLS handshake, Finished (20):
-* SSL connection using TLSv1.3 / AEAD-AES256-GCM-SHA384
-* ALPN: server accepted http/1.1
-* Server certificate:
-*  subject: CN=www.memxtrading.dev
-*  start date: Mar 13 11:35:29 2023 GMT
-*  expire date: Apr 13 11:35:29 2024 GMT
-*  issuer: C=US; ST=Arizona; L=Scottsdale; O=GoDaddy.com, Inc.; OU=http://certs.godaddy.com/repository/; CN=Go Daddy Secure Certificate Authority - G2
-*  SSL certificate verify ok.
-* using HTTP/1.1
-> POST /secure-api/docs HTTP/1.1
-> Host: www.memxtrading.dev
-> User-Agent: curl/8.1.2
-> Accept: */*
-> Institution: MEMX
-> market: US Options
-> Authorization: Token testtoken1234
-> Content-Length: 23441
-> Content-Type: multipart/form-data; boundary=------------------------3c7dd956900a3de2
-> 
-* We are completely uploaded and fine
-< HTTP/1.1 204 No Content
-< Date: Tue, 31 Oct 2023 19:49:21 GMT
-< Connection: keep-alive
-< Content-Security-Policy: default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests
-< Cross-Origin-Opener-Policy: same-origin
-< Cross-Origin-Resource-Policy: same-origin
-< Origin-Agent-Cluster: ?1
-< Referrer-Policy: no-referrer
-< Strict-Transport-Security: max-age=15552000; includeSubDomains
-< X-Content-Type-Options: nosniff
-< X-DNS-Prefetch-Control: off
-< X-Download-Options: noopen
-< X-Frame-Options: SAMEORIGIN
-< X-Permitted-Cross-Domain-Policies: none
-< X-XSS-Protection: 0
-< Surrogate-Control: no-store
-< Cache-Control: no-store, no-cache, must-revalidate, proxy-revalidate
-< Pragma: no-cache
-< Expires: 0
-< Access-Control-Allow-Origin: *
-< Server: memxtrading.dev
-< Strict-Transport-Security: max-age=31536000; includeSubDomains
-< 
-* Connection #0 to host www.memxtrading.dev left intact
+# Define the folder and the path to the files you want to upload
+folder = 'Finance'
+source_folder = '/path/to/local/folder'  # Replace with the path to your local folder
+
+# List all the files in the source folder
+files = os.listdir(source_folder)
+
+# Initialize a dictionary to store the files to upload
+files_to_upload = {}
+
+# Iterate through the files and add them to the dictionary
+for filename in files:
+    if filename.endswith('.xlsx'):
+        file_path = os.path.join(source_folder, filename)
+        files_to_upload[filename] = (filename, open(file_path, 'rb'))
+
+# Define the form data to be sent with the request
+data = {'folder': folder}
+
+# Send the POST request to the server with the files and form data
+response = requests.post(url, headers=headers, files=files_to_upload, data=data)
+
+# Check the response status code
+if response.status_code == 204:
+    print("Files uploaded successfully.")
+else:
+    print(f"Error uploading files. Status code: {response.status_code}")
