@@ -1,18 +1,87 @@
-#!/bin/bash
+import sqlite3
+import pandas as pd
+import glob
+import re
+import argparse
+import os
 
-# Replace these with your specific values
-output_dir="/data/orsa-intermediate"  # Directory containing the .csv files
-target_server="your_username@your_server_ip_or_hostname"  # SSH username and server address
-target_dir="/path/to/target/directory"  # Remote directory where you want to copy the files
 
-# Define the date format to match
-mm_dd="10-27"
+# Define a command-line argument for the month
+parser = argparse.ArgumentParser()
+parser.add_argument('--month', required=True, help='The month (YYYY-MM) to consolidate and export.')
+args = parser.parse_args()
 
-# Use SCP to copy .csv files with the specified date format to the target server
-scp "$output_dir"/*"$mm_dd.csv" "$target_server:$target_dir/"
+# Define the regular expression pattern for matching .db files for the specified month
+db_pattern = fr'{args.month}-\d{{2}}\.db'
+print(db_pattern)
 
-if [ $? -eq 0 ]; then
-    echo "Files copied successfully to $target_server:$target_dir"
-else
-    echo "Error copying files to $target_server:$target_dir"
-fi
+# List the files in the current directory
+files = os.listdir()
+print(files)
+
+# Filter files based on the pattern
+#matching_files = [file for file in files if fnmatch.fnmatch(file, db_pattern)]
+matching_files = [file for file in files if re.match(db_pattern, file)]
+
+print(matching_files)
+
+# Specify the output CSV file
+output_csv_file = f'Monthly_{args.month}_Trades.csv'
+
+# Connect to the consolidated database
+consolidated_conn = sqlite3.connect(':memory:')  # Use an in-memory database for consolidation
+consolidated_cursor = consolidated_conn.cursor()
+
+
+# Iterate through database files matching the pattern
+for db_file in matching_files:
+    # Connect to the individual database
+    conn = sqlite3.connect(db_file)
+    cursor = conn.cursor()
+    print(db_file)
+
+    # Attach the individual database to the consolidated database
+    cursor.execute(f"ATTACH DATABASE '{db_file}' AS {args.month}")
+
+    # Get the structure of the grouped_trades_summary table
+    cursor.execute(f"PRAGMA table_info(grouped_trades_summary)")
+    table_info = cursor.fetchall()
+    column_names = [info[1] for info in table_info]
+
+    # Generate the CREATE TABLE statement for the consolidated_data table
+    create_table_query = f"CREATE TABLE IF NOT EXISTS consolidated_data ({', '.join(column_names)})"
+    consolidated_cursor.execute(create_table_query)
+
+    # Fetch data from the individual database
+    cursor.execute(f"SELECT * FROM grouped_trades_summary")
+    data_to_insert = cursor.fetchall()
+
+    # Insert fetched data into the consolidated database
+    for row in data_to_insert:
+        insert_query = f"INSERT INTO consolidated_data VALUES ({', '.join(['?'] * len(row))})"
+        consolidated_cursor.execute(insert_query, row)
+
+    # Detach the individual database
+    cursor.execute(f"DETACH DATABASE {args.month}")
+    conn.close()
+
+# Group data by the specified columns
+query = """
+SELECT Side, Sub_ID, Ultimate_Clearing_Firm, Entering_Firm_Col1, EXCH, TRANS_TYPE, SUM(Total_Quantity)
+FROM consolidated_data
+GROUP BY Side, Sub_ID, Ultimate_Clearing_Firm, Entering_Firm_Col1, EXCH, TRANS_TYPE
+"""
+
+# Execute the query
+result = consolidated_cursor.execute(query)
+
+# Convert the result to a pandas DataFrame
+df = pd.DataFrame(result.fetchall(), columns=['Side', 'Sub_ID', 'Ultimate_Clearing_Firm', 'Entering_Firm_Col1', 'EXCH', 'TRANS_TYPE', 'Total_Quantity'])
+
+# Export the grouped data to a CSV file
+df.to_csv(output_csv_file, index=False)
+
+# Close the consolidated database connection
+consolidated_conn.close()
+
+print(f'Data exported to {output_csv_file}')
