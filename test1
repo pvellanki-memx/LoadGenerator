@@ -1,4 +1,10 @@
-# Define a command-line argument for the month
+# Calculate the previous month
+today = datetime.today()
+first_day_of_current_month = today.replace(day=1)
+last_day_of_previous_month = first_day_of_current_month - timedelta(days=1)
+previous_month = last_day_of_previous_month.strftime('%Y-%m')
+
+# Define a command-line argument for the month with the previous month as the default
 parser = argparse.ArgumentParser()
-parser.add_argument('--month', required=True, help='The month (YYYY-MM) to consolidate and export.')
+parser.add_argument('--month', default=previous_month, help='The month (YYYY-MM) to consolidate and export.')
 args = parser.parse_args()
