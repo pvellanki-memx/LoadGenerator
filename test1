@@ -1,40 +1,4 @@
-import os
-import requests
-
-# Define the URL of the web server endpoint
-url = 'https://www.memxtrading.dev/secure-api/docs'
-
-# Define the headers for the request
-headers = {
-    'Institution': 'MEMX',
-    'market': 'US Options',
-    'Authorization': 'Token testtoken1234',
-}
-
-# Define the folder and the path to the files you want to upload
-folder = 'Finance'
-source_folder = '/path/to/local/folder'  # Replace with the path to your local folder
-
-# List all the files in the source folder
-files = os.listdir(source_folder)
-
-# Initialize a dictionary to store the files to upload
-files_to_upload = {}
-
-# Iterate through the files and add them to the dictionary
-for filename in files:
-    if filename.endswith('.xlsx'):
-        file_path = os.path.join(source_folder, filename)
-        files_to_upload[filename] = (filename, open(file_path, 'rb'))
-
-# Define the form data to be sent with the request
-data = {'folder': folder}
-
-# Send the POST request to the server with the files and form data
-response = requests.post(url, headers=headers, files=files_to_upload, data=data)
-
-# Check the response status code
-if response.status_code == 204:
-    print("Files uploaded successfully.")
-else:
-    print(f"Error uploading files. Status code: {response.status_code}")
+# Define a command-line argument for the month
+parser = argparse.ArgumentParser()
+parser.add_argument('--month', required=True, help='The month (YYYY-MM) to consolidate and export.')
+args = parser.parse_args()
