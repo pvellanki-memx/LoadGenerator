@@ -17,10 +17,13 @@ file_pattern="$previous_date.csv"
 # Construct the destination directory on your local machine
 local_directory="/path/to/local/folder"
 
-# Use sftp to retrieve the files from the SFTP server
-sftp $sftp_user@$sftp_server:$remote_directory/$file_pattern $local_directory/
+# Use lftp to retrieve files matching the pattern from the SFTP server
+lftp -u $sftp_user,$sftp_password $sftp_server <<EOF
+mirror --include "$file_pattern" $remote_directory $local_directory
+bye
+EOF
 
-# Check the exit status of sftp
+# Check the exit status of lftp
 if [ $? -eq 0 ]; then
     echo "Files matching $file_pattern retrieved successfully."
 else
