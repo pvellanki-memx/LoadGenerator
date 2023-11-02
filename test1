@@ -1,22 +1,28 @@
 #!/bin/bash
 
-# Define your source and destination server information
-source_server="user@source_server_ip_or_hostname"
-destination_server="user@destination_server_ip_or_hostname"
-destination_path="/path/to/destination/folder"
+# Define your SFTP server information
+sftp_server="user@sftp_server_ip_or_hostname"
+sftp_user="your_username"
+sftp_password="your_password"
 
-# Get the current month and date in MM-DD format
-current_date=$(date +"%m-%d")
+# Calculate the previous day in MM-DD format
+previous_date=$(date -d "yesterday" +"%m-%d")
 
-# Construct the source path to match the files with MM-DD.csv pattern
-source_path="$source_server:/path/to/source/files/*$current_date.csv"
+# Construct the remote directory path on the SFTP server
+remote_directory="/path/to/remote/files"
 
-# Use scp to copy the files from the source to the destination
-scp $source_path "$destination_server:$destination_path/"
+# Construct the source file pattern to match the files with the previous day's MM-DD.csv pattern
+file_pattern="$previous_date.csv"
 
-# Check the exit status of scp
+# Construct the destination directory on your local machine
+local_directory="/path/to/local/folder"
+
+# Use sftp to retrieve the files from the SFTP server
+sftp $sftp_user@$sftp_server:$remote_directory/$file_pattern $local_directory/
+
+# Check the exit status of sftp
 if [ $? -eq 0 ]; then
-    echo "Files matching *$current_date.csv copied successfully."
+    echo "Files matching $file_pattern retrieved successfully."
 else
-    echo "Error: Files matching *$current_date.csv copy failed."
+    echo "Error: Files matching $file_pattern retrieval failed."
 fi
