@@ -3,7 +3,6 @@
 # Define your SFTP server information
 sftp_server="user@sftp_server_ip_or_hostname"
 sftp_user="your_username"
-sftp_password="your_password"
 
 # Calculate the previous day in MM-DD format
 previous_date=$(date -d "yesterday" +"%m-%d")
@@ -17,13 +16,15 @@ file_pattern="$previous_date.csv"
 # Construct the destination directory on your local machine
 local_directory="/path/to/local/folder"
 
-# Use lftp to retrieve files matching the pattern from the SFTP server
-lftp -u $sftp_user,$sftp_password $sftp_server <<EOF
-mirror --include "$file_pattern" $remote_directory $local_directory
-bye
-EOF
+# Use SSH to connect to the SFTP server and list files matching the pattern
+file_list=$(ssh $sftp_server "cd $remote_directory; ls $file_pattern")
 
-# Check the exit status of lftp
+# Use sftp to retrieve each file from the SFTP server
+for remote_file in $file_list; do
+    sftp $sftp_user@$sftp_server:$remote_directory/$remote_file $local_directory/
+done
+
+# Check the exit status of the sftp commands
 if [ $? -eq 0 ]; then
     echo "Files matching $file_pattern retrieved successfully."
 else
