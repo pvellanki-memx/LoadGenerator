@@ -11,22 +11,33 @@ previous_date=$(date -d "yesterday" +"%m-%d")
 remote_directory="/path/to/remote/files"
 
 # Construct the source file pattern to match the files with the previous day's MM-DD.csv pattern
-file_pattern="$previous_date.csv"
+file_pattern="^.*$previous_date\.csv$"
 
 # Construct the destination directory on your local machine
 local_directory="/path/to/local/folder"
 
-# Use SSH to connect to the SFTP server and list files matching the pattern
-file_list=$(ssh $sftp_server "cd $remote_directory; ls $file_pattern")
+# Use sftp to list files matching the pattern on the SFTP server
+file_list=$(sftp $sftp_user@$sftp_server <<EOF
+cd $remote_directory
+ls -1
+bye
+EOF)
+
+# Filter the file list using grep and the regular expression
+filtered_file_list=$(echo "$file_list" | grep -E "$file_pattern")
+
+# Print the filtered file list
+echo "Files matching $previous_date.csv on the SFTP server:"
+echo "$filtered_file_list"
 
 # Use sftp to retrieve each file from the SFTP server
-for remote_file in $file_list; do
+for remote_file in $filtered_file_list; do
     sftp $sftp_user@$sftp_server:$remote_directory/$remote_file $local_directory/
 done
 
 # Check the exit status of the sftp commands
 if [ $? -eq 0 ]; then
-    echo "Files matching $file_pattern retrieved successfully."
+    echo "Files matching $previous_date.csv retrieved successfully."
 else
-    echo "Error: Files matching $file_pattern retrieval failed."
+    echo "Error: Files matching $previous_date.csv retrieval failed."
 fi
