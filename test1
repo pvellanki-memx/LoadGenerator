@@ -1,10 +1,22 @@
-# Calculate the previous month
-today = datetime.today()
-first_day_of_current_month = today.replace(day=1)
-last_day_of_previous_month = first_day_of_current_month - timedelta(days=1)
-previous_month = last_day_of_previous_month.strftime('%Y-%m')
+#!/bin/bash
 
-# Define a command-line argument for the month with the previous month as the default
-parser = argparse.ArgumentParser()
-parser.add_argument('--month', default=previous_month, help='The month (YYYY-MM) to consolidate and export.')
-args = parser.parse_args()
+# Define your source and destination server information
+source_server="user@source_server_ip_or_hostname"
+destination_server="user@destination_server_ip_or_hostname"
+destination_path="/path/to/destination/folder"
+
+# Get the current month and date in MM-DD format
+current_date=$(date +"%m-%d")
+
+# Construct the source path to match the files with MM-DD.csv pattern
+source_path="$source_server:/path/to/source/files/*$current_date.csv"
+
+# Use scp to copy the files from the source to the destination
+scp $source_path "$destination_server:$destination_path/"
+
+# Check the exit status of scp
+if [ $? -eq 0 ]; then
+    echo "Files matching *$current_date.csv copied successfully."
+else
+    echo "Error: Files matching *$current_date.csv copy failed."
+fi
