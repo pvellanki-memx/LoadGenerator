@@ -1,5 +1,6 @@
 import pandas as pd
 from datetime import datetime, timedelta
+from openpyxl import Workbook
 
 
 # Load the '23-10 Post-Move Data' dataset (replace 'your_data.csv' with the actual file path)
@@ -268,6 +269,8 @@ def lookup_member_name(value):
 
 unique_df['CC Name'] = unique_df['Unique_Column'].apply(lookup_member_name)
 
+unique_df = unique_df.sort_values(by='Unique_Column', ascending=True)
+
 
 # Get the current date
 current_date = datetime.now()
@@ -286,7 +289,7 @@ previous_month = first_day_of_previous_month.month
 file_name_format = f"Monthly_ORF_Fee_{previous_month_year:04d}-{previous_month:02d}"
 
 # Define the file name
-file_name = f"{file_name_format}.csv"
+#file_name = f"{file_name_format}.csv"
 
 # Replace 'output_directory' with the desired directory path where you want to save the CSV file.
 #output_directory = '/path/to/your/directory'
@@ -295,9 +298,24 @@ file_name = f"{file_name_format}.csv"
 #output_file_path = f"{output_directory}/{file_name}"
 
 #unique_df.to_csv(output_file_path, index=False)
-unique_df.to_csv(file_name, index=False)
+#unique_df.to_csv(file_name, index=False)
 
 #print(f"Monthly ORF Fee Calc saved to {output_file_path}")
+
+file_name = f"{file_name_format}.xlsx"
+
+
+# Create a new Excel writer
+with pd.ExcelWriter(file_name, engine='openpyxl') as writer:
+    # Write 'trade_df' to the 'Trade Data' sheet
+    trade_df.to_excel(writer, sheet_name='Trade Data', index=False)
+    
+    # Write 'combined_df' to the 'Combined Data' sheet
+    combined_df.to_excel(writer, sheet_name='Postmove Data', index=False)
+    
+    # Write 'unique_df' to the 'Unique Data' sheet
+    unique_df.to_excel(writer, sheet_name='ORF Data', index=False)
+
 print(f"Monthly ORF Fee Calc saved to {file_name}")
 
 #print(unique_df.head(20))
