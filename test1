@@ -1,2 +1,4 @@
-# Create the "yyyy-mm" format
-file_name_format = f"Monthly_ORF_Fee_{previous_month_year:04d}-{previous_month:02d}"
+# Write DataFrames to CSV files with the appended format
+trade_df.to_csv(f'Trade_Data_{file_name_format}.csv', index=False)
+combined_df.to_csv(f'Postmove_Data_{file_name_format}.csv', index=False)
+unique_df.to_csv(f'ORF_Data_{file_name_format}.csv', index=False)
