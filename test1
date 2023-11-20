@@ -1,2 +1,47 @@
- "<FIXML r="20030618" s="20040109" v="4.4" xr="FIA" xv="1.1" xmlns="http://fixprotocol.org/FIXML-4-4"><TrdCaptRpt TransTyp="1" MtchID="0000247" RptTyp="0" BizDt="2023-11-13" TxnTm="2023-11-13T13:29:06" TrdTyp="0" MktID="MXOP" LastQty="100" LastPx="10.0" Ccy="USD"><Instrmt SecTyp="OPT" Sym="GLD" PutCall="0" MMY="20241220" StrkPx="100.0"/><RptSide Side="1" PosEfct="C" TrdID="216178279671922767" ClOrdID="1699900148819" ExchSpeclInstr="253" TrdCode="01"><Pty ID="00982" R="4"><Sub ID="C" Typ="26"/></Pty><Pty ID="MT5A" R="38"/><Pty ID="MT5A" R="2"/></RptSide><RptSide Side="2" PosEfct="C" TrdID="216178279671922767" ExchSpeclInstr="253" TrdCode="01" ClOrdID="1699900148814"><Pty ID="00982" R="4"><Sub ID="C" Typ="26"/></Pty><Pty ID="MT5A" R="38"/><Pty ID="MT5A" R="2"/></RptSide></TrdCaptRpt></FIXML>"
-2023-11-13T13:29:06-05:00 gc22006.options.ewr2.memx.tech bash[7782]: 2023/11/13 18:29:06.809355796 UTC gc22006 [INFO ] ACTOR.STREAM_CNC: OCC_GATEWAY: SERVER.OCC: CHANNEL.OCC_MQ: Writing FIXML to MQ: "<FIXML r="20030618" s="20040109" v="4.4" xr="FIA" xv="1.1" xmlns="http://fixprotocol.org/FIXML-4-4"><TrdCaptRpt TransTyp="0" MtchID="0000248" RptTyp="0" BizDt="2023-11-13" TxnTm="2023-11-13T13:29:06" TrdTyp="0" MktID="MXOP" LastQty="100" LastPx="10.0" Ccy="USD"><Instrmt SecTyp="OPT" Sym="GLD" PutCall="0" MMY="20241220" StrkPx="100.0"/><RptSide Side="1" PosEfct="O" TrdID="216178279671922767" ClOrdID="1699900148819" ExchSpeclInstr="254" TrdCode="01"><Pty ID="00982" R="4"><Sub ID="C" Typ="26"/></Pty><Pty ID="MT5A" R="38"/><Pty ID="MT5A" R="2"/></RptSide><RptSide Side="2" PosEfct="C" TrdID="216178279671922767" ExchSpeclInstr="254" TrdCode="01" ClOrdID="1699900148814"><Pty ID="00982" R="4"><Sub ID="C" Typ="26"/></Pty><Pty ID="MT5A" R="38"/><Pty ID="MT5A" R="2"/></RptSide></TrdCaptRpt></FIXML>"
+import pymqi
+
+# Connection details
+queue_manager = "YOUR_QUEUE_MANAGER"
+channel = "YOUR_CHANNEL"
+host = "YOUR_MQ_HOST"
+port = 1414
+queue_name = "YOUR_QUEUE_NAME"
+
+# Connection properties
+conn_info = f"{host}({port})"
+qmgr = None
+
+# Connect to the queue manager
+try:
+    qmgr = pymqi.QueueManager(None)
+    qmgr.connect(queue_manager, channel, conn_info)
+    print("Connected to queue manager")
+
+    # Access the queue
+    queue = pymqi.Queue(qmgr, queue_name)
+    print(f"Opened queue '{queue_name}'")
+
+    # Set the options for the message
+    get_message_options = pymqi.gmo(Options=pymqi.CMQC.MQGMO_WAIT | pymqi.CMQC.MQGMO_FAIL_IF_QUIESCING)
+    get_message_options.WaitInterval = 5000  # 5 seconds
+
+    while True:
+        # Get a message from the queue
+        try:
+            message = queue.get(None, None, get_message_options)
+            print(f"Received message: {message}")
+        except pymqi.MQMIError as e:
+            if e.comp == pymqi.CMQC.MQCC_FAILED and e.reason == pymqi.CMQC.MQRC_NO_MSG_AVAILABLE:
+                print("No messages available. Waiting...")
+                continue
+            else:
+                raise
+
+except Exception as e:
+    print(f"Error: {e}")
+
+finally:
+    # Disconnect from the queue manager
+    if qmgr:
+        qmgr.disconnect()
+        print("Disconnected from queue manager")
