@@ -1,47 +1,16 @@
-import pymqi
+# Create a new Excel writer
+with pd.ExcelWriter(file_name, engine='openpyxl') as writer:
+    # Write 'trade_df' to the 'Trade Data' sheet
+    trade_df.to_excel(writer, sheet_name='Trade Data', index=False)
+    
+    # Write 'combined_df' to the 'Combined Data' sheet
+    combined_df.to_excel(writer, sheet_name='Postmove Data', index=False)
+    
+    # Write 'unique_df' to the 'Unique Data' sheet
+    unique_df.to_excel(writer, sheet_name='ORF Data', index=False)
 
-# Connection details
-queue_manager = "YOUR_QUEUE_MANAGER"
-channel = "YOUR_CHANNEL"
-host = "YOUR_MQ_HOST"
-port = 1414
-queue_name = "YOUR_QUEUE_NAME"
+print(f"Monthly ORF Fee Calc saved to {file_name}")
 
-# Connection properties
-conn_info = f"{host}({port})"
-qmgr = None
-
-# Connect to the queue manager
-try:
-    qmgr = pymqi.QueueManager(None)
-    qmgr.connect(queue_manager, channel, conn_info)
-    print("Connected to queue manager")
-
-    # Access the queue
-    queue = pymqi.Queue(qmgr, queue_name)
-    print(f"Opened queue '{queue_name}'")
-
-    # Set the options for the message
-    get_message_options = pymqi.gmo(Options=pymqi.CMQC.MQGMO_WAIT | pymqi.CMQC.MQGMO_FAIL_IF_QUIESCING)
-    get_message_options.WaitInterval = 5000  # 5 seconds
-
-    while True:
-        # Get a message from the queue
-        try:
-            message = queue.get(None, None, get_message_options)
-            print(f"Received message: {message}")
-        except pymqi.MQMIError as e:
-            if e.comp == pymqi.CMQC.MQCC_FAILED and e.reason == pymqi.CMQC.MQRC_NO_MSG_AVAILABLE:
-                print("No messages available. Waiting...")
-                continue
-            else:
-                raise
-
-except Exception as e:
-    print(f"Error: {e}")
-
-finally:
-    # Disconnect from the queue manager
-    if qmgr:
-        qmgr.disconnect()
-        print("Disconnected from queue manager")
+#print(unique_df.head(20))
+#print(trade_df.head(20))
+#print(combined_df.head(20))
