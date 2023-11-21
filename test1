@@ -1,353 +1,218 @@
 import unittest
-import socket
-import struct
 import time
-from sbe_encoder_decoder_new import *
-from sbe_message_types import *
-from sbe_messages2 import sbe_messages
-from decode_ER import *
-from get_config import *
+import random
+import configparser
+import quickfix as fix
+import json
+
+# Global variables
+sessions = {}
+
+config = configparser.ConfigParser()
+config.read("config.cfg")
+log_file = config.get("DEFAULT", "FileLogPath")
+
+def replace_placeholders(template, placeholders):
+    for placeholder, value in placeholders.items():
+        template = template.replace(placeholder, value)
+    return template
+
+def validate_execution_report(exec_report, order_qty, symbol, order_type, tif):
+    # Validate OrderQty
+    assert exec_report.getField(32) == str(order_qty), "Execution Report OrderQty mismatch"
+
+    # Validate Symbol
+    assert exec_report.getField(55) == symbol, "Execution Report Symbol mismatch"
+
+    # Validate OrdType
+    assert exec_report.getField(40) == order_type, "Execution Report OrdType mismatch"
+
+    # Validate TimeInForce
+    assert exec_report.getField(59) == tif, "Execution Report TimeInForce mismatch"
+
+class MyApplication(fix.Application):
+    def __init__(self):
+        super().__init__()
+        self.execution_report_received = False
+        self.last_execution_report = None
+        self.cl_ord_ids = []
+        log_file = config.get("DEFAULT", "FileLogPath")
+        self.log_file = log_file
+        self.sessions = {}
+        
 
 
-# Function to establish SBE TCP session
-def establish_session(session_name):
-    # Get connection details for the specified session name
-    host = connection_config[session_name]['host']
-    port = int(connection_config[session_name]['port'])
-    user = connection_config[session_name]['user']
-    password = connection_config[session_name]['password']
-    token = f'{user}:{password}'
-    # Login request
-    message_type = 100
-    token_type = 'P'  # Assuming token type is always 'P'
-    token_length = len(token)
-    header = struct.pack('!BHB', message_type, token_length + 1, token_type.encode('utf-8')[0])
-    message = header + token.encode('utf-8')
+    def onCreate(self, sessionID):
+        print("Session created -", sessionID.toString())
+        self.sessions[sessionID] = fix.Session.lookupSession(sessionID)
+        
 
-    # Create a socket and establish the connection
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect((host, port))
+    def onLogon(self, sessionID):
+        print("Logon Successful -", sessionID.toString())
 
-    # Set socket to binary mode
-    client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+    def onLogout(self, sessionID):
+        print("Logout initiated -", sessionID.toString())
 
-    # Send the login request
-    client_socket.sendall(message)
+    def toAdmin(self, message, sessionID):
+        if message.getHeader().getField(fix.MsgType()).getString() == fix.MsgType_Logon:
+            message.getHeader().setField(1408, "1.3")
+            print("sent admin message", message.toString())
 
-    # Receive and handle the response
-    response_header = client_socket.recv(3)
-    
-    response_type, response_length = struct.unpack('!B H', response_header)
+    def fromAdmin(self, message, sessionID):
+        global sessions
+        session_id = sessionID.toString()
+        incoming_msg_seq_num = int(message.getHeader().getField(34))
+        msg_type = message.getHeader().getField(35)
+        print(message)
 
-    if response_type == 1:  # Login Accepted
-        response_message = client_socket.recv(response_length)
-        print("Login Accepted:", response_message.decode('utf-8'))
-        session_id = None
-    elif response_type == 2:  # Login Rejected
-        response_message = client_socket.recv(response_length)
-        print("Login Rejected:", response_message.decode('utf-8'))
-        client_socket.close()
-        exit()  # Exit the script gracefully after login rejection
-    else:
-        print("Invalid response received.")
-        client_socket.close()
-        exit()  # Exit the script if an invalid response is received
+        if msg_type == 'A':  # Logon message
+            if incoming_msg_seq_num == 1:
+                print(f"Session established for {session_id}")
+                sessions[session_id] = True
+        elif msg_type == '5':  # Logout message
+            print(f"Session disconnected for {session_id}")
+            sessions[session_id] = False
+        with open(self.log_file, 'a') as file:
+            file.write(f"Received fromAdmin message:{message.toString()}\n")
 
-    # Continue with the session
-    while True:
-        response_header = client_socket.recv(11)
-        response_type, response_length, session_id = struct.unpack('!B H Q', response_header)
+    def toApp(self, message, sessionID):
+        session_id = sessionID.toString()
+        with open(self.log_file, "a") as file:
+                file.write(f"Session: {session_id}\n")
+                file.write(message.toString() + '\n')
+        print("sent application message", message.toString())
 
-        if response_type == 3:  # Start of Session
-            print("Start of Session. Session ID:", session_id)
-            break
-        else:
-            print("Invalid response received.")
+    def fromApp(self, message, sessionID):
+        msg_type = fix.MsgType()
+        message.getHeader().getField(msg_type)
 
-    # Stream Request
-    stream_request_type = 103
-    stream_request_length = 16  # 4 bytes for message type and length, 8 bytes for session ID, 8 bytes for next sequence number
-    NEXT_SEQUENCE_NUMBER = 0
-    stream_request_header = struct.pack('!BHQQ', stream_request_type, stream_request_length, session_id, NEXT_SEQUENCE_NUMBER)
-    stream_request = stream_request_header
+        if msg_type.getValue() == fix.MsgType_ExecutionReport:
+            cl_ord_id = fix.ClOrdID()
+            exec_report = fix.ExecutionReport()
+            message.getField(cl_ord_id)
+            message.getField(exec_report)
+            self.last_execution_report = exec_report
 
-    # Send the Stream Request
-    client_socket.sendall(stream_request)
+            # Check if the execution report matches the conditions
+            if exec_report.getField(39).getString() == '0' or exec_report.getField(39).getString() == '150':
+                self.execution_report_received = True
 
-    response_header = client_socket.recv(3)
-    response_type, response_length = struct.unpack('!B H', response_header)
+    def generate_clordid(self):
+        return str(random.randint(100000, 999999))
 
-    if response_type == 9:  # Stream Rejected
-        response_message = client_socket.recv(response_length)
-        reject_code = response_message.decode('utf-8')
-        print("Stream Rejected. Reject Code:", reject_code)
-        client_socket.close()
-        exit()
-    elif response_type == 10:  # End of Stream
-        response_message = client_socket.recv(response_length)
-        print("End of Stream")
-        client_socket.close()
-        exit()
-    elif response_type == 8:  # Stream Begin
-        response_message = client_socket.recv(response_length - 2)
-        NEXT_SEQUENCE_NUMBER  = struct.unpack('!Q', response_message[3:11])
-        print("Stream Begin received")
-    else:
-        print("Invalid Message received")
-
-    return client_socket, session_id
-
-
-
-# Send the generated message over the TCP connection
-def send_message(client_socket, message):
-    # Send the message
-    client_socket.sendall(message)
-    # Sleep for a short period to control the message rate
-    #time.sleep(1 / message_rate)
-    time.sleep(1)
-
-
-              
-class SBETestCase(unittest.TestCase):
+class TestFIXSession(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # Establish the session before running any test cases
-        cls.client_socket, cls.session_id = establish_session('Session1')
+        cls.app = MyApplication()
+        cls.settings = fix.SessionSettings("config.cfg")
+        cls.storeFactory = fix.FileStoreFactory(cls.settings)
+        cls.logFactory = fix.ScreenLogFactory(cls.settings)
+        cls.initiator = fix.SocketInitiator(cls.app, cls.storeFactory, cls.settings, cls.logFactory)
+        cls.initiator.start()
+        time.sleep(1)
+        cls.session_id = cls.app.session_id
+        
 
     @classmethod
     def tearDownClass(cls):
-        # Close the session after all test cases have been executed
-        cls.client_socket.close()
-    def handle_sbe_message(self, message_data, message_type):
-        # Extract the SBE header and determine template ID
-        sbe_header = message_data[:8]
-        #block_length, template_id, schema_id, version, num_groups = struct.unpack('!HBBHb', sbe_header)
-        template_id = struct.unpack_from('!B', sbe_header, 7)[0]
-        print('template_id:',template_id)
-        
-        # Determine the message type based on TemplateID
-        message_type = None
-        for msg_type, template_id_val in MESSAGE_TYPES.items():
-            if template_id_val == template_id:
-                message_type = msg_type
-                break
-        if message_type is not None:
-            print(f"Decoded Message Type: {message_type}")   
-        
-        decoded_message = {}
-        # if message_type is not None:
-        #     # Call the decode function based on message_type
-        #     #decode_message(message_data[7:], message_type)
-        #     decoded_message = decode_ER_BulkQuote_ComponentNew(message_data[7:])
-        if template_id == 11:
-            decoded_message = decode_ER_New(message_data[8:])
-        elif template_id == 12:
-            decoded_message = decode_BulkQuote_pending_new(message_data[8:])
-        elif template_id == 13:
-            decoded_message = decode_ER_BulkQuote_ComponentNew(message_data[8:])
-        elif template_id == 14:
-            decoded_message = decode_ER_Rejected(message_data[8:])
-        return decoded_message
-    
-    def send_and_receive(self, message_type, message):
-        # Send the message over the TCP connection
-        send_message(self.client_socket, message)
+        cls.initiator.stop()
 
-        # Initialize a buffer to store received data
-        receive_buffer = b""
+    def send_new_order_single(self, order_type, time_in_force, order_qty, symbol, exec_inst=''):
+        # Read the JSON file
+        with open('instrument_definitions.json', 'r') as file:
+            json_data = json.load(file)
 
-        while True:
-            # Receive data from the socket
-            try:
-                received_data = self.client_socket.recv(4096)
-            except ConnectionResetError:
-                pass
-            
-            if not received_data:
-                # If no more data is received, exit the loop
+        # Find the matching optionId based on the symbol
+        option_id = None
+        for item in json_data:
+            if item['underlyingSymbolId'] == symbol:
+                option_id = item['optionId']
                 break
 
-            # Add the received data to the receive buffer
-            receive_buffer += received_data
-            print('receive buffer: ',receive_buffer)
-            
-            # Process messages in the receive buffer
-            while True:
-            #while len(receive_buffer) >7:
-                # Read the header to determine message length (3 bytes)
-                if len(receive_buffer) < 3:
-                    break
-                print('len(receive_buffer):',len(receive_buffer))
-                
-                # Unpack the header
-                message_length = struct.unpack('!H', receive_buffer[1:3])[0]
-                print('message length:',message_length)
-                # if len(receive_buffer) < 3 + message_length:
-                #     # If the full message is not yet in the buffer, exit the loop
-                #     break
-                
-                # Extract the complete message
-                complete_message = receive_buffer[:3 + message_length]
-                print('complete message: ',complete_message)
-                # Update the receive buffer
-                receive_buffer = receive_buffer[3 + message_length:]
-                
-                # Process the complete message
-                self.handle_sbe_message(complete_message, message_type)
+        if not option_id:
+            raise ValueError(f"No optionId found for symbol: {symbol}")
 
-    
-    
+        message = fix.Message()
+        message.getHeader().setField(fix.BeginString(self.session_id.getBeginString().getString()))
+        message.getHeader().setField(fix.MsgType(fix.MsgType_NewOrderSingle))
+        message.getHeader().setField(fix.SenderCompID(self.session_id.getSenderCompID().getString()))
+        message.getHeader().setField(fix.TargetCompID(self.session_id.getTargetCompID().getString()))
+        message.getHeader().setField(fix.MsgSeqNum(self.app.get_outgoing_seq_num(self.session_id)))
 
-    # def send_and_receive(self, message_type, message):
-    #     # Send the message over the TCP connection
-    #     send_message(self.client_socket, message)
-        
-    #     # Receive the first 10 bytes of the response message
-    #     response_header = self.client_socket.recv(10)
-        
-    #     print('Resonse header=======',response_header)
-                    
-    #     # Decode the template ID from the 5th byte
-    #     template_id = struct.unpack_from('!B', response_header, 7)[0]
-    #     print('Temp id:',template_id)
-    #     # Assuming response_length is calculated properly, receive the remaining response
-    #     response_length = struct.unpack_from('!H', response_header, 1)[0]
-    #     remaining_bytes = response_length - 10
-        
-    #     response_message = response_header + self.client_socket.recv(remaining_bytes)
-        
-    #     print('response meassage==',response_message)
-        
-    #     # Decode the message type based on the template ID
-    #     decoded_message_type = None
-    #     for message_name, message_template_id in MESSAGE_TYPES.items():
-    #         if message_template_id == template_id:
-    #             decoded_message_type = message_name
-    #             break
+        # Set other required fields for NewOrderSingle message
+        message.setField(fix.Symbol(symbol))
+        message.setField(fix.Side(fix.Side_BUY))
+        message.setField(fix.OrderQty(order_qty))
+        message.setField(fix.Price(8))
+        message.setField(fix.OrdType(fix.OrdType_LIMIT))
+        message.setField(fix.TimeInForce(time_in_force))
+        message.setField(fix.ClOrdID(self.app.generate_clordid()))
+        message.setField(fix.ExecInst(exec_inst))
+        message.setField(1815, "6")
+        message.setField(21035, option_id)
+        message.setField(201, json_data[0]['putCall'])
+        message.setField(202, str(json_data[0]['strikePrice']))
+        message.setField(541, str(json_data[0]['expirationDate']))
 
-    #     if decoded_message_type is not None:
-    #         print(f"Decoded Message Type: {decoded_message_type}")        
-        
-    #     #template_id = struct.unpack('!B', response_message[2:3])[0]
-    #     decoded_message ={}
-    #     if template_id == 11:
-    #         decoded_message = decode_ER_New(response_message[3:])
-    #     elif template_id == 12:
-    #         decoded_message = decode_BulkQuote_pending_new(response_message[3:])
-    #     elif template_id == 13:
-    #         decoded_message = decode_ER_BulkQuote_ComponentNew(response_message[3:])
-    #     elif template_id == 14:
-    #         decoded_message = decode_ER_Rejected(response_message[3:])
-    #     elif template_id == 15:
-    #         decoded_message = decode_ER_Trade(response_message[3:])
-    #     elif template_id == 16:
-    #         decoded_message = decode_ER_PendingCancel(response_message[3:])
-    #     elif template_id == 17:
-    #         decoded_message = decode_ER_Canceled(response_message[3:])
-    #     elif template_id == 18:
-    #         decoded_message = decode_ER_PendingReplace(response_message[3:])
-    #     elif template_id == 19:
-    #         decoded_message = decode_ER_Replaced(response_message[3:])
-    #     elif template_id == 20:
-    #         decoded_message = decode_ER_TradeCorrection(response_message[3:])
-    #     elif template_id == 21:
-    #         decoded_message = decode_ER_TradeBreak(response_message[3:])
-    #     elif template_id == 22:
-    #         decoded_message = decode_ER_Restatement(response_message[3:])
-    #     elif template_id == 23:
-    #         decoded_message = decode_PendingMassCancel(response_message[3:])
-    #     elif template_id == 24:
-    #         decoded_message = decode_MassCancelReject(response_message[3:])
-            
-    #     elif template_id == 25:
-    #         decoded_message = decode_MassCancelDone(response_message[3:])
-    #     elif template_id == 26:
-    #         decoded_message = decode_OrderCancelReject(response_message[3:])
-    #     elif template_id == 27:
-    #         decoded_message = decode_AllocationInstructionAck(response_message[3:])
-    #     elif template_id == 28:
-    #         decoded_message = decode_AllocationInstructionAlert(response_message[3:])
-    #     elif template_id == 29:
-    #         decoded_message = decode_UserNotification(response_message[3:])
-    #     elif template_id == 30:
-    #         decoded_message = decode_MassCancelClearLockoutReject(response_message[3:])
-    #     elif template_id == 31:
-    #         decoded_message = decode_MassCancelClearLockoutDone(response_message[3:])
-    #     else:
-    #         print('Invalid template Id!')
-    #         return
-    #     print('decoded_message==', decoded_message)
+        # Create the repeating group for PartyIDs
+        party_group = fix.Group(fix.Tag_NoPartyIDs, fix.Tag_PartyID, [fix.Tag_PartyIDSource, fix.Tag_PartyRole])
+        party_group.setField(fix.PartyID("QAX3"))
+        party_group.setField(fix.PartyIDSource("D"))
+        party_group.setField(fix.PartyRole("1"))
+        message.addGroup(party_group)
 
-    #     return decoded_message
+        fix.Session.sendToTarget(message, self.session_id)
 
+        time.sleep(2)
 
-    # def test_new_order_single(self):
-    #     message_type = 'NewOrderSingle'
-    #     # Generate a message based on the message_type
-    #     message = sbe_messages.generate_message(message_type, 'Session1')
-    #     # Send and receive the message
-    #     dm = self.send_and_receive(message_type, message)
-        
-    #     #order cancel request
-    #     message_type2 = 'OrderCancelRequest'
-    #     message2 = sbe_messages.generate_message2(message_type2, 'Session1', dm)
-    #     #self.client_socket.sendall(message2)
-    #     self.send_and_receive(message_type2, message2)
+        self.assertTrue(self.app.execution_report_received)
+        exec_report = self.app.last_execution_report
+        cl_ord_id = exec_report.getField(11)
 
-        
+        validate_execution_report(exec_report, order_qty=order_qty, symbol=symbol, order_type=order_type, tif=time_in_force)
+        self.assertEqual(exec_report.getField(39), '0')
 
-    def test_short_two_sided_bulk_quote(self):
-        message_type = 'ShortTwoSidedBulkQuote'
-        # Generate a message based on the message_type
-        message = sbe_messages.generate_message(message_type, 'Session1')
+    # def send_cancel_replace_request(self, orig_cl_ord_id, new_price=None, new_order_qty=None):
+    #     # Implementation for sending cancel/replace request
+    #     pass
 
-        # Send and receive the message
-        self.send_and_receive(message_type, message)
-        
-    # def test_long_two_sided_bulk_quote(self):
-    #     message_type = 'LongTwoSidedBulkQuote'
-    #     # Generate a message based on the message_type
-    #     message = sbe_messages.generate_message(message_type, 'Session1')        
-    #     # Send and receive the message
-    #     self.send_and_receive(message_type, message)
+    # def send_order_cancel_request(self, orig_cl_ord_id):
+    #     # Implementation for sending order cancel request
+    #     pass
 
-    # def test_short_one_sided_bulk_quote(self):
-    #     message_type = 'ShortOneSidedBulkQuote'
-    #     # Generate a message based on the message_type
-    #     message = sbe_messages.generate_message(message_type, 'Session1')
-    #     # Send and receive the message
-    #     self.send_and_receive(message_type, message)
+    def test_market_order_with_day_tif(self):
+        self.send_new_order_single(order_type='1', time_in_force='0', order_qty=100, symbol='AAPL')
 
-    # def test_long_one_sided_bulk_quote(self):
-    #     message_type = 'LongOneSidedBulkQuote'
-    #     # Generate a message based on the message_type
-    #     message = sbe_messages.generate_message(message_type, 'Session1')
-    #     # Send and receive the message
-    #     self.send_and_receive(message_type, message)
+    # def test_market_order_with_ioc_tif(self):
+    #     self.send_new_order_single(order_type='1', time_in_force='3', order_qty=100, symbol='AAPL')
 
-    # def test_order_cancel_request(self):
-    #     message_type = 'OrderCancelRequest'
-    #     # Generate a message based on the message_type
-    #     message = sbe_messages.generate_message(message_type, 'Session1')
-    #     # Send and receive the message
-    #     self.send_and_receive(message_type, message)
+    # def test_limit_order_with_day_tif(self):
+    #     self.send_new_order_single(order_type='2', time_in_force='0', order_qty=100, symbol='AAPL')
 
-    # def test_mass_cancel_request(self):
-    #     message_type = 'MassCancelRequest'
-    #     # Generate a message based on the message_type
-    #     message = sbe_messages.generate_message2(message_type, 'Session1', dm=None)
-    #     # Send and receive the message
-    #     self.client_socket.sendall(message)
-    #     self.send_and_receive(message_type, message)
-        
-    # def test_allocation_instruction(self):
-    #     message_type = 'AllocationInstruction'
-    #     message = sbe_messages.generate_message3(message_type)
-    #     print('Encoded message:\n',message)
-    #     self.send_and_receive(message_type, message)
-        
+    # def test_limit_order_with_ioc_tif(self):
+    #     self.send_new_order_single(order_type='2', time_in_force='3', order_qty=100, symbol='AAPL')
 
+    # def test_limit_order_with_iso_modifier(self):
+    #     self.send_new_order_single(order_type='2', time_in_force='0', order_qty=100, symbol='AAPL', exec_inst='F')
+
+    # def test_rejected_market_order_with_iso_modifier(self):
+    #     self.send_new_order_single(order_type='1', time_in_force='0', order_qty=100, symbol='AAPL', exec_inst='F')
+    #     self.assertEqual(self.app.last_execution_report.getField(39), '8')
+
+    # def test_cancel_replace_price(self):
+    #     self.send_new_order_single(order_type='2', time_in_force='0', order_qty=100, symbol='AAPL')
+    #     orig_cl_ord_id = self.app.last_execution_report.getField(11)
+    #     self.send_cancel_replace_request(orig_cl_ord_id, new_price=150)
+
+    # def test_cancel_replace_qty(self):
+    #     self.send_new_order_single(order_type='2', time_in_force='0', order_qty=100, symbol='AAPL')
+    #     orig_cl_ord_id = self.app.last_execution_report.getField(11)
+    #     self.send_cancel_replace_request(orig_cl_ord_id, new_order_qty=50)
+
+    # def tearDown(self):
+    #     orig_cl_ord_id = self.app.last_execution_report.getField(11)
+    #     self.send_order_cancel_request(orig_cl_ord_id)
 
 if __name__ == '__main__':
     unittest.main()
+
