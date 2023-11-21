@@ -1,1 +1,114 @@
-header_bytes =  b'\x00c\x0b'
+    def send_and_receive(self, message_type, message):
+        # Send the message over the TCP connection
+        send_message(self.client_socket, message)
+
+        # Initialize a buffer to store received data
+        receive_buffer = b""
+        print(receive_buffer)
+
+
+
+        while True:
+            # Receive data from the socket
+            try:
+                received_data = self.client_socket.recv(4096)
+            except ConnectionResetError:
+                print("Connection reset by peer")
+                pass
+
+            if not received_data:
+                # If no more data is received, exit the loop
+                break
+
+            # Initialize a buffer to store received data
+            receive_buffer += received_data
+            print('receive buffer: ',receive_buffer)
+
+            #while True:
+            while len(receive_buffer) > 3:
+                # Read the header to determine message length (3 bytes)
+                
+                header_bytes = receive_buffer[:3]
+                response_type, response_length = struct.unpack('!B H', header_bytes)
+                print('header_bytes: ',header_bytes)
+                print(response_type,response_length)
+                
+                # Unpack the header
+                #message_length = struct.unpack('!H', header_bytes[1:3])[0]
+                message_length = struct.unpack('!H', header_bytes)[0]
+                print('message_length: ',message_length)
+
+                # Check if the complete message is in the buffer
+                if len(receive_buffer) < 3 + message_length:
+                    break
+
+                # Extract the complete message
+                complete_message = receive_buffer[3:3 + message_length]
+                print('Complete message:', complete_message)
+
+                # Process the complete message
+                self.handle_sbe_message(complete_message, message_type)
+
+                # Update the receive buffer for the next iteration
+                receive_buffer = receive_buffer[3 + message_length:]
+                print('Receive_buffer after complete message:', receive_buffer)
+    
+        if len(receive_buffer) > 0:
+            print('Incomplete message in buffer:', receive_buffer)
+            receive_buffer = b""
+
+
+
+
+
+
+Heartbeat (Message Type = 0)
+Heartbeat messages do not increment the sequence number of the stream. The Message Length field for a heartbeat is set to 0.
+
+Heartbeats are sent from the client to the server, and the server to the client periodically. If no messages are received by a client or a server for some length of time, the client or server should disconnect.
+
+Client-to-Server
+ 
+
+Login Request (Message Type = 100)
+Offset
+
+Length
+
+Type
+
+Name
+
+Description
+
+3
+
+1
+
+Byte
+
+Token Type
+
+Token type
+
+4
+
+n (max:255)
+
+Bytes
+
+Token
+
+Login token
+
+Token Types:
+
+Token Type
+
+Description
+
+P
+
+Static Password
+
+When using the Token Type = Static Password approach in the Login Request, the ‘Token’ field should be formatted as ‘user:password’. Where user and password are those supplied by MEMX.
