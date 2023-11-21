@@ -1,8 +1,1 @@
-import struct
-import sys
-
-
-print('System byte order:', sys.byteorder)
-header_bytes = b"h\x00c\x0b'"
-message_length = struct.unpack('!H', header_bytes[1:3])[0]
-print('Decoded message length:', message_length)
+header_bytes =  b'\x00c\x0b'
