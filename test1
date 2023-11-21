@@ -226,13 +226,12 @@ if __name__ == '__main__':
 
 
 
-
-
-8=FIXT.1.19=8135=A34=149=MXOP52=20231121-14:16:48.64356=MEOPVF198=0108=11137=91408=1.610=065
-Session established for FIXT.1.1:MEOPVF1->MXOP
-Traceback (most recent call last):
-  File "/home/vchalla/Final/FIX/functional/fix_test_suite.py", line 75, in fromAdmin
-    with open(self.log_file, 'a') as file:
-IsADirectoryError: [Errno 21] Is a directory: 'log/'
+class MyApplication(fix.Application):
+    def __init__(self):
+        # ... (other code)
+        log_file_path = config.get("DEFAULT", "FileLogPath")
+        # Add date and time to the log file name
+        log_file_name = f"log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+        self.log_file = os.path.join(log_file_path, log_file_name)
 
 
