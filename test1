@@ -1,3 +1,3 @@
-   if len(receive_buffer) > 0:
-        print('Incomplete message in buffer:', receive_buffer)
-        receive_buffer = b""
+(base) Priyankas-MacBook-Pro:~ priyankavellanki$ python3 test1.py 
+System byte order: little
+Decoded message length: 99
