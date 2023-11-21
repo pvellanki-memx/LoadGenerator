@@ -216,3 +216,49 @@ class TestFIXSession(unittest.TestCase):
 if __name__ == '__main__':
     unittest.main()
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+Session created - FIXT.1.1:MEOPVF1->MXOP
+<20231121-14:08:42.194999000, FIXT.1.1:MEOPVF1->MXOP, event>
+  (Created session)
+<20231121-14:08:42.195363000, FIXT.1.1:MEOPVF1->MXOP, event>
+  (Connecting to 10.3.0.8 on port 40318 (Source :0))
+sent admin message 8=FIXT.1.19=8135=A34=149=MEOPVF152=20231121-14:08:42.19556=MXOP1408=1.398=0108=11137=910=059
+<20231121-14:08:42.196127000, FIXT.1.1:MEOPVF1->MXOP, outgoing>
+  (8=FIXT.1.19=8135=A34=149=MEOPVF152=20231121-14:08:42.19556=MXOP1408=1.398=0108=11137=910=059)
+<20231121-14:08:42.196182000, FIXT.1.1:MEOPVF1->MXOP, event>
+  (Initiated logon request)
+<20231121-14:08:42.196670000, FIXT.1.1:MEOPVF1->MXOP, event>
+  (Socket Error: Connection reset by peer.)
+<20231121-14:08:42.196686000, FIXT.1.1:MEOPVF1->MXOP, event>
+  (Disconnecting)
+Logout initiated - FIXT.1.1:MEOPVF1->MXOP
+E
+======================================================================
+ERROR: setUpClass (__main__.TestFIXSession)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/vchalla/Final/FIX/functional/fix_test_suite.py", line 113, in setUpClass
+    cls.session_id = cls.app.session_id
+  File "/usr/local/lib/python3.10/dist-packages/quickfix.py", line 39558, in <lambda>
+    __getattr__ = lambda self, name: _swig_getattr(self, Application, name)
+  File "/usr/local/lib/python3.10/dist-packages/quickfix.py", line 83, in _swig_getattr
+    raise AttributeError("'%s' object has no attribute '%s'" % (class_type.__name__, name))
+AttributeError: 'Application' object has no attribute 'session_id'
+
+----------------------------------------------------------------------
+Ran 0 tests in 1.014s
+
+
+
