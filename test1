@@ -1,48 +1,44 @@
-    def send_and_receive(self, message_type, message):
-        # Send the message over the TCP connection
-        send_message(self.client_socket, message)
+import struct
+
+def send_and_receive(self, message_type, message):
+    # Send the message over the TCP connection
+    send_message(self.client_socket, message)
+
+    while True:
+        # Receive data from the socket
+        try:
+            received_data = self.client_socket.recv(4096)
+        except ConnectionResetError:
+            print("Connection reset by peer")
+            break
+
+        if not received_data:
+            # If no more data is received, exit the loop
+            break
 
         # Initialize a buffer to store received data
-        receive_buffer = b""
+        receive_buffer = received_data
 
-        while True:
-            # Receive data from the socket
-            try:
-                received_data = self.client_socket.recv(4096)
-            except ConnectionResetError:
-                pass
+        while len(receive_buffer) > 3:
+            # Read the header to determine message length (3 bytes)
+            header_bytes = receive_buffer[:3]
             
-            if not received_data:
-                # If no more data is received, exit the loop
+            # Unpack the header
+            message_length = struct.unpack('!H', header_bytes[1:3])[0]
+
+            # Check if the complete message is in the buffer
+            if len(receive_buffer) < 3 + message_length:
                 break
 
-            # Add the received data to the receive buffer
-            receive_buffer += received_data
-            print('receive buffer: ',receive_buffer)
-            
-            # Process messages in the receive buffer
-            while True:
-            #while len(receive_buffer) >7:
-                # Read the header to determine message length (3 bytes)
-                if len(receive_buffer) < 3:
-                    break
-                print('len(receive_buffer):',len(receive_buffer))
-                
-                # Unpack the header
-                message_length = struct.unpack('!H', receive_buffer[1:3])[0]
-                print('message length:',message_length)
-                # if len(receive_buffer) < 3 + message_length:
-                #     # If the full message is not yet in the buffer, exit the loop
-                #     break
-                
-                # Extract the complete message
-                complete_message = receive_buffer[:3 + message_length]
-                print('complete message: ',complete_message)
-                # Update the receive buffer
-                receive_buffer = receive_buffer[3 + message_length:]
-                
-                # Process the complete message
-                self.handle_sbe_message(complete_message, message_type)
+            # Extract the complete message
+            complete_message = receive_buffer[3:3 + message_length]
+            print('Complete message:', complete_message)
+
+            # Process the complete message
+            self.handle_sbe_message(complete_message, message_type)
+
+            # Update the receive buffer for the next iteration
+            receive_buffer = receive_buffer[3 + message_length:]
 
 
 
