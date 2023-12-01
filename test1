@@ -72,11 +72,11 @@ for underlier in underliers_to_check:
         print(f"Warning: Key '{underlier}' not found in the configuration file.")
 
 # Randomly select an underlier
-selected_underlier = choices(underliers_to_check)
+selected_underlier = choice(underliers_to_check)
 
 
 # Get the associated options security IDs for the selected underlier
-selected_options_security_ids = options_security_ids_by_underlier[selected_underlier[0]]
+selected_options_security_ids = options_security_ids_by_underlier[selected_underlier]
 
 
 
