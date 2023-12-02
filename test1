@@ -1,61 +1,3 @@
-# ...
-
-def generate_message(session_name, underliers_to_check, options_security_ids_by_underlier, send_cancels=False):
-    new_order_single_message = None
-    order_cancel_message = None
-
-    # Randomly select an underlier
-    selected_underlier = choice(underliers_to_check)
-
-    # Get the associated options security IDs for the selected underlier
-    selected_options_security_ids = options_security_ids_by_underlier[selected_underlier]
-
-    # Generate a random message type based on the weights
-    message_type = generate_message_type()
-
-    # ...
-
-    if message_type == 'NewOrderSingle':
-        # ...
-
-        options_security_id = choices(selected_options_security_ids)[0]
-
-        # ...
-
-    elif message_type == 'LongTwoSideBulkQuote':
-        # ...
-
-        options_security_id = choices(selected_options_security_ids)[0]
-
-        # ...
-
-    else:
-        raise ValueError(f"Invalid message type: {message_type}")
-
-    # ...
-
-    return new_order_single_message, order_cancel_message
-
-# ...
-
-# Generate one or two messages
-new_order_single_message, order_cancel_message = generate_message(
-    selected_underlier, underliers_to_check, options_security_ids_by_underlier, send_cancels=config.getboolean('Load', 'SendCancels')
-)
-
-# ...
-
-
-
-
-
-
-
-
-
-
-
-
 import configparser
 
 # Assuming connection.cfg has a section [SBE] with a key VERSION
@@ -77,5 +19,3 @@ class NewOrderSingle:
         self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, version_from_config, self.num_groups)
         
         # ... (remaining code)
-
-
