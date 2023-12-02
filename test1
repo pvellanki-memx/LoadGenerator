@@ -19,3 +19,40 @@ class NewOrderSingle:
         self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, version_from_config, self.num_groups)
         
         # ... (remaining code)
+
+
+
+
+
+
+
+
+
+
+[Session2]
+host = 10.3.0.6
+port = 30967
+user = meopt2
+password = sbemeops4
+EFID = MT02
+tradingcapacity = MARKETMAKER
+version = 262
+
+
+[Session1]
+host = 10.3.0.6
+port = 31021
+user = meopt2
+password = sbemeopvs2
+EFID = MT02
+tradingcapacity = MARKETMAKER
+version = 262
+
+[Session3]
+host = 10.3.0.6
+port = 31020
+user = meopt2
+password = sbemeopvs1
+EFID = MT02
+tradingcapacity = MARKETMAKER
+version =262
