@@ -45,3 +45,37 @@ new_order_single_message, order_cancel_message = generate_message(
 
 # ...
 
+
+
+
+
+
+
+
+
+
+
+
+import configparser
+
+# Assuming connection.cfg has a section [SBE] with a key VERSION
+config = configparser.ConfigParser()
+config.read('connection.cfg')
+
+class NewOrderSingle:
+    TEMPLATE_ID = 1
+    num_groups = 1
+    schema_id = 9
+
+    def __init__(self, **kwargs):
+        # ... (existing code)
+
+        # Read VERSION from the configuration file
+        version_from_config = int(config['SBE']['VERSION'])
+        
+        # Update SBEHeader with the version from the configuration file
+        self.sbe_header = SBEHeader(self.BLOCK_LENGTH, self.TEMPLATE_ID, self.schema_id, version_from_config, self.num_groups)
+        
+        # ... (remaining code)
+
+
