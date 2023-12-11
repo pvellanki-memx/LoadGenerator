@@ -1,3 +1,17 @@
-curl -G "http://10.0.28.177:8086/query" --data-urlencode "db=your_database" --data-urlencode "q=SELECT * FROM your_measurement LIMIT 5"
+from deephaven import init, TableOperations
+
+# Connect to Deephaven instance
+init(host="your_remote_host", port=your_remote_port)
+
+
+# Get a list of all tables
+all_tables = TableOperations.list_tables()
+
+# Print the list of tables
+for table_name in all_tables:
+    print(f"Table: {table_name}")
+
+# Close the connection to Deephaven
+TableOperations.shutdown()
 
 
