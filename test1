@@ -1,4 +1,5 @@
--- Assuming RawFields is a table in MIDS namespace
+ worker_188 • Python • 4.0 GB • dh-query-mde-1.memxtrading.com  • 
+Loading class `com.mysql.jdbc.Driver'. This is deprecated. The new driver class is `com.mysql.cj.jdbc.Driver'. The driver is automatically registered via the SPI and manual loading of the driver class is generally unnecessary.
 SELECT 
     AcceptedPrice,
     AcceptedQuantity,
@@ -23,5 +24,64 @@ SELECT
 FROM
     MIDS.RawFields
 WHERE
-    Date = '2021-03-26' AND
+    Date = '2023-11-14' AND
     SymbolId = 'NAV';
+Python command, "SELECT 
+    AcceptedPrice,
+    AcceptedQuantity,
+    AccountId,
+    CancelReason,
+    ClOrdId,
+    DisplayedOpenQuantity,
+    ExchangeOrderId,
+    ExecutionPrice,
+    FirmName,
+    IsBookOnly,
+    MatchId,
+    MessageId,
+    OrderQty,
+    PegPrice,
+    Quantity,
+    RoutedOrderId,
+    RoutedOrderType,
+    SymbolSfx,
+    TimeInForce,
+    TargetCompID
+FROM
+    MIDS.RawFields
+WHERE
+    Date = '2023-11-14' AND
+    SymbolId = 'NAV';" failed:
+
+java.lang.RuntimeException: Error in Python interpreter:
+Type: <class 'IndentationError'>
+Value: unexpected indent (<string>, line 2)
+Line: <not available>
+Namespace: <not available>
+File: <not available>
+Traceback (most recent call last):
+
+        at org.jpy.PyLib.executeCode(PyLib.java:-2)
+        at org.jpy.PyObject.executeCode(PyObject.java:138)
+        at com.illumon.iris.db.util.PythonEvaluatorJpy.evalScript(PythonEvaluatorJpy.java:53)
+        at com.illumon.iris.db.util.IrisDbPythonSession.lambda$evaluate$1(IrisDbPythonSession.java:147)
+        at com.illumon.util.locks.FunctionalLock.doLockedInterruptibly(FunctionalLock.java:45)
+        at com.illumon.iris.db.util.IrisDbPythonSession.evaluate(IrisDbPythonSession.java:146)
+        at com.illumon.iris.console.events.RemoteScriptCommandQuery.execute(RemoteScriptCommandQuery.java:92)
+        at com.illumon.iris.console.events.RemoteScriptCommandQuery.execute(RemoteScriptCommandQuery.java:25)
+        at com.illumon.iris.db.tables.remotequery.RemoteQueryProcessor$QueryAction.lambda$execute$0(RemoteQueryProcessor.java:1920)
+        at com.illumon.util.locks.FunctionalLock.computeLockedInterruptibly(FunctionalLock.java:97)
+        at com.illumon.iris.db.tables.remotequery.RemoteQueryProcessor$QueryAction.execute(RemoteQueryProcessor.java:1920)
+        at com.illumon.iris.db.tables.remotequery.RemoteQueryProcessor$ClientConnectionHandler.runSyncQueryAndSendResult(RemoteQueryProcessor.java:1682)
+        at com.illumon.iris.db.tables.remotequery.RemoteQueryProcessor$ClientConnectionHandler.handleCommandST(RemoteQueryProcessor.java:1576)
+        at com.illumon.iris.db.tables.remotequery.RemoteQueryProcessor$ClientConnectionHandler$HandleCommandRunnable.run(RemoteQueryProcessor.java:1171)
+        at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539)
+        at java.util.concurrent.FutureTask.run(FutureTask.java:264)
+        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+        at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+        at java.lang.Thread.run(Thread.java:891)
+
+
+
+
+
