@@ -1,29 +1,12 @@
-Tables.list()
-r-Scheduler-Serial-1 | .c.ConsoleServiceGrpcImpl | Error running script: groovy.lang.MissingPropertyException: No such property: Tables for class: io.deephaven.dynamic.Script_8
-	at org.codehaus.groovy.runtime.ScriptBytecodeAdapter.unwrap(ScriptBytecodeAdapter.java:65)
-	at org.codehaus.groovy.runtime.callsite.PogoGetPropertySite.getProperty(PogoGetPropertySite.java:51)
-	at org.codehaus.groovy.runtime.callsite.AbstractCallSite.callGroovyObjectGetProperty(AbstractCallSite.java:341)
-	at io.deephaven.dynamic.Script_8.run(Script_8.groovy:2)
-	at groovy.lang.GroovyShell.evaluate(GroovyShell.java:427)
-	at groovy.lang.GroovyShell.evaluate(GroovyShell.java:461)
-	at groovy.lang.GroovyShell.evaluate(GroovyShell.java:436)
-	at io.deephaven.engine.util.GroovyDeephavenSession.evaluateCommand(GroovyDeephavenSession.java:302)
-	at io.deephaven.engine.util.GroovyDeephavenSession.lambda$evaluate$0(GroovyDeephavenSession.java:325)
-	at io.deephaven.util.locks.FunctionalLock.doLockedInterruptibly(FunctionalLock.java:51)
-	at io.deephaven.engine.util.GroovyDeephavenSession.evaluate(GroovyDeephavenSession.java:325)
-	at io.deephaven.engine.util.AbstractScriptSession.lambda$evaluateScript$0(AbstractScriptSession.java:147)
-	at io.deephaven.engine.context.ExecutionContext.lambda$apply$0(ExecutionContext.java:149)
-	at io.deephaven.engine.context.ExecutionContext.apply(ExecutionContext.java:160)
-	at io.deephaven.engine.context.ExecutionContext.apply(ExecutionContext.java:148)
-	at io.deephaven.engine.util.AbstractScriptSession.evaluateScript(AbstractScriptSession.java:147)
-	at io.deephaven.engine.util.DelegatingScriptSession.evaluateScript(DelegatingScriptSession.java:84)
-	at io.deephaven.engine.util.ScriptSession.evaluateScript(ScriptSession.java:102)
-	at io.deephaven.server.console.ConsoleServiceGrpcImpl.lambda$executeCommand$4(ConsoleServiceGrpcImpl.java:175)
-	at io.deephaven.server.session.SessionState$ExportBuilder.lambda$submit$2(SessionState.java:1388)
-	at io.deephaven.server.session.SessionState$ExportObject.doExport(SessionState.java:924)
-	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539)
-	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
-	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
-	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
-	at io.deephaven.server.runner.scheduler.SchedulerModule$ThreadFactory.lambda$newThread$0(SchedulerModule.java:78)
-	at java.base/java.lang.Thread.run(Thread.java:891)
+messages = db.i("MIDS", "RawFields").where("Date = `2021-03-26`","SymbolId = `NAV`").view("AcceptedPrice","AcceptedQuantity ","AccountId","CancelReason ","ClOrdId ","DisplayedOpenQuantity","ExchangeOrderId ","ExecutionPrice ","FirmName ","IsBookOnly ","MatchId ","MessageId ","OrderQty ","PegPrice ","Quantity ","RoutedOrderId ","RoutedOrderType ","SymbolSfx ","TimeInForce ","TargetCompID ")
+
+———————————————————————————————
+
+import com.memx.us_equities.dh.mids.MIDS;
+//Hack to put this in the variable scope of query engine
+map_MessageNames = MIDS.map_MessageNames;
+date = CALENDAR_USNYSE.currentDay();
+T = db.i("MIDS", "RawFields").where("Date=date")
+                            .head(100)
+                            .view("AcceptedPrice","AcceptedQuantity ","AccountId","CancelReason ","ClOrdId ","DisplayedOpenQuantity","ExchangeOrderId ","ExecutionPrice ","FirmName ","IsBookOnly ","MatchId ","MessageId ","OrderQty ","PegPrice ","Quantity ","RoutedOrderId ","RoutedOrderType ","SymbolSfx ","TimeInForce ","TargetCompID ","SourceId ")
+                            .updateView("Name=(String)map_MessageNames[(short)MessageId]");
