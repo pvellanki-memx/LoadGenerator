@@ -1,12 +1,27 @@
-messages = db.i("MIDS", "RawFields").where("Date = `2021-03-26`","SymbolId = `NAV`").view("AcceptedPrice","AcceptedQuantity ","AccountId","CancelReason ","ClOrdId ","DisplayedOpenQuantity","ExchangeOrderId ","ExecutionPrice ","FirmName ","IsBookOnly ","MatchId ","MessageId ","OrderQty ","PegPrice ","Quantity ","RoutedOrderId ","RoutedOrderType ","SymbolSfx ","TimeInForce ","TargetCompID ")
-
-———————————————————————————————
-
-import com.memx.us_equities.dh.mids.MIDS;
-//Hack to put this in the variable scope of query engine
-map_MessageNames = MIDS.map_MessageNames;
-date = CALENDAR_USNYSE.currentDay();
-T = db.i("MIDS", "RawFields").where("Date=date")
-                            .head(100)
-                            .view("AcceptedPrice","AcceptedQuantity ","AccountId","CancelReason ","ClOrdId ","DisplayedOpenQuantity","ExchangeOrderId ","ExecutionPrice ","FirmName ","IsBookOnly ","MatchId ","MessageId ","OrderQty ","PegPrice ","Quantity ","RoutedOrderId ","RoutedOrderType ","SymbolSfx ","TimeInForce ","TargetCompID ","SourceId ")
-                            .updateView("Name=(String)map_MessageNames[(short)MessageId]");
+-- Assuming RawFields is a table in MIDS namespace
+SELECT 
+    AcceptedPrice,
+    AcceptedQuantity,
+    AccountId,
+    CancelReason,
+    ClOrdId,
+    DisplayedOpenQuantity,
+    ExchangeOrderId,
+    ExecutionPrice,
+    FirmName,
+    IsBookOnly,
+    MatchId,
+    MessageId,
+    OrderQty,
+    PegPrice,
+    Quantity,
+    RoutedOrderId,
+    RoutedOrderType,
+    SymbolSfx,
+    TimeInForce,
+    TargetCompID
+FROM
+    MIDS.RawFields
+WHERE
+    Date = '2021-03-26' AND
+    SymbolId = 'NAV';
