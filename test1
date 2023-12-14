@@ -1,19 +1,22 @@
-pvellanki@pvellanki-MacBookPro dh % pip install deephaven  
-Defaulting to user installation because normal site-packages is not writeable
-Requirement already satisfied: deephaven in /Users/pvellanki/Library/Python/3.9/lib/python/site-packages (1.20190117.245)
-Requirement already satisfied: numpy in /Users/pvellanki/Library/Python/3.9/lib/python/site-packages (from deephaven) (1.25.1)
-Requirement already satisfied: dill>=0.2.8 in /Users/pvellanki/Library/Python/3.9/lib/python/site-packages (from deephaven) (0.3.7)
-Requirement already satisfied: wrapt in /Users/pvellanki/Library/Python/3.9/lib/python/site-packages (from deephaven) (1.16.0)
-Requirement already satisfied: pandas in /Users/pvellanki/Library/Python/3.9/lib/python/site-packages (from deephaven) (2.0.3)
-Requirement already satisfied: numba in /Users/pvellanki/Library/Python/3.9/lib/python/site-packages (from deephaven) (0.58.1)
-Requirement already satisfied: tzlocal in /Users/pvellanki/Library/Python/3.9/lib/python/site-packages (from deephaven) (5.2)
-Requirement already satisfied: llvmlite<0.42,>=0.41.0dev0 in /Users/pvellanki/Library/Python/3.9/lib/python/site-packages (from numba->deephaven) (0.41.1)
-Requirement already satisfied: python-dateutil>=2.8.2 in /Users/pvellanki/Library/Python/3.9/lib/python/site-packages (from pandas->deephaven) (2.8.2)
-Requirement already satisfied: pytz>=2020.1 in /Users/pvellanki/Library/Python/3.9/lib/python/site-packages (from pandas->deephaven) (2023.3)
-Requirement already satisfied: tzdata>=2022.1 in /Users/pvellanki/Library/Python/3.9/lib/python/site-packages (from pandas->deephaven) (2023.3)
-Requirement already satisfied: six>=1.5 in /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/site-packages (from python-dateutil>=2.8.2->pandas->deephaven) (1.15.0)
-pvellanki@pvellanki-MacBookPro dh % python3 test.py                                                                 
-Traceback (most recent call last):
-  File "/Users/pvellanki/dh/test.py", line 1, in <module>
-    import deephaven as dh
-ModuleNotFoundError: No module named 'deephaven'
+pvellanki@pvellanki-MacBookPro dh % pip install --user deephaven
+Collecting deephaven
+  Using cached deephaven-1.20221001.62-py2.py3-none-any.whl (157 kB)
+Collecting jpy==0.11.0 (from deephaven)
+  Using cached jpy-0.11.0.tar.gz (170 kB)
+  Preparing metadata (setup.py) ... error
+  error: subprocess-exited-with-error
+  
+  × python setup.py egg_info did not run successfully.
+  │ exit code: 1
+  ╰─> [1 lines of output]
+      Error: environment variable "JAVA_HOME" must be set to a JDK (>= v1.7) installation directory
+      [end of output]
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+error: metadata-generation-failed
+
+× Encountered error while generating package metadata.
+╰─> See above for output.
+
+note: This is an issue with the package mentioned above, not pip.
+hint: See above for details
