@@ -1,22 +1,9 @@
-pvellanki@pvellanki-MacBookPro dh % pip install --user deephaven
-Collecting deephaven
-  Using cached deephaven-1.20221001.62-py2.py3-none-any.whl (157 kB)
-Collecting jpy==0.11.0 (from deephaven)
-  Using cached jpy-0.11.0.tar.gz (170 kB)
-  Preparing metadata (setup.py) ... error
-  error: subprocess-exited-with-error
-  
-  × python setup.py egg_info did not run successfully.
-  │ exit code: 1
-  ╰─> [1 lines of output]
-      Error: environment variable "JAVA_HOME" must be set to a JDK (>= v1.7) installation directory
-      [end of output]
-  
-  note: This error originates from a subprocess, and is likely not a problem with pip.
-error: metadata-generation-failed
-
-× Encountered error while generating package metadata.
-╰─> See above for output.
-
-note: This is an issue with the package mentioned above, not pip.
-hint: See above for details
+      "matchOrderAcceptCount": 16,
+      "matchOrderExecutedCount": 0,
+      "matchOrderCanceledCount": 16,
+      "matchOrderReplacedCount": 0,
+      "matchQuoteAcceptedCount": 0,
+      "matchQuoteCompleteCount": 0,
+      "matchQuoteComponentAcceptedCount": 0,
+      "matchOrderSelfTradeCanceledCount": 0,
+      "matchOrderRepricedCount":
