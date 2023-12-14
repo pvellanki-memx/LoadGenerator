@@ -1,17 +1,63 @@
-# Import necessary modules
-from deephaven import Table
+import deephaven as dh
+import pandas as pd
 
-# Select the table
-raw_fields_table = dh.table("MIDS", "RawFields")
+# Your Deephaven connection details
+deephaven_credentials = {
+    "username": "your_username",
+    "password": "your_password",
+    "host": "deephaven_host",
+    "port": 12345  # Deephaven server port
+}
 
-# Apply the filter and select columns
-result_table = raw_fields_table.where("Date == '2023-11-14'", "SymbolId == 'NAV'").view(
-    "AcceptedPrice", "AcceptedQuantity", "AccountId", "CancelReason",
-    "ClOrdId", "DisplayedOpenQuantity", "ExchangeOrderId", "ExecutionPrice",
-    "FirmName", "IsBookOnly", "MatchId", "MessageId", "OrderQty", "PegPrice",
-    "Quantity", "RoutedOrderId", "RoutedOrderType", "SymbolSfx",
-    "TimeInForce", "TargetCompID"
-)
+# Connect to Deephaven
+deephaven_connection = dh.connect(deephaven_credentials)
 
-# Display the result
-result_table.head()
+# Example query to subscribe to real-time trade updates for all symbols
+subscription_query = "select timestamp, price, quantity, symbol, side, firm_id from trades"
+stream = deephaven_connection.stream(subscription_query)
+
+# Function to detect potential wash trades within a time interval
+def detect_wash_trades_within_interval(trade_data, time_interval=60, executable=True):
+    wash_trade_flag = False
+    
+    # Sort data by timestamp
+    trade_data = trade_data.sort_values('timestamp')
+    
+    # Loop through the sorted data
+    for i in range(1, len(trade_data)):
+        current_trade = trade_data.iloc[i]
+        previous_trade = trade_data.iloc[i - 1]
+        
+        # Check if the trades are between the same firm, are executable, and within the specified time interval
+        if (
+            current_trade['firm_id'] == previous_trade['firm_id'] and
+            current_trade['executable'] == executable and
+            (current_trade['timestamp'] - previous_trade['timestamp']).seconds < time_interval
+        ):
+            wash_trade_flag = True
+            break
+    
+    return wash_trade_flag
+
+# Define the time interval for collecting trade data
+collection_time_interval = 300  # seconds (adjust as needed)
+
+# Initialize variables for data collection
+current_collection_time = pd.Timestamp.now()
+trade_data_collection = pd.DataFrame()
+
+# Continuous monitoring loop
+for new_data in stream.events():
+    # Assuming the 'new_data' is a DataFrame containing the latest trade data
+    trade_data_collection = pd.concat([trade_data_collection, new_data], ignore_index=True)
+    
+    # Check if the time interval for data collection has elapsed
+    if (pd.Timestamp.now() - current_collection_time).seconds >= collection_time_interval:
+        # Check for potential wash trades within the collected data
+        if detect_wash_trades_within_interval(trade_data_collection, time_interval=60, executable=True):
+            print(f"Wash trades detected within the last {collection_time_interval} seconds!")
+            # Implement your alerting or logging mechanism here
+
+        # Reset variables for the next interval
+        current_collection_time = pd.Timestamp.now()
+        trade_data_collection = pd.DataFrame()
