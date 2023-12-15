@@ -1,9 +1,14 @@
-      "matchOrderAcceptCount": 16,
-      "matchOrderExecutedCount": 0,
-      "matchOrderCanceledCount": 16,
-      "matchOrderReplacedCount": 0,
-      "matchQuoteAcceptedCount": 0,
-      "matchQuoteCompleteCount": 0,
-      "matchQuoteComponentAcceptedCount": 0,
-      "matchOrderSelfTradeCanceledCount": 0,
-      "matchOrderRepricedCount":
+ssh 10.0.20.7
+sudo su - techops-files-download
+cd /mnt/occ/downloads/prod/ #<<<<<<<<< PLEASE MAKE SURE YOU CD INTO THIS MOUNT DIR BEFORE SFTP
+sftp -oPort=10022 198.133.169.198
+cd data
+get memx_orsa_trades_yyyy-mm-dd.xml.Z
+get memx_orsa_postmove_yyyy-mm-dd.xml.Z
+
+exit
+chmod +r memx_orsa_trades_yyyy-mm-dd.xml.Z
+chmod +r memx_orsa_postmove_yyyy-mm-dd.xml.Z
+
+ls -ltrh /mnt/occ/downloads/prod/memx_orsa_trades_yyyy-mm-dd.xml*
+ls -ltrh /mnt/occ/downloads/prod/memx_orsa_postmove_yyyy-mm-dd.xml*
