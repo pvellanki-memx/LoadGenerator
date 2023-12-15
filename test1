@@ -1,14 +1,48 @@
-ssh 10.0.20.7
+#!/bin/bash
+
+# Replace these variables with your actual values
+REMOTE_HOST="10.0.20.7"
+REMOTE_USER="techops-files-download"
+REMOTE_DIR="/mnt/occ/downloads/prod/"
+SFTP_HOST="198.133.169.198"
+SFTP_PORT="10022"
+
+# Function to check if the closing FIXML tags are present in the compressed file
+check_tags() {
+    local file="$1"
+
+    # Use zcat to check for the closing FIXML tags without decompressing the file
+    zcat "$file" | grep -q "</FIXML>"
+}
+
+# Connect to the remote server and execute commands
+ssh "$REMOTE_USER@$REMOTE_HOST" <<EOF
 sudo su - techops-files-download
-cd /mnt/occ/downloads/prod/ #<<<<<<<<< PLEASE MAKE SURE YOU CD INTO THIS MOUNT DIR BEFORE SFTP
-sftp -oPort=10022 198.133.169.198
+cd "$REMOTE_DIR"
+sftp -oPort="$SFTP_PORT" "$SFTP_HOST"
 cd data
-get memx_orsa_trades_yyyy-mm-dd.xml.Z
-get memx_orsa_postmove_yyyy-mm-dd.xml.Z
-
+get memx_orsa_trades_$(date +"%Y-%m-%d").xml.Z
+get memx_orsa_postmove_$(date +"%Y-%m-%d").xml.Z
 exit
-chmod +r memx_orsa_trades_yyyy-mm-dd.xml.Z
-chmod +r memx_orsa_postmove_yyyy-mm-dd.xml.Z
+EOF
 
-ls -ltrh /mnt/occ/downloads/prod/memx_orsa_trades_yyyy-mm-dd.xml*
-ls -ltrh /mnt/occ/downloads/prod/memx_orsa_postmove_yyyy-mm-dd.xml*
+# Set permissions on downloaded files
+chmod +r "$REMOTE_DIR"memx_orsa_trades_$(date +"%Y-%m-%d").xml.Z
+chmod +r "$REMOTE_DIR"memx_orsa_postmove_$(date +"%Y-%m-%d").xml.Z
+
+# Wait for the file download to complete
+while ! check_tags "$REMOTE_DIR"memx_orsa_trades_$(date +"%Y-%m-%d").xml.Z; do
+    sleep 300  # Sleep for 5 minutes (adjust as needed)
+done
+
+while ! check_tags "$REMOTE_DIR"memx_orsa_postmove_$(date +"%Y-%m-%d").xml.Z; do
+    sleep 300  # Sleep for 5 minutes (adjust as needed)
+done
+
+# Display information about downloaded files
+ls -ltrh "$REMOTE_DIR"memx_orsa_trades_$(date +"%Y-%m-%d").xml*
+ls -ltrh "$REMOTE_DIR"memx_orsa_postmove_$(date +"%Y-%m-%d").xml*
+
+# Print a message indicating that the file download is complete
+echo "File download is complete."
+
