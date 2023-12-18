@@ -1,5 +1,23 @@
-python3 groupedexcel_v6.py 2023-12-01.db
+#!/bin/bash
 
-python3 streamfurther_v6.py 2023-12-01.db
+# Specify the folder containing the .db files
+folder_path="/path/to/your/folder"
 
-
+# Iterate over files and run the commands
+for file in "$folder_path"/2023-12-*.db; do
+    if [ -f "$file" ]; then
+        echo "Processing file: $file"
+        
+        # Run the first command
+        python3 groupedexcel_v6.py "$file"
+        
+        # Check the exit status of the first command
+        if [ $? -eq 0 ]; then
+            # If the first command succeeds, run the second command
+            python3 streamfurther_v6.py "$file"
+            echo "Processing complete for $file"
+        else
+            echo "Error: First command failed for $file. Skipping the second command."
+        fi
+    fi
+done
