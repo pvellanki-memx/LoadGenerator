@@ -1,50 +1,5 @@
-#!/bin/bash
+python3 groupedexcel_v6.py 2023-12-01.db
 
-# Replace these variables with your actual values
-REMOTE_HOST="10.0.20.7"
-REMOTE_USER="techops-files-download"
-REMOTE_DIR="/mnt/occ/downloads/prod/"
-SFTP_HOST="198.133.169.198"
-SFTP_PORT="10022"
+python3 streamfurther_v6.py 2023-12-01.db
 
-# Function to check if the closing FIXML tags are present in the compressed file
-check_tags() {
-    local file="$1"
 
-    # Use zcat to check for the closing FIXML tags without decompressing the file
-    zcat "$file" | grep -q "</FIXML>"
-}
-
-# Calculate the date for the previous day
-previous_day=$(date -d "yesterday" +"%Y-%m-%d")
-
-# Connect to the remote server and execute commands
-ssh "$REMOTE_USER@$REMOTE_HOST" <<EOF
-sudo su - techops-files-download
-cd "$REMOTE_DIR"
-sftp -oPort="$SFTP_PORT" "$SFTP_HOST"
-cd data
-get memx_orsa_trades_$previous_day.xml.Z
-get memx_orsa_postmove_$previous_day.xml.Z
-exit
-EOF
-
-# Set permissions on downloaded files
-chmod +r "$REMOTE_DIR"memx_orsa_trades_$previous_day.xml.Z
-chmod +r "$REMOTE_DIR"memx_orsa_postmove_$previous_day.xml.Z
-
-# Wait for the file download to complete
-while ! check_tags "$REMOTE_DIR"memx_orsa_trades_$previous_day.xml.Z; do
-    sleep 300  # Sleep for 5 minutes (adjust as needed)
-done
-
-while ! check_tags "$REMOTE_DIR"memx_orsa_postmove_$previous_day.xml.Z; do
-    sleep 300  # Sleep for 5 minutes (adjust as needed)
-done
-
-# Display information about downloaded files
-ls -ltrh "$REMOTE_DIR"memx_orsa_trades_$previous_day.xml*
-ls -ltrh "$REMOTE_DIR"memx_orsa_postmove_$previous_day.xml*
-
-# Print a message indicating that the file download is complete
-echo "File download is complete for $previous_day."
