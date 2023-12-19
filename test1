@@ -1,28 +1,67 @@
-2023-12-19T16:19:35-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:19:35.675448072 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : ClientConsumer : Incoming Gap Message (expected=1 Received=7) header=35=A|49=SMRT03|56=TEST01|34=7|52=20231219-21:19:35.675|43=true| fields=8=FIXT.1.1|9=87|35=A|34=7|43=Y|49=SMRT03|52=20231219-21:19:35.675|56=TEST01|1408=1.3|98=0|108=1|1137=9|10=090
-2023-12-19T16:19:35-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:19:35.675676850 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : FixPublisher : Live outbound sequence 42579
-2023-12-19T16:19:35-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:19:35.675737508 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : ClientConsumer : Completed logon: nextExpectedSequence=1
-2023-12-19T16:19:35-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:19:35.675744140 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : EventServer : Requesting Resend from sequence 1
-2023-12-19T16:19:35-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:19:35.675910797 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : ClientConsumer : Incoming Gap Message (expected=1 Received=8) header=35=2|49=SMRT03|56=TEST01|34=8|52=20231219-21:19:35.675| fields=8=FIXT.1.1|9=64|35=2|34=8|49=SMRT03|52=20231219-21:19:35.675|56=TEST01|7=1|16=0|10=253
-2023-12-19T16:19:35-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:19:35.675982553 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : EventServer : Requesting Resend from sequence 1
-2023-12-19T16:19:35-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:19:35.698975909 UTC gc22008 [WARN ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : FixConnection : IOException in write() on [local=10.3.128.182:31997,remote=10.3.44.2:43590]sendTo error [32]: Broken pipe
-2023-12-19T16:19:35-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:19:35.699140845 UTC gc22008 [WARN ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : FixPublisher : FixPublisher: Unexpected onConfirmDisconnect() received in state: Disconnected
-2023-12-19T16:20:23-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:20:23.477753718 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : ClientConsumer : Incoming Gap Message (expected=1 Received=9) header=35=A|49=SMRT03|56=TEST01|34=9|52=20231219-21:20:23.477|43=true| fields=8=FIXT.1.1|9=87|35=A|34=9|43=Y|49=SMRT03|52=20231219-21:20:23.477|56=TEST01|1408=1.3|98=0|108=1|1137=9|10=081
-2023-12-19T16:20:23-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:20:23.477962426 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : FixPublisher : Live outbound sequence 42592
-2023-12-19T16:20:23-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:20:23.477985371 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : ClientConsumer : Completed logon: nextExpectedSequence=1
-2023-12-19T16:20:23-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:20:23.477990071 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : EventServer : Requesting Resend from sequence 1
-2023-12-19T16:20:23-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:20:23.478144700 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : ClientConsumer : Incoming Gap Message (expected=1 Received=10) header=35=2|49=SMRT03|56=TEST01|34=10|52=20231219-21:20:23.478| fields=8=FIXT.1.1|9=65|35=2|34=10|49=SMRT03|52=20231219-21:20:23.478|56=TEST01|7=1|16=0|10=029
-2023-12-19T16:20:23-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:20:23.478206398 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : EventServer : Requesting Resend from sequence 1
-2023-12-19T16:20:23-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:20:23.502390167 UTC gc22008 [WARN ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : FixConnection : IOException in write() on [local=10.3.128.182:31997,remote=10.3.44.2:43612]sendTo error [32]: Broken pipe
-2023-12-19T16:20:23-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:20:23.502529213 UTC gc22008 [WARN ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : FixPublisher : FixPublisher: Unexpected onConfirmDisconnect() received in state: Disconnected
-2023-12-19T16:22:11-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:22:11.102967601 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : ClientConsumer : Incoming Gap Message (expected=1 Received=11) header=35=A|49=SMRT03|56=TEST01|34=11|52=20231219-21:22:11.102|43=true| fields=8=FIXT.1.1|9=88|35=A|34=11|43=Y|49=SMRT03|52=20231219-21:22:11.102|56=TEST01|1408=1.3|98=0|108=1|1137=9|10=107
-2023-12-19T16:22:11-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:22:11.103116944 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : FixPublisher : Live outbound sequence 42608
-2023-12-19T16:22:11-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:22:11.103140406 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : ClientConsumer : Completed logon: nextExpectedSequence=1
-2023-12-19T16:22:11-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:22:11.103145216 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : EventServer : Requesting Resend from sequence 1
-2023-12-19T16:22:11-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:22:11.103295294 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : ClientConsumer : Incoming Gap Message (expected=1 Received=12) header=35=2|49=SMRT03|56=TEST01|34=12|52=20231219-21:22:11.103| fields=8=FIXT.1.1|9=65|35=2|34=12|49=SMRT03|52=20231219-21:22:11.103|56=TEST01|7=1|16=0|10=015
-2023-12-19T16:22:11-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:22:11.103358285 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : EventServer : Requesting Resend from sequence 1
-2023-12-19T16:22:11-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:22:11.175972885 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : FixPublisher : Completed Replay from 1 to 42612
-2023-12-19T16:22:11-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:22:11.176012213 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : FixPublisher : Live outbound sequence 42611
-2023-12-19T16:22:11-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:22:11.176382153 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : ClientConsumer : Ignoring Incoming PossDup Message: header=35=4|49=SMRT03|56=TEST01|34=1|52=20231219-21:22:11.106|43=true|122=20231219-21:22:11.106| fields=8=FIXT.1.1|9=98|35=4|34=1|43=Y|49=SMRT03|52=20231219-21:22:11.106|56=TEST01|122=20231219-21:22:11.106|36=13|123=Y|10=153
-2023-12-19T16:22:13-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:22:13.000328932 UTC gc22008 [WARN ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : ClientConsumer : Discarding extra event received after already receiving Logout: header=35=0|49=SMRT03|56=TEST01|34=15|52=20231219-21:22:13.000|, fields=8=FIXT.1.1|9=56|35=0|34=15|49=SMRT03|52=20231219-21:22:13.000|56=TEST01|10=147
-2023-12-19T16:22:14-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:22:14.001162629 UTC gc22008 [WARN ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : ClientConsumer : Discarding extra event received after already receiving Logout: header=35=0|49=SMRT03|56=TEST01|34=16|52=20231219-21:22:14.001|, fields=8=FIXT.1.1|9=56|35=0|34=16|49=SMRT03|52=20231219-21:22:14.001|56=TEST01|10=150
-2023-12-19T16:22:14-05:00 gc22008.options.ewr2.memx.tech bash[3038330]: 2023/12/19 21:22:14.295040706 UTC gc22008 [WARN ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : EventServer : Remote Client took too long to disconnect - forcing disconnect
+import quickfix as fix
+import time
+import datetime
+import os
+
+
+class MyApplication(fix.Application):
+    def __init__(self):
+        super().__init__()
+        self.sessions = {}
+        self.log_directory = "log"
+        
+
+    def onCreate(self, sessionID):
+        print("Session created -", sessionID.toString())
+        self.sessions[sessionID] = fix.Session.lookupSession(sessionID)
+
+    def fromApp(self, message, sessionID):
+        # Log the received message to the specified file
+        log_file_path = self.get_log_file()
+        with open(log_file_path, "a") as log_file:
+            log_file.write(f"Received FIX Message: {message.toString()}\n")
+
+    def toApp(self, message, sessionID):
+        pass
+
+    def fromAdmin(self, message, sessionID):
+        pass
+
+    def toAdmin(self, message, sessionID):
+        if message.getHeader().getField(fix.MsgType()).getString() == fix.MsgType_Logon:
+            message.getHeader().setField(1408, "1.3")
+            message.getHeader().setField(43, "Y")
+            print("sent admin message", message.toString())
+        return True
+
+    def onLogout(self, sessionID):
+        print("Logout initiated -", sessionID.toString())
+
+    def onLogon(self, sessionID):
+        print("Logon Successful -", sessionID.toString())
+
+    def get_log_file(self):
+        log_directory="log"
+        os.makedirs(log_directory, exist_ok=True)
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H")
+        log_file_name = f"log_file_{timestamp}.log"
+        print(os.path.join(self.log_directory, log_file_name))
+        return os.path.join(self.log_directory, log_file_name)
+
+
+    def run(self):
+        settings = fix.SessionSettings(self.connection_config_file)
+        application = fix.SocketInitiator(self, fix.FileStoreFactory(settings), settings)
+        application.start()
+
+        time.sleep(1)
+
+        application.stop()
+
+
+app = MyApplication()
+app.connection_config_file = "acceptor.cfg"
+
+
+# Run the FIX application
+app.run()
