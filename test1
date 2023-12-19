@@ -1,53 +1,13 @@
-import quickfix as fix
-
-class MyApplication(fix.Application):
-    def __init__(self, log_file_path):
-        self.log_file_path = log_file_path
-
-    def fromApp(self, message, sessionID):
-        # Log the received message to the specified file
-        with open(self.log_file_path, "a") as log_file:
-            log_file.write(f"Received FIX Message: {message.toString()}\n")
-
-    def toApp(self, message, sessionID):
-        pass
-
-    def fromAdmin(self, message, sessionID):
-        pass
-
-    def toAdmin(self, message, sessionID):
-        pass
-
-def main():
-    try:
-        # Set the log file path
-        log_file_path = "received_messages.log"
-
-        # Create the FIX application
-        application = MyApplication(log_file_path)
-
-        # Create FIX session settings using the configuration file
-        settings = fix.SessionSettings("acceptor.cfg")
-
-        # Create the FIX store and log factories
-        storeFactory = fix.FileStoreFactory(settings)
-        logFactory = fix.FileLogFactory(settings)
-
-        # Create the FIX acceptor
-        acceptor = fix.SocketAcceptor(application, storeFactory, settings, logFactory)
-
-        # Start the FIX acceptor
-        acceptor.start()
-
-        # Run indefinitely (you can add your own logic here)
-        while True:
-            pass
-
-        # Stop the FIX acceptor when done
-        acceptor.stop()
-
-    except (fix.ConfigError, fix.RuntimeError) as e:
-        print(f"Error: {e}")
-
-if __name__ == "__main__":
+Traceback (most recent call last):
+  File "smartsFIX.py", line 53, in <module>
     main()
+  File "smartsFIX.py", line 37, in main
+    acceptor = fix.SocketAcceptor(application, storeFactory, settings, logFactory)
+  File "/usr/local/lib64/python3.6/site-packages/quickfix.py", line 40014, in __init__
+    SocketAcceptorBase.__init__(self, application, storeFactory, settings, logFactory)
+  File "/usr/local/lib64/python3.6/site-packages/quickfix.py", line 39817, in __init__
+    this = _quickfix.new_SocketAcceptorBase(*args)
+NotImplementedError: Wrong number or type of arguments for overloaded function 'new_SocketAcceptorBase'.
+  Possible C/C++ prototypes are:
+    FIX::SocketAcceptor::SocketAcceptor(FIX::Application &,FIX::MessageStoreFactory &,FIX::SessionSettings const &)
+    FIX::SocketAcceptor::SocketAcceptor(FIX::Application &,FIX::MessageStoreFactory &,FIX::SessionSettings const &,FIX::LogFactory &)
