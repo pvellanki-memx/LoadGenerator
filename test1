@@ -9,16 +9,19 @@ python_script="dump2excel.py"
 # Iterate over files and run the Python script
 for file in "$folder_path"/2023-12-*.db; do
     if [ -f "$file" ]; then
-        echo "Processing file: $file"
-        
-        # Run the Python script on the file
-        python3 "$python_script" "$file"
-        
+        # Extract the database name without the path
+        db_name=$(basename "$file" .db)
+
+        echo "Processing database: $db_name"
+
+        # Run the Python script on the database name
+        python3 "$python_script" "$db_name"
+
         # Check the exit status of the Python script
         if [ $? -eq 0 ]; then
-            echo "Processing complete for $file"
+            echo "Processing complete for $db_name"
         else
-            echo "Error: Python script failed for $file."
+            echo "Error: Python script failed for $db_name."
         fi
     fi
 done
