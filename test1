@@ -1,2 +1,24 @@
-ip link show | grep '\.620@'
+#!/bin/bash
 
+# Specify the folder containing the .db files
+folder_path="/path/to/your/folder"
+
+# Specify the Python script
+python_script="dump2excel.py"
+
+# Iterate over files and run the Python script
+for file in "$folder_path"/2023-12-*.db; do
+    if [ -f "$file" ]; then
+        echo "Processing file: $file"
+        
+        # Run the Python script on the file
+        python3 "$python_script" "$file"
+        
+        # Check the exit status of the Python script
+        if [ $? -eq 0 ]; then
+            echo "Processing complete for $file"
+        else
+            echo "Error: Python script failed for $file."
+        fi
+    fi
+done
