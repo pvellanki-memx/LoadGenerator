@@ -1,59 +1,12 @@
-import quickfix as fix
-
-class MyApplication(fix.Application):
-    def __init__(self, log_file_path):
-        self.log_file_path = log_file_path
-
-    def fromApp(self, message, sessionID):
-        # Log the received message to the specified file
-        with open(self.log_file_path, "a") as log_file:
-            log_file.write(f"Received FIX Message: {message.toString()}\n")
-
-    def toApp(self, message, sessionID):
-        pass
-
-    def fromAdmin(self, message, sessionID):
-        pass
-
-    def toAdmin(self, message, sessionID):
-        pass
-
-def main():
-    try:
-        # Set the log file path
-        log_file_path = "received_messages.log"
-
-        # Create the FIX application
-        application = MyApplication(log_file_path)
-
-        # Create FIX session settings using the configuration file
-        settings = fix.SessionSettings()
-        settings.setString("ConnectionType", "initiator")  # Use initiator for client
-        settings.setString("FileStorePath", "./store")
-        settings.setString("FileLogPath", "./log")
-        settings.setString("StartTime", "00:00:00")
-        settings.setString("EndTime", "00:00:00")
-        settings.setString("HeartBtInt", "30")
-        settings.setString("SocketConnectHost", "localhost")  # Replace with your server's IP or hostname
-        settings.setString("SocketConnectPort", "9876")  # Replace with your server's port
-
-        # Create the FIX store and log factories
-        storeFactory = fix.FileStoreFactory(settings)
-        logFactory = fix.FileLogFactory(settings)
-
-        # Create the FIX initiator (instead of acceptor)
-        initiator = fix.SocketInitiator(application, storeFactory, settings, logFactory)
-        initiator.start()
-
-        # Run indefinitely (you can add your own logic here)
-        while True:
-            pass
-
-        # Stop the FIX initiator when done
-        initiator.stop()
-
-    except (fix.ConfigError, fix.RuntimeError) as e:
-        print(f"Error: {e}")
-
-if __name__ == "__main__":
+[pvellanki@sys0412 tools]$ python3 smartsFIX.py 
+Traceback (most recent call last):
+  File "smartsFIX.py", line 61, in <module>
     main()
+  File "smartsFIX.py", line 31, in main
+    settings.set("ConnectionType", "initiator")  # Use initiator for client
+  File "/usr/local/lib64/python3.6/site-packages/quickfix.py", line 38638, in set
+    return _quickfix.SessionSettings_set(self, *args)
+NotImplementedError: Wrong number or type of arguments for overloaded function 'SessionSettings_set'.
+  Possible C/C++ prototypes are:
+    FIX::SessionSettings::set(FIX::SessionID const &,FIX::Dictionary)
+    FIX::SessionSettings::set(FIX::Dictionary const &)
