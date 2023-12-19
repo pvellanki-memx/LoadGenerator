@@ -1,7 +1,21 @@
-Results-driven DevOps engineer with a master's degree in computer science and two years of hands-on experience in streamlining development operations. Eager to contribute expertise in all aspects of technology, bringing a blend of academic knowledge and practical skills to drive innovation and efficiency in diverse technical environments.
-
-
-Results-driven computer science master's graduate with a solid foundation in technology. Backed by 2 years of hands-on experience as a DevOps engineer, I bring a proven track record of streamlining deployment processes, orchestrating tasks, and enhancing monitoring capabilities. Eager to contribute across all aspects of technology, with a passion for continuous learning and a commitment to driving innovation in diverse technical environments. Ready to tackle challenges and make impactful contributions to cutting-edge projects.
-
-
-Versatile technologist with a Master's in Computer Science and a robust two-year background as a DevOps engineer. Eagerly seeking opportunities to contribute expertise and enthusiasm to various facets of technology, embracing challenges and fostering innovation.
+est Document: Alert 2031: Large trade
+This large trade alert will identify significantly large trades in an instrument taking account for the instruments trading history. The alert look at benchmarks, absolute value and volume for on- and off-market trades.
+Scenario 1 :Alerting - user thresholds
+Alertserver Date: 20090925
+Test Case Description :
+This scenario verifies the basic case where the order’s volume is larger than LARGE TRADE VOLUME 2031 and the order’s value is larger than LARGE TRADE VALUE 2031 This scenario tests the following conditions Rule
+1 Is the order larger in volume that the LARGE TRADE VOLUME 2031? Rule 2 Is the order larger in value than the LARGE TRADE VALUE 2031?
+Expected output:
+I s s u e : A l e r t 2031
+I n t e n s i t y : <100>
+2009/09/25 9 : 3 0 : 0 0 . 0 0 0 ABC
+LARGE TRADE: A l a r g e t r a d e o f x1 , 0 0 0 , 0 0 0 u n i t s with a v a l u e o f $3 , 0 0 0 , 0 0 0 o c c u r r e d f o r ABC. This i s l a r g e r than t h e volume t h r e s h o l d o f x200 , 0 0 0 and t h e v a l u e
+t h r e s h o l d o f $200 , 0 0 0 .
+Buy s i d e −Broker B1 − Trader T1 − C l i e n t C1
+S e l l s i d e −Broker B2 − Trader T2FIELD∗ T h r e s h o l d ∗ $200 , 0 0 0 ∗ FIELD∗ R e s u l t ∗ $3 , 0 0 0 , 0 0 0 ∗ FIELD∗BenchmarkType∗ Pre−d e f i n e d M i n V a l ∗FIELD∗ I n t e n s i t y ∗93∗FIELD∗ M a x I n t e n s i t y ∗93∗
+FIELD∗ I n t e n s i t y 1 ∗80∗FIELD∗ V o l u m e I n t e n s i t y ∗80∗FIELD∗ I n t e n s i t y 2 ∗93∗FIELD∗ V a l u e I n t e n s i t y ∗93∗
+FAV Data: 20090925
+Time Type Security SubType Id Buy Order Id Sell Order Id Price Volume Value Flags BuyerH BuyerT BuyerC SellerH SellerT SellerC
+09:30:00.000 ENTER ABC BUY 1 1 $3.00 x1,000,000 $3,000,000 Q B1 T1 C1
+09:30:00.000 ENTER ABC SELL 2 2 $3.00 x1,000,000 $3,000,000 se Q B2 T2 -
+09:30:00.000 TRADE ABC 1 1 2 $3.00 x1,000,000 $3,000,000 Si Q ON B1 T1 C1 B2 T2 -
