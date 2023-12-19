@@ -1,27 +1,44 @@
-#!/bin/bash
+import quickfix as fix
 
-# Specify the folder containing the .db files
-folder_path="/path/to/your/folder"
+class MyApplication(fix.Application):
+    def __init__(self, log_file_path):
+        self.log_file_path = log_file_path
 
-# Specify the Python script
-python_script="dump2excel.py"
+    def fromApp(self, message, sessionID):
+        # Log the received message to the specified file
+        try:
+            with open(self.log_file_path, "a") as log_file:
+                log_file.write(f"Received FIX Message: {message.toString()}\n")
+        except Exception as e:
+            print(f"Error logging message: {e}")
 
-# Iterate over files and run the Python script
-for file in "$folder_path"/2023-12-*.db; do
-    if [ -f "$file" ]; then
-        # Extract the database name without the path
-        db_name=$(basename "$file" .db)
+    def toApp(self, message, sessionID):
+        pass
 
-        echo "Processing database: $db_name"
+    def fromAdmin(self, message, sessionID):
+        pass
 
-        # Run the Python script on the database name
-        python3 "$python_script" "$db_name"
+    def toAdmin(self, message, sessionID):
+        pass
 
-        # Check the exit status of the Python script
-        if [ $? -eq 0 ]; then
-            echo "Processing complete for $db_name"
-        else
-            echo "Error: Python script failed for $db_name."
-        fi
-    fi
-done
+def main():
+    try:
+        settings = fix.SessionSettings("your_fix_config_file.cfg")
+        log_file_path = settings.get("LOG_FILE_PATH")  # Add this line to retrieve log file path
+        application = MyApplication(log_file_path)
+        storeFactory = fix.FileStoreFactory(settings)
+        logFactory = fix.ScreenLogFactory(settings)
+
+        acceptor = fix.SocketAcceptor(application, storeFactory, settings, logFactory)
+        acceptor.start()
+
+        while True:
+            pass  # Add your main application logic here
+
+        acceptor.stop()
+
+    except (fix.ConfigError, fix.RuntimeError) as e:
+        print(f"Error: {e}")
+
+if __name__ == "__main__":
+    main()
