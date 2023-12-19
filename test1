@@ -1,51 +1,47 @@
-[pvellanki@sys0412 tools]$ python3 smartsFIX.py 
-Traceback (most recent call last):
-  File "smartsFIX.py", line 44, in <module>
+import quickfix as fix
+
+class MyApplication(fix.Application):
+    def __init__(self, log_file_path):
+        self.log_file_path = log_file_path
+
+    def fromApp(self, message, sessionID):
+        # Log the received message to the specified file
+        try:
+            with open(self.log_file_path, "a") as log_file:
+                log_file.write(f"Received FIX Message: {message.toString()}\n")
+        except Exception as e:
+            print(f"Error logging message: {e}")
+
+    def toApp(self, message, sessionID):
+        pass
+
+    def fromAdmin(self, message, sessionID):
+        pass
+
+    def toAdmin(self, message, sessionID):
+        pass
+
+def main():
+    try:
+        settings = fix.SessionSettings("connections.cfg")
+
+        # Retrieve log file path from the [DEFAULT] section
+        log_file_path = settings.get("FileLogPath")
+
+        application = MyApplication(log_file_path)
+        storeFactory = fix.FileStoreFactory(settings)
+        logFactory = fix.FileLogFactory(settings)
+
+        acceptor = fix.SocketAcceptor(application, storeFactory, settings, logFactory)
+        acceptor.start()
+
+        while True:
+            pass  # Add your main application logic here
+
+        acceptor.stop()
+
+    except (fix.ConfigError, fix.RuntimeError) as e:
+        print(f"Error: {e}")
+
+if __name__ == "__main__":
     main()
-  File "smartsFIX.py", line 27, in main
-    log_file_path = settings.get("LOG_FILE_PATH")  # Add this line to retrieve log file path
-  File "/usr/local/lib64/python3.6/site-packages/quickfix.py", line 38635, in get
-    return _quickfix.SessionSettings_get(self, *args)
-NotImplementedError: Wrong number or type of arguments for overloaded function 'SessionSettings_get'.
-  Possible C/C++ prototypes are:
-    FIX::SessionSettings::get(FIX::SessionID const &) const
-    FIX::SessionSettings::get() const
-
-[pvellanki@sys0412 tools]$ cat connections.cfg 
-[DEFAULT]
-ConnectionType=initiator
-ReconnectInterval=10
-FileStorePath=./Sessions/
-FileLogPath=log
-
-[SESSION]
-BeginString = FIXT.1.1
-SenderCompID = SMRT04
-TargetCompID = TEST02
-SocketConnectHost = 10.3.128.183
-SocketConnectPort = 31996
-DefaultApplVerID = 9
-StartTime = 03:00:00
-EndTime = 03:00:00
-HeartBtInt = 1
-DataDictionary = FIX50SP2.xml
-TransportDataDictionary = FIXT.1.1.xml
-LogonTimeout = 10
-DefaultCstmApplVerID = 1.3
-FileLogPath=log
-
-[SESSION]
-BeginString = FIXT.1.1
-SenderCompID = SMRT03
-TargetCompID = TEST01
-SocketConnectHost = 10.3.128.182
-SocketConnectPort = 31997
-DefaultApplVerID = 9
-StartTime = 03:00:00
-EndTime = 03:00:00
-HeartBtInt = 1
-DataDictionary = FIX50SP2.xml
-TransportDataDictionary = FIXT.1.1.xml
-LogonTimeout = 10
-DefaultCstmApplVerID = 1.3
-FileLogPath=log
