@@ -19,3 +19,33 @@ Time Type Security SubType Id Buy Order Id Sell Order Id Price Volume Value Flag
 09:30:00.000 ENTER ABC BUY 1 1 $3.00 x1,000,000 $3,000,000 Q B1 T1 C1
 09:30:00.000 ENTER ABC SELL 2 2 $3.00 x1,000,000 $3,000,000 se Q B2 T2 -
 09:30:00.000 TRADE ABC 1 1 2 $3.00 x1,000,000 $3,000,000 Si Q ON B1 T1 C1 B2 T2 -
+
+
+
+
+
+
+
+
+
+
+Test Document: Alert 4040: Wash Sales
+This alert identifies trades where there is no change in beneficial ownership of the parcel of shares.
+Scenario 1 :Alerting - on Broker
+Alertserver Date: 20080417
+Test Case Description :
+This scenario verifies the basic case where the same house is involved on both sides of a trade. ALERT ON BROKERS 4040 is set to Yes, while ALERT ON TRADERS 4040 and ALERT ON CLIENTS 4040 are set to false.
+Modified Parameters:
+ALERT ON BROKERS 4040 Yes
+ALERT ON TRADERS 4040 No
+ALERT ON CLIENTS 4040 No
+Expected output:
+I s s u e : A l e r t 4040
+I n t e n s i t y : <100>
+2008/04/17 9 : 3 0 : 0 0 . 0 0 0 ABC
+WASH SALES A−A: Broker B1 e x e c u t e d a wash s a l e o f x100 ABC a t $5 . 0 0 with a v a l u e o f $500 .
+FAV Data: 20080417
+Time Type Security SubType Id Buy Order Id Sell Order Id Price Volume Value Flags BuyerH BuyerT BuyerC SellerH SellerT SellerC
+09:30:00.000 ENTER ABC BUY 1 1 $5.00 x100 $500 Q B1 T1 C1
+09:30:00.000 ENTER ABC SELL 2 2 $5.00 x100 $500 se Q B1 T2 C2
+09:30:00.000 TRADE ABC 120 1 2 $5.00 x100 $500 Si CR Q ON B1 T1 C1 B1 T2 C2
