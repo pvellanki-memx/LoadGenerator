@@ -1,1 +1,2 @@
-ip link show | grep '\.[0-9]\+@'
+ip link show | grep '\.620@'
+
