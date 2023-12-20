@@ -1,0 +1,431 @@
+
+
+
+
+
+Test Document: Alert 7075: High Order To Trade Rate 
+The unusual order to trade ratio spread alert can be an indicator for severl forms of market abuse: HFT/Quote stuffing, Attempt to create a false or misleading market or client account intrusion 
+Scenario 1 :Order to trade ratio greather than threshold 
+Alertserver Date: 20080903 Test Case Description : 
+For security ABC at 10:10:30, the alert will be issued because there are (11) orders and (5) trades over the extended interval duration resulting in a order to trade ratio of (2.2) which is greater than the threshold (2). 
+Modified Parameters: 
+Expected output: 
+Issue : Alert 7075
+Intensity : 9
+2008/09/03 10:10:30.000 ABC 
+HIGH ORDER TO TRADE RATIO 
+FAV Data: 
+DEFAULT ORDER TO TRADE RATIO 7075 2 
+MINIMUM TRADES IN INTERVAL 7075 5 
+
+
+
+Test Document: Alert 7075: High Order To Trade Rate 
+The unusual order to trade ratio spread alert can be an indicator for severl forms of market abuse: HFT/Quote stuffing, Attempt to create a false or misleading market or client account intrusion 
+Scenario 1 :Order to trade ratio above threshold 
+Alertserver Date: 20080903 Test Case Description : 
+For security ABC at 10:10:30, the alert will be issued because there are (11) orders and (5) trades over the extended interval duration resulting in a order to trade ratio of (2.2) which is greater than the threshold (2). 
+Modified Parameters: 
+Expected output: 
+Issue : Alert 7075
+Intensity : 9
+2008/09/03 10:10:30.000000000 ABC 
+DEFAULT ORDER TO TRADE RATIO 7075 2 
+MINIMUM TRADES IN INTERVAL 7075 5 
+
+
+Test Document: Alert 7022: Repeat Orders 
+Identify unusually large numbers of orders entered by the same broker with the same price and volume. This might indicate that these orders have been mistakenly entered into the order book many times when it should be only one order. Many repeated orders with the same volume and price coming from the same broker might indicate a broken order entry system. This usually happens when a broker enters an order to the order book but due to a system error the order did not get through. The broker then attempts to enter many times until the order is accepted and as a result many of the same orders might pass through the network and eventually be entered to the order book. 
+Scenario 1 : Basic Triggering Case 
+Alertserver Date: 20080903 Test Case Description : 
+For security ABC at 09:09:19, the alert will be issued because the minimum number of orders has been reached (10) and the total consideration has been reached $100,000,000. Does not trigger a second time since MIN INTERVAL FOR RETRIGGER 7022 has not been passed. 
+AL: 20080903 3 9:09:15.005 9:10:15.005 ABC <100> @B1 . ”” 7022 - I . ”..” ”report” ”eventtypes=111000000, filtertime1=09:30:00.000, filtertime2=17:00:00.000, filterdate1=03/09/2008, filterdate2=03/09/2008, or- derids=,4,8,13,7,6,5,1,14,12,9,10,2,11,3 -almasfile= ̈/smarts/builds/core-6.4.21.62-64bit/data/alert7022-6/alerts/2008/09/20080903.als/official/RPT ORDER ALERT 7022/All Securities 7022 6 20080903.csv ̈” ”REPEAT ORDER” ”REPEAT ORDER: B1 has entered many bid orders with price $0.00 and volume x500,000 for a total value of $0. FIELD*SYSTEM-TIME*12:35:57.579” ”” NoTime 
+Expected output: 
+Issue : Alert 7022
+Intensity : <100> 2008/09/03 9:09:19.005 ABC 
+REPEATORDER: B1 has entered many bid orders with price $15.00 and volume x500,000 for a total value of $105,000,000. FIELD∗SYSTEM−TIME∗12:35:57.579 
+Scenario 2 : Basic Reissue Case 
+Alertserver Date: 20080903 Test Case Description : 
+For security ABC at 09:09:19, the alert will be issued because the minimum number of orders has been reached (10) and the total consideration has been reached $100,000,000. At 11:10:33, a secondary alert will be issued because the minimum number of orders has been reached (10) and the total consideration has been reached $100,000,000 and MIN INTERVAL FOR RETRIGGER has occurred. 
+Expected output: 
+Issue : Alert 7022
+Intensity : <100> 2008/09/03 9:09:19.005 ABC 
+REPEATORDER: B1 has entered many bid orders with price $15.00 and volume x500,000 for a total value of $105,000,000. FIELD∗SYSTEM−TIME∗12:35:57.579 
+Issue : Alert 7022
+Intensity : <100> 2008/09/03 11:09:33.005 ABC 
+REPEATORDER: B1 has entered many bid orders with price $15.00 and volume x500,000 for a total value of $105,000,000. FIELD∗SYSTEM−TIME∗12:44:36.898 
+
+
+
+Scenario 3 : No Alerting due to exceeding sampling interval time TIME INTERVAL 7022 
+Alertserver Date: 20080903 Test Case Description : 
+This will not alert since the potentially triggering order is outside the time interval of TIME INTERVAL 7022 (0:01:00) 
+
+
+
+
+
+Scenario 4 : No Alerting due not reaching MIN NUMBER OF ORDERS 7022 
+Alertserver Date: 20080903 Test Case Description : 
+This will not alert since the order count never reaches MIN NUMBER OF ORDERS 7022 (10). 
+
+
+
+
+Scenario 5 : Larger order count than MAX PRINTED ORDERS 7022 
+Alertserver Date: 20080903 Test Case Description : 
+This alert will have a truncated output based on MAX PRINTED ORDERS 7022 (50). 
+
+
+Scenario 6 :Repeated Market Orders 
+Alertserver Date: 20080903 Test Case Description : 
+This is based on Scenario 1 (Basic Triggering Case), but with Market Order bids. For security ABC at 09:09:15, the alert will be issued because the minimum number of orders has been reached (10) and the total consideration has been reached $0. Does not trigger a second time since MIN INTERVAL FOR RETRIGGER 7022 has not been passed. TOTAL CONSIDERATION 7022::$0; 
+
+
+Scenario 7 : Negative priced trades 
+Alertserver Date: 20080903 Test Case Description : 
+Unit test confirms the behaviour for negative priced instruments, same as scenario 1 but using negative values 
+
+
+
+Scenario 8 : Price reaches zero 
+Alertserver Date: 20080903 Test Case Description : 
+Unit test confirms the behaviour for instruments that reach zero price 
+Modified Parameters: 
+
+
+
+Test Document: Alert 6070: Capping And Pegging 
+This alert will identify participants with large positions in a futures or options contract, who dominate trading in the underlying security prior to the setting of the settlement price. 
+Scenario 1 : Normal Case 
+Alertserver Date: 20080926 Test Case Description : 
+This scenario tests that the alert triggers. 
+
+
+
+Test Document: Alert4071: Phishing 
+This alert identifies participants that pinging the market with small orders and trying to detect hidden volume and take advantage of these hidden volume by executing a transaction with relativly large volume 
+Scenario 1 : Basic Positive Case 
+Alertserver Date: 20160101 Test Case Description : 
+This scenario tests the basic scenario where a participant finds the best ask price by pinging, and makes a large trade against that price. 
+
+
+Scenario 2 : Basic Negative Case 
+Alertserver Date: 20160101 Test Case Description : 
+Copied from scenario 1, but alert does not trigger as the minimum ping order count (5) is not met - as there are only 4 pinging orders. This scenario tests the basic scenario where a participant finds the best ask price by pinging, and makes a large trade against that price. 
+
+
+Scenario 3 : Postive Case - Price Change greater than threshold 
+Alertserver Date: 20160101 Test Case Description : 
+Copied from scenario 1, but with PRICE CHANGE PERC 4071 set to (3.9%) which is greater than the actual price change percentage (4%) between the large trade price ($13) and the pinging trade price ($12.50). This scenario tests the basic scenario where a participant finds the best ask price by pinging, and makes a large trade against that price.
+Modified Parameters: 
+
+
+
+Test Document: Alert4070: Pinging Order 
+This alert identifies participants that pinging the market with small orders and trying to detect hidden volume and take advantage of these hidden volume by executing a transaction with relativly large volume 
+Scenario 1 : Basic Positive Case 
+Alertserver Date: 20160101 Test Case Description : 
+This scenario tests the basic scenario where a participant enters 5 pinging order in a row. 
+
+
+
+
+Scenario 2 : Basic Positive Case - Yield 
+Alertserver Date: 20160101 Test Case Description : 
+Copied from scenario 1, with bid and ask orders swapped.
+This scenario tests the basic scenario where a participant enters 5 pinging order in a row. 
+
+
+
+Scenario 1 : Normal Case - At Open 
+Alertserver Date: 20080926 Test Case Description : 
+This scenario tests the alert triggers at opening time. 
+
+
+Scenario 2 : Normal Case - At Close 
+Alertserver Date: 20080926 Test Case Description : 
+This scenario tests the alert triggers at closing time. All the transactions are the same as scenario 1, with the exception of the time stamps. 
+
+
+
+
+Test Document:Alert 4041: Wash Sales A to B to A 
+This alert will identify a series of trades which appear to be a wash. A wash sale under this alert would be the sequence of A buying 1000 shares from B and then selling all 1000 shares back to B. if the trade is done at the same price, it is a Wash Sale. If the trade sequence is done at a different price then the alert is called a Money Pass. 
+Scenario 1 :Normal alert triggering case 
+Alertserver Date: 20080924 Test Case Description : 
+This scenario tests that the alert triggers correctly when
+• Broker 12 buys from Broker 26 after selling the same volume earlier in the day - results in a normal alert 
+• Broker 12 buys from Broker 26, at a different price, after selling the same volume earlier in the day - results in a money passing alert 
+
+
+
+
+Scenario 1 :Alerting - on Broker 
+Alertserver Date: 20080417 Test Case Description : 
+This scenario verifies the basic case where the same house is involved on both sides of a trade. ALERT ON BROKERS 4040 is set to Yes, while ALERT ON TRADERS 4040 and ALERT ON CLIENTS 4040 are set to false. 
+
+
+Scenario 2 :NEG - Brokers differ 
+Alertserver Date: 20080417 Test Case Description : 
+This scenario verifies the case where a different house is involved on both sides of a trade. ALERT ON BROKERS 4040 is set to Yes, while ALERT ON TRADERS 4040 and ALERT ON CLIENTS 4040 are set to false. This does not trigger an alert. 
+
+
+Scenario 3 :Alerting - on Broker, undefined trader/client 
+Alertserver Date: 20080417 Test Case Description : 
+This scenario verifies the basic case where the same house is involved on both sides of a trade. ALERT ON BROKERS 4040 is set to Yes, while ALERT ON TRADERS 4040 and ALERT ON CLIENTS 4040 are set to false. This scenario differs from scenario 1 in that the trader and client on both sides of the trade are undefined. This test ensures that this situation does not break functionality. 
+
+
+
+Scenario 4 :Alerting - on Broker, Trader 
+Alertserver Date: 20080417 Test Case Description : 
+This scenario verifies the case where the houses on both sides of a trade match, but the client and trader do not. As the house AND trader parameters are selected, this does not trigger an alert. 
+
+
+
+
+Scenario 5 :Alerting - on Trader 
+Alertserver Date: 20080417 Test Case Description : 
+This scenario verifies the case where the traders on both sides of a trade match, but the client and house do not. As trader matching is the only user parameter selected, this triggers an alert. 
+
+
+Scenario 6 :Alerting - on Client 
+Alertserver Date: 20080417 Test Case Description : 
+This scenario verifies the case where the clients on both sides of a trade match, but the trader and house do not. As client matching is the only user parameter selected, this triggers an alert. 
+
+
+
+
+Scenario 7 :Alerting - on Client, with matching house, trader 
+Alertserver Date: 20080417 Test Case Description : 
+This scenario verifies the case where the everything matches on both sides of a trader. Client is the only parameter selected, but since the trader and broker match, they are set as suspects as well. 
+
+
+
+Scenario 8 :Alerting - on Broker, Trader, Client 
+Alertserver Date: 20080417 Test Case Description : 
+This scenario verifies the case where the everything matches on both sides of a trader. All 3 parameters are selected, and all participants match, and so this triggers an alert with the house, trader, and client as suspects. 
+
+
+
+
+Scenario 9 :Reissue - on Broker, Trader, Client 
+Alertserver Date: 20080417 Test Case Description : 
+This scenario verifies that reissues occur on every instance of a Wash Sales trade. An alert triggers at 9:30:00 as the house, trader and client is the same on both sides of the trade. An alert then triggers again at 9:31:00 as another instance of wash trading occurs with the same participants in the same security. 
+
+
+
+
+Scenario 10 :Alerting - End of day (EOD) 
+Alertserver Date: 20080417 Test Case Description : 
+This scenario verifies that that the alert functions correctly with end of day alerting. 
+The user parameter MIN OCCURRENCES 4021 is set to 2, which means only 1 alert will be fired, per security, per day. There are 2 instances of wash trading in security ABC, which means that an alert is triggered (and a CSV file created) for it. ZZZ has one instance of wash selling, and does not trigger an alert. 
+
+
+
+Scenario 11 :NEG - Orders entered more than 30 minutes apart 
+Alertserver Date: 20080417 Test Case Description : 
+This scenario verifies the case where orders from the same house are ordered more than 30 minutes apart and trade. This should not trigger a wash sale. 
+
+
+
+
+Scenario 12 :Alerting - EOD with CSV, no Dealing Capacity 
+Alertserver Date: 20080417 Test Case Description : 
+This scenario verifies that that the alert functions correctly with end of day alerting. The tag TAGS DEALING CAPACITY FIELD is set to ”” as the ”Dealing Capacity” information is not available. The user parameter ALERT METHOD 4040 is set to 2, which means only 1 alert will be fired, per security, per day. There are 2 instances of wash trading in security ABC, which means that an alert is triggered (and a CSV file created) for it. ZZZ has one instance of wash selling, and does not trigger an alert.
+NB: Alerts 5051,5031,6031 must not run! 
+
+
+
+Scenario 13 :Alerting - EOD, cancelled trade, no DC 
+Alertserver Date: 20080417 Test Case Description : 
+This scenario verifies that that the alert functions correctly with end of day alerting. The tag TAGS DEALING CAPACITY FIELD is set to ”” as the ”Dealing Capacity” information is not available. The user parameter ALERT METHOD 4040 is set to 2, which means only 1 alert will be fired, per security, per day. There are 2 instances of wash trading in security ABC, which means that an alert is triggered (and a CSV file created) for it. ZZZ has one instance of wash selling, and does not trigger an alert. The second trade of security ABC was cancelled later, so the cancelled column is YES
+NB: Alerts 5051,5031,6031 must not run! 
+
+
+
+
+Scenario 14 :NEG - Alert disabled 
+Alertserver Date: 20080417 Test Case Description : 
+This scenario is set up similarly to scenario 1 but the alert is now disabled
+
+
+
+
+
+Scenario 15 :NEG - low percentage of EOD wash/total volume, EOD 
+Alertserver Date: 20080417 Test Case Description : 
+This scenario is based on scenario 10. There is no alert because the EOD PERCENTAGE OF TOTAL VOLUME 4040 is increased to 67% while EOD percentage of wash volume and total volume is only 66.67%. 
+
+
+
+
+
+Scenario 16 :NEG - low percentage of EOD wash/total volume 
+Alertserver Date: 20080417 Test Case Description : 
+This scenario is based on scenario 13. There will be no alert and no extra file because the EOD percentage of wash volume and total volume is less then threshold. 
+
+
+
+Scenario 17 :EOD with INCLUDE PARTICIPANT 
+Alertserver Date: 20080417 Test Case Description : 
+This scenario is set up to test multi alerts triggered in 3 cases: -First wash sale alert triggered for ABC with participant : BrokerB1 TraderT1 ClientC1. Only displays information related with this security-participant pairs. -Second wash sale alert triggered for ABC with different participant :BrokerB3 TraderT3 ClientC3. Only displays information related with this security-participant pairs. The second trade was cancelled. -Third wash sale alert triggered for YYY with same participant with security ABC. Only displays information related with this security-participant pairs. The second trade was cancelled. 
+
+
+
+
+
+Scenario 18 :NEG - Too few trades EOD, INCLUDE PARTICIPANT 
+Alertserver Date: 20080417 Test Case Description : 
+This scenario is set up to test same security with different participants. There is no alert because the ”number of occurrences” taken participants in account. There are 3 wash trades for ABC, but only 1 wash trade per 
+ABC-B1/T1/C1,ABC-B2/T2/C2,ABC-B3/T3/C3. Since the number of 
+occurrence is less than ALERT METHOD 4040, there is no alert. 
+
+
+
+
+
+Scenario 19 :Alerting EOD, INCLUDE PARTICIPANT enough trades. 
+Alertserver Date: 20080417 Test Case Description : 
+This scenario is based on scenario 18. The database is set up so that the number of occurrence per security-participant is greater than threshold (ALERT METHOD 4040 = 2) Also test for displaying information for each entity 
+
+
+
+Alertserver Date: 20080417 Test Case Description : 
+This scenario is based on scenario 19. The number of occurrences still greater than the threshold but the EOD PERCENTAGE OF TOTAL VOLUME 4040 over total volume per security-participant pairs. Hence, there is no alert. 
+
+
+
+
+Scenario 21 :Volume weighted average price test 
+Alertserver Date: 20080417 Test Case Description : 
+This scenario is based on scenario 10. Test VWAP calculation, where price * volume != value 
+The user parameter MIN OCCURRENCES 4021 is set to 2, which means only 1 alert will be fired, per security, per day. There are 2 instances of wash trading in security ABC, which means that an alert is triggered (and a CSV file created) for it. ZZZ has one instance of wash selling, and does not trigger an alert. 
+
+
+
+
+
+Scenario 22 :Price Multiplier 0.01 
+Alertserver Date: 20080417 Test Case Description : 
+This scenario is based on scenario 21. Test to confirm that Price multiplier does not affect the VWAP 
+
+
+
+
+Scenario 23 :NEG - undefined Client 
+Alertserver Date: 20080417 Test Case Description : 
+Same as scenario 9 - However no alert will fire due to a missing participant. This scenario verifies that reissues occur on every instance of a Wash Sales trade. An alert triggers at 9:30:00 as the house, trader and client is the same on both sides of the trade. An alert then triggers again at 9:31:00 as another instance of wash trading occurs with the same participants in the same security. 
+
+
+
+
+Scenario 24 :NEG - EOD, undefined Client 
+Alertserver Date: 20080417 Test Case Description : 
+Same as scenario 10 - However no alert will fire due to a missing participant. This scenario verifies that that the alert functions correctly with end of day alerting. 
+The user parameter MIN OCCURRENCES 4021 is set to 2, which means only 1 alert will be 
+fired, per security, per day. There are 2 instances of wash trading in security ABC, which means that an alert is triggered (and a 
+CSV file created) for it. ZZZ has 
+
+
+
+
+Scenario 25 :Alerting - Negative priced trades 
+Alertserver Date: 20080417 Test Case Description : 
+Unit test confirms the behaviour for negative priced instruments, same as scenario 1 but using negative values 
+
+
+
+
+Scenario 26 :Alerting - Price reaches zero 
+Alertserver Date: 20080417 Test Case Description : 
+Unit test confirms the behaviour for instruments that reach zero price 
+
+
+
+Scenario 27 :Alerting - Yield, Value not in alert text 
+Alertserver Date: 20080417 Test Case Description : 
+This scenario has been copied from scenario 1 and tests that value is not in the alert text. 
+
+
+
+
+
+Scenario 28 :Alerting - Yield, Value not in alert text, with CSV attachment 
+Alertserver Date: 20080417 Test Case Description : 
+Copied from S12 and is to test that value is not in the alert text and CSV attachment for one instrument. NB: Alerts 5051,5031,6031 must not run! 
+
+
+
+
+Scenario 29 :Alerting - Yield, with CSV attachment for all instruments 
+Alertserver Date: 20080417 Test Case Description : 
+This scenario has been copied from scenario 13 and is to test that value is not in the alert text and csv attachment for all instrument. 
+
+
+
+
+
+Scenario 30 :Alerting - Yield, MIN VALUE SINGLE TRADE 4040 
+Alertserver Date: 20080417 Test Case Description : 
+This scenario is similar to scenario 29 except we check with the value parameter so there will be no alert on ZZZ. However ABC will alert as there is no check for yield instruments. 
+
+
+Scenario 31 :Reissues with Party5 and Party6 
+Alertserver Date: 20180821 Test Case Description : 
+This scenario verifies that reissues occur on every instance of a Wash Sales trade. Copied from Scenario 9, with extra parties added. 
+
+
+
+
+
+Scenario 32 :Alerting - EOD, on Client, Party4 and Party5 
+Alertserver Date: 20180821 Test Case Description : 
+This scenario verifies that that the alert functions correctly with end of day alerting.
+There are 2 instances of wash trading in security AVB, which means that an alert is triggered (and a CSV file created) for it. ZZZ has one instance of wash selling, and does not trigger an alert.
+Copied from Scenario 10, with extra parties supplied by trade data. 
+
+
+
+Scenario 33 :Alerting - EOD, Include Participant, on Trader, Party5, Party6. 
+Alertserver Date: 20080417 Test Case Description : 
+This scenario is set up to test multi alerts triggered in 3 cases:
+-First wash sale alert triggered for AVB with participant : T1-A1-B1. Only displays information related with this security-participant pairs.
+-Second wash sale alert triggered for AVB with different participant: T3-A3-B3. Only displays information related with this security-participant pairs. The second trade was cancelled. -Third wash sale alert triggered for YYY with same participant with security AVB. Only displays information related with this security-participant pairs. The second trade was cancelled. Copied from s17 with extra parties added. 
+
+
+
+
+
+Test Document: Alert 4032: MULTI-ORDER SPOOFING WITH BAIT AND SWITCH 
+The alert detects participants that enter and delete a number of large orders that adds significantly to the liquidity displayed in the order book and alive for only a short period of time. During the lifespan of the orders, or within a short time after it is canceled, the same trader executes a trade on the opposite side of the market at a better price and gains a profit. 
+Scenario 1 :Alerting - default settings 
+Alertserver Date: 20090331 Test Case Description : 
+This scenario tests the basic scenario for the alert to trigger. 
+
+
+
+Test Document: Alert 4020: SPOOFING - RAPID ENTRY AND DELETE 
+This alert detects brokers that enter and delete a large number of unexecuted orders where the orders were alive for only a short period 
+Scenario 1 : Positive scenario default settings 
+Alertserver Date: 20090331 Test Case Description : 
+This scenario tests the basic scenario for the alert to trigger. User Parameters MIN GENUINE TRADE VALUE SINGLE EVENT 4032 = $10 MIN ESTIMATED PROFIT 4032 = $1 
+
+
+
+Test Document: Alert 4026: ORDER WITHDRAWAL (CONTINUOUS) 
+This alert identifies the entry and deletion of a large order at the best bid or ask price which are deleted prior to any executions. Such orders need to be checked to determine if they were genuine orders to trade. Repeated patterns by a participant may indicate an attempt to game the market through the method known as spoofing. 
+Scenario 1 : For security AFC, Positive scenario for default volume threshold with House only 
+Alertserver Date: 20090331 Test Case Description : 
+This scenario tests the basic scenario for the alert to trigger off the default threshold. User parameters details
+MAX ALIVE TIME 4021: Length of time an order must exist to be excluded.
+NUM DELETED ORDERS 4021: Number of deleted orders considered excessive. 
+
+
+
+Test Document: Alert 2031: Large trade 
+This large trade alert will identify significantly large trades in an instrument taking account for the instruments trading history. The alert look at benchmarks, absolute value and volume for on- and off-market trades. 
+Scenario 1 :Alerting - user thresholds 
+Alertserver Date: 20090925 Test Case Description : 
+This scenario verifies the basic case where the order’s volume is larger than LARGE TRADE VOLUME 2031 and the order’s value is larger than LARGE TRADE VALUE 2031 This scenario tests the following conditions Rule 1 Is the order larger in volume that the LARGE TRADE VOLUME 2031? Rule 2 Is the order larger in value than the LARGE TRADE VALUE 2031? 
+
