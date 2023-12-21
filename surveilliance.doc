@@ -1,179 +1,146 @@
-1.1	Unusual Price Movement Inter-Day :
-Unusual Price Movement Intra-Day :
-Similar in logic to the Unusual Price Movement Intra-Day alert, the Unusual Price Movement Inter-Day alert identifies unusual price movements against security specific benchmarks, but for multiple configurable inter-day time ranges e.g. for 1, 3, and 10 day intervals. The alert also identifies the participant that caused the most number of price upticks or downticks, over the time range that triggered the alert, which is the most likely to be responsible for the unusual price movement.
+Equities Functional Requirements
+1. Unusual Price Movement Inter-Day
+Objective:
+Identify unusual price movements against security-specific benchmarks for multiple configurable inter-day time ranges.
 
+Description:
+This alert identifies unusual price movements over configurable inter-day time ranges and identifies the participant responsible for the most number of price upticks or downticks during the triggering time range.
 
-1.2	Unusual volume intrdaday
-The Unusual Volume Intra-Day Alert identifies unusual levels of trading volume against security specific benchmarks for multiple intra-day time ranges e.g. for 10 minute and 1 hour intervals. The alert also identifies the participant that traded the most volume, over the time range that triggered the alert, which is the most likely to be responsible for the unusual volume.
+Required Information:
 
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Price movements against benchmarks
+Participant causing the most upticks or downticks
+2. Unusual Volume Intra-Day
+Objective:
+Identify unusual levels of trading volume against security-specific benchmarks for multiple intra-day time ranges.
 
+Description:
+This alert identifies unusual trading volume levels over configurable intra-day time ranges and identifies the participant responsible for the most traded volume during the triggering time range.
 
-1.3	Market manipulation
-Alerts in the Market manipulation category are designed to identify different kinds of market manipulation behaviour that is prevalent around the world. Each concept below can also be related to the European definitions of market abuse as set out in the CESR 505b Directive.
+Required Information:
 
-1.3.1	Marking the Close (Non-Auction Close)
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Trading volume against benchmarks
+Participant trading the most volume
+3. Market Manipulation
+Objective:
+Identify different kinds of market manipulation behavior prevalent worldwide.
 
-The Market the Close (Non-Auction Close) alert identifies participants that attempt to manipulate the price level of a security before the market closes. Most funds base their quoted prices and value off of the closing prices of securities in their portfolio. Unusual price movements which revert the following day - especially at quarter ends, may indicate market manipulation to artificially inflate the price of securities.
+3.1 Marking the Close (Non-Auction Close)
+Description:
+Identifies participants attempting to manipulate the price level of a security before the market closes. Unusual price movements, especially at quarter ends, may indicate market manipulation to artificially inflate prices.
 
+Required Information:
 
-1.3.2	Painting the Tape
-The Painting the Tape alert identifies participants that are responsible for an unusual price movement, but then reverse the direction of their trading to capitalise on the price movement that they had caused. This alert can be configured to use an instance of the Unusual Price Movement Intra-Day Alert for the initial price movement, or to identify scenarios separately, using its own set of alert parameters.
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Unusual price movements before market close
+3.2 Painting the Tape
+Description:
+Identifies participants responsible for an unusual price movement and then reverse the direction of their trading to capitalize on the price movement they caused.
 
+Required Information:
 
-1.4	Aggressive Buy or Sell
-The Aggressive Buy or Sell alert identifies participants that continually enter aggressive orders that break the market up or down.
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Unusual price movement details
+4. Aggressive Buy or Sell
+Objective:
+Identify participants continually entering aggressive orders that break the market up or down.
 
+Description:
+This alert identifies participants aggressively entering orders that significantly impact the market.
 
-1.5	Narrowing Spread Followed by Crossing
+Required Information:
 
-The Narrowing Spread Followed by Crossing alert identifies off-market transactions where the spread was narrowed just before the crossing of the transaction.
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Details of aggressive buy or sell orders
+5. Narrowing Spread Followed by Crossing
+Objective:
+Identify off-market transactions where the spread was narrowed just before the crossing of the transaction.
 
+Description:
+This alert identifies transactions where the spread was narrowed before crossing, indicating potential market manipulation.
 
-1.6	Wash Sales (A to A)
-The Wash Sales (A to A) alert identifies participants that execute trades in which they are both the buyer and the seller, which increase volume without changing beneficial ownership. This alert can be configured to identify wash sales occurring on broker, trader, client or extra participant levels.
+Required Information:
 
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Details of spread narrowing and crossing
+6. Wash Sales (A to A)
+Objective:
+Identify participants executing trades in which they are both the buyer and the seller, increasing volume without changing beneficial ownership.
 
-1.7	Wash Sales A - B – A
+Description:
+This alert identifies trades where participants act as both the buyer and seller.
 
-The Wash Sales (A to B to A) alert identifies a series of trades which when aggregated, appear to be a wash sale. A wash sale under this alert would be the sequence of participant A buying 1,000 shares from participant B and then selling all 1,000 shares back to B. if the trade is done at the same price, it is a Wash Sale.
-There is a variation of this alert, where if the two trades are done at a different price then the alert is called a Money Pass. Effectively one party has passed money to the other party through trade price differentials. 
+Required Information:
 
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Details of the wash sale
+7. Wash Sales A - B – A
+Objective:
+Identify a series of trades that, when aggregated, appear to be a wash sale or a Money Pass.
 
-1.8	High Order Rate
-The High Order Rate alert identifies participants that enter a larger than usual number of orders, which may indicate upcoming supply/demand shifts in a security or erroneous order entries.
+Description:
+This alert identifies a series of trades that may appear to be a wash sale or Money Pass, indicating potential market manipulation.
 
+Required Information:
 
-1.9	High Small Order Rate
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Details of the trades
+8. High Order Rate
+Objective:
+Identify participants entering a larger than usual number of orders, indicating upcoming supply/demand shifts or erroneous order entries.
 
-The High Small Order Rate alert identifies participants that enter a high rate of small orders which are below a pre-defined volume, when submitted into the order book for a security.
+Description:
+This alert identifies participants entering a higher than usual number of orders, suggesting potential shifts in supply/demand or erroneous entries.
 
+Required Information:
 
-1.10	Repeat Order
-The Repeat Order alert Identifies unusually large numbers of orders entered by the same broker with the same price and volume.
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Number of orders
+9. High Small Order Rate
+Objective:
+Identify participants entering a high rate of small orders below a predefined volume when submitted into the order book for a security.
 
+Description:
+This alert identifies participants entering a high rate of small orders below a predefined volume.
 
+Required Information:
 
-1.11	High Order to Trade Ratio
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Details of small orders
+10. Repeat Order
+Objective:
+Identify unusually large numbers of orders entered by the same broker with the same price and volume.
 
-The High Order to Trade Ratio alert can be an indicator for several forms of market abuse:
-•	HFT/ Quote stuffing - A tactic employed by high-frequency traders that involves using specialized, high-bandwidth hardware to quickly enter and withdraw large quantities of orders in an attempt to flood the market, thereby gaining an advantage over slower market participants.
-•	Attempt to create a false or misleading market - The increase activity by the bad actor is intended to attract additional investors, and increase the price.
-•	Client account intrusion - The alerts attempts to uncover trading activity performed by a bad actor who has unlawfully gained access to a trading account to further their manipulative conduct.
+Description:
+This alert identifies unusually large numbers of orders entered by the same broker with consistent price and volume.
 
+Required Information:
 
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Number of orders
+11. High Order to Trade Ratio
+Objective:
+Identify participants with a high order-to-trade ratio, indicating potential market abuse such as HFT/quote stuffing, creating a false market, or client account intrusion.
 
+Description:
+This alert serves as an indicator for several forms of market abuse, including HFT/quote stuffing, creating a false market, or client account intrusion.
 
-Benchmarking:
+Required Information:
 
-A.1	Benchmarking methods
-Nasdaq uses several calculation methods in determining the threshold for issuing an alert. The mechanism used in benchmarking depends on the alert
-A.1.1	Standard Deviation
-By Sample Standard Deviation mechanism, SMARTS establishes the thresholds by calculating the absolute statistical mean and the standard deviation of the distributions for individual instruments over the sample period.
-The simplified formula is as follows:
-Upper-Bound = abs(mean of the distribution + (standard deviation of the distribution x number of standard deviations)) x multiplier
-Lower-Bound = abs(mean of the distribution - (standard deviation of the distribution x number of standard deviations)) x multiplier
-The multiplier is defined by the user parameter BENCHMARK_MULTIPLIER_<ALERTCODE>.
-A.1.2	Distribution Cut-off
-By Distribution Cut-off mechanism, SMARTS establishes the thresholds by collecting the distributions for individual instruments and applying the distribution percentile cut-off value defined by user parameter DIST_CUT_OFF_<ALERTCODE> to get the threshold value.
-The simplified formula is as follows:
-Threshold = distribution cut-off x multiplier
-A.1.3	Threshold Table
-When there are less than 30 observations during the benchmarking period, it is not enough for applying standard deviation or distribution cut-off methods. Threshold values will be retrieved from a pre-defined thresholds table. 
-An example table of fallback values for the 1001 trade to trade price alerts is as follows:
-Price	Threshold	Explanation
-$0.00	50%	Prices up to $0.10 have a threshold of 50%
-$0.10	30%	Prices from $0.10 up to $0.25 have a threshold of 30%
-$0.25	15%	Prices from $0.25 up to $0.50 have a threshold of 15%
-$0.50	12%	Prices from $0.50 up to $1.00 have a threshold of 12%
-$1.00	10%	Prices from $1.00 up to $2.00 have a threshold of 10%
-$2.00	7.5%	Prices from $2.00 up to $5.00 have a threshold of 7.5%
-$5.00	5%	Prices from $5.00 up to $100000000 have a threshold of 5%
-$100000000	4%	Prices above $100000000 have a threshold of 4%
-A.2	Price Alerts Benchmarking Analysis
-The Price Change alerts in Nasdaq Market Surveillance utilise various statistical mechanisms for determining thresholds through benchmarking historical data for individual securities. 
-A.2.1	Purpose
-This section will analyse Alert 1001 - Unusual Price Movement (Intra-day) calculation of thresholds using historical data and highlight methodology used for statistical distributions within the ALICE programming language. 
-Alert 1001 statistical thresholds include:
-•	Absolute Price Change threshold
-•	Price Percentage threshold
-A.2.2	Sample Alert Long Text
-The following is an example Alert 1001 long text, which will be used to help with explanation of the two thresholds contained in the alert.
-UNUSUAL PRICE RISE INTRA-DAY:
-Price Change trade to trade is +$16.00 (40%) from $40.00 to $56.00 and benchmark is $9.00 (5%)
-A.2.3	Absolute Price Threshold
-In the above example, the absolute price threshold is $9.00. For Alert 1001, this threshold is calculated by taking the absolute difference between trade-to-trade prices.
-For example, a trade for $10.00 followed by a trade for $10.30 is an absolute change of $0.30. Alternatively, a trade for $10.00 followed by a trade for $9.39 is an absolute price change of $0.61. 
-The calculated value is then inserted into a distribution and depending on the number of observations the following statistical calculations are used to establish the thresholds.
-A.2.4	Observation count greater than 30
-When the observation count in the distribution is greater than 30 , the absolute price threshold is established by utilising the absolute statistical mean and a multiple of standard deviation for the distribution. 
-The number of standard deviations is defined by the user parameter PRICE_DIFF_STD_DEV_1001 and currently set to 5. A multiplier can be applied to this threshold if the calculated cut off is deemed to be too small by the user parameter.
-A.2.5	Observation count less than 30
-When the observation count is less than 30, a threshold value is established using the "price percentage threshold" below together with the close price of the previous trading day. 
-The simplified formula is as follows:
-Absolute Price Threshold = "price percentage threshold" x close price
-A.2.6	Price Percentage Threshold
-In the above example, the price percentage threshold is 5%. For Alert 1001, this threshold is calculated by taking the percentage change between trade-to-trade prices taking into account the positive or negative movement of prices.
-For example, a trade for $10.00 followed by a trade for $10.30 is a price increase change of +3% (+$0.30). Alternatively, a trade for $10.00 followed by a trade for $9.39 is a price decrease of -6.1% (-$0.61).
-The calculated value is then inserted into a distribution and depending on the number of observations the following statistical calculations are used to establish the thresholds.
-A.2.7	Observation count greater than 30
-When the observation count in the distribution is greater than 30, the price percentage threshold is established by utilising the absolute statistical mean and a multiple of standard deviation for the distribution. 
-The number of standard deviations is defined by the user parameter STD_DEV_1001 and currently set to 5. A multiplier can be applied to this threshold if the calculated cut off is deemed to be too small by the user parameter.
-A.2.8	Observation count less than 30
-Where there are less than 30 to no observations gathered during benchmarking in the distribution a threshold value is established through using established default thresholds table by comparing with a previous trading day’s close price.
-The current table of fall back values for the trade to trade alerts are as follows:
-Price	Threshold	Explanation
-$0.00	50%	Prices up to $0.10 have a threshold of 50%
-$0.10	30%	Prices from $0.10 up to $0.25 have a threshold of 30%
-$0.25	15%	Prices from $0.25 up to $0.50 have a threshold of 15%
-$0.50	12%	Prices from $0.50 up to $1.00 have a threshold of 12%
-$1.00	10%	Prices from $1.00 up to $2.00 have a threshold of 10%
-$2.00	7.5%	Prices from $2.00 up to $5.00 have a threshold of 7.5%
-$5.00	5%	Prices from $5.00 up to $100000000 have a threshold of 5%
-$100000000	4%	Prices above $100000000 have a threshold of 4%
-A.3	ALICE distributions
-The methodology used by the ALICE programming language to handles distribution is built differently to other statistical calculators, this section will help to explain the differences and help in verifying the produced results.
-A.3.1	Distribution Accuracy
-The default setting within ALICE and Alertserver for distributions is 2 significant figures unless configured otherwise to a different setting. Note that a higher accuracy setting will require an increase in memory consumption.
-Numbers added into a distribution will be rounded either up or down to 2 significant figures. The following table will illustrate the rounding utilised:
-Input	Output After Rounding (2 Sig. Fig.)
-1.04	1
-1.16	1.2
-16	16
-155	160
-125	130
-A.3.2	Distribution Percentile
-The ALICE distribution functions will always return a value which was inserted into the distribution as an observation rounding up and will never return the same accuracy as statistical calculators.
-A.3.3	Example Data
-As an example for the following data set of 20 observations:
-#	Original Entry	2 SigFig
-1	0.51	0.51
-2	0.55	0.55
-3	0.56	0.56
-4	0.56	0.56
-5	0.57	0.57
-6	0.57	0.57
-7	0.58	0.58
-8	0.59	0.59
-9	0.59	0.59
-10	0.69	0.69
-11	0.77	0.77
-12	0.79	0.79
-13	0.83	0.83
-14	0.84	0.84
-15	0.85	0.85
-16	1.04	1
-17	1.16	1.2
-18	1.41	1.4
-19	1.64	1.6
-20	1.85	1.9
-A.3.4	Percentile Comparison
-The following illustrates the differences between the results shown using Microsoft Excel’s percentile function compared to ALICE distribution cut-off function:
-%	Excel-percentile	ALICE-distcutoff
-0.8	1.064	1.2
-0.85	1.1975	1.4
-0.9	1.433	1.6
-0.95	1.6505	1.9
-0.96	1.6904	1.9
-0.97	1.7303	1.9
-0.98	1.7702	1.9
-0.99	1.8101	1.9
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Order-to-trade ratio
+Relevant system parameters
