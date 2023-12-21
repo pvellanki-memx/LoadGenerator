@@ -1,18 +1,277 @@
-Equities Functional Requirements
-1. Unusual Price Movement Inter-Day
+
+
+
+
+
+
+
+ 
+
+
+Market Surveillance System
+
+Business Requirements Document (BRD)
+
+
+
+
+Document Version: 1.0
+Date: 12/26/2023
+
+
+
+
+
+
+
+
+
+
+1	Table of Contents
+1.	EXECUTIVE SUMMARY	2
+2.	INTRODUCTION	3
+3.	OBJECTIVES	3
+4.	SCOPE	3
+5.	STAKEHOLDERS	3
+6.	FUNCTIONAL REQUIREMENTS - OPTIONS	3
+6.1	HIGH ORDER TO TRADE RATE	3
+6.2	REPEAT ORDERS	4
+6.3	CAPPING AND PEGGING	4
+6.4	PHISHING	5
+6.5	WASH SALES A TO B TO A	5
+6.6	MULTI-ORDER SPOOFING WITH BAIT AND SWITCH	5
+6.7	SPOOFING - RAPID ENTRY AND DELETE	6
+6.8	ORDER WITHDRAWAL (CONTINUOUS)	6
+6.9	LARGE TRADE	6
+6.10	ALERTSERVER DATE: [DATE]	7
+7.	FUNCTIONAL REQUIREMENTS - EQUITIES	7
+7.1	UNUSUAL PRICE MOVEMENT INTER-DAY	7
+7.2	UNUSUAL VOLUME INTRA-DAY	7
+7.3	MARKING THE CLOSE (NON-AUCTION CLOSE)	8
+7.4	PAINTING THE TAPE	8
+7.5	AGGRESSIVE BUY OR SELL	8
+7.6	NARROWING SPREAD FOLLOWED BY CROSSING	8
+7.7	WASH SALES (A TO A)	9
+7.8	WASH SALES A - B – A	9
+7.9	HIGH ORDER RATE	9
+7.10	HIGH SMALL ORDER RATE	10
+7.11	REPEAT ORDER	10
+7.12	HIGH ORDER TO TRADE RATIO	10
+8.	NON-FUNCTIONAL REQUIREMENTS	11
+9.	ASSUMPTIONS AND DEPENDENCIES	11
+10.	CONSTRAINTS	11
+11.	RISKS	11
+12.	SIGN-OFF	11
+
+
+
+
+
+
+1.	Executive Summary
+
+The Market Surveillance System aims to monitor trade and order data from the trading system to identify potential market abuse and irregularities. This document outlines the business requirements for the system, including specific alert scenarios, expected outputs, and testing procedures.
+
+2.	Introduction
+
+The surveillance system will generate alerts based on predefined criteria to detect abnormal trading patterns, repeated orders, and other potential market abuses. The alerts will assist in maintaining a fair and transparent market environment.
+
+
+3.	Objectives
+
+The primary objectives of the Market Surveillance System are:
+
+•	Identify and generate alerts for potential market abuse.
+•	Provide detailed information and analysis for each alert scenario.
+•	Facilitate timely intervention and investigation by relevant authorities.
+
+4.	Scope
+
+The surveillance system will focus on monitoring trade and order data from the trading system. It covers specific alert scenarios such as high order to trade ratio, repeat orders, capping and pegging, phishing, pinging orders, wash sales, spoofing, rapid entry and delete, and large trades.
+
+5.	Stakeholders
+
+Stakeholders involved in the Trade and Order Surveillance System include:
+
+Regulatory Team
+Trading system Dev
+
+
+
+6.	Functional Requirements - Options
+
+6.1	High Order to Trade Rate
+
+Objective:
+Detect abnormal order-to-trade ratios, which may indicate potential market abuse, including High-Frequency Trading (HFT), quote stuffing, or attempts to create a false market.
+
+Description:
+This alert triggers when the order-to-trade ratio exceeds a defined threshold, indicating an unusual concentration of orders relative to executed trades. This could signify disruptive trading practices, such as market manipulation or false market creation.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Number of orders and trades
+Order-to-trade ratio
+Threshold for order-to-trade ratio
+Relevant system parameters (e.g., default order-to-trade ratio)
+
+6.2	Repeat Orders
+
+Objective:
+Identify repeated entry of large orders by the same broker with the same price and volume, suggesting potential system errors or attempts to manipulate the order book.
+
+Description:
+This alert triggers when a broker repeatedly enters orders with the same price and volume, potentially indicating a malfunctioning order entry system or intentional manipulation.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Number of orders and trades
+Total consideration of the orders
+Minimum number of orders triggering the alert
+Price and volume of the repeated orders
+Minimum interval for retriggering the alert.
+
+6.3	Capping and Pegging
+
+Objective:
+Identify participants with significant positions in futures or options contracts dominating trading in the underlying security before settlement.
+
+Description:
+This alert triggers when a participant holds a large position in a futures or options contract, potentially influencing the underlying security's trading before the settlement price is set.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Participant's position in futures/options contracts
+Relevant settlement-related parameters
+Intensity level for the alert
+
+6.4	Phishing
+
+Objective:
+Identify participants engaging in "pinging" the market with small orders to detect hidden volume and execute transactions with relatively large volume.
+
+Description:
+This alert triggers when a participant places small orders to detect hidden volume, followed by a large trade against the identified price, potentially indicating an attempt to exploit hidden liquidity.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Number of pinging orders
+Best ask price detected.
+Volume and price of the subsequent large trade
+Minimum ping order count triggering the alert
+
+6.5	Wash Sales A to B to A
+
+Objective:
+Identify wash sales, where a participant buys and sells the same volume of shares with another participant, potentially to manipulate or create misleading trading activity.
+
+Description:
+This alert triggers when a participant buys from another and then sells the same volume back, potentially indicating a wash sale. The alert distinguishes between normal and money passing wash sales.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Involved brokers, traders, and clients
+Price, volume, and total value of the transactions
+Indication of normal or money passing wash sale
+
+6.6	MULTI-ORDER SPOOFING WITH BAIT AND SWITCH
+
+Objective:
+Detect participants entering and deleting large orders that add liquidity to the order book for a short period, followed by a profitable trade on the opposite side.
+
+Description:
+This alert triggers when a participant enters and deletes a number of large orders, contributing to order book liquidity for a short time, and subsequently executes a profitable trade on the opposite side.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Number of entered and deleted orders
+Lifespan of the orders
+Details of the profitable trade
+
+6.7	SPOOFING - RAPID ENTRY AND DELETE
+
+Objective:
+Identify brokers entering and deleting a large number of unexecuted orders within a short time, suggesting potential spoofing.
+
+Description:
+This alert triggers when a broker rapidly enters and deletes a significant number of unexecuted orders within a short period, potentially indicating spoofing behavior.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Number of entered and deleted orders
+Timeframe for order existence
+Minimum genuine trade value and estimated profit thresholds
+
+6.8	ORDER WITHDRAWAL (CONTINUOUS)
+
+Objective:
+Identify the entry and deletion of large orders at the best bid or ask price, deleted before any executions, potentially indicating continuous attempts to game the market.
+
+Description:
+This alert triggers when a participant enters and deletes a large order at the best bid or ask price, with no executions, suggesting possible attempts to manipulate the market through continuous order withdrawal.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Order details (price, volume, etc.)
+Maximum allowed alive time for an order
+Threshold for considering the number of deleted orders excessive
+
+6.9	Large trade
+
+Objective:
+Identify significantly large trades in an instrument, considering benchmarks, absolute value, and volume, to detect potential market impact.
+
+Description:
+This alert triggers when a trade's volume and value exceed predefined thresholds, indicating a significantly large transaction that may impact the market.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the trade
+Trade volume and value
+Benchmark information
+User-defined thresholds for large trade volume and value
+
+6.10	Alertserver Date: [Date]
+
+Test Case Description: Verify alert triggers when the order's volume is larger than LARGE TRADE VOLUME 2031 and the order's value is larger than LARGE TRADE VALUE 2031.
+Expected output: [Expected output details]
+
+
+7.	Functional Requirements - Equities
+
+7.1	Unusual Price Movement Inter-Day
 Objective:
 Identify unusual price movements against security-specific benchmarks for multiple configurable inter-day time ranges.
 
 Description:
-This alert identifies unusual price movements over configurable inter-day time ranges and identifies the participant responsible for the most number of price upticks or downticks during the triggering time range.
+This alert identifies unusual price movements over configurable inter-day time ranges and identifies the participant responsible for the greatest number of price upticks or downticks during the triggering time range.
 
 Required Information:
 
 Security identifier (e.g., ticker symbol)
 Timestamp of the event
 Price movements against benchmarks
-Participant causing the most upticks or downticks
-2. Unusual Volume Intra-Day
+Participant causing the most upticks or downticks.
+
+7.2	Unusual Volume Intra-Day
+
 Objective:
 Identify unusual levels of trading volume against security-specific benchmarks for multiple intra-day time ranges.
 
@@ -29,7 +288,8 @@ Participant trading the most volume
 Objective:
 Identify different kinds of market manipulation behavior prevalent worldwide.
 
-3.1 Marking the Close (Non-Auction Close)
+7.3	Marking the Close (Non-Auction Close)
+
 Description:
 Identifies participants attempting to manipulate the price level of a security before the market closes. Unusual price movements, especially at quarter ends, may indicate market manipulation to artificially inflate prices.
 
@@ -38,7 +298,9 @@ Required Information:
 Security identifier (e.g., ticker symbol)
 Timestamp of the event
 Unusual price movements before market close
-3.2 Painting the Tape
+
+7.4	Painting the Tape
+
 Description:
 Identifies participants responsible for an unusual price movement and then reverse the direction of their trading to capitalize on the price movement they caused.
 
@@ -47,7 +309,9 @@ Required Information:
 Security identifier (e.g., ticker symbol)
 Timestamp of the event
 Unusual price movement details
-4. Aggressive Buy or Sell
+
+7.5	 Aggressive Buy or Sell
+
 Objective:
 Identify participants continually entering aggressive orders that break the market up or down.
 
@@ -59,7 +323,9 @@ Required Information:
 Security identifier (e.g., ticker symbol)
 Timestamp of the event
 Details of aggressive buy or sell orders
-5. Narrowing Spread Followed by Crossing
+
+7.6	Narrowing Spread Followed by Crossing
+
 Objective:
 Identify off-market transactions where the spread was narrowed just before the crossing of the transaction.
 
@@ -71,7 +337,9 @@ Required Information:
 Security identifier (e.g., ticker symbol)
 Timestamp of the event
 Details of spread narrowing and crossing
-6. Wash Sales (A to A)
+
+7.7	Wash Sales (A to A)
+
 Objective:
 Identify participants executing trades in which they are both the buyer and the seller, increasing volume without changing beneficial ownership.
 
@@ -83,7 +351,9 @@ Required Information:
 Security identifier (e.g., ticker symbol)
 Timestamp of the event
 Details of the wash sale
-7. Wash Sales A - B – A
+
+7.8	Wash Sales A - B – A
+
 Objective:
 Identify a series of trades that, when aggregated, appear to be a wash sale or a Money Pass.
 
@@ -95,7 +365,9 @@ Required Information:
 Security identifier (e.g., ticker symbol)
 Timestamp of the event
 Details of the trades
-8. High Order Rate
+
+7.9	High Order Rate
+
 Objective:
 Identify participants entering a larger than usual number of orders, indicating upcoming supply/demand shifts or erroneous order entries.
 
@@ -107,7 +379,9 @@ Required Information:
 Security identifier (e.g., ticker symbol)
 Timestamp of the event
 Number of orders
-9. High Small Order Rate
+
+7.10	High Small Order Rate
+
 Objective:
 Identify participants entering a high rate of small orders below a predefined volume when submitted into the order book for a security.
 
@@ -119,7 +393,8 @@ Required Information:
 Security identifier (e.g., ticker symbol)
 Timestamp of the event
 Details of small orders
-10. Repeat Order
+7.11	Repeat Order
+
 Objective:
 Identify unusually large numbers of orders entered by the same broker with the same price and volume.
 
@@ -131,7 +406,9 @@ Required Information:
 Security identifier (e.g., ticker symbol)
 Timestamp of the event
 Number of orders
-11. High Order to Trade Ratio
+
+7.12	High Order to Trade Ratio
+
 Objective:
 Identify participants with a high order-to-trade ratio, indicating potential market abuse such as HFT/quote stuffing, creating a false market, or client account intrusion.
 
@@ -144,3 +421,23 @@ Security identifier (e.g., ticker symbol)
 Timestamp of the event
 Order-to-trade ratio
 Relevant system parameters
+8.	Non-functional Requirements
+
+The surveillance system should process alerts in real-time with minimal latency.
+The system should be scalable to accommodate growing trade and order data.
+Data confidentiality and integrity should be maintained.
+9.	Assumptions and Dependencies
+
+The trading system provides accurate and timely trade and order data.
+The surveillance system has access to necessary historical data for analysis.
+10.	Constraints
+
+The system's performance may be impacted by fluctuations in trade and order volume.
+Regulatory changes may necessitate updates to alert criteria.
+11.	Risks
+
+Inadequate data quality may lead to false alerts.
+Changes in market dynamics may require continuous refinement of alert criteria.
+12.	Sign-Off
+
+[Space for stakeholders' signatures indicating approval of the document.]
