@@ -1,19 +1,15 @@
-import warnings
-warnings.filterwarnings("ignore", category=FutureWarning, module="deephaven.*")
-
-from deephaven import Session
-from deephaven import numpy  # Add this import to handle the numpy warning
+import deephaven.TableTools as tt
 
 # Set Deephaven server address and port
 deephaven_server = "localhost"
 deephaven_port = 10000
 
 # Connect to Deephaven
-session = Session(deephaven_server, deephaven_port)
+deephaven_connection = tt.connect(deephaven_server, deephaven_port)
 
 # Assuming you have a table named "Orders," you can query it
-orders_table = session.query("Orders")
-print(orders_table.head())
+orders_table = tt.readTable(deephaven_connection, "Orders")
+print(tt.head(orders_table))
 
-# Don't forget to close the session when you're done
-session.close()
+# Don't forget to close the connection when you're done
+tt.close(deephaven_connection)
