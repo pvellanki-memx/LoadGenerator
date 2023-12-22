@@ -1,2 +1,67 @@
-import warnings
-warnings.filterwarnings("ignore", category=FutureWarning, module="deephaven.*")
+Collecting numpy==1.19.5
+  Using cached http://10.0.28.1/artifactory/api/pypi/pypi-remote/packages/packages/51/60/3f0fe5b7675a461d96b9d6729beecd3532565743278a9c3fe6dd09697fa7/numpy-1.19.5.zip (7.3 MB)
+  Installing build dependencies ... error
+  error: subprocess-exited-with-error
+
+  × pip subprocess to install build dependencies did not run successfully.
+  │ exit code: 2
+  ╰─> [58 lines of output]
+      Looking in indexes: http://10.0.28.1/artifactory/api/pypi/pypi-remote/simple
+      User for 10.0.28.1: ERROR: Exception:
+      Traceback (most recent call last):
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_internal/cli/base_command.py", line 165, in exc_logging_wrapper
+          status = run_func(*args)
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_internal/cli/req_command.py", line 205, in wrapper
+          return func(self, options, args)
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_internal/commands/install.py", line 339, in run
+          requirement_set = resolver.resolve(
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_internal/resolution/resolvelib/resolver.py", line 94, in resolve
+          result = self._result = resolver.resolve(
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_vendor/resolvelib/resolvers.py", line 481, in resolve
+          state = resolution.resolve(requirements, max_rounds=max_rounds)
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_vendor/resolvelib/resolvers.py", line 348, in resolve
+          self._add_to_criteria(self.state.criteria, r, parent=None)
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_vendor/resolvelib/resolvers.py", line 172, in _add_to_criteria
+          if not criterion.candidates:
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_vendor/resolvelib/structs.py", line 151, in __bool__
+          return bool(self._sequence)
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_internal/resolution/resolvelib/found_candidates.py", line 155, in __bool__
+          return any(self)
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_internal/resolution/resolvelib/found_candidates.py", line 143, in <genexpr>
+          return (c for c in iterator if id(c) not in self._incompatible_ids)
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_internal/resolution/resolvelib/found_candidates.py", line 44, in _iter_built
+          for version, func in infos:
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_internal/resolution/resolvelib/factory.py", line 294, in iter_index_candidate_infos
+          result = self._finder.find_best_candidate(
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_internal/index/package_finder.py", line 868, in find_best_candidate
+          candidates = self.find_all_candidates(project_name)
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_internal/index/package_finder.py", line 809, in find_all_candidates
+          page_candidates = list(page_candidates_it)
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_internal/index/sources.py", line 134, in page_candidates
+          yield from self._candidates_from_page(self._link)
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_internal/index/package_finder.py", line 769, in process_project_url
+          html_page = self._link_collector.fetch_page(project_url)
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_internal/index/collector.py", line 604, in fetch_page
+          return _get_html_page(location, session=self.session)
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_internal/index/collector.py", line 509, in _get_html_page
+          resp = _get_html_response(url, session=session)
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_internal/index/collector.py", line 125, in _get_html_response
+          resp = session.get(
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_vendor/requests/sessions.py", line 542, in get
+          return self.request('GET', url, **kwargs)
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_internal/network/session.py", line 454, in request
+          return super().request(method, url, *args, **kwargs)
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_vendor/requests/sessions.py", line 529, in request
+          resp = self.send(prep, **send_kwargs)
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_vendor/requests/sessions.py", line 652, in send
+          r = dispatch_hook('response', hooks, r, **kwargs)
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_vendor/requests/hooks.py", line 31, in dispatch_hook
+          _hook_data = hook(hook_data, **kwargs)
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_internal/network/auth.py", line 270, in handle_401
+          username, password, save = self._prompt_for_password(parsed.netloc)
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_internal/network/auth.py", line 233, in _prompt_for_password
+          username = ask_input(f"User for {netloc}: ")
+        File "/tmp/pip-standalone-pip-_1tc2d2v/__env_pip__.zip/pip/_internal/utils/misc.py", line 200, in ask_input
+          return input(message)
+      EOFError: EOF when reading a line
+      [end of output]
