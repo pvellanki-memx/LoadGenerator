@@ -1,13 +1,15 @@
-from deephaven import init, TableTools
+from deephaven import Session
 
-# Initialize Deephaven connection
-init()
+# Set Deephaven server address and port
+deephaven_server = "localhost"
+deephaven_port = 10000
 
-# Specify the query to select data from the "Orders" table
-query = "Orders"
+# Connect to Deephaven
+session = Session(deephaven_server, deephaven_port)
 
-# Execute the query and fetch the result as a Pandas DataFrame
-result_df = TableTools.readTable(query).toPandas()
+# Assuming you have a table named "Orders," you can query it
+orders_table = session.query("Orders")
+print(orders_table.head())
 
-# Print the result
-print(result_df)
+# Don't forget to close the session when you're done
+session.close()
