@@ -441,3 +441,75 @@ Changes in market dynamics may require continuous refinement of alert criteria.
 12.	Sign-Off
 
 [Space for stakeholders' signatures indicating approval of the document.]
+
+
+
+
+
+
+UI
+
+Certainly! In the Trade and Order Surveillance System, the user interface (UI) is designed to provide comprehensive functionality to the regulatory team, empowering them to efficiently manage and oversee the surveillance process. The UI offers various features and provisions tailored to the needs of regulatory users:
+
+Audit Trail:
+
+The UI includes a robust audit trail functionality, ensuring transparency and accountability in the surveillance activities.
+Every action taken within the system, such as alert configuration changes, acknowledgment of alerts, and interventions, is logged with a timestamp.
+The audit trail serves as a detailed record of user interactions, providing a transparent view of system activities for compliance and auditing purposes.
+Alert Configuration from UI:
+
+Regulatory users have the capability to configure alert parameters and criteria directly from the user interface.
+The UI provides an intuitive and user-friendly environment where regulatory team members can easily set and modify alert thresholds, criteria, and other parameters.
+This flexibility allows the regulatory team to adapt surveillance strategies to evolving market conditions or regulatory requirements without requiring extensive technical expertise.
+Alert Acknowledgment and Action:
+
+The UI enables regulatory users to acknowledge alerts and take necessary actions promptly.
+Upon receiving an alert, the regulatory team can acknowledge it directly from the UI, indicating awareness and initiating further investigation or intervention.
+Depending on the severity and nature of the alert, the UI provides options for regulatory users to take appropriate actions, such as escalating the alert for further review, initiating investigations, or communicating with relevant stakeholders.
+User Roles and Permissions:
+
+The UI incorporates a role-based access control system, ensuring that regulatory team members have access to functionalities relevant to their responsibilities.
+Different user roles may include administrators, analysts, and investigators, each with specific permissions to access and modify certain aspects of the surveillance system.
+This role-based approach enhances security and streamlines workflow, allowing regulatory users to focus on their specific tasks within the surveillance process.
+Dashboard and Reporting:
+
+The UI features a comprehensive dashboard that provides an overview of the current surveillance status, including the number and status of alerts, recent system activities, and pending actions.
+Regulatory users can generate customizable reports from the UI, facilitating data-driven decision-making and regulatory compliance reporting.
+The UI of the Trade and Order Surveillance System is designed as a powerful tool for the regulatory team, offering not only advanced surveillance capabilities but also intuitive controls for configuring alerts, managing workflows, and maintaining a clear audit trail of all system activities.
+
+
+
+benchmarking:
+
+
+Certainly! In the context of the provided information, benchmarking is a crucial process within the Trade and Order Surveillance System. It involves the establishment of threshold values for various alerts by analyzing historical data using statistical methods. The primary goal of benchmarking is to identify and flag potential anomalies or irregularities in the financial markets.
+
+Key Aspects of Benchmarking:
+
+Purpose:
+
+Benchmarking is undertaken to set criteria for identifying unusual behavior or events in financial markets through predefined alerts.
+Methods:
+
+The system employs several benchmarking methods, including Standard Deviation, Distribution Cut-off, and Threshold Table, to determine thresholds for issuing alerts.
+Standard Deviation Mechanism:
+
+This method calculates statistical mean and standard deviation for individual instruments over a sample period.
+Thresholds are established based on a user-defined number of standard deviations and a multiplier.
+Distribution Cut-off:
+
+This method collects distributions for individual instruments and applies a user-defined distribution percentile cut-off value to determine thresholds.
+Threshold Table:
+
+In cases with fewer than 30 observations during benchmarking, thresholds are retrieved from a predefined table based on price ranges.
+Absolute Price and Price Percentage Thresholds:
+
+These thresholds are calculated based on the absolute difference or percentage change between trade-to-trade prices.
+For observation counts greater than 30, statistical mean and standard deviation are used.
+For counts less than 30, thresholds are established using a fallback table or price percentage together with the close price.
+Implementation:
+
+Benchmark parameters are periodically updated in the system's database.
+Alert thresholds are calculated based on the selected benchmarking method for each specific alert type.
+Calculated thresholds are then used to trigger alerts for potential market abuse or irregularities in real-time.
+Benchmarking is a dynamic and essential component of the Trade and Order Surveillance System, enabling it to adapt to changing market conditions and ensuring the timely identification of suspicious activities.
