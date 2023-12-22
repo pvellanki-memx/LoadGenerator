@@ -1,23 +1,8 @@
-pvellanki@qa2434:~$ python3 connectdh.py 
-Traceback (most recent call last):
-  File "/home/pvellanki/connectdh.py", line 3, in <module>
-    from deephaven import Session
-  File "/usr/local/lib/python3.10/dist-packages/deephaven/__init__.py", line 105, in <module>
-    from .DeephavenDb import DeephavenDb
-  File "/usr/local/lib/python3.10/dist-packages/deephaven/DeephavenDb.py", line 14, in <module>
-    from .java_to_python import tableToDataFrame
-  File "/usr/local/lib/python3.10/dist-packages/deephaven/java_to_python.py", line 27, in <module>
-    'object': numpy.object,
-  File "/home/pvellanki/.local/lib/python3.10/site-packages/numpy/__init__.py", line 313, in __getattr__
-    raise AttributeError(__former_attrs__[attr])
-AttributeError: module 'numpy' has no attribute 'object'.
-`np.object` was a deprecated alias for the builtin `object`. To avoid this error in existing code, use `object` by itself. Doing this will not modify any behavior and is safe. 
-The aliases was originally deprecated in NumPy 1.20; for more details and guidance see the original release note at:
-    https://numpy.org/devdocs/release/1.20.0-notes.html#deprecations. Did you mean: 'object_'?
-pvellanki@qa2434:~$ cat connectdh.py 
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning, module="deephaven.*")
+
 from deephaven import Session
+from deephaven import numpy  # Add this import to handle the numpy warning
 
 # Set Deephaven server address and port
 deephaven_server = "localhost"
