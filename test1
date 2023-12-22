@@ -1,39 +1,4 @@
-pvellanki@qa2434:~$ echo $LD_LIBRARY_PATH
-/usr/bin/java/lib/server
-pvellanki@qa2434:~$ echo $JAVA_HOME
-/usr/bin/java
-pvellanki@qa2434:~$ ls -lrt
-total 443100
-drwxrwxr-x  8 pvellanki pvellanki      4096 Jun 30 09:05 loadgenerator
-drwxrwxr-x  2 pvellanki pvellanki      4096 Jul 15 12:41 orsa_report
-drwxrwxrwx  4 pvellanki pvellanki      4096 Jul 20 12:25 Final
-drwxrwxr-x  4 pvellanki pvellanki      4096 Jul 24 10:35 work
--rw-r--r--  1 pvellanki pvellanki         0 Jul 27 13:34 trade.db
--rw-r--r--  1 tcpdump   tcpdump        1635 Aug  4 16:28 perftool_connection.pcap
-drwxrwxr-x  2 pvellanki pvellanki      4096 Aug  9 16:24 test
-drwxrwxr-x 10 pvellanki pvellanki      4096 Aug  9 17:34 qa
--rw-r--r--  1 tcpdump   tcpdump       13349 Aug 30 09:53 perftool_connection830.pcap
--rw-r--r--  1 pvellanki pvellanki         0 Sep  6 18:19 06-05.db
--rw-r--r--  1 pvellanki pvellanki         0 Sep 11 16:34 06-28.db
-drwxrwxrwx  4 pvellanki pvellanki 452337664 Sep 27 19:10 orsa
-drwxr-xr-x 21 root      root           4096 Oct 20 12:03 Options
-drwxrwxr-x  6 pvellanki pvellanki      4096 Oct 20 15:36 toRun
--rwxrwxr-x  1 pvellanki pvellanki      1100 Oct 20 18:36 run.sh
--rw-r--r--  1 root      root           2942 Nov 24 10:38 bulk_quote.pcap
-drwxrwxr-x  5 pvellanki pvellanki      4096 Dec 21 11:31 venv
--rw-rw-r--  1 pvellanki pvellanki       399 Dec 22 11:23 connectdh.py
-pvellanki@qa2434:~$ python3 connectdh.py 
-Traceback (most recent call last):
-  File "/home/pvellanki/connectdh.py", line 1, in <module>
-    from deephaven import Session
-  File "/usr/local/lib/python3.10/dist-packages/deephaven/__init__.py", line 90, in <module>
-    jpyutil.preload_jvm_dll()
-  File "/usr/local/lib/python3.10/dist-packages/jpyutil.py", line 348, in preload_jvm_dll
-    jvm_dll_file = find_jvm_dll_file(java_home_dir=java_home_dir, fail=fail)
-  File "/usr/local/lib/python3.10/dist-packages/jpyutil.py", line 195, in find_jvm_dll_file
-    raise RuntimeError("can't find any JVM shared library")
-RuntimeError: can't find any JVM shared library
-pvellanki@qa2434:~$ java -version
-openjdk version "11.0.14.1" 2022-02-08
-OpenJDK Runtime Environment (build 11.0.14.1+1-Ubuntu-0ubuntu1)
-OpenJDK 64-Bit Server VM (build 11.0.14.1+1-Ubuntu-0ubuntu1, mixed mode, sharing)
+export LD_LIBRARY_PATH=/usr/lib/jvm/java-11-openjdk-amd64/lib/server:$LD_LIBRARY_PATH
+
+import jpyconfig
+jpyconfig.add_classpath('/path/to/deephaven-jars/*')
