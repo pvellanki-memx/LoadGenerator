@@ -1,52 +1,18 @@
-Consistent Formatting:
+#!/bin/bash
 
-Ensure consistency in formatting, such as font size and style, throughout the document.
-Maintain a consistent numbering and indentation style for sections and sub-sections.
-Table of Contents:
+# Define variables
+current_month=$(date +'%Y-%m')
+previous_month=$(date -d 'last month' +'%Y-%m')
+source_folder="/path/to/source"
+destination_folder="/path/to/destination"
 
-Double-check that the Table of Contents accurately reflects the document's structure, especially after making any edits.
-Consider adding hyperlinks to allow easy navigation within the document.
+# Create the destination folder if it doesn't exist
+mkdir -p "$destination_folder"
 
-Executive Summary:
+# Move .db files created in the previous month to the destination folder
+find "$source_folder" -maxdepth 1 -type f -name "*.db" -newermt "$previous_month-01" ! -newermt "$current_month-01" -exec mv {} "$destination_folder" \;
 
-The Market Surveillance System aims to monitor trading activity by utilizing Deephaven as the primary repository for trading data. Algorithms are executed within Deephaven to generate alerts, and these alerts are inserted into a Postgres database. The UI interfaces with the PostgresDB to present and manage the alerts.
+# Compress the destination folder
+tar -czf "$destination_folder/$previous_month.tar.gz" -C "$destination_folder" .
 
-
-Introduction:
-
-Market surveillance plays a crucial role in ensuring regulatory compliance and maintaining the integrity of financial markets. The effective monitoring of trading activities is imperative to detect potential market abuse, irregularities, and maintain a fair and transparent trading environment.
-
-In response to these critical needs, we are developing a comprehensive Market Surveillance System. This system will be built from scratch, designed to address the evolving challenges of financial market oversight. While leveraging the existing capabilities of Deephaven as a repository for trading data, the new system will introduce advanced algorithms to analyze and generate alerts. These alerts will be seamlessly integrated into a Postgres database for efficient management.
-
-This document outlines the business requirements for the development of the Market Surveillance System, detailing specific alert scenarios for equities and options markets and their expected outputs.
-
-
-
-
-Functional Requirements – Options:
-
-Ensure consistency in the use of terminology across all functional requirements.
-User Interface:
-
-Add a brief description of the technologies or frameworks used to develop the user interface.
-Consider including wireframes or mockups to provide a visual representation of the UI.
-
-Benchmarking:
-
-Elaborate on how often benchmark parameters are updated. Specify the process for this update, including who is responsible.
-Non-functional Requirements:
-
-Add specific performance targets, such as the maximum allowable latency for processing alerts.
-Assumptions and Dependencies:
-
-Provide details on the sources of historical data and how it will be accessed.
-
-Constraints:
-
-Clarify how the system plans to handle fluctuations in trade and order volume. Consider providing specific performance thresholds.
-Risks:
-
-Elaborate on the strategies or mechanisms in place to mitigate the risk of false alerts due to inadequate data quality.
-Sign-Off:
-
-Clarify who will be responsible for signing off on the document. Include names and positions.
+echo "Files moved and compressed successfully."
