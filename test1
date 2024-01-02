@@ -1,18 +1,24 @@
 #!/bin/bash
 
-# Define variables
-current_month=$(date +'%Y-%m')
-previous_month=$(date -d 'last month' +'%Y-%m')
-source_folder="/path/to/source"
-destination_folder="/path/to/destination"
+# Specify the folder containing the .db files
+folder_path="/data/pvellanki/orsa-package-2/DEC"
 
-# Create the destination folder if it doesn't exist
-mkdir -p "$destination_folder"
+# Iterate over files and run the commands
+for file in "$folder_path"/2023-12-2*.db; do
+    if [ -f "$file" ]; then
+        echo "Processing file: $file"
 
-# Move .db files created in the previous month to the destination folder
-find "$source_folder" -maxdepth 1 -type f -name "*.db" -newermt "$previous_month-01" ! -newermt "$current_month-01" -exec mv {} "$destination_folder" \;
+        # Run the first command
+        python3 groupedexcel_v6.py "$file"
 
-# Compress the destination folder
-tar -czf "$destination_folder/$previous_month.tar.gz" -C "$destination_folder" .
-
-echo "Files moved and compressed successfully."
+        # Check the exit status of the first command
+        if [ $? -eq 0 ]; then
+            # If the first command succeeds, run the second command
+            python3 streamfurther_v6.py "$file"
+            echo "Processing complete for $file"
+        else
+            echo "Error: First command failed for $file. Skipping the second command."
+        fi
+    fi
+done
+~        
