@@ -1,29 +1,40 @@
 #!/bin/bash
 
+# Check if a target location is provided
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 <target_location>"
+    exit 1
+fi
 
+TARGET_LOCATION="$1"
+
+# Get the current year
 YEAR=$(date +"%Y")
 
+# Move to the target location
+cd "$TARGET_LOCATION" || exit 1
 
+# Iterate through each file in the target location
 for FILE in *; do
     # Check if it is a regular file
     if [ -f "$FILE" ]; then
-        
+        # Extract the month and year from the file's creation date
         MONTH=$(date -r "$FILE" +"%m")
         YEAR_FILE=$(date -r "$FILE" +"%Y")
 
-       
+        # Check if the file's creation year matches the current year
         if [ "$YEAR_FILE" = "$YEAR" ]; then
             # Create the month folder if it doesn't exist
             MONTH_FOLDER="${YEAR}-${MONTH}"
             mkdir -p "$MONTH_FOLDER"
 
-           
+            # Move the file to the month folder
             mv "$FILE" "$MONTH_FOLDER/"
         fi
     fi
 done
 
-
+# Compress each month folder
 for FOLDER in "${YEAR}-"??; do
     # Check if it is a directory
     if [ -d "$FOLDER" ]; then
