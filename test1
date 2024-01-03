@@ -1,24 +1,35 @@
 #!/bin/bash
 
-# Specify the folder containing the .db files
-folder_path="/data/pvellanki/orsa-package-2/DEC"
 
-# Iterate over files and run the commands
-for file in "$folder_path"/2023-12-2*.db; do
-    if [ -f "$file" ]; then
-        echo "Processing file: $file"
+YEAR=$(date +"%Y")
 
-        # Run the first command
-        python3 groupedexcel_v6.py "$file"
 
-        # Check the exit status of the first command
-        if [ $? -eq 0 ]; then
-            # If the first command succeeds, run the second command
-            python3 streamfurther_v6.py "$file"
-            echo "Processing complete for $file"
-        else
-            echo "Error: First command failed for $file. Skipping the second command."
+for FILE in *; do
+    # Check if it is a regular file
+    if [ -f "$FILE" ]; then
+        
+        MONTH=$(date -r "$FILE" +"%m")
+        YEAR_FILE=$(date -r "$FILE" +"%Y")
+
+       
+        if [ "$YEAR_FILE" = "$YEAR" ]; then
+            # Create the month folder if it doesn't exist
+            MONTH_FOLDER="${YEAR}-${MONTH}"
+            mkdir -p "$MONTH_FOLDER"
+
+           
+            mv "$FILE" "$MONTH_FOLDER/"
         fi
     fi
 done
-~        
+
+
+for FOLDER in "${YEAR}-"??; do
+    # Check if it is a directory
+    if [ -d "$FOLDER" ]; then
+        # Create a compressed archive
+        tar -czf "${FOLDER}.tar.gz" "$FOLDER"
+    fi
+done
+
+echo "Compression completed."
