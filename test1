@@ -8,9 +8,6 @@ fi
 
 TARGET_LOCATION="$1"
 
-# Get the current year
-YEAR=$(date +"%Y")
-
 # Move to the target location
 cd "$TARGET_LOCATION" || exit 1
 
@@ -22,20 +19,17 @@ for FILE in *; do
         MONTH=$(date -r "$FILE" +"%m")
         YEAR_FILE=$(date -r "$FILE" +"%Y")
 
-        # Check if the file's creation year matches the current year
-        if [ "$YEAR_FILE" = "$YEAR" ]; then
-            # Create the month folder if it doesn't exist
-            MONTH_FOLDER="${YEAR}-${MONTH}"
-            mkdir -p "$MONTH_FOLDER"
+        # Create the year-month folder if it doesn't exist
+        MONTH_FOLDER="${YEAR_FILE}-${MONTH}"
+        mkdir -p "$MONTH_FOLDER"
 
-            # Move the file to the month folder
-            mv "$FILE" "$MONTH_FOLDER/"
-        fi
+        # Move the file to the year-month folder
+        mv "$FILE" "$MONTH_FOLDER/"
     fi
 done
 
-# Compress each month folder
-for FOLDER in "${YEAR}-"??; do
+# Compress each year-month folder
+for FOLDER in *-??; do
     # Check if it is a directory
     if [ -d "$FOLDER" ]; then
         # Create a compressed archive
