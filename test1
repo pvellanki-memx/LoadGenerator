@@ -1,15 +1,30 @@
 #!/bin/bash
 
-# Check if a target location is provided
-if [ $# -eq 0 ]; then
-    echo "Usage: $0 <target_location>"
+# Check if target location and exclusion list are provided
+if [ $# -lt 2 ]; then
+    echo "Usage: $0 <target_location> <exclusion_list>"
     exit 1
 fi
 
 TARGET_LOCATION="$1"
+EXCLUSION_LIST="$2"
 
 # Move to the target location
 cd "$TARGET_LOCATION" || exit 1
+
+# Create an array from the comma-separated exclusion list
+IFS=',' read -ra EXCLUDE_ARRAY <<< "$EXCLUSION_LIST"
+
+# Function to check if a folder should be excluded
+should_exclude() {
+    local FOLDER="$1"
+    for EXCLUDE in "${EXCLUDE_ARRAY[@]}"; do
+        if [ "$FOLDER" = "$EXCLUDE" ]; then
+            return 0  # Folder should be excluded
+        fi
+    done
+    return 1  # Folder should not be excluded
+}
 
 # Iterate through each file in the target location
 for FILE in *; do
@@ -28,13 +43,21 @@ for FILE in *; do
     fi
 done
 
-# Compress each year-month folder
+# Compress each year-month folder, excluding specified folders
 for FOLDER in *-??; do
-    # Check if it is a directory
-    if [ -d "$FOLDER" ]; then
+    # Check if it is a directory and should not be excluded
+    if [ -d "$FOLDER" ] && should_exclude "$FOLDER"; then
         # Create a compressed archive
         tar -czf "${FOLDER}.tar.gz" "$FOLDER"
     fi
 done
 
 echo "Compression completed."
+
+
+
+
+
+
+
+./compress_by_date.sh /path/to/target/location folder1,folder2
