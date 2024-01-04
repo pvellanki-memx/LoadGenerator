@@ -18,7 +18,10 @@ pvellanki@qa2434:~$ cat connectdh.py
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning, module="deephaven.*")
 import deephaven.TableTools as tt
+import numpy as np
 
+
+np.object = object
 # Set Deephaven server address and port
 deephaven_server = deephaven.options.ewr2.memx.tech
 deephaven_port = 8123
