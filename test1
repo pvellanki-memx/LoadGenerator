@@ -1,63 +1,34 @@
-#!/bin/bash
+pvellanki@qa2434:~$ python3 connectdh.py 
+Traceback (most recent call last):
+  File "/home/pvellanki/connectdh.py", line 3, in <module>
+    import deephaven.TableTools as tt
+  File "/usr/local/lib/python3.10/dist-packages/deephaven/__init__.py", line 105, in <module>
+    from .DeephavenDb import DeephavenDb
+  File "/usr/local/lib/python3.10/dist-packages/deephaven/DeephavenDb.py", line 14, in <module>
+    from .java_to_python import tableToDataFrame
+  File "/usr/local/lib/python3.10/dist-packages/deephaven/java_to_python.py", line 27, in <module>
+    'object': numpy.object,
+  File "/home/pvellanki/.local/lib/python3.10/site-packages/numpy/__init__.py", line 313, in __getattr__
+    raise AttributeError(__former_attrs__[attr])
+AttributeError: module 'numpy' has no attribute 'object'.
+`np.object` was a deprecated alias for the builtin `object`. To avoid this error in existing code, use `object` by itself. Doing this will not modify any behavior and is safe. 
+The aliases was originally deprecated in NumPy 1.20; for more details and guidance see the original release note at:
+    https://numpy.org/devdocs/release/1.20.0-notes.html#deprecations. Did you mean: 'object_'?
+pvellanki@qa2434:~$ cat connectdh.py 
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning, module="deephaven.*")
+import deephaven.TableTools as tt
 
-# Check if target location and exclusion list are provided
-if [ $# -lt 2 ]; then
-    echo "Usage: $0 <target_location> <exclusion_list>"
-    exit 1
-fi
+# Set Deephaven server address and port
+deephaven_server = deephaven.options.ewr2.memx.tech
+deephaven_port = 8123
 
-TARGET_LOCATION="$1"
-EXCLUSION_LIST="$2"
+# Connect to Deephaven
+deephaven_connection = tt.connect(deephaven_server, deephaven_port)
 
-# Move to the target location
-cd "$TARGET_LOCATION" || exit 1
+# Assuming you have a table named "Orders," you can query it
+orders_table = tt.readTable(deephaven_connection, "Orders")
+print(tt.head(orders_table))
 
-# Create an array from the comma-separated exclusion list
-IFS=',' read -ra EXCLUDE_ARRAY <<< "$EXCLUSION_LIST"
-
-# Function to check if a folder should be excluded
-should_exclude() {
-    local FOLDER="$1"
-    for EXCLUDE in "${EXCLUDE_ARRAY[@]}"; do
-        if [ "$FOLDER" = "$EXCLUDE" ]; then
-            return 0  # Folder should be excluded
-        fi
-    done
-    return 1  # Folder should not be excluded
-}
-
-# Iterate through each file in the target location
-for FILE in *; do
-    # Check if it is a regular file
-    if [ -f "$FILE" ]; then
-        # Extract the month and year from the file's creation date
-        MONTH=$(date -r "$FILE" +"%m")
-        YEAR_FILE=$(date -r "$FILE" +"%Y")
-
-        # Create the year-month folder if it doesn't exist
-        MONTH_FOLDER="${YEAR_FILE}-${MONTH}"
-        mkdir -p "$MONTH_FOLDER"
-
-        # Move the file to the year-month folder
-        mv "$FILE" "$MONTH_FOLDER/"
-    fi
-done
-
-# Compress each year-month folder, excluding specified folders
-for FOLDER in *-??; do
-    # Check if it is a directory and should not be excluded
-    if [ -d "$FOLDER" ] && should_exclude "$FOLDER"; then
-        # Create a compressed archive
-        tar -czf "${FOLDER}.tar.gz" "$FOLDER"
-    fi
-done
-
-echo "Compression completed."
-
-
-
-
-
-
-
-./compress_by_date.sh /path/to/target/location folder1,folder2
+# Don't forget to close the connection when you're done
+tt.close(deephaven_connection)
