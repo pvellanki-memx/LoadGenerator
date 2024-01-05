@@ -1,1 +1,11 @@
 https://www.theocc.com/getmedia/7be16cf4-f02d-4513-ad9a-ce6a363a3e58/ENCORE_DDS_Guide_Proprietary_Transmissions.pdf
+
+Quantity - Column C
+
+/TrdCaptRpt/RptSide/@Side = Column AL (1=buy, 2= sell)
+
+/TrdCaptRpt/RptSide/Pty/@ID = Column AP (Customer identifier)
+
+/TrdCaptRpt/RptSide/Pty/@R = Column AQ (21 = Clearing Org, 1 = Executing Clearing Firm, 26 = Position Account Type, 38 = Position Account, 14 = Give Up Clearing Firm, 2 = Executing Broker, 24 = Customer Account Number, 18 = Contra Clearing Firm, 38 = Position Account)
+
+Customer Type (C/F/M) Customer Firm Market Maker - Column AR 
