@@ -1,6 +1,17 @@
+def onLogout(self, sessionID):
+    print("Logout initiated -", sessionID.toString())
+    
+    # Log the initiation of Logout
+    log_file_path = self.get_log_file()
+    with open(log_file_path, "a") as log_file:
+        log_file.write("Logout initiated - {}\n".format(sessionID.toString()))
 
-2024-01-08T13:13:31-05:00 gc22008.options.ewr2.memx.tech bash[6776]: 2024/01/08 18:13:31.936113477 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : FixPublisher : Live outbound sequence 42424
-2024-01-08T13:13:31-05:00 gc22008.options.ewr2.memx.tech bash[6776]: 2024/01/08 18:13:31.936145219 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : ClientConsumer : Completed logon: nextExpectedSequence=694
-2024-01-08T13:13:31-05:00 gc22008.options.ewr2.memx.tech bash[6776]: 2024/01/08 18:13:31.936512288 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : FixPublisher : Completed Replay from 42417 to 42426
-2024-01-08T13:13:31-05:00 gc22008.options.ewr2.memx.tech bash[6776]: 2024/01/08 18:13:31.936548796 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : FixPublisher : Live outbound sequence 42425
-2024-01-08T13:13:33-05:00 gc22008.options.ewr2.memx.tech bash[6776]: 2024/01/08 18:13:33.551769854 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : FixConnection : Remote Client shutdown: [local=10.3.128.182:31997,remote=10.3.44.2:50282]
+    # Create a Logout message
+    logout_message = fix.Message()
+    header = logout_message.getHeader()
+    header.setField(fix.MsgType(fix.MsgType_Logout))
+    
+    # You can add more fields to the Logout message as needed
+    
+    # Send the Logout message
+    fix.Session.sendToTarget(logout_message, sessionID)
