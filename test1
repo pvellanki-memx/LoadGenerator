@@ -1,10 +1,20 @@
-https://www.theocc.com/getmedia/7be16cf4-f02d-4513-ad9a-ce6a363a3e58/ENCORE_DDS_Guide_Proprietary_Transmissions.pdf
 
-Quantity - Column C
+dh-infra-bizdev.memxtrading.com
+dh-ingest-bizdev.memxtrading.com
+dh-query-bizdev-1.memxtrading.com
+dh-query-bizdev-2.memxtrading.com
 
-/TrdCaptRpt/RptSide/@Side = Column AL (1=buy, 2= sell)
 
-/TrdCaptRpt/RptSide/Pty/@ID = Column AP (Customer identifier)
+different servers have different purposes
+
+infra - is the controller of cluster
+
+ingest - ingest data
+
+query - where his queries and workers run.
+
+
+
 
 /TrdCaptRpt/RptSide/Pty/@R = Column AQ (21 = Clearing Org, 1 = Executing Clearing Firm, 26 = Position Account Type, 38 = Position Account, 14 = Give Up Clearing Firm, 2 = Executing Broker, 24 = Customer Account Number, 18 = Contra Clearing Firm, 38 = Position Account)
 
