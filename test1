@@ -1,12 +1,10 @@
-def toApp(self, message, sessionID):
-    msg_type = message.getHeader().getField(fix.MsgType()).getString()
-
-    if msg_type == fix.MsgType_Logon:
-        print("Sending Logon Message:", message.toString())
-
-    # Log the message to the specified file
-    log_file_path = self.get_log_file()
-    with open(log_file_path, "a") as log_file:
-        log_file.write(f"Sent FIX Message: {message.toString()}\n")
-
+[pvellanki@sys0412 tools]$ python3 test.py 
+Session created - FIXT.1.1:SMRT03->TEST01
+sent admin message 8=FIXT.1.19=8835=A34=943=Y49=SMRT0352=20240109-14:41:02.71156=TEST011408=1.398=0108=301137=910=123
+Logon Successful - FIXT.1.1:SMRT03->TEST01
+Traceback (most recent call last):
+  File "test.py", line 34, in toApp
     return super().toApp(message, sessionID)
+  File "/usr/local/lib64/python3.6/site-packages/quickfix.py", line 39576, in toApp
+    return _quickfix.Application_toApp(self, arg0, arg1)
+RuntimeError: SWIG director pure virtual method called FIX::Application::toApp
