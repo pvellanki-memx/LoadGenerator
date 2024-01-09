@@ -1,8 +1,12 @@
-[pvellanki@sys0412 tools]$ python3 test.py 
-Session created - FIXT.1.1:SMRT03->TEST01
-sent admin message 8=FIXT.1.19=8835=A34=743=Y49=SMRT0352=20240109-14:36:08.58356=TEST011408=1.398=0108=301137=910=138
-Logon Successful - FIXT.1.1:SMRT03->TEST01
-Traceback (most recent call last):
-  File "test.py", line 26, in toApp
+def toApp(self, message, sessionID):
+    msg_type = message.getHeader().getField(fix.MsgType()).getString()
+
+    if msg_type == fix.MsgType_Logon:
+        print("Sending Logon Message:", message.toString())
+
+    # Log the message to the specified file
+    log_file_path = self.get_log_file()
     with open(log_file_path, "a") as log_file:
-RecursionError: maximum recursion depth exceeded
+        log_file.write(f"Sent FIX Message: {message.toString()}\n")
+
+    return super().toApp(message, sessionID)
