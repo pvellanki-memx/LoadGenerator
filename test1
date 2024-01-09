@@ -68,3 +68,25 @@ app.connection_config_file = "acceptor.cfg"
 
 # Run the FIX application
 app.run()
+
+
+
+
+
+
+2024-01-09T09:09:27-05:00 gc22008.options.ewr2.memx.tech bash[2458717]: 2024/01/09 14:09:27.498068102 UTC gc22008 [DEBUG] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : FixPublisher : Publishing Logon: HeartbeatIntervalSeconds=30
+2024-01-09T09:09:27-05:00 gc22008.options.ewr2.memx.tech bash[2458717]: 2024/01/09 14:09:27.498098824 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : ClientConsumer : Completed logon: nextExpectedSequence=6
+2024-01-09T09:09:27-05:00 gc22008.options.ewr2.memx.tech bash[2458717]: 2024/01/09 14:09:27.498100486 UTC gc22008 [DEBUG] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : ClientConsumer : Changing State from Received Logon to Logged In
+2024-01-09T09:09:27-05:00 gc22008.options.ewr2.memx.tech bash[2458717]: 2024/01/09 14:09:27.498104876 UTC gc22008 [DEBUG] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : EventServer : Changing State from Connected to Logged In
+2024-01-09T09:09:28-05:00 gc22008.options.ewr2.memx.tech bash[2458717]: 2024/01/09 14:09:28.362013968 UTC gc22008 [DEBUG] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : FixPublisher : Publishing Heartbeat
+2024-01-09T09:09:29-05:00 gc22008.options.ewr2.memx.tech bash[2458717]: 2024/01/09 14:09:29.362325266 UTC gc22008 [DEBUG] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : ClientConsumer : Changing State from Logged In to Received Logout
+2024-01-09T09:09:29-05:00 gc22008.options.ewr2.memx.tech bash[2458717]: 2024/01/09 14:09:29.362381504 UTC gc22008 [DEBUG] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : FixPublisher : Publishing Logout: Text=Client initiated logout
+2024-01-09T09:09:29-05:00 gc22008.options.ewr2.memx.tech bash[2458717]: 2024/01/09 14:09:29.362398709 UTC gc22008 [DEBUG] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : EventServer : Changing State from Logged In to Awaiting Disconnect
+2024-01-09T09:09:29-05:00 gc22008.options.ewr2.memx.tech bash[2458717]: 2024/01/09 14:09:29.362518486 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : FixConnection : Remote Client shutdown: [local=10.3.128.182:31997,remote=10.3.44.2:54550]
+2024-01-09T09:09:29-05:00 gc22008.options.ewr2.memx.tech bash[2458717]: 2024/01/09 14:09:29.362677379 UTC gc22008 [DEBUG] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : EventServer : Changing State from Awaiting Disconnect to Disconnecting
+2024-01-09T09:09:29-05:00 gc22008.options.ewr2.memx.tech bash[2458717]: 2024/01/09 14:09:29.362687027 UTC gc22008 [DEBUG] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : FixPublisher : Changing State from Live to Disconnecting
+2024-01-09T09:09:29-05:00 gc22008.options.ewr2.memx.tech bash[2458717]: 2024/01/09 14:09:29.362693238 UTC gc22008 [DEBUG] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : ClientConsumer : Changing State from Received Logout to Disconnecting
+2024-01-09T09:09:29-05:00 gc22008.options.ewr2.memx.tech bash[2458717]: 2024/01/09 14:09:29.362722693 UTC gc22008 [DEBUG] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : EventServer : Changing State from Disconnecting to Disconnected
+2024-01-09T09:09:29-05:00 gc22008.options.ewr2.memx.tech bash[2458717]: 2024/01/09 14:09:29.362728300 UTC gc22008 [DEBUG] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : FixPublisher : Changing State from Disconnecting to Disconnected
+2024-01-09T09:09:29-05:00 gc22008.options.ewr2.memx.tech bash[2458717]: 2024/01/09 14:09:29.362730884 UTC gc22008 [DEBUG] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : FixPublisher : Disconnected
+2024-01-09T09:09:29-05:00 gc22008.options.ewr2.memx.tech bash[2458717]: 2024/01/09 14:09:29.362732965 UTC gc22008 [DEBUG] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : ClientConsumer : Changing State from Disconnecting to Disconnected
