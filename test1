@@ -1,1 +1,4 @@
 T = db.t("ORSA", "TradeSummary").where();
+
+T = db.t("ORSA", "TradeSummary").where().and("column1 > 100").and("column2 == 'ABC'");
+
