@@ -1,17 +1,1 @@
-#!/bin/bash
-
-# Define the output directory
-output_dir_db="/data/orsa-intermediate/"
-
-# Get the current date in the desired format (assuming YYYYMMDD)
-current_date=$(date +"%Y%m%d")
-
-# Construct the source and destination paths
-source_path="path/to/your/date.db"  # Replace with the actual path to your date.db file
-destination_path="${output_dir_db}${current_date}.db"
-
-# Move the date.db file to the output directory
-mv "$source_path" "$destination_path"
-
-# Print a message indicating the successful move
-echo "Moved date.db to $destination_path"
+T = db.t("ORSA", "TradeSummary").where();
