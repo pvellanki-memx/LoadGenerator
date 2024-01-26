@@ -1,5 +1,611 @@
+dcs:
+- name: ewr2
+  primary: true
 
-echo "Scripts executed successfully."
+networks:
+- name: adm
+- name: mint
+- name: mext
+  external: true
+machines:
+  gc22001.options.ewr2.memx.tech:
+    cores: 30
+    dc: ewr2
+    roles:
+    - drop
+    - risk
+    - sbe
+    - fix
+    - penguin
+    interfaces:
+      adm:
+        ip: 10.3.0.2
+        network: adm
+      mint:
+        ip: 10.3.16.2
+        network: mint
+      mext:
+        ip: 10.3.12.2
+        network: mext
+    mounts:
+      - type: ssd
+        path: /
+        capacity: 480GB
+    memory: 384GB
+    numa:
+      0: 1..16
+      1: 17..32
+  gc22002.options.ewr2.memx.tech:
+    cores: 30
+    dc: ewr2
+    roles:
+    - placeholder
+    - penguin
+    interfaces:
+      adm:
+        ip: 10.3.0.3
+        network: adm
+      mint:
+        ip: 10.3.16.3
+        network: mint
+      mext:
+        ip: 10.3.12.3
+        network: mext
+    mounts:
+      - type: ssd
+        path: /
+        capacity: 480GB
+    memory: 384GB
+    numa:
+      0: 1..16
+      1: 17..32
+  gc22003.options.ewr2.memx.tech:
+    cores: 30
+    dc: ewr2
+    roles:
+    - placeholder
+    - penguin
+    interfaces:
+      adm:
+        ip: 10.3.0.4
+        network: adm
+      mint:
+        ip: 10.3.16.4
+        network: mint
+      mext:
+        ip: 10.3.12.4
+        network: mext
+    mounts:
+      - type: ssd
+        path: /
+        capacity: 480GB
+    memory: 384GB
+    numa:
+      0: 1..16
+      1: 17..32        
+  gc22004.options.ewr2.memx.tech:
+    cores: 30
+    dc: ewr2
+    roles:
+    - placeholder
+    - penguin
+    interfaces:
+      adm:
+        ip: 10.3.0.5
+        network: adm
+      mint:
+        ip: 10.3.16.5
+        network: mint
+      mext:
+        ip: 10.3.12.5
+        network: mext
+    mounts:
+      - type: ssd
+        path: /
+        capacity: 480GB
+    memory: 384GB
+    numa:
+      0: 1..16
+      1: 17..32        
+  gc22005.options.ewr2.memx.tech:
+    cores: 30
+    dc: ewr2
+    roles:
+    - drop
+    - risk
+    - sbe
+    - fix
+    - penguin
+    interfaces:
+      adm:
+        ip: 10.3.0.6
+        network: adm
+      mint:
+        ip: 10.3.16.6
+        network: mint
+      mext:
+        ip: 10.3.12.6
+        network: mext
+    mounts:
+      - type: ssd
+        path: /
+        capacity: 480GB
+    memory: 384GB
+    numa:
+      0: 1..16
+      1: 17..32        
+  gc22006.options.ewr2.memx.tech:
+    cores: 30
+    dc: ewr2
+    roles:
+    - placeholder
+    - penguin
+    interfaces:
+      adm:
+        ip: 10.3.0.7
+        network: adm
+      mint:
+        ip: 10.3.16.7
+        network: mint
+      mext:
+        ip: 10.3.12.7
+        network: mext
+    mounts:
+      - type: ssd
+        path: /
+        capacity: 480GB
+    memory: 384GB
+    numa:
+      0: 1..16
+      1: 17..32        
+  gc22008.options.ewr2.memx.tech:
+    cores: 30
+    dc: ewr2
+    roles:
+    - placeholder
+    - penguin
+    interfaces:
+      adm:
+        ip: 10.3.0.8
+        network: adm
+      mint:
+        ip: 10.3.16.8
+        network: mint
+      mext:
+        ip: 10.3.12.8
+        network: mext
+    mounts:
+      - type: ssd
+        path: /
+        capacity: 480GB
+    memory: 384GB
+    numa:
+      0: 1..16
+      1: 17..32
+  gc22051.options.ewr2.memx.tech:
+    cores: 30
+    dc: ewr2
+    roles:
+    - placeholder
+    - penguin
+    interfaces:
+      adm:
+        ip: 10.3.0.1
+        network: adm
+      mint:
+        ip: 10.3.16.1
+        network: mint
+      mext:
+        ip: 10.3.12.1
+        network: mext
+    mounts:
+      - type: ssd
+        path: /
+        capacity: 480GB
+    memory: 384GB
+    numa:
+      0: 1..16
+      1: 17..32
+  gc22052.options.ewr2.memx.tech:
+    cores: 30
+    dc: ewr2
+    roles:
+    - placeholder
+    - penguin
+    interfaces:
+      adm:
+        ip: 10.3.0.52
+        network: adm
+      mint:
+        ip: 10.3.16.52
+        network: mint
+      mext:
+        ip: 10.3.12.52
+        network: mext
+    mounts:
+      - type: ssd
+        path: /
+        capacity: 480GB
+    memory: 384GB
+    numa:
+      0: 1..16
+      1: 17..32
+  gc22061.options.ewr2.memx.tech:
+    cores: 30
+    dc: ewr2
+    roles:
+    - placeholder
+    - penguin
+    interfaces:
+      adm:
+        ip: 10.3.0.61
+        network: adm
+      mint:
+        ip: 10.3.16.61
+        network: mint
+      mext:
+        ip: 10.3.12.61
+        network: mext
+    mounts:
+      - type: ssd
+        path: /
+        capacity: 480GB
+    memory: 384GB
+    numa:
+      0: 1..16
+      1: 17..32        
+  collector01.options.ewr2.memx.tech:
+    cores: 4
+    dc: ewr2
+    roles:
+    - status collector
+    memory: 8GB
+    interfaces:
+      ens18:
+        ip: 10.3.20.5
+        network: adm
+  gc22055.mmdsop.ewr2.memx.tech:
+    cores: 30
+    dc: ewr2
+    roles:
+    - mmds
+    interfaces:
+      adm:
+        ip: 10.3.40.55
+        network: adm
+      mext:
+        ip: 10.3.48.55
+        network: mext
+      mint:
+        ip: 10.3.36.55
+        network: mint
+  gc22046.mmdsop.ewr2.memx.tech:
+    cores: 30
+    dc: ewr2
+    roles:
+    - mmds
+    interfaces:
+      adm:
+        ip: 10.3.40.46
+        network: adm
+      mext:
+        ip: 10.3.48.46
+        network: mext
+      mint:
+        ip: 10.3.36.46
+        network: mint
 
-mv *"$mm_dd.csv" "$output_dir/"
+
+
+
+
+
+There is a folder called binding which has list of hosts as folders, in side this filder, there are bindings.mml file.
+
+bindings:
+  gc22001.options.ewr2.memx.tech:
+    system: us_options_ewr2
+    cores:
+      cpu_01:
+        type: stream_reader
+        name: stream_reader_oe_01
+        stream: oe_01
+        via: multicast
+        outputs: shmem
+      cpu_02:
+        type: t1_republisher
+        name: CNC_T1_REPUBLISHER
+        stream: cnc
+      cpu_03:
+        type: t2_republisher_persistent
+        name: CNC_T2_REPUBLISHER_PERSISTENT
+        stream: cnc
+      cpu_04:
+        type: t2_republisher_ephemeral
+        name: CNC_T2_REPUBLISHER_EPHEMERAL
+        stream: cnc
+      cpu_05:
+        type: stream_reader
+        name: stream_reader_cnc
+        stream: cnc
+        via: multicast
+        outputs: shmem
+      cpu_06:
+        type: t1_republisher
+        name: OE_01_T1_REPUBLISHER
+        stream: oe_01
+      cpu_07:
+        type: t2_republisher_persistent
+        name: OE_01_T2_REPUBLISHER_PERSISTENT
+        stream: oe_01
+      cpu_08:
+        type: t2_republisher_ephemeral
+        name: OE_01_T2_REPUBLISHER_EPHEMERAL
+        stream: oe_01
+      cpu_09:
+        name: options_drop_cnc_ewr2_01
+        type: options_actors
+        stream: cnc
+        actors:
+        - name: DROP_CLEARING_AMROOTC1
+        - name: DROP_CLEARING_BO551TS1
+        - name: DROP_EXECUTIONS_JANETD10
+        - name: DROP_EXECUTIONS_OPTITD01
+        env:
+          add_remove_template: 'True'
+      cpu_10:
+        name: options_drop_cnc_ewr2_02
+        type: options_actors
+        stream: cnc
+        actors:
+        - name: DROP_CLEARING_AMROTD30
+        - name: DROP_EXECUTIONS_CITATD10
+        - name: DROP_EXECUTIONS_JPMMTD10
+        - name: DROP_EXECUTIONS_MORGTD10
+        - name: DROP_EXECUTIONS_OPTITD02
+        env:
+          add_remove_template: 'True'
+      cpu_11:
+        name: options_drop_cnc_ewr2_03
+        type: options_actors
+        stream: cnc
+        actors:
+        - name: DROP_CLEARING_AMROTD40
+        - name: DROP_EXECUTIONS_GROUD001
+        - name: DROP_EXECUTIONS_JSOFTD10
+        - name: DROP_EXECUTIONS_SIGMODD1
+        env:
+          add_remove_template: 'True'
+      cpu_12:
+        name: options_drop_cnc_ewr2_04
+        type: options_actors
+        stream: cnc
+        actors:
+        - name: DROP_CLEARING_AMROTD50
+        - name: DROP_EXECUTIONS_GROUD002
+        - name: DROP_EXECUTIONS_VIRTTD10
+        - name: DROP_CLEARING_AMROTD60
+        - name: DROP_EXECUTIONS_GSCOOTD1
+        env:
+          add_remove_template: 'True'
+      cpu_14:
+        name: options_fix_oe_01_ewr2_01
+        type: options_actors
+        stream: oe_01
+        actors:
+        - name: FIX_BOFAODE1
+        - name: FIX_CDRGTE01
+        - name: FIX_CSFBTE02
+        - name: FIX_DASHTE13
+        - name: FIX_GROUT001
+        - name: FIX_IBKRTE02
+        - name: FIX_INSTTE21
+        - name: FIX_JSOFTE10
+        - name: FIX_RQDCT001
+        env:
+          add_remove_template: 'True'
+      cpu_15:
+        name: options_fix_oe_01_ewr2_02
+        type: options_actors
+        stream: oe_01
+        actors:
+        - name: FIX_BOFAODE2
+        - name: FIX_CDRGTE02
+        - name: FIX_DASHTE10
+        - name: FIX_DASHTE14
+        - name: FIX_GROUT002
+        - name: FIX_INSTTE01
+        - name: FIX_JEFFTE10
+        - name: FIX_MATRTE10
+        - name: FIX_WEXXTE10
+        env:
+          add_remove_template: 'True'
+      cpu_16:
+        name: options_fix_oe_01_ewr2_03
+        type: options_actors
+        stream: oe_01
+        actors:
+        - name: FIX_BOFAODE3
+        - name: FIX_CSFBTE01
+        - name: FIX_DASHTE11
+        - name: FIX_GEBRTE01
+        - name: FIX_IBKRTE01
+        - name: FIX_INSTTE20
+        - name: FIX_JPMMXE10
+        - name: FIX_MATRTE11
+        env:
+          add_remove_template: 'True'
+      cpu_17:
+        name: options_risk_oe_01_ewr2_01
+        type: options_actors
+        stream: oe_01
+        actors:
+        - name: RISK_CITARDE1
+        - name: RISK_IMCCTR11
+        - name: RISK_IMCCTR14
+        - name: RISK_IMCCTR17
+        - name: RISK_OPTITR01
+        - name: RISK_OPTITR04
+        - name: RISK_SUSQRXE3
+        - name: RISK_WOTDMRX5
+        env:
+          add_remove_template: 'True'
+      cpu_18:
+        type: options_actors
+        stream: oe_01
+        name: primary_required_oe_01_actors
+        actors:
+        - name: RISK_OE_01
+        - name: COD_ACTOR_01
+        - name: MASS_CANCEL_OE_01
+      cpu_19:
+        type: options_actors
+        stream: oe_01
+        name: oe_01_forwarders
+        actors:
+        - name: FORWARDER_FROM_OE01_TO_MATCH
+        - name: FORWARDER_FROM_OE01_TO_CNC
+      cpu_20:
+        type: options_actors
+        stream: cnc
+        name: backup_options_spinner
+        actors:
+        - name: ACCOUNT_SPINNER
+        - name: EFID_SPINNER
+        - name: FIRM_SPINNER
+        - name: INSTRUMENT_SPINNER
+        - name: SCHEDULED_EVENT_SPINNER
+        - name: EQUITY_INSTRUMENT_SPINNER
+        - name: CLASS_APPOINTMENT_SPINNER
+        - name: OPTION_ROOT_SPINNER
+        - name: ACTIVE_RISK_SPINNER
+        - name: PASSIVE_RISK_SPINNER
+        - name: PRICE_CONTROLS_SPINNER
+        - name: CLEARING_RECORD_SPINNER
+      cpu_21:
+        name: options_risk_oe_01_ewr2_02
+        type: options_actors
+        stream: oe_01
+        actors:
+        - name: RISK_CITARDE2
+        - name: RISK_IMCCTR12
+        - name: RISK_IMCCTR15
+        - name: RISK_IMCCTR18
+        - name: RISK_OPTITR02
+        - name: RISK_SUSQRXE1
+        - name: RISK_VIRTTR10
+        env:
+          add_remove_template: 'True'
+      cpu_22:
+        name: options_risk_oe_01_ewr2_03
+        type: options_actors
+        stream: oe_01
+        actors:
+        - name: RISK_IMCCTR10
+        - name: RISK_IMCCTR13
+        - name: RISK_IMCCTR16
+        - name: RISK_JANETR10
+        - name: RISK_OPTITR03
+        - name: RISK_SUSQRXE2
+        - name: RISK_WOTDMRX1
+        env:
+          add_remove_template: 'True'
+      cpu_23:
+        type: stream_file_writer
+        name: options_file_writer_oe_01
+        stream: oe_01
+      cpu_24:
+        type: options_actors
+        stream: oe_01
+        name: options_oe_01_dhlogger
+        version: memx-core@93.12
+        actors:
+        - name: PORT_REQUESTS_01_LOGGER
+        - name: PASSIVE_RISK_01_LOGGER
+        - name: ACTIVE_RISK_01_LOGGER
+        - name: ACTIVE_RISK_STATE_01_LOGGER
+      cpu_25:
+        type: options_actors
+        stream: cnc
+        name: backup_clearing_post_trade
+        actors:
+        - name: CLEARING_ENGINE
+        - name: OCC_GATEWAY
+        - name: OCC_FILE
+        - name: POST_TRADE_ENGINE
+      cpu_26:
+        name: options_sbe_oe_01_ewr2_02
+        type: options_actors
+        stream: oe_01
+        actors:
+        - name: SBE_CITAODE2
+        - name: SBE_IMCCTE10
+        - name: SBE_IMCCTE14
+        - name: SBE_IMCCTE18
+        - name: SBE_OPTITE01
+        - name: SBE_OPTITE05
+        - name: SBE_SIGMODE1
+        - name: SBE_SIGMODE5
+        - name: SBE_SIMPTE11
+        - name: SBE_WOTMODE1
+        env:
+          add_remove_template: 'True'
+      cpu_27:
+        name: options_sbe_oe_01_ewr2_01
+        type: options_actors
+        stream: oe_01
+        actors:
+        - name: SBE_CITAODE1
+        - name: SBE_HRTFT001
+        - name: SBE_IMCCTE13
+        - name: SBE_IMCCTE17
+        - name: SBE_MSCOMXT2
+        - name: SBE_OPTITE04
+        - name: SBE_OPTITE08
+        - name: SBE_SIGMODE4
+        - name: SBE_SIMPTE10
+        - name: SBE_VIRTTE11
+        env:
+          add_remove_template: 'True'
+      cpu_28:
+        name: options_influx_oe_01
+        type: options_actors
+        stream: oe_01
+        actors:
+        - name: INFLUX_WRITER_OE_01
+      cpu_29:
+        name: options_sbe_oe_01_ewr2_03
+        type: options_actors
+        stream: oe_01
+        actors:
+        - name: SBE_GSCOOTT1
+        - name: SBE_IMCCTE11
+        - name: SBE_IMCCTE15
+        - name: SBE_JANETE10
+        - name: SBE_OPTITE02
+        - name: SBE_OPTITE06
+        - name: SBE_SIGMODE2
+        - name: SBE_SIGMODE6
+        - name: SBE_SUSQOTT1
+        - name: SBE_WOTMODE2
+        env:
+          add_remove_template: 'True'
+      cpu_30:
+        name: options_sbe_oe_01_ewr2_04
+        type: options_actors
+        stream: oe_01
+        actors:
+        - name: SBE_GSCOOTT2
+        - name: SBE_IMCCTE12
+        - name: SBE_IMCCTE16
+        - name: SBE_MSCOMXT1
+        - name: SBE_OPTITE03
+        - name: SBE_OPTITE07
+        - name: SBE_SIGMODE3
+        - name: SBE_SIGMODE7
+        - name: SBE_VIRTTE10
+        env:
+          add_remove_template: 'True'
+
+
 
