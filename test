@@ -1,3 +1,5 @@
+inventory.mml
+
 dcs:
 - name: ewr2
   primary: true
