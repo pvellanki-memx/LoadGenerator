@@ -1,613 +1,239 @@
-inventory.mml
+index.html
 
-dcs:
-- name: ewr2
-  primary: true
+<!DOCTYPE html>
+<html lang="en">
 
-networks:
-- name: adm
-- name: mint
-- name: mext
-  external: true
-machines:
-  gc22001.options.ewr2.memx.tech:
-    cores: 30
-    dc: ewr2
-    roles:
-    - drop
-    - risk
-    - sbe
-    - fix
-    - penguin
-    interfaces:
-      adm:
-        ip: 10.3.0.2
-        network: adm
-      mint:
-        ip: 10.3.16.2
-        network: mint
-      mext:
-        ip: 10.3.12.2
-        network: mext
-    mounts:
-      - type: ssd
-        path: /
-        capacity: 480GB
-    memory: 384GB
-    numa:
-      0: 1..16
-      1: 17..32
-  gc22002.options.ewr2.memx.tech:
-    cores: 30
-    dc: ewr2
-    roles:
-    - placeholder
-    - penguin
-    interfaces:
-      adm:
-        ip: 10.3.0.3
-        network: adm
-      mint:
-        ip: 10.3.16.3
-        network: mint
-      mext:
-        ip: 10.3.12.3
-        network: mext
-    mounts:
-      - type: ssd
-        path: /
-        capacity: 480GB
-    memory: 384GB
-    numa:
-      0: 1..16
-      1: 17..32
-  gc22003.options.ewr2.memx.tech:
-    cores: 30
-    dc: ewr2
-    roles:
-    - placeholder
-    - penguin
-    interfaces:
-      adm:
-        ip: 10.3.0.4
-        network: adm
-      mint:
-        ip: 10.3.16.4
-        network: mint
-      mext:
-        ip: 10.3.12.4
-        network: mext
-    mounts:
-      - type: ssd
-        path: /
-        capacity: 480GB
-    memory: 384GB
-    numa:
-      0: 1..16
-      1: 17..32        
-  gc22004.options.ewr2.memx.tech:
-    cores: 30
-    dc: ewr2
-    roles:
-    - placeholder
-    - penguin
-    interfaces:
-      adm:
-        ip: 10.3.0.5
-        network: adm
-      mint:
-        ip: 10.3.16.5
-        network: mint
-      mext:
-        ip: 10.3.12.5
-        network: mext
-    mounts:
-      - type: ssd
-        path: /
-        capacity: 480GB
-    memory: 384GB
-    numa:
-      0: 1..16
-      1: 17..32        
-  gc22005.options.ewr2.memx.tech:
-    cores: 30
-    dc: ewr2
-    roles:
-    - drop
-    - risk
-    - sbe
-    - fix
-    - penguin
-    interfaces:
-      adm:
-        ip: 10.3.0.6
-        network: adm
-      mint:
-        ip: 10.3.16.6
-        network: mint
-      mext:
-        ip: 10.3.12.6
-        network: mext
-    mounts:
-      - type: ssd
-        path: /
-        capacity: 480GB
-    memory: 384GB
-    numa:
-      0: 1..16
-      1: 17..32        
-  gc22006.options.ewr2.memx.tech:
-    cores: 30
-    dc: ewr2
-    roles:
-    - placeholder
-    - penguin
-    interfaces:
-      adm:
-        ip: 10.3.0.7
-        network: adm
-      mint:
-        ip: 10.3.16.7
-        network: mint
-      mext:
-        ip: 10.3.12.7
-        network: mext
-    mounts:
-      - type: ssd
-        path: /
-        capacity: 480GB
-    memory: 384GB
-    numa:
-      0: 1..16
-      1: 17..32        
-  gc22008.options.ewr2.memx.tech:
-    cores: 30
-    dc: ewr2
-    roles:
-    - placeholder
-    - penguin
-    interfaces:
-      adm:
-        ip: 10.3.0.8
-        network: adm
-      mint:
-        ip: 10.3.16.8
-        network: mint
-      mext:
-        ip: 10.3.12.8
-        network: mext
-    mounts:
-      - type: ssd
-        path: /
-        capacity: 480GB
-    memory: 384GB
-    numa:
-      0: 1..16
-      1: 17..32
-  gc22051.options.ewr2.memx.tech:
-    cores: 30
-    dc: ewr2
-    roles:
-    - placeholder
-    - penguin
-    interfaces:
-      adm:
-        ip: 10.3.0.1
-        network: adm
-      mint:
-        ip: 10.3.16.1
-        network: mint
-      mext:
-        ip: 10.3.12.1
-        network: mext
-    mounts:
-      - type: ssd
-        path: /
-        capacity: 480GB
-    memory: 384GB
-    numa:
-      0: 1..16
-      1: 17..32
-  gc22052.options.ewr2.memx.tech:
-    cores: 30
-    dc: ewr2
-    roles:
-    - placeholder
-    - penguin
-    interfaces:
-      adm:
-        ip: 10.3.0.52
-        network: adm
-      mint:
-        ip: 10.3.16.52
-        network: mint
-      mext:
-        ip: 10.3.12.52
-        network: mext
-    mounts:
-      - type: ssd
-        path: /
-        capacity: 480GB
-    memory: 384GB
-    numa:
-      0: 1..16
-      1: 17..32
-  gc22061.options.ewr2.memx.tech:
-    cores: 30
-    dc: ewr2
-    roles:
-    - placeholder
-    - penguin
-    interfaces:
-      adm:
-        ip: 10.3.0.61
-        network: adm
-      mint:
-        ip: 10.3.16.61
-        network: mint
-      mext:
-        ip: 10.3.12.61
-        network: mext
-    mounts:
-      - type: ssd
-        path: /
-        capacity: 480GB
-    memory: 384GB
-    numa:
-      0: 1..16
-      1: 17..32        
-  collector01.options.ewr2.memx.tech:
-    cores: 4
-    dc: ewr2
-    roles:
-    - status collector
-    memory: 8GB
-    interfaces:
-      ens18:
-        ip: 10.3.20.5
-        network: adm
-  gc22055.mmdsop.ewr2.memx.tech:
-    cores: 30
-    dc: ewr2
-    roles:
-    - mmds
-    interfaces:
-      adm:
-        ip: 10.3.40.55
-        network: adm
-      mext:
-        ip: 10.3.48.55
-        network: mext
-      mint:
-        ip: 10.3.36.55
-        network: mint
-  gc22046.mmdsop.ewr2.memx.tech:
-    cores: 30
-    dc: ewr2
-    roles:
-    - mmds
-    interfaces:
-      adm:
-        ip: 10.3.40.46
-        network: adm
-      mext:
-        ip: 10.3.48.46
-        network: mext
-      mint:
-        ip: 10.3.36.46
-        network: mint
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Center Inventory</title>
+    <style>
+        body {
+            background-color: #001f3f; /* dark blue */
+            color: #fff; /* white */
+            font-family: Arial, sans-serif;
+        }
+
+        h1, h2, strong {
+            color: #fff; /* white */
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            color: #fff; /* white */
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #fff; /* white */
+        }
+
+        th {
+            background-color: #003366; /* darker blue */
+        }
+
+        td {
+            background-color: #004080; /* dark blue */
+        }
+
+        button {
+            background-color: #0066cc; /* blue */
+            color: #fff; /* white */
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #004080; /* darker blue on hover */
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Data Center Inventory</h1>
+
+    {% for data_center in inventory %}
+    <h2>{{ data_center['name'] }}</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Host</th>
+                <th>Cores</th>
+                <th>Memory</th>
+                <th>Networks</th>
+                <th>CPUs</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for host in data_center['hosts'] %}
+            <tr>
+                <td>
+                    <strong>{{ host['name'] }}</strong>
+                    <button data-target="{{ host['name'] }}" onclick="toggleDetails('{{ host['name'] }}')">+</button>
+                    <div id="{{ host['name'] }}_details" style="display: none;">
+                        {% if host['cpus'] %}
+                        <h4>CPUs</h4>
+                        <ul>
+                            {% for cpu, details in host['cpus'].items() %}
+                            <li>
+                                <strong>{{ cpu }}</strong>
+                                <button data-target="{{ host['name'] }}_{{ cpu }}" onclick="toggleDetails('{{ host['name'] }}_{{ cpu }}')">+</button>
+                                <div id="{{ host['name'] }}_{{ cpu }}_details" style="display: none; margin-left: 20px;">
+                                    <p>Type: {{ details['type'] }}</p>
+                                    <p>Name: {{ details['name'] }}</p>
+                                    <p>Stream: {{ details['stream'] }}</p>
+                                    <p>Via: {{ details['via'] }}</p>
+                                    <p>Outputs: {{ details['outputs'] }}</p>
+
+                                    <!-- New Section to Display Actors -->
+                                    {% if 'actors' in details %}
+                                        <h5>Actors</h5>
+                                        <ul>
+                                            {% for actor in details['actors'] %}
+                                                <li>{{ actor['name'] }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% endif %}
+                                    <!-- End of New Section -->
+
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                </td>
+                <td>{{ host['cores'] }}</td>
+                <td>{{ host['memory'] }}</td>
+                <td>
+                    <ul>
+                        {% for network, ip in host['networks'].items() %}
+                        <li>{{ network }}: {{ ip }}</li>
+                        {% endfor %}
+                    </ul>
+                </td>
+                <td>{{ host['cpus']|length if host['cpus'] else 'N/A' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% endfor %}
+
+    <script>
+        function toggleDetails(elementId) {
+            var detailsElement = document.getElementById(elementId + "_details");
+            var buttonElement = document.querySelector('button[data-target="' + elementId + '"]');
+
+            if (detailsElement.style.display === "none") {
+                detailsElement.style.display = "block";
+                buttonElement.textContent = "-";
+            } else {
+                detailsElement.style.display = "none";
+                buttonElement.textContent = "+";
+            }
+        }
+    </script>
+</body>
+
+</html>
 
 
 
+yamlui.py
+from flask import Flask, render_template
+from flask_socketio import SocketIO, emit
+import yaml
+import os
+
+app = Flask(__name__)
+socketio = SocketIO(app)
 
 
 
-There is a folder called binding which has list of hosts as folders, in side this filder, there are bindings.mml file.
+def load_inventory_data():
+    data_centers = []
 
-bindings:
-  gc22001.options.ewr2.memx.tech:
-    system: us_options_ewr2
-    cores:
-      cpu_01:
-        type: stream_reader
-        name: stream_reader_oe_01
-        stream: oe_01
-        via: multicast
-        outputs: shmem
-      cpu_02:
-        type: t1_republisher
-        name: CNC_T1_REPUBLISHER
-        stream: cnc
-      cpu_03:
-        type: t2_republisher_persistent
-        name: CNC_T2_REPUBLISHER_PERSISTENT
-        stream: cnc
-      cpu_04:
-        type: t2_republisher_ephemeral
-        name: CNC_T2_REPUBLISHER_EPHEMERAL
-        stream: cnc
-      cpu_05:
-        type: stream_reader
-        name: stream_reader_cnc
-        stream: cnc
-        via: multicast
-        outputs: shmem
-      cpu_06:
-        type: t1_republisher
-        name: OE_01_T1_REPUBLISHER
-        stream: oe_01
-      cpu_07:
-        type: t2_republisher_persistent
-        name: OE_01_T2_REPUBLISHER_PERSISTENT
-        stream: oe_01
-      cpu_08:
-        type: t2_republisher_ephemeral
-        name: OE_01_T2_REPUBLISHER_EPHEMERAL
-        stream: oe_01
-      cpu_09:
-        name: options_drop_cnc_ewr2_01
-        type: options_actors
-        stream: cnc
-        actors:
-        - name: DROP_CLEARING_AMROOTC1
-        - name: DROP_CLEARING_BO551TS1
-        - name: DROP_EXECUTIONS_JANETD10
-        - name: DROP_EXECUTIONS_OPTITD01
-        env:
-          add_remove_template: 'True'
-      cpu_10:
-        name: options_drop_cnc_ewr2_02
-        type: options_actors
-        stream: cnc
-        actors:
-        - name: DROP_CLEARING_AMROTD30
-        - name: DROP_EXECUTIONS_CITATD10
-        - name: DROP_EXECUTIONS_JPMMTD10
-        - name: DROP_EXECUTIONS_MORGTD10
-        - name: DROP_EXECUTIONS_OPTITD02
-        env:
-          add_remove_template: 'True'
-      cpu_11:
-        name: options_drop_cnc_ewr2_03
-        type: options_actors
-        stream: cnc
-        actors:
-        - name: DROP_CLEARING_AMROTD40
-        - name: DROP_EXECUTIONS_GROUD001
-        - name: DROP_EXECUTIONS_JSOFTD10
-        - name: DROP_EXECUTIONS_SIGMODD1
-        env:
-          add_remove_template: 'True'
-      cpu_12:
-        name: options_drop_cnc_ewr2_04
-        type: options_actors
-        stream: cnc
-        actors:
-        - name: DROP_CLEARING_AMROTD50
-        - name: DROP_EXECUTIONS_GROUD002
-        - name: DROP_EXECUTIONS_VIRTTD10
-        - name: DROP_CLEARING_AMROTD60
-        - name: DROP_EXECUTIONS_GSCOOTD1
-        env:
-          add_remove_template: 'True'
-      cpu_14:
-        name: options_fix_oe_01_ewr2_01
-        type: options_actors
-        stream: oe_01
-        actors:
-        - name: FIX_BOFAODE1
-        - name: FIX_CDRGTE01
-        - name: FIX_CSFBTE02
-        - name: FIX_DASHTE13
-        - name: FIX_GROUT001
-        - name: FIX_IBKRTE02
-        - name: FIX_INSTTE21
-        - name: FIX_JSOFTE10
-        - name: FIX_RQDCT001
-        env:
-          add_remove_template: 'True'
-      cpu_15:
-        name: options_fix_oe_01_ewr2_02
-        type: options_actors
-        stream: oe_01
-        actors:
-        - name: FIX_BOFAODE2
-        - name: FIX_CDRGTE02
-        - name: FIX_DASHTE10
-        - name: FIX_DASHTE14
-        - name: FIX_GROUT002
-        - name: FIX_INSTTE01
-        - name: FIX_JEFFTE10
-        - name: FIX_MATRTE10
-        - name: FIX_WEXXTE10
-        env:
-          add_remove_template: 'True'
-      cpu_16:
-        name: options_fix_oe_01_ewr2_03
-        type: options_actors
-        stream: oe_01
-        actors:
-        - name: FIX_BOFAODE3
-        - name: FIX_CSFBTE01
-        - name: FIX_DASHTE11
-        - name: FIX_GEBRTE01
-        - name: FIX_IBKRTE01
-        - name: FIX_INSTTE20
-        - name: FIX_JPMMXE10
-        - name: FIX_MATRTE11
-        env:
-          add_remove_template: 'True'
-      cpu_17:
-        name: options_risk_oe_01_ewr2_01
-        type: options_actors
-        stream: oe_01
-        actors:
-        - name: RISK_CITARDE1
-        - name: RISK_IMCCTR11
-        - name: RISK_IMCCTR14
-        - name: RISK_IMCCTR17
-        - name: RISK_OPTITR01
-        - name: RISK_OPTITR04
-        - name: RISK_SUSQRXE3
-        - name: RISK_WOTDMRX5
-        env:
-          add_remove_template: 'True'
-      cpu_18:
-        type: options_actors
-        stream: oe_01
-        name: primary_required_oe_01_actors
-        actors:
-        - name: RISK_OE_01
-        - name: COD_ACTOR_01
-        - name: MASS_CANCEL_OE_01
-      cpu_19:
-        type: options_actors
-        stream: oe_01
-        name: oe_01_forwarders
-        actors:
-        - name: FORWARDER_FROM_OE01_TO_MATCH
-        - name: FORWARDER_FROM_OE01_TO_CNC
-      cpu_20:
-        type: options_actors
-        stream: cnc
-        name: backup_options_spinner
-        actors:
-        - name: ACCOUNT_SPINNER
-        - name: EFID_SPINNER
-        - name: FIRM_SPINNER
-        - name: INSTRUMENT_SPINNER
-        - name: SCHEDULED_EVENT_SPINNER
-        - name: EQUITY_INSTRUMENT_SPINNER
-        - name: CLASS_APPOINTMENT_SPINNER
-        - name: OPTION_ROOT_SPINNER
-        - name: ACTIVE_RISK_SPINNER
-        - name: PASSIVE_RISK_SPINNER
-        - name: PRICE_CONTROLS_SPINNER
-        - name: CLEARING_RECORD_SPINNER
-      cpu_21:
-        name: options_risk_oe_01_ewr2_02
-        type: options_actors
-        stream: oe_01
-        actors:
-        - name: RISK_CITARDE2
-        - name: RISK_IMCCTR12
-        - name: RISK_IMCCTR15
-        - name: RISK_IMCCTR18
-        - name: RISK_OPTITR02
-        - name: RISK_SUSQRXE1
-        - name: RISK_VIRTTR10
-        env:
-          add_remove_template: 'True'
-      cpu_22:
-        name: options_risk_oe_01_ewr2_03
-        type: options_actors
-        stream: oe_01
-        actors:
-        - name: RISK_IMCCTR10
-        - name: RISK_IMCCTR13
-        - name: RISK_IMCCTR16
-        - name: RISK_JANETR10
-        - name: RISK_OPTITR03
-        - name: RISK_SUSQRXE2
-        - name: RISK_WOTDMRX1
-        env:
-          add_remove_template: 'True'
-      cpu_23:
-        type: stream_file_writer
-        name: options_file_writer_oe_01
-        stream: oe_01
-      cpu_24:
-        type: options_actors
-        stream: oe_01
-        name: options_oe_01_dhlogger
-        version: memx-core@93.12
-        actors:
-        - name: PORT_REQUESTS_01_LOGGER
-        - name: PASSIVE_RISK_01_LOGGER
-        - name: ACTIVE_RISK_01_LOGGER
-        - name: ACTIVE_RISK_STATE_01_LOGGER
-      cpu_25:
-        type: options_actors
-        stream: cnc
-        name: backup_clearing_post_trade
-        actors:
-        - name: CLEARING_ENGINE
-        - name: OCC_GATEWAY
-        - name: OCC_FILE
-        - name: POST_TRADE_ENGINE
-      cpu_26:
-        name: options_sbe_oe_01_ewr2_02
-        type: options_actors
-        stream: oe_01
-        actors:
-        - name: SBE_CITAODE2
-        - name: SBE_IMCCTE10
-        - name: SBE_IMCCTE14
-        - name: SBE_IMCCTE18
-        - name: SBE_OPTITE01
-        - name: SBE_OPTITE05
-        - name: SBE_SIGMODE1
-        - name: SBE_SIGMODE5
-        - name: SBE_SIMPTE11
-        - name: SBE_WOTMODE1
-        env:
-          add_remove_template: 'True'
-      cpu_27:
-        name: options_sbe_oe_01_ewr2_01
-        type: options_actors
-        stream: oe_01
-        actors:
-        - name: SBE_CITAODE1
-        - name: SBE_HRTFT001
-        - name: SBE_IMCCTE13
-        - name: SBE_IMCCTE17
-        - name: SBE_MSCOMXT2
-        - name: SBE_OPTITE04
-        - name: SBE_OPTITE08
-        - name: SBE_SIGMODE4
-        - name: SBE_SIMPTE10
-        - name: SBE_VIRTTE11
-        env:
-          add_remove_template: 'True'
-      cpu_28:
-        name: options_influx_oe_01
-        type: options_actors
-        stream: oe_01
-        actors:
-        - name: INFLUX_WRITER_OE_01
-      cpu_29:
-        name: options_sbe_oe_01_ewr2_03
-        type: options_actors
-        stream: oe_01
-        actors:
-        - name: SBE_GSCOOTT1
-        - name: SBE_IMCCTE11
-        - name: SBE_IMCCTE15
-        - name: SBE_JANETE10
-        - name: SBE_OPTITE02
-        - name: SBE_OPTITE06
-        - name: SBE_SIGMODE2
-        - name: SBE_SIGMODE6
-        - name: SBE_SUSQOTT1
-        - name: SBE_WOTMODE2
-        env:
-          add_remove_template: 'True'
-      cpu_30:
-        name: options_sbe_oe_01_ewr2_04
-        type: options_actors
-        stream: oe_01
-        actors:
-        - name: SBE_GSCOOTT2
-        - name: SBE_IMCCTE12
-        - name: SBE_IMCCTE16
-        - name: SBE_MSCOMXT1
-        - name: SBE_OPTITE03
-        - name: SBE_OPTITE07
-        - name: SBE_SIGMODE3
-        - name: SBE_SIGMODE7
-        - name: SBE_VIRTTE10
-        env:
-          add_remove_template: 'True'
+    # Assuming inventory.mml is in the same directory as the script
+    inventory_file_path = os.path.join(os.path.dirname(__file__), 'inventory.mml')
+
+    with open(inventory_file_path, 'r') as inventory_file:
+        inventory_data = yaml.safe_load(inventory_file)
+
+    for host_name, host_details in inventory_data.get('machines', {}).items():
+        data_center_name = host_details.get('dc', 'default')
+
+        # Create data center if not exists
+        data_center = next((dc for dc in data_centers if dc['name'] == data_center_name), None)
+        if data_center is None:
+            data_center = {'name': data_center_name, 'hosts': []}
+            data_centers.append(data_center)
+
+        # Create host
+        host_folder_path = os.path.join(os.path.dirname(__file__), host_name)
+        host = {'name': host_name, 'cores': host_details.get('cores', 0), 'memory': host_details.get('memory', 'N/A'), 'networks': {}}
+
+        # Add networks
+        for interface_name, interface_details in host_details.get('interfaces', {}).items():
+            host['networks'][interface_name] = f"{interface_details['ip']} ({interface_details['network']})"
+
+        # Check if there are bindings for the host
+        bindings_file_path = os.path.join(host_folder_path, 'bindings.mml')
+        if os.path.exists(bindings_file_path):
+            with open(bindings_file_path, 'r') as bindings_file:
+                host['cpus'] = yaml.safe_load(bindings_file).get('bindings', {}).get(host_name, {}).get('cores', {})
+        else:
+            host['cpus'] = {}
+
+        data_center['hosts'].append(host)
+
+    return {'data_centers': data_centers}
 
 
 
+def load_binding_data(host):
+    # Replace this with your actual logic to load binding data
+    # For demonstration purposes, returning a sample dictionary
+    return {
+        'gc22001.options.ewr2.memx.tech': {
+            'system': 'us_options_ewr2',
+            'cores': {
+                'cpu_01': {'type': 'stream_reader', 'name': 'stream_reader_oe_01', 'stream': 'oe_01', 'via': 'multicast', 'outputs': 'shmem'},
+                'cpu_02': {'type': 't1_republisher', 'name': 'CNC_T1_REPUBLISHER', 'stream': 'cnc'},
+                # Add more CPUs as needed
+            }
+        },
+        # Add more host bindings as needed
+    }.get(host, {})  # Return an empty dictionary if the host is not found
+
+@app.route('/')
+def index():
+    inventory_data = load_inventory_data()
+    # For demonstration purposes, taking the first host of the first data center
+    host = inventory_data['data_centers'][0]['hosts'][0]['name']
+    binding_data = load_binding_data(host)
+
+    return render_template('index.html', inventory=inventory_data['data_centers'], host=host, bindings=binding_data)
+
+if __name__ == '__main__':
+    print("Before creating Flask app")
+    
+    # Use socketio.run instead of app.run for Socket.IO
+    socketio.run(app, host='0.0.0.0', port=5001, debug=True)
+
+    print("After running Flask app")
