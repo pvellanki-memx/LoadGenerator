@@ -1,14 +1,95 @@
-T = db.t("ORSA", "TradeSummary").where();
+...
+9   Case Management
 
-T = db.t("ORSA", "TradeSummary").where().and("column1 > 100").and("column2 == 'ABC'");
+The case management tool within the user interface facilitates the efficient handling and tracking of alerts through a structured workflow. Each alert triggers the creation of a case, providing a systematic approach to investigation and resolution.
+
+9.1   Alert Ticket Creation Workflow
+
+•	[9.1.1] **Automatic Case Creation:** When an alert is generated, the system automatically creates a corresponding case with a unique identifier.
+  
+•	[9.1.2] **Alert Details Integration:** Relevant details from the alert, such as security identifier, timestamp, and alert type, are automatically populated into the case.
+
+•	[9.1.3] **User Input:** Users can input additional information related to the alert, providing context and insights for the investigation.
+
+9.2   Case Ticket Fields
+
+Each case ticket contains essential fields to manage and categorize the alert effectively.
+
+    [9.2.1] **Status:** The current status of the case, indicating whether it is open, under investigation, resolved, or closed.
+
+    [9.2.2] **Assigned To:** The team member or user responsible for investigating and resolving the case.
+
+    [9.2.3] **Severity:** A classification of the severity level associated with the alert, helping prioritize investigations.
+
+    [9.2.4] **Matter ID:** A unique identifier linking the case to a specific regulatory matter or issue.
+
+9.3   Case Management UI Features
+
+•	[9.3.1] **List View:** Users can view a list of all open and closed cases, with relevant details such as case ID, status, assigned user, and severity.
+
+•	[9.3.2] **Filtering and Sorting:** Users can filter and sort cases based on various parameters, allowing for quick identification of critical issues.
+
+•	[9.3.3] **Workflow Actions:** The UI provides actions to update case status, reassign cases, and escalate severity levels.
+
+•	[9.3.4] **Alert Integration:** The case management tool is integrated with the alert system, allowing users to navigate seamlessly between alerts and associated cases.
+
+•	[9.3.5] **Reporting:** Users can generate reports summarizing case statistics, resolution times, and other key metrics for compliance and analysis purposes.
+
+9.4   Case Resolution Workflow
+
+•	[9.4.1] **Resolution Confirmation:** Once the investigation is complete, users can confirm the resolution of the case.
+
+•	[9.4.2] **Closure:** Closed cases are marked as resolved or closed, providing a clear indication of case status.
+
+•	[9.4.3] **Audit Trail:** All actions related to case management, including status changes and resolutions, are logged in the audit trail for transparency and compliance.
+
+9.5   Case Management Security
+
+•	[9.5.1] **Access Control:** Role-based access control ensures that only authorized users have access to case management features.
+
+•	[9.5.2] **Data Privacy:** Case details are treated with confidentiality, and access is restricted to authorized personnel.
+
+...
 
 
-currentDateNy()
 
-Configuration Type: Data Merge (persistent query editor)
 
-https://docs.3forge.com/mediawiki/AMI_Script
 
-https://docs.3forge.com/mediawiki/AMI_Script
 
-https://docs.3forge.com/mediawiki/Introduction_to_AMI
+
+8	User Interface
+
+The user interface (UI) is designed to provide comprehensive functionality to the regulatory team, to efficiently manage and oversee the surveillance process. 
+
+8.1	Audit Trail
+
+•	[8.1.1] The UI includes a robust audit trail functionality, ensuring transparency and accountability in the surveillance activities.
+•	[8.1.2] Every action taken within the system, such as alert configuration changes, acknowledgment of alerts, and interventions, is logged with a timestamp.
+•	[8.1.3] The audit trail serves as a detailed record of user interactions, providing a transparent view of system activities for compliance and auditing purposes.
+
+8.2	Alert Configuration
+
+•	[8.2.1] Regulatory users have the capability to configure specific alert parameters directly from the user interface.
+•	[8.2.2] The alert configuration section allows the definition of a generic alert with customizable parameters.
+
+    **Generic Alert Configuration:**
+    
+    [8.2.2.1] Security Identifier: Users can specify the security identifier (e.g., ticker symbol) for the alert.
+    
+    [8.2.2.2] Firm Identifier: Users can define a firm identifier for targeted surveillance on specific firms or participants.
+    
+    [8.2.2.3] Price Condition: Users can set conditions based on the price field, using arithmetic operations (e.g., >, <, =).
+    
+    [8.2.2.4] Volume Condition: Users can set conditions based on the volume field, using arithmetic operations (e.g., >, <, =).
+    
+    [8.2.2.5] Time Interval: Users can define a time interval for the alert, specifying the duration over which the conditions should be evaluated.
+    
+    [8.2.2.6] Arithmetic Operations: Users can apply arithmetic operations on price, volume, and time interval fields to create complex alert conditions.
+    
+    [8.2.2.7] Save and Apply: The UI allows users to save and apply the configured generic alert for ongoing surveillance.
+
+8.3	Alert Acknowledgment and Action
+
+The UI enables regulatory users to acknowledge alerts and take necessary actions promptly.
+Upon receiving an alert, the regulatory team can acknowledge it directly from the UI, indicating awareness and initiating further investigation or intervention.
+
