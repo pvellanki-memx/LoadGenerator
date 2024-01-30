@@ -254,17 +254,10 @@ flask                              3.0.1
 
 
 
-
-pvellanki@pvellanki-MacBookPro yamlui % python3 yamlui.py 
-Traceback (most recent call last):
-  File "/Users/pvellanki/yamlui/yamlui.py", line 1, in <module>
-    from flask import Flask, render_template
-  File "/Users/pvellanki/Library/Python/3.9/lib/python/site-packages/flask/__init__.py", line 7, in <module>
-    from .app import Flask as Flask
-  File "/Users/pvellanki/Library/Python/3.9/lib/python/site-packages/flask/app.py", line 28, in <module>
-    from . import cli
-  File "/Users/pvellanki/Library/Python/3.9/lib/python/site-packages/flask/cli.py", line 18, in <module>
-    from .helpers import get_debug_flag
-  File "/Users/pvellanki/Library/Python/3.9/lib/python/site-packages/flask/helpers.py", line 16, in <module>
-    from werkzeug.urls import url_quote
-ImportError: cannot import name 'url_quote' from 'werkzeug.urls' (/Users/pvellanki/Library/Python/3.9/lib/python/site-packages/werkzeug/urls.py)
+pvellanki@pvellanki-MacBookPro yamlui % pip install gunicorn==21.2.0
+Defaulting to user installation because normal site-packages is not writeable
+Requirement already satisfied: gunicorn==21.2.0 in /Users/pvellanki/Library/Python/3.9/lib/python/site-packages (21.2.0)
+Requirement already satisfied: packaging in /Users/pvellanki/Library/Python/3.9/lib/python/site-packages (from gunicorn==21.2.0) (23.2)
+pvellanki@pvellanki-MacBookPro yamlui % gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w 1 -b 0.0.0.0:5001 yaml:app
+zsh: command not found: gunicorn
+pvellanki@pvellanki-MacBookPro yam
