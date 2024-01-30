@@ -237,3 +237,27 @@ if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5001, debug=True)
 
     print("After running Flask app")
+
+
+
+
+
+
+
+
+
+
+
+pvellanki@pvellanki-MacBookPro yamlui % python3 yamlui.py 
+Traceback (most recent call last):
+  File "/Users/pvellanki/yamlui/yamlui.py", line 1, in <module>
+    from flask import Flask, render_template
+  File "/Users/pvellanki/Library/Python/3.9/lib/python/site-packages/flask/__init__.py", line 7, in <module>
+    from .app import Flask as Flask
+  File "/Users/pvellanki/Library/Python/3.9/lib/python/site-packages/flask/app.py", line 28, in <module>
+    from . import cli
+  File "/Users/pvellanki/Library/Python/3.9/lib/python/site-packages/flask/cli.py", line 18, in <module>
+    from .helpers import get_debug_flag
+  File "/Users/pvellanki/Library/Python/3.9/lib/python/site-packages/flask/helpers.py", line 16, in <module>
+    from werkzeug.urls import url_quote
+ImportError: cannot import name 'url_quote' from 'werkzeug.urls' (/Users/pvellanki/Library/Python/3.9/lib/python/site-packages/werkzeug/urls.py)
