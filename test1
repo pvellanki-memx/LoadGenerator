@@ -93,3 +93,74 @@ The user interface (UI) is designed to provide comprehensive functionality to th
 The UI enables regulatory users to acknowledge alerts and take necessary actions promptly.
 Upon receiving an alert, the regulatory team can acknowledge it directly from the UI, indicating awareness and initiating further investigation or intervention.
 
+
+
+
+
+
+
+
+
+
+# Flask Inventory Tool
+
+## Overview
+
+This Flask app provides a simple web interface to visualize inventory and binding data for hosts in a data center. It utilizes Flask for the web server, Socket.IO for real-time updates, and Gunicorn for serving with WebSocket support.
+
+## Prerequisites
+
+- Python 3.x
+- Flask
+- Flask-SocketIO
+- PyYAML
+- Gunicorn
+- Gevent (required for Gunicorn WebSocket worker)
+
+## Installation
+
+1. Clone the repository:
+
+    ```bash
+    git clone https://github.com/yourusername/flask-inventory-tool.git
+    ```
+
+2. Change to the project directory:
+
+    ```bash
+    cd flask-inventory-tool
+    ```
+
+3. Install the required dependencies:
+
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+## Usage
+
+1. Run the Flask app with Gunicorn (including WebSocket support):
+
+    ```bash
+    gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w 1 -b 0.0.0.0:5001 app:app
+    ```
+
+    The server will start, and you can access the web interface at [http://localhost:5001](http://localhost:5001) in your web browser.
+
+2. Explore the inventory and binding data for hosts in the data center.
+
+## Customization
+
+- Modify the `inventory.mml` file to add or update host information in your inventory.
+- Update the logic in the `load_binding_data` function in `app.py` to load actual binding data for each host.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+
+requirements.txt
+
+Flask==2.0.1
+Flask-SocketIO==5.1.1
+PyYAML==6.0
