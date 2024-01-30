@@ -1,161 +1,3 @@
-index.html
-
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Center Inventory</title>
-    <style>
-        body {
-            background-color: #001f3f; /* dark blue */
-            color: #fff; /* white */
-            font-family: Arial, sans-serif;
-        }
-
-        h1, h2, strong {
-            color: #fff; /* white */
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            color: #fff; /* white */
-        }
-
-        th, td {
-            padding: 10px;
-            text-align: left;
-            border-bottom: 1px solid #fff; /* white */
-        }
-
-        th {
-            background-color: #003366; /* darker blue */
-        }
-
-        td {
-            background-color: #004080; /* dark blue */
-        }
-
-        button {
-            background-color: #0066cc; /* blue */
-            color: #fff; /* white */
-            border: none;
-            padding: 5px 10px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #004080; /* darker blue on hover */
-        }
-
-        ul {
-            list-style-type: none;
-            padding: 0;
-        }
-
-        li {
-            margin-bottom: 5px;
-        }
-    </style>
-</head>
-
-<body>
-    <h1>Data Center Inventory</h1>
-
-    {% for data_center in inventory %}
-    <h2>{{ data_center['name'] }}</h2>
-
-    <table>
-        <thead>
-            <tr>
-                <th>Host</th>
-                <th>Cores</th>
-                <th>Memory</th>
-                <th>Networks</th>
-                <th>CPUs</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for host in data_center['hosts'] %}
-            <tr>
-                <td>
-                    <strong>{{ host['name'] }}</strong>
-                    <button data-target="{{ host['name'] }}" onclick="toggleDetails('{{ host['name'] }}')">+</button>
-                    <div id="{{ host['name'] }}_details" style="display: none;">
-                        {% if host['cpus'] %}
-                        <h4>CPUs</h4>
-                        <ul>
-                            {% for cpu, details in host['cpus'].items() %}
-                            <li>
-                                <strong>{{ cpu }}</strong>
-                                <button data-target="{{ host['name'] }}_{{ cpu }}" onclick="toggleDetails('{{ host['name'] }}_{{ cpu }}')">+</button>
-                                <div id="{{ host['name'] }}_{{ cpu }}_details" style="display: none; margin-left: 20px;">
-                                    <p>Type: {{ details['type'] }}</p>
-                                    <p>Name: {{ details['name'] }}</p>
-                                    <p>Stream: {{ details['stream'] }}</p>
-                                    <p>Via: {{ details['via'] }}</p>
-                                    <p>Outputs: {{ details['outputs'] }}</p>
-
-                                    <!-- New Section to Display Actors -->
-                                    {% if 'actors' in details %}
-                                        <h5>Actors</h5>
-                                        <ul>
-                                            {% for actor in details['actors'] %}
-                                                <li>{{ actor['name'] }}</li>
-                                            {% endfor %}
-                                        </ul>
-                                    {% endif %}
-                                    <!-- End of New Section -->
-
-                                </div>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                        {% endif %}
-                    </div>
-                </td>
-                <td>{{ host['cores'] }}</td>
-                <td>{{ host['memory'] }}</td>
-                <td>
-                    <ul>
-                        {% for network, ip in host['networks'].items() %}
-                        <li>{{ network }}: {{ ip }}</li>
-                        {% endfor %}
-                    </ul>
-                </td>
-                <td>{{ host['cpus']|length if host['cpus'] else 'N/A' }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    {% endfor %}
-
-    <script>
-        function toggleDetails(elementId) {
-            var detailsElement = document.getElementById(elementId + "_details");
-            var buttonElement = document.querySelector('button[data-target="' + elementId + '"]');
-
-            if (detailsElement.style.display === "none") {
-                detailsElement.style.display = "block";
-                buttonElement.textContent = "-";
-            } else {
-                detailsElement.style.display = "none";
-                buttonElement.textContent = "+";
-            }
-        }
-    </script>
-</body>
-
-</html>
-
-
-
-yamlui.py
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 import yaml
@@ -175,6 +17,9 @@ def load_inventory_data():
     with open(inventory_file_path, 'r') as inventory_file:
         inventory_data = yaml.safe_load(inventory_file)
 
+    # Updated path for the bindings folder
+    bindings_folder_path = os.path.join(os.path.dirname(__file__), 'bindings')
+
     for host_name, host_details in inventory_data.get('machines', {}).items():
         data_center_name = host_details.get('dc', 'default')
 
@@ -185,7 +30,7 @@ def load_inventory_data():
             data_centers.append(data_center)
 
         # Create host
-        host_folder_path = os.path.join(os.path.dirname(__file__), host_name)
+        host_folder_path = os.path.join(bindings_folder_path, host_name)  # Updated path
         host = {'name': host_name, 'cores': host_details.get('cores', 0), 'memory': host_details.get('memory', 'N/A'), 'networks': {}}
 
         # Add networks
@@ -193,7 +38,7 @@ def load_inventory_data():
             host['networks'][interface_name] = f"{interface_details['ip']} ({interface_details['network']})"
 
         # Check if there are bindings for the host
-        bindings_file_path = os.path.join(host_folder_path, 'bindings.mml')
+        bindings_file_path = os.path.join(host_folder_path, 'binding.mml')  # Updated path
         if os.path.exists(bindings_file_path):
             with open(bindings_file_path, 'r') as bindings_file:
                 host['cpus'] = yaml.safe_load(bindings_file).get('bindings', {}).get(host_name, {}).get('cores', {})
@@ -206,29 +51,15 @@ def load_inventory_data():
 
 
 
-def load_binding_data(host):
-    # Replace this with your actual logic to load binding data
-    # For demonstration purposes, returning a sample dictionary
-    return {
-        'gc22001.options.ewr2.memx.tech': {
-            'system': 'us_options_ewr2',
-            'cores': {
-                'cpu_01': {'type': 'stream_reader', 'name': 'stream_reader_oe_01', 'stream': 'oe_01', 'via': 'multicast', 'outputs': 'shmem'},
-                'cpu_02': {'type': 't1_republisher', 'name': 'CNC_T1_REPUBLISHER', 'stream': 'cnc'},
-                # Add more CPUs as needed
-            }
-        },
-        # Add more host bindings as needed
-    }.get(host, {})  # Return an empty dictionary if the host is not found
 
 @app.route('/')
 def index():
     inventory_data = load_inventory_data()
     # For demonstration purposes, taking the first host of the first data center
-    host = inventory_data['data_centers'][0]['hosts'][0]['name']
-    binding_data = load_binding_data(host)
+    #host = inventory_data['data_centers'][0]['hosts'][0]['name']
+    #binding_data = load_binding_data(host)
 
-    return render_template('index.html', inventory=inventory_data['data_centers'], host=host, bindings=binding_data)
+    return render_template('index.html', inventory=inventory_data['data_centers'])
 
 if __name__ == '__main__':
     print("Before creating Flask app")
@@ -237,27 +68,3 @@ if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5001, debug=True)
 
     print("After running Flask app")
-
-
-
-
-Werkzeug==0.16.1
-pip install -r requirements.txt --force-reinstall
-werkzeug                           3.0.1
-PyYAML                             5.3.1
-gevent                             23.9.1
-gevent-websocket                   0.10.1
-Flask-SocketIO                     5.3.6
-flask                              3.0.1
-
-
-
-
-
-pvellanki@pvellanki-MacBookPro yamlui % pip install gunicorn==21.2.0
-Defaulting to user installation because normal site-packages is not writeable
-Requirement already satisfied: gunicorn==21.2.0 in /Users/pvellanki/Library/Python/3.9/lib/python/site-packages (21.2.0)
-Requirement already satisfied: packaging in /Users/pvellanki/Library/Python/3.9/lib/python/site-packages (from gunicorn==21.2.0) (23.2)
-pvellanki@pvellanki-MacBookPro yamlui % gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w 1 -b 0.0.0.0:5001 yaml:app
-zsh: command not found: gunicorn
-pvellanki@pvellanki-MacBookPro yam
