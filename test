@@ -1,103 +1,21 @@
-OptionId
-M1px6nZh
-M1px6nZi
-M1px6nZj
-M1px6nZk
-M1px6nZl
-M1px6nZm
-M1px6nZn
-M1px6nZo
-M1px6C02
-M1px6C03
-M1px6C04
-M1px6C05
-M1px6nZp
-M1px6nZq
-M1px6nZr
-M1px6nZs
-M1px6nZt
-M1px6nZu
-M1px6nZv
-M1px6nZw
-M1px6nZx
-M1px6nZy
-M1px6nZz
-M1px6nZA
-M1px6nZB
-M1px6nZC
-M1px6nZD
-M1px6nZE
-M1px6nZF
-M1px6nZG
-M1px6nZH
-M1px6nZI
-M1px6nZJ
-M1px6nZK
-M1px6nZL
-M1px6nZM
-M1px6nZN
-M1px6nZO
-M1px6o1y
-M1px6o1z
-M1px6o1A
-M1px6o1B
-M1px6o1C
-M1px6o1D
-M1px6o1E
-M1px6o1F
-M1px6C0g
-M1px6C0h
-M1px6C0i
-M1px6C0j
-M1px6o1G
-M1px6o1H
-M1px6o1I
-M1px6o1J
-M1px6o1K
-M1px6o1L
-M1px6o1M
-M1px6o1N
-M1px6o1O
-M1px6o1P
-M1px6o1Q
-M1px6o1R
-M1px6o1S
-M1px6o1T
-M1px6o1U
-M1px6o1V
-M1px6o1W
-M1px6o1X
-M1px6o1Y
-M1px6o1Z
-M1px6o20
-M1px6o21
-M1px6o22
-M1px6o23
-M1px6o24
-M1px6o25
-M1px7MDq
-M1px7MDr
-M1px7MDs
-M1px7MDt
-M1px7MDu
-M1px7MDv
-M1px7MDw
-M1px7MDx
-M1px7MDy
-M1px7MDz
-M1px7MDA
-M1px7MDB
-M1px7MDC
-M1px7MDD
-M1px7MDE
-M1px7MDF
-M1px7MDG
-M1px7MDH
-M1px7MDI
-M1px7MDJ
-M1px7MDK
-M1px7MDL
-M1px7MDM
-M1px7MDN
-M1px7MDO
-M1px7MDP
+# Extended List
+extended_list = [
+    "M1px6nZh", "M1px6nZi", "M1px6nZj", "M1px6nZk", "M1px6nZl", "M1px6nZm", "M1px6nZn", "M1px6nZo",
+    "M1px6C02", "M1px6C03", "M1px6C04", "M1px6C05", "M1px6nZp", "M1px6nZq", "M1px6nZr", "M1px6nZs",
+    "M1px6nZt", "M1px6nZu", "M1px6nZv", "M1px6nZw", "M1px6nZx", "M1px6nZy", "M1px6nZz", "M1px6nZA",
+    "M1px6nZB", "M1px6nZC", "M1px6nZD", "M1px6nZE", "M1px6nZF", "M1px6nZG", "M1px6nZH", "M1px6nZI",
+    "M1px6nZJ", "M1px6nZK", "M1px6nZL", "M1px6nZM", "M1px6nZN", "M1px6nZO", "M1px6o1y", "M1px6o1z",
+    "M1px6o1A", "M1px6o1B", "M1px6o1C", "M1px6o1D", "M1px6o1E", "M1px6o1F", "M1px6C0g", "M1px6C0h",
+    "M1px6C0i", "M1px6C0j", "M1px6o1G", "M1px6o1H", "M1px6o1I", "M1px6o1J", "M1px6o1K", "M1px6o1L",
+    "M1px6o1M", "M1px6o1N", "M1px6o1O", "M1px6o1P", "M1px6o1Q", "M1px6o1R", "M1px6o1S", "M1px6o1T",
+    "M1px6o1U", "M1px6o1V", "M1px6o1W", "M1px6o1X", "M1px6o1Y", "M1px6o1Z", "M1px6o20", "M1px6o21",
+    "M1px6o22", "M1px6o23", "M1px6o24", "M1px6o25", "M1px7MDq", "M1px7MDr", "M1px7MDs", "M1px7MDt",
+    "M1px7MDu", "M1px7MDv", "M1px7MDw", "M1px7MDx", "M1px7MDy", "M1px7MDz", "M1px7MDA", "M1px7MDB",
+    "M1px7MDC", "M1px7MDD", "M1px7MDE", "M1px7MDF", "M1px7MDG", "M1px7MDH", "M1px7MDI", "M1px7MDJ",
+    "M1px7MDK", "M1px7MDL", "M1px7MDM", "M1px7MDN", "M1px7MDO", "M1px7MDP"
+]
+
+# LongTwoSidedQuote objects with the extended list
+quote1 = LongTwoSidedQuote(list_seq_no=1, options_security_id=extended_list[0], bid_size=10, bid_px=1000000000000000, offer_size=20, offer_px=15000000000000000)
+quote2 = LongTwoSidedQuote(list_seq_no=2, options_security_id=extended_list[1], bid_size=15, bid_px=20000000000000000, offer_size=25, offer_px=250000000000000000)
+quote3 = LongTwoSidedQuote(list_seq_no=3,
