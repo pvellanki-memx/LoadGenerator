@@ -1,163 +1,97 @@
-<!DOCTYPE html>
-<html lang="en">
+        quote1 = LongTwoSidedQuote(list_seq_no=1, options_security_id="M1px7MDq", bid_size=10, bid_px=1000000000000000,offer_size=20,offer_px=15000000000000000)
+        quote2 = LongTwoSidedQuote(list_seq_no=2, options_security_id="M1px7MDr",bid_size=15,bid_px=20000000000000000, offer_size=25, offer_px=250000000000000000)
+        quote3 = LongTwoSidedQuote(list_seq_no=3, options_security_id="M1px7MDu",bid_size=16,bid_px=21000000000000000, offer_size=26, offer_px=260000000000000000)
+        quote4 = LongTwoSidedQuote(list_seq_no=4, options_security_id="M1px7MDD",bid_size=17,bid_px=22000000000000000, offer_size=27, offer_px=270000000000000000)
+        quote5 = LongTwoSidedQuote(list_seq_no=5, options_security_id="M1px7MDB",bid_size=18,bid_px=23000000000000000, offer_size=28, offer_px=280000000000000000)
+        quote6 = LongTwoSidedQuote(list_seq_no=6, options_security_id="M1px7MDQ",bid_size=19,bid_px=24000000000000000, offer_size=29, offer_px=290000000000000000)
+        quote7 = LongTwoSidedQuote(list_seq_no=7, options_security_id="M1px7MDK",bid_size=38,bid_px=25000000000000000, offer_size=48, offer_px=300000000000000000)
+        quote8 = LongTwoSidedQuote(list_seq_no=8, options_security_id="M1px7MDS",bid_size=20,bid_px=26000000000000000, offer_size=30, offer_px=310000000000000000)
+        quote9 = LongTwoSidedQuote(list_seq_no=9, options_security_id="M1px7MDT",bid_size=21,bid_px=27000000000000000, offer_size=31, offer_px=320000000000000000)
+        quote10 = LongTwoSidedQuote(list_seq_no=10, options_security_id="M1px7MDV",bid_size=22,bid_px=28000000000000000, offer_size=32, offer_px=330000000000000000)
+        quote11 = LongTwoSidedQuote(list_seq_no=11, options_security_id="M1px7MDU",bid_size=23,bid_px=29000000000000000, offer_size=33, offer_px=340000000000000000)
+        quote12 = LongTwoSidedQuote(list_seq_no=12, options_security_id="M1px7ME1",bid_size=24,bid_px=30000000000000000, offer_size=34, offer_px=350000000000000000)
+        quote13 = LongTwoSidedQuote(list_seq_no=13, options_security_id="M1px7ME3",bid_size=25,bid_px=31000000000000000, offer_size=35, offer_px=360000000000000000)
+        quote14 = LongTwoSidedQuote(list_seq_no=14, options_security_id="M1px7ME6",bid_size=26,bid_px=32000000000000000, offer_size=36, offer_px=370000000000000000)
+        quote15 = LongTwoSidedQuote(list_seq_no=15, options_security_id="M1px7MEa",bid_size=27,bid_px=33000000000000000, offer_size=37, offer_px=380000000000000000)
+        quote16 = LongTwoSidedQuote(list_seq_no=16, options_security_id="M1px7MEd",bid_size=28,bid_px=34000000000000000, offer_size=38, offer_px=390000000000000000)
+        quote17 = LongTwoSidedQuote(list_seq_no=17, options_security_id="M1px7MEb",bid_size=29,bid_px=35000000000000000, offer_size=39, offer_px=400000000000000000)
+        quote18 = LongTwoSidedQuote(list_seq_no=18, options_security_id="M1px7ME9",bid_size=30,bid_px=36000000000000000, offer_size=40, offer_px=410000000000000000)
+        quote19 = LongTwoSidedQuote(list_seq_no=19, options_security_id="M1px7MDZ",bid_size=31,bid_px=37000000000000000, offer_size=41, offer_px=420000000000000000)
+        quote20 = LongTwoSidedQuote(list_seq_no=20, options_security_id="M1px7MDX",bid_size=32,bid_px=38000000000000000, offer_size=42, offer_px=430000000000000000)
+        quote21 = LongTwoSidedQuote(list_seq_no=21, options_security_id="M1px7MDy", bid_size=33, bid_px=3900000000000000,offer_size=43,offer_px=44000000000000000)
+        quote22 = LongTwoSidedQuote(list_seq_no=22, options_security_id="M1px7MDz",bid_size=34,bid_px=40000000000000000, offer_size=44, offer_px=450000000000000000)
+        quote23 = LongTwoSidedQuote(list_seq_no=23, options_security_id="M1px6nZC",bid_size=35,bid_px=41000000000000000, offer_size=45, offer_px=460000000000000000)
+        quote24 = LongTwoSidedQuote(list_seq_no=24, options_security_id="M1px6nZt",bid_size=36,bid_px=42000000000000000, offer_size=46, offer_px=470000000000000000)
+        quote25 = LongTwoSidedQuote(list_seq_no=25, options_security_id="M1px6nZF",bid_size=37,bid_px=43000000000000000, offer_size=47, offer_px=490000000000000000)
 
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Center Inventory</title>
-    <style>
-        body {
-            background-color: #001f3f; /* dark blue */
-            color: #fff; /* white */
-            font-family: Arial, sans-serif;
-        }
 
-        h1, h2, strong {
-            color: #fff; /* white */
-        }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            color: #fff; /* white */
-        }
+G0UG6kwM
+G0UG6jsC
+G0UG6gFv
+G0UG6gdP
+G0UG6gfA
+G0UG6g8m
+G0UG6hQg
+G0UG6h1w
+G0UG6lLj
+G0UG6jTP
+G0UG6jr1
+G0UG6iGc
+G0UG6kGg
+G0UG6iQh
+G0UG6jLq
+G0UG6isf
+G0UG6kGI
+G0UG6iv0
+G0UG6mmZ
+G0UG6lUN
+G0UG6hJ2
+G0UG6iSa
+G0UG6k0f
+G0UG6hp6
+G0UG6i6z
+G0UG6hZ0
+G0UG6gRX
+G0UG6hmt
+G0UG6jCJ
+G0UG6g2y
+G0UG6lOL
+G0UG6izc
+G0UG6ivj
+G0UG6gjp
 
-        th, td {
-            padding: 10px;
-            text-align: left;
-            border-bottom: 1px solid #fff; /* white */
-        }
 
-        th {
-            background-color: #003366; /* darker blue */
-        }
 
-        td {
-            background-color: #004080; /* dark blue */
-        }
-
-        button {
-            background-color: #0066cc; /* blue */
-            color: #fff; /* white */
-            border: none;
-            padding: 5px 10px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #004080; /* darker blue on hover */
-        }
-
-        ul {
-            list-style-type: none;
-            padding: 0;
-        }
-
-        li {
-            margin-bottom: 5px;
-        }
-
-        .cpu-info {
-            color: yellow; /* yellow */
-        }
-
-        .cpu-info span {
-            color: white; /* white */
-            text-transform: uppercase;
-        }
-    </style>
-</head>
-
-<body>
-    <h1>Data Center Inventory</h1>
-
-    {% for data_center in inventory %}
-    <h2>{{ data_center['name'] }}</h2>
-
-    <table>
-        <thead>
-            <tr>
-                <th>Host</th>
-                <th>Cores</th>
-                <th>Memory</th>
-                <th>Networks</th>
-                <th>CPUs</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for host in data_center['hosts'] %}
-            <tr>
-                <td>
-                    <strong>{{ host['name'] }}</strong>
-                    <button data-target="{{ host['name'] }}" onclick="toggleDetails('{{ host['name'] }}')">+</button>
-                    <div id="{{ host['name'] }}_details" style="display: none;">
-                        {% if host['cpus'] %}
-                        <h4>CPUs</h4>
-                        <ul>
-                            {% for cpu, details in host['cpus'].items() %}
-                            <li>
-                                <strong class="cpu-info">
-                                    {{ cpu }} -
-                                    <span>TYPE:</span> {{ details['type'] }},
-                                    <span>NAME:</span> {{ details['name'] }},
-                                    <span>STREAM:</span> {{ details['stream'] }}
-                                </strong>
-                                <button data-target="{{ host['name'] }}_{{ cpu }}" onclick="toggleDetails('{{ host['name'] }}_{{ cpu }}')">+</button>
-                                <div id="{{ host['name'] }}_{{ cpu }}_details" style="display: none; margin-left: 20px;">
-                                    <p>Via: {{ details['via'] }}</p>
-                                    <p>Outputs: {{ details['outputs'] }}</p>
-
-                                    <!-- New Section to Display Actors -->
-                                    {% if 'actors' in details %}
-                                        <h5>Actors</h5>
-                                        <ul>
-                                            {% for actor in details['actors'] %}
-                                                <li>{{ actor['name'] }}</li>
-                                            {% endfor %}
-                                        </ul>
-                                    {% endif %}
-                                    <!-- End of New Section -->
-
-                                </div>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                        {% endif %}
-                    </div>
-                </td>
-                <td>{{ host['cores'] }}</td>
-                <td>{{ host['memory'] }}</td>
-                <td>
-                    <ul>
-                        {% for network, ip in host['networks'].items() %}
-                        <li>{{ network }}: {{ ip }}</li>
-                        {% endfor %}
-                    </ul>
-                </td>
-                <td>{{ host['cpus']|length if host['cpus'] else 'N/A' }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    {% endfor %}
-
-    <script>
-        function toggleDetails(elementId) {
-            var detailsElement = document.getElementById(elementId + "_details");
-            var buttonElement = document.querySelector('button[data-target="' + elementId + '"]');
-
-            if (detailsElement.style.display === "none") {
-                detailsElement.style.display = "block";
-                buttonElement.textContent = "-";
-            } else {
-                detailsElement.style.display = "none";
-                buttonElement.textContent = "+";
-            }
-        }
-    </script>
-</body>
-
-</html>
+A00h6y2f
+A00h6y2g
+A00h6y2h
+A00h6y2i
+A00h6y2j
+A00h6y2k
+A00h6y2l
+A00h6y2m
+A00h6y2n
+A00h6y2o
+A00h6y2p
+A00h6y2q
+A00h6y2r
+A00h6y2s
+A00h6y2t
+A00h6y2u
+A00h6y2v
+A00h6y2w
+A00h6y2x
+A00h6y2y
+A00h6y2z
+A00h6y2A
+A00h6y2B
+A00h6y2C
+A00h6y2D
+A00h6y2E
+A00h6y2F
+A00h6y2G
+A00h6y2H
+A00h6y2I
+A00h6y2J
+A00h6y2K
