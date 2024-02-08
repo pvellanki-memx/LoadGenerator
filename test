@@ -176,3 +176,55 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+
+
+           # Generate values for the fields
+        sending_time = UTCTimestampNanos(int(time.time() * 10**9))
+        orig_cl_ord_id = ''.join(choices(string.ascii_letters + string.digits, k=20))
+        options_security_id = choices(selected_options_security_ids)[0]
+        value=choices([SideType.BUY, SideType.SELL])
+        side = value[0]
+        order_qty = UINT32(value=randint(1, 10))
+        ord_type = OrdType(value=OrdType.LIMIT)
+        price_value = UINT32(value=randint(1, 10))
+        realprice = price_value.value * 10**14
+        #price = PriceType(50000000000000000)  # Set the price with 10^8 multiplier
+        price = PriceType(realprice) 
+        time_in_force = TimeInForceType(value=TimeInForceType.DAY)
+        #time_in_force = TimeInForceType(value=TimeInForceType.IMMEDIATE_OR_CANCEL)
+        exec_inst = ExecInstType(value=ExecInstType.ParticipateDoNotInitiate)  # Set the execution instructions
+        trading_capacity = TradingCapacityType(value=TradingCapacityType.CUSTOMER)  # Set the trading capacity
+        efid = connection_config[session_name]['EFID']
+        party_id = PartyID(efid)
+        party_id_source = PartyIDSource('D')
+        party_role = PartyRoleType(1)
+        party_id1 = PartyID(efid)
+        party_id_source1 = PartyIDSource('D')
+        party_role1 = PartyRoleType(66)
+        parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role],[party_id1, party_id_source1, party_role1]])]
+        no_parties_groups = 2
+
+        # Create an instance of NewOrderSingle and set the field values
+        new_order_single = NewOrderSingle(
+            sending_time=sending_time,
+            cl_ord_id=orig_cl_ord_id,
+            options_security_id=options_security_id,
+            side=side,
+            order_qty=order_qty,
+            ord_type=ord_type,
+            price=price,
+            time_in_force=time_in_force,
+            exec_inst=exec_inst,
+            trading_capacity=trading_capacity,
+            parties_group=parties,
+            party_entries=no_parties_groups
+        )
+
+        
+        messageLength = 73 + (18 * (no_parties_groups))
+        unsequenced_message = struct.pack('!BH', 104, messageLength)  # MessageType=104, MessageLength=91, TCP Header Length=102
+        # Encode the NewOrderSingle instance
+        encoded_message = new_order_single.encode()
+        message = unsequenced_message + encoded_message
