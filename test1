@@ -11,3 +11,42 @@ Required Information:
 User-defined parameters for rule creation
 Arithmetic operations for threshold setting
 Threshold values for alert triggering
+
+
+
+
+
+
+
+
+5.6		Multi-Order Spoofing with Bait and Switch
+
+Objective:
+Detect participants entering and deleting large orders that add liquidity to the order book for a short period, followed by a profitable trade on the opposite side.
+
+Description:
+This alert triggers when a participant enters and deletes several large orders, contributing to order book liquidity for a short time, and subsequently executes a profitable trade on the opposite side.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Number of entered and deleted orders
+Lifespan of the orders
+Details of the profitable trade
+
+5.7		Spoofing - Rapid Entry and Delete
+
+Objective:
+Identify brokers entering and deleting many unexecuted orders within a short time, suggesting potential spoofing.
+
+Description:
+This alert triggers when a broker rapidly enters and deletes a significant number of unexecuted orders within a short period, potentially indicating spoofing behavior.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Number of entered and deleted orders
+Timeframe for order existence
+Minimum genuine trade value and estimated profit thresholds
