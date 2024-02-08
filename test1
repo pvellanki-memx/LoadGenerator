@@ -1,16 +1,90 @@
-6. Functional Requirements – Options
-6.13 Custom Rule Creation
-Objective:
-Enable the creation of custom surveillance rules based on user-defined parameters and arithmetic operations to detect emerging market abuse patterns not covered by predefined alert scenarios.
+9	User Interface
 
-Description:
-This feature allows authorized users to create custom surveillance rules on the fly, providing flexibility to adapt to evolving market conditions and emerging threats. Users can define rule parameters such as price, volume, reference data, and arithmetic operations (e.g., greater than, less than, equal to) to set dynamic thresholds for alert generation.
+The user interface (UI) is designed to provide comprehensive functionality to the regulatory team, to efficiently manage and oversee the surveillance process. 
 
-Required Information:
+9.1	Audit Trail
 
-User-defined parameters for rule creation
-Arithmetic operations for threshold setting
-Threshold values for alert triggering
+•	[8.1.1] The UI includes a robust audit trail functionality, ensuring transparency and accountability in the surveillance activities.
+•	[8.1.2] Every action taken within the system, such as alert configuration changes, acknowledgment of alerts, and interventions, is logged with a timestamp.
+•	[8.1.3] The audit trail serves as a detailed record of user interactions, providing a transparent view of system activities for compliance and auditing purposes.
+
+9.2	Alert Configuration
+
+•	[8.2.1] Regulatory users have the capability to configure alert parameters and criteria directly from the user interface.
+•	[8.2.2] This flexibility allows the regulatory team to adapt surveillance strategies to evolving market conditions or regulatory requirements without requiring extensive technical expertise.
+
+9.3	Alert Acknowledgment and Action
+
+The UI enables regulatory users to acknowledge alerts and take necessary actions promptly.
+Upon receiving an alert, the regulatory team can acknowledge it directly from the UI, indicating awareness and initiating further investigation or intervention.
+
+9.4	User Roles and Permissions
+
+•	[8.4.1] The UI incorporates a role-based access control system, ensuring that regulatory team members have access to functionalities relevant to their responsibilities.
+•	[8.4.2] This role-based approach enhances security and streamlines workflow, allowing regulatory users to focus on their specific tasks within the surveillance process.
+
+9.5	Dashboards and Reporting:
+
+•	[8.5.1] The UI features a comprehensive dashboard that provides an overview of the current surveillance status, including the number and status of alerts, recent system activities, and pending actions.
+•	[8.5.2] Regulatory users can generate customizable reports from the UI, facilitating data-driven decision-making and regulatory compliance reporting.
+
+9.6	 Mockups
+
+ 
+
+ 
+
+
+
+10	Case Management
+
+The case management tool within the user interface facilitates the efficient handling and tracking of alerts through a structured workflow. Each alert triggers the creation of a case, providing a systematic approach to investigation and resolution.
+
+10.1	Alert Ticket Creation Workflow
+
+•	[9.1.1] Automatic Case Creation: When an alert is generated, the system automatically creates a corresponding case with a unique identifier.
+  
+•	[9.1.2] Alert Details Integration: Relevant details from the alert, such as security identifier, timestamp, and alert type, are automatically populated into the case.
+
+•	[9.1.3] User Input: Users can input additional information related to the alert, providing context and insights for the investigation.
+
+10.2	Case Ticket Fields
+
+Each case ticket contains essential fields to manage and categorize the alert effectively.
+
+    [9.2.1] Status: The status of the case, indicating whether it is open, under investigation, resolved, or closed.
+
+    [9.2.2] Assigned To: The team member or user responsible for investigating and resolving the case.
+
+    [9.2.3] Severity: A classification of the severity level associated with the alert, helping prioritize investigations.
+
+    [9.2.4] Matter ID: A unique identifier linking the case to a specific regulatory matter or issue.
+
+10.3	Case Management UI Features
+
+•	[9.3.1] List View: Users can view a list of all open and closed cases, with relevant details such as case ID, status, assigned user, and severity.
+
+•	[9.3.2] Filtering and Sorting: Users can filter, and sort cases based on various parameters, allowing for quick identification of critical issues.
+
+•	[9.3.3] Workflow Actions: The UI provides actions to update case status, reassign cases, and escalate severity levels.
+
+•	[9.3.4] Alert Integration: The case management tool is integrated with the alert system, allowing users to navigate seamlessly between alerts and associated cases.
+
+•	[9.3.5] Reporting: Users can generate reports summarizing case statistics, resolution times, and other key metrics for compliance and analysis purposes.
+
+10.4	Case Resolution Workflow
+
+•	[9.4.1] Resolution Confirmation: Once the investigation is complete, users can confirm the resolution of the case.
+
+•	[9.4.2] Closure: Closed cases are marked as resolved or closed, providing a clear indication of case status.
+
+•	[9.4.3] Audit Trail: All actions related to case management, including status changes and resolutions, are logged in the audit trail for transparency and compliance.
+
+9.5   Case Management Security
+
+•	[9.5.1] Access Control: Role-based access control ensures that only authorized users have access to case management features.
+
+•	[9.5.2] Data Privacy: Case details are treated with confidentiality, and access is restricted to authorized personnel.
 
 
 
@@ -19,34 +93,7 @@ Threshold values for alert triggering
 
 
 
-5.6		Multi-Order Spoofing with Bait and Switch
 
-Objective:
-Detect participants entering and deleting large orders that add liquidity to the order book for a short period, followed by a profitable trade on the opposite side.
 
-Description:
-This alert triggers when a participant enters and deletes several large orders, contributing to order book liquidity for a short time, and subsequently executes a profitable trade on the opposite side.
 
-Required Information:
 
-Security identifier (e.g., ticker symbol)
-Timestamp of the event
-Number of entered and deleted orders
-Lifespan of the orders
-Details of the profitable trade
-
-5.7		Spoofing - Rapid Entry and Delete
-
-Objective:
-Identify brokers entering and deleting many unexecuted orders within a short time, suggesting potential spoofing.
-
-Description:
-This alert triggers when a broker rapidly enters and deletes a significant number of unexecuted orders within a short period, potentially indicating spoofing behavior.
-
-Required Information:
-
-Security identifier (e.g., ticker symbol)
-Timestamp of the event
-Number of entered and deleted orders
-Timeframe for order existence
-Minimum genuine trade value and estimated profit thresholds
