@@ -1,205 +1,582 @@
-import configparser
-import socket
-import struct
-import time
-from sbe_encoder_decoder import *
-from random import choices, randint
-import string
-
-# Read configuration from config.ini
-config = configparser.ConfigParser()
-config.read('config.ini')
-
-# Read connection details from connections.cfg
-connection_config = configparser.ConfigParser()
-connection_config.read(config['Server']['config_file'])
-
-# Read underliers and associated option security ids
-underliers_and_options = {}
-for underlier, options in config.items('OptionsSecurityIDs'):
-    underliers_and_options[underlier] = options.split(',')
 
 
 
-# Establish SBE TCP session
-def establish_session(session_name):
-    # Get connection details for the specified session name
-    host = connection_config[session_name]['host']
-    port = int(connection_config[session_name]['port'])
-    user = connection_config[session_name]['user']
-    password = connection_config[session_name]['password']
-    token = f'{user}:{password}'
-
-    # Login request
-    message_type = 100
-    token_type = 'P'
-    token_length = len(token)
-    header = struct.pack('!BHB', message_type, token_length + 1, token_type.encode('utf-8')[0])
-    message = header + token.encode('utf-8')
-
-    # Create a socket and establish the connection
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect((host, port))
-    client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-
-    # Send the login request
-    client_socket.sendall(message)
-
-    # Receive and handle the response (login accepted or rejected)
-    response_header = client_socket.recv(3)
-    response_type, response_length = struct.unpack('!B H', response_header)
-    print(response_type, response_length)
-
-    if response_type == 1:  # Login Accepted
-        response_message = client_socket.recv(response_length)
-        print("Login Accepted:", response_message.decode('utf-8'))
-        session_id = None
-    elif response_type == 2:  # Login Rejected
-        response_message = client_socket.recv(response_length)
-        print("Login Rejected:", response_message.decode('utf-8'))
-        client_socket.close()
-        exit()  # Exit the script gracefully after login rejection
-    else:
-        print("Invalid response received.")
-        client_socket.close()
-        exit()  # Exit the script if an invalid response is received
-
-    # Continue with the session
-    while True:
-        response_header = client_socket.recv(11)
-        response_type, response_length, session_id = struct.unpack('!B H Q', response_header)
-        print(response_header, response_type, response_length)
-
-        if response_type == 3:  # Start of Session
-            print("Start of Session. Session ID:", session_id)
-            break
-        else:
-            print("Invalid response received.")
-
-    return client_socket, session_id
-
-# Generate and send messages for NewOrderSingle
-def send_new_order_single(client_socket, session_id, options_security_id, underlier,session_name):
-    for order_number in range(15):
-        sending_time = UTCTimestampNanos(int(time.time() * 10**9))
-        cl_ord_id = ''.join(choices(string.ascii_letters + string.digits, k=20))
-        side = SideType(value=SideType.BUY)
-        order_qty = randint(1, 10)
-        ord_type = OrdType(value=OrdType.LIMIT)
-        price_value = UINT32(order_number)
-        print(order_number)
-        realprice = price_value.value * 10**14
-        price = PriceType(realprice)
-        print(realprice,price)
-        time_in_force = TimeInForceType(value=TimeInForceType.DAY)
-        exec_inst = ExecInstType(value=ExecInstType.ParticipateDoNotInitiate)
-        trading_capacity = TradingCapacityType(value=TradingCapacityType.CUSTOMER)
-        efid = connection_config[session_name]['EFID']
-        party_id = PartyID(efid)
-        party_id_source = PartyIDSource('D')
-        party_role = PartyRoleType(1)
-        party_id1 = PartyID(efid)
-        party_id_source1 = PartyIDSource('D')
-        party_role1 = PartyRoleType(66)
-        parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role],[party_id1, party_id_source1, party_role1]])]
-        no_parties_groups = 2
-
-        new_order_single = NewOrderSingle(
-            sending_time=sending_time,
-            cl_ord_id=cl_ord_id,
-            options_security_id=options_security_id,
-            side=side,
-            order_qty=order_qty,
-            ord_type=ord_type,
-            price=price,
-            time_in_force=time_in_force,
-            exec_inst=exec_inst,
-            trading_capacity=trading_capacity,
-            parties_group=parties,
-            party_entries=no_parties_groups
-        )
-
-        messageLength = 73 + (18 * (no_parties_groups))
-        unsequenced_message = struct.pack('!BH', 104, messageLength)  # MessageType=104, MessageLength=91, TCP Header Length=102
-        # Encode the NewOrderSingle instance
-        encoded_message = new_order_single.encode()
-        message = unsequenced_message + encoded_message
-
-        client_socket.sendall(message)
-        time.sleep(0.2)  # Sleep for a short period between each message
-
-    # Update price for sell orders
-    for order_number in range(15):
-        sending_time = UTCTimestampNanos(int(time.time() * 10**9))
-        cl_ord_id = ''.join(choices(string.ascii_letters + string.digits, k=20))
-        side = SideType(value=SideType.SELL)
-        order_qty = randint(1, 10)
-        ord_type = OrdType(value=OrdType.LIMIT)
-        price_value = UINT32(order_number)
-        realprice = price_value.value * 10**14
-        price = PriceType(realprice)
-        print(realprice,price)
-        time_in_force = TimeInForceType(value=TimeInForceType.DAY)
-        exec_inst = ExecInstType(value=ExecInstType.ParticipateDoNotInitiate)
-        trading_capacity = TradingCapacityType(value=TradingCapacityType.CUSTOMER)
-        efid = connection_config[session_name]['EFID']
-        party_id = PartyID(efid)
-        party_id_source = PartyIDSource('D')
-        party_role = PartyRoleType(1)
-        party_id1 = PartyID(efid)
-        party_id_source1 = PartyIDSource('D')
-        party_role1 = PartyRoleType(66)
-        parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role],[party_id1, party_id_source1, party_role1]])]
-        no_parties_groups = 2
-
-        new_order_single = NewOrderSingle(
-            sending_time=sending_time,
-            cl_ord_id=cl_ord_id,
-            options_security_id=options_security_id,
-            side=side,
-            order_qty=order_qty,
-            ord_type=ord_type,
-            price=price,
-            time_in_force=time_in_force,
-            exec_inst=exec_inst,
-            trading_capacity=trading_capacity,
-            parties_group=parties,
-            party_entries=no_parties_groups
-        )
-
-        messageLength = 73 + (18 * (no_parties_groups))
-        unsequenced_message = struct.pack('!BH', 104, messageLength)  # MessageType=104, MessageLength=91, TCP Header Length=102
-        # Encode the NewOrderSingle instance
-        encoded_message = new_order_single.encode()
-        message = unsequenced_message + encoded_message
-
-        client_socket.sendall(message)
-        time.sleep(0.2)  # Sleep for a short period between each message
-
-def main():
-    # Iterate over session names and establish sessions
-    for session_name in connection_config.sections():
-        print(f"Processing session: {session_name}")
-        try:
-            # Establish SBE TCP session for the current session name
-            client_socket, session_id = establish_session(session_name)
-
-            # Generate and send messages for NewOrderSingle for each underlier and associated option security ids
-            for underlier, option_security_ids in underliers_and_options.items():
-                for option_security_id in option_security_ids:
-                    send_new_order_single(client_socket, session_id, option_security_id, underlier,session_name)
-
-            # Close the TCP connection for the current session
-            client_socket.close()
-
-        except Exception as e:
-            print(f"Failed to establish session for {session_name}: {str(e)}")
-
-if __name__ == '__main__':
-    main()
 
 
 
-price_value = UINT32(value=10000000000000000 - (_ * 100000000000000))
+
+ 
+
+
+MEMX Market Surveillance System
+
+Business Requirements Document
+
+
+
+
+Document Version: 1.0
+Date: 1/16/2024
+
+
+
+
+
+
+
+
+
+
+
+Table of Contents
+1	EXECUTIVE SUMMARY	3
+2	INTRODUCTION	3
+3	OBJECTIVES	3
+4	SCOPE	3
+5	FUNCTIONAL REQUIREMENTS – OPTIONS	4
+5.1	HIGH ORDER TO TRADE RATE	4
+5.2	REPEAT ORDERS	4
+5.3	CAPPING AND PEGGING	5
+5.4	PHISHING	5
+5.5	WASH SALES A TO B TO A	6
+5.6	MULTI-ORDER SPOOFING WITH BAIT AND SWITCH	6
+5.7	SPOOFING - RAPID ENTRY AND DELETE	6
+5.8	ORDER WITHDRAWAL (CONTINUES)	7
+5.9	LARGE TRADE	7
+6	FUNCTIONAL REQUIREMENTS – EQUITIES	8
+6.1	UNUSUAL PRICE MOVEMENT INTER-DAY	8
+6.2	UNUSUAL VOLUME INTRA-DAY	8
+6.3	MARKING THE CLOSE (NON-AUCTION CLOSE)	9
+6.4	PAINTING THE TAPE	9
+6.5	AGGRESSIVE BUY OR SELL	9
+6.6	NARROWING SPREAD FOLLOWED BY CROSSING	9
+6.7	WASH SALES (A TO A)	10
+6.8	WASH SALES A - B – A	10
+6.9	HIGH ORDER RATE	11
+6.10	HIGH SMALL ORDER RATE	11
+6.11	REPEAT ORDER	11
+6.12	HIGH ORDER TO TRADE RATIO	12
+7	REPLAY SERVICE:	12
+8	USER INTERFACE	12
+8.1	AUDIT TRAIL	12
+8.2	ALERT CONFIGURATION	13
+8.3	ALERT ACKNOWLEDGMENT AND ACTION	13
+8.4	USER ROLES AND PERMISSIONS	13
+8.5	DASHBOARDS AND REPORTING:	13
+8.6	MOCKUPS	13
+9	CASE MANAGEMENT	14
+9.1	ALERT TICKET CREATION WORKFLOW	14
+9.2	CASE TICKET FIELDS	15
+9.3	CASE MANAGEMENT UI FEATURES	15
+9.4	CASE RESOLUTION WORKFLOW	15
+10	BENCHMARKING	16
+11	NON-FUNCTIONAL REQUIREMENTS	16
+12	ASSUMPTIONS AND DEPENDENCIES	17
+13	CONSTRAINTS	17
+14	RISKS	17
+
+
+
+
+1	Executive Summary
+
+The Surveillance System aims to monitor trading activity from the trading system to identify potential market abuse and irregularities. This document outlines the business requirements for the system, including specific alert scenarios for equities and options markers and their expected outputs.
+
+2	Introduction
+
+The Surveillance System will generate alerts based on predefined criteria to detect abnormal trading patterns, repeated orders, and other potential market abuses. The alerts will assist in maintaining a fair and transparent market environment.
+
+Trading activity is monitored by utilizing data store as the primary repository for trading data. Algorithms are executed within data store to generate alerts, and these alerts are inserted into a Postgres database. The UI interfaces with the PostgresDB to present and manage the alerts.
+
+
+3	Objectives
+
+The primary objectives of the Market Surveillance System are:
+
+•	Identify and generate alerts for potential market abuse.
+•	Provide detailed information and analysis for each alert scenario.
+•	Facilitate timely intervention and investigation by relevant authorities.
+
+4	Scope
+
+
+The surveillance system will serve as a direct replacement for the existing SMARTS (Surveillance, Monitoring, and Analysis Real-Time Systems) platform, providing an equivalent set of functionalities without introducing any new features. The transition from SMARTS to the new system aims to maintain continuity in monitoring trade and order data from the trading system.
+
+
+
+
+
+5	Functional Requirements – Options
+
+5.1		High Order to Trade Rate
+
+Objective:
+Detect abnormal order-to-trade ratios, which may indicate potential market abuse, including High-Frequency Trading (HFT), quote stuffing, or attempts to create a false market.
+
+Description:
+This alert triggers when the order-to-trade ratio exceeds a defined threshold, indicating an unusual concentration of orders relative to executed trades. This could signify disruptive trading practices, such as market manipulation or false market creation.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Number of orders and trades
+Order-to-trade ratio.
+Threshold for order-to-trade ratio
+Relevant system parameters (e.g., default order-to-trade ratio)
+
+5.2		Repeat Orders
+
+Objective:
+Identify repeated entry of large orders by the same broker with the same price and volume, suggesting potential system errors or attempts to manipulate the order book.
+
+Description:
+This alert triggers when a broker repeatedly enters orders with the same price and volume, potentially indicating a malfunctioning order entry system or intentional manipulation.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Number of orders and trades
+Total consideration of the orders
+Minimum number of orders triggering the alert
+Price and volume of the repeated orders
+Minimum interval for retriggering the alert.
+
+
+5.3		Capping and Pegging
+
+Objective:
+Identify participants with significant positions in options contracts dominating trading in the underlying security before settlement.
+
+Description:
+This alert triggers when a participant holds a large position in a options contract, potentially influencing the underlying security's trading before the settlement price is set.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Participant's position in options contracts
+Relevant settlement-related parameters
+
+5.4		Phishing
+
+Objective:
+Identify participants engaging in "pinging" the market with small orders to detect hidden volume and execute transactions with relatively large volume.
+
+Description:
+This alert triggers when a participant places small orders to detect hidden volume, followed by a large trade against the identified price, potentially indicating an attempt to exploit hidden liquidity.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Number of pinging orders
+Best ask price detected.
+Volume and price of the subsequent large trade
+Minimum ping order count triggering the alert.
+
+5.5		Wash Sales A to B to A
+
+Objective:
+Identify wash sales, where a participant buys and sells the same volume of shares with another participant, potentially to manipulate or create misleading trading activity.
+
+Description:
+This alert triggers when a participant buys from another and then sells the same volume back, potentially indicating a wash sale. The alert distinguishes between normal and money passing wash sales.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Involved brokers, traders, and clients.
+Price, volume, and total value of the transactions
+Indication of normal or money passing wash sale
+
+5.6		Multi-Order Spoofing with Bait and Switch
+
+Objective:
+Detect participants entering and deleting large orders that add liquidity to the order book for a short period, followed by a profitable trade on the opposite side.
+
+Description:
+This alert triggers when a participant enters and deletes several large orders, contributing to order book liquidity for a short time, and subsequently executes a profitable trade on the opposite side.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Number of entered and deleted orders
+Lifespan of the orders
+Details of the profitable trade
+
+5.7		Spoofing - Rapid Entry and Delete
+
+Objective:
+Identify brokers entering and deleting many unexecuted orders within a short time, suggesting potential spoofing.
+
+Description:
+This alert triggers when a broker rapidly enters and deletes a significant number of unexecuted orders within a short period, potentially indicating spoofing behavior.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Number of entered and deleted orders
+Timeframe for order existence
+Minimum genuine trade value and estimated profit thresholds
+
+5.8		Order Withdrawal (Continues)
+
+Objective:
+Identify the entry and deletion of large orders at the best bid or ask price, deleted before any executions, potentially indicating continuous attempts to game the market.
+
+Description:
+This alert triggers when a participant enters and deletes a large order at the best bid or ask price, with no executions, suggesting possible attempts to manipulate the market through continuous order withdrawal.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Order details (price, volume, etc.)
+Maximum allowed alive time for an order.
+Threshold for considering the number of deleted orders excessive.
+
+5.9		Large trade
+
+Objective:
+Identify significantly large trades in an instrument, considering benchmarks, absolute value, and volume, to detect potential market impact.
+
+Description:
+This alert triggers when a trade's volume and value exceed predefined thresholds, indicating a significantly large transaction that may impact the market.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the trade
+Trade volume and value
+Benchmark information.
+User-defined thresholds for large trade volume and value
+
+
+
+6	Functional Requirements – Equities
+
+6.1		Unusual Price Movement Inter-Day
+
+Objective:
+Identify unusual price movements against security-specific benchmarks for multiple configurable inter-day time ranges.
+
+Description:
+This alert identifies unusual price movements over configurable inter-day time ranges and identifies the participant responsible for the greatest number of price upticks or downticks during the triggering time range.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Price movements against benchmarks
+Participant causing the most upticks or downticks.
+
+6.2		Unusual Volume Intra-Day
+
+Objective:
+Identify unusual levels of trading volume against security-specific benchmarks for multiple intra-day time ranges.
+
+Description:
+This alert identifies unusual trading volume levels over configurable intra-day time ranges and identifies the participant responsible for the most traded volume during the triggering time range.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Trading volume against benchmarks
+Participant trading the most volume.
+3. Market Manipulation
+Objective:
+Identify different kinds of market manipulation behavior prevalent worldwide.
+
+6.3		Marking the Close (Non-Auction Close)
+
+Description:
+Identifies participants attempting to manipulate the price level of a security before the market closes. Unusual price movements, especially at quarter ends, may indicate market manipulation to artificially inflate prices.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Unusual price movements before market close
+
+6.4		Painting the Tape
+
+Description:
+Identifies participants responsible for an unusual price movement and then reverse the direction of their trading to capitalize on the price movement they caused.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Unusual price movement details
+
+6.5		Aggressive Buy or Sell
+
+Objective:
+Identify participants continually entering aggressive orders that break the market up or down.
+
+Description:
+This alert identifies participants aggressively entering orders that significantly impact the market.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Details of aggressive buy or sell orders.
+
+6.6		Narrowing Spread Followed by Crossing
+
+Objective:
+Identify off-market transactions where the spread was narrowed just before the crossing of the transaction.
+
+Description:
+This alert identifies transactions where the spread was narrowed before crossing, indicating potential market manipulation.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Details of spread narrowing and crossing
+
+6.7		Wash Sales (A to A)
+
+Objective:
+Identify participants executing trades in which they are both the buyer and the seller, increasing volume without changing beneficial ownership.
+
+Description:
+This alert identifies trades where participants act as both the buyer and seller.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Details of the wash sale
+
+6.8		Wash Sales A - B – A
+
+Objective:
+Identify a series of trades that, when aggregated, appear to be a wash sale or a Money Pass.
+
+Description:
+This alert identifies a series of trades that may appear to be a wash sale or Money Pass, indicating potential market manipulation.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Details of the trades
+
+6.9	 	High Order Rate
+
+Objective:
+Identify participants entering a larger than usual number of orders, indicating upcoming supply/demand shifts or erroneous order entries.
+
+Description:
+This alert identifies participants entering a higher than usual number of orders, suggesting potential shifts in supply/demand or erroneous entries.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Number of orders
+
+6.10	 	High Small Order Rate
+
+Objective:
+Identify participants entering a high rate of small orders below a predefined volume when submitted into the order book for a security.
+
+Description:
+This alert identifies participants entering a high rate of small orders below a predefined volume.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Details of small orders
+
+6.11	Repeat Order
+
+Objective:
+Identify unusually large numbers of orders entered by the same broker with the same price and volume.
+
+Description:
+This alert identifies unusually large numbers of orders entered by the same broker with consistent price and volume.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Number of orders
+
+6.12	High Order to Trade Ratio
+
+Objective:
+Identify participants with a high order-to-trade ratio, indicating potential market abuse such as HFT/quote stuffing, creating a false market, or client account intrusion.
+
+Description:
+This alert serves as an indicator for several forms of market abuse, including HFT/quote stuffing, creating a false market, or client account intrusion.
+
+Required Information:
+
+Security identifier (e.g., ticker symbol)
+Timestamp of the event
+Order-to-trade ratio.
+Relevant system parameters
+
+7	Functional Requirements – Custom Rule Creation
+
+Objective:
+Enable the creation of custom surveillance rules based on user-defined parameters and arithmetic operations to detect emerging market abuse patterns not covered by predefined alert scenarios.
+
+Description:
+This feature allows authorized users to create custom surveillance rules on the fly, providing flexibility to adapt to evolving market conditions and emerging threats. Users can define rule parameters such as price, volume, reference data, and arithmetic operations (e.g., greater than, less than, equal to) to set dynamic thresholds for alert generation.
+
+Required Information:
+
+User-defined parameters for rule creation
+Arithmetic operations for threshold setting
+Threshold values for alert triggering
+
+8	Replay Service:
+
+A Replay Service is responsible for retrieving historical data and replaying it through the alerting algorithms. This service should operate independently and doesn't interfere with real-time monitoring. This will be a standalone service that will be triggered on demand when there is need to run surveillance on historical data.
+
+
+9	User Interface
+
+The user interface (UI) is designed to provide comprehensive functionality to the regulatory team, to efficiently manage and oversee the surveillance process. 
+
+9.1	Audit Trail
+
+•	[8.1.1] The UI includes a robust audit trail functionality, ensuring transparency and accountability in the surveillance activities.
+•	[8.1.2] Every action taken within the system, such as alert configuration changes, acknowledgment of alerts, and interventions, is logged with a timestamp.
+•	[8.1.3] The audit trail serves as a detailed record of user interactions, providing a transparent view of system activities for compliance and auditing purposes.
+
+9.2	Alert Configuration
+
+•	[8.2.1] Regulatory users have the capability to configure alert parameters and criteria directly from the user interface.
+•	[8.2.2] This flexibility allows the regulatory team to adapt surveillance strategies to evolving market conditions or regulatory requirements without requiring extensive technical expertise.
+
+9.3	Alert Acknowledgment and Action
+
+The UI enables regulatory users to acknowledge alerts and take necessary actions promptly.
+Upon receiving an alert, the regulatory team can acknowledge it directly from the UI, indicating awareness and initiating further investigation or intervention.
+
+9.4	User Roles and Permissions
+
+•	[8.4.1] The UI incorporates a role-based access control system, ensuring that regulatory team members have access to functionalities relevant to their responsibilities.
+•	[8.4.2] This role-based approach enhances security and streamlines workflow, allowing regulatory users to focus on their specific tasks within the surveillance process.
+
+9.5	Dashboards and Reporting:
+
+•	[8.5.1] The UI features a comprehensive dashboard that provides an overview of the current surveillance status, including the number and status of alerts, recent system activities, and pending actions.
+•	[8.5.2] Regulatory users can generate customizable reports from the UI, facilitating data-driven decision-making and regulatory compliance reporting.
+
+9.6	 Mockups
+
+ 
+
+ 
+
+
+
+10	Case Management
+
+The case management tool within the user interface facilitates the efficient handling and tracking of alerts through a structured workflow. Each alert triggers the creation of a case, providing a systematic approach to investigation and resolution.
+
+10.1	Alert Ticket Creation Workflow
+
+•	[9.1.1] Automatic Case Creation: When an alert is generated, the system automatically creates a corresponding case with a unique identifier.
+  
+•	[9.1.2] Alert Details Integration: Relevant details from the alert, such as security identifier, timestamp, and alert type, are automatically populated into the case.
+
+•	[9.1.3] User Input: Users can input additional information related to the alert, providing context and insights for the investigation.
+
+10.2	Case Ticket Fields
+
+Each case ticket contains essential fields to manage and categorize the alert effectively.
+
+    [9.2.1] Status: The status of the case, indicating whether it is open, under investigation, resolved, or closed.
+
+    [9.2.2] Assigned To: The team member or user responsible for investigating and resolving the case.
+
+    [9.2.3] Severity: A classification of the severity level associated with the alert, helping prioritize investigations.
+
+    [9.2.4] Matter ID: A unique identifier linking the case to a specific regulatory matter or issue.
+
+10.3	Case Management UI Features
+
+•	[9.3.1] List View: Users can view a list of all open and closed cases, with relevant details such as case ID, status, assigned user, and severity.
+
+•	[9.3.2] Filtering and Sorting: Users can filter, and sort cases based on various parameters, allowing for quick identification of critical issues.
+
+•	[9.3.3] Workflow Actions: The UI provides actions to update case status, reassign cases, and escalate severity levels.
+
+•	[9.3.4] Alert Integration: The case management tool is integrated with the alert system, allowing users to navigate seamlessly between alerts and associated cases.
+
+•	[9.3.5] Reporting: Users can generate reports summarizing case statistics, resolution times, and other key metrics for compliance and analysis purposes.
+
+10.4	Case Resolution Workflow
+
+•	[9.4.1] Resolution Confirmation: Once the investigation is complete, users can confirm the resolution of the case.
+
+•	[9.4.2] Closure: Closed cases are marked as resolved or closed, providing a clear indication of case status.
+
+•	[9.4.3] Audit Trail: All actions related to case management, including status changes and resolutions, are logged in the audit trail for transparency and compliance.
+
+9.5   Case Management Security
+
+•	[9.5.1] Access Control: Role-based access control ensures that only authorized users have access to case management features.
+
+•	[9.5.2] Data Privacy: Case details are treated with confidentiality, and access is restricted to authorized personnel.
+
+
+
+11	Benchmarking
+
+Benchmarking is a dynamic and essential component of Surveillance System, enabling it to adapt to changing market conditions and ensuring the timely identification of suspicious activities. It involves the establishment of threshold values for various parameters by analyzing historical data using statistical methods. The primary goal of benchmarking is to identify fair benchmarks to surveil trading system.
+
+The system employs several benchmarking methods, including Standard Deviation, Distribution Cut-off, and Threshold Table, to determine thresholds for issuing alerts.
+
+•	[10.1] Benchmark parameters are periodically updated in the system's database.
+•	[10.2] Alert thresholds are calculated based on the selected benchmarking method for each specific alert type.
+•	[10.3] Calculated thresholds are then used to trigger alerts for potential market abuse or irregularities in real-time.
+
+
+
+12	Non-functional Requirements
+
+The surveillance system should process alerts in real-time with minimal latency.
+The system should be scalable to accommodate growing trade and order data.
+Data confidentiality and integrity should be maintained.
+
+
+
+13	Assumptions and Dependencies
+
+The trading system provides accurate and timely trade and order data.
+The surveillance system has access to necessary historical data for analysis.
+
+
+14	Constraints
+
+The system's performance may be impacted by fluctuations in trade and order volume.
+Regulatory changes may necessitate updates to alert criteria.
+
+
+
+15	Risks
+
+Inadequate data quality may lead to false alerts.
+Changes in market dynamics may require continuous refinement of alert criteria.
+
+
+
+
 
 
