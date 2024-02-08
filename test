@@ -2,7 +2,7 @@ import configparser
 import socket
 import struct
 import time
-from sbe_encoder_decoder import UTCTimestampNanos, NewOrderSingle, PriceType, TimeInForceType, ExecInstType, TradingCapacityType, SideType, PartyID, PartiesGroup, PartyIDSource, PartyRoleType, OptionsSecurityID
+from sbe_encoder_decoder import *
 from random import choices, randint
 import string
 
@@ -16,7 +16,7 @@ connection_config.read(config['Server']['config_file'])
 
 # Read underliers and associated option security ids
 underliers_and_options = {}
-for underlier, options in config.items('Underliers'):
+for underlier, options in config.items('OptionsSecurityIDs'):
     underliers_and_options[underlier] = options.split(',')
 
 
@@ -79,14 +79,18 @@ def establish_session(session_name):
     return client_socket, session_id
 
 # Generate and send messages for NewOrderSingle
-def send_new_order_single(client_socket, session_id, options_security_id, underlier):
-    for _ in range(15):
+def send_new_order_single(client_socket, session_id, options_security_id, underlier,session_name):
+    for order_number in range(15):
         sending_time = UTCTimestampNanos(int(time.time() * 10**9))
         cl_ord_id = ''.join(choices(string.ascii_letters + string.digits, k=20))
         side = SideType(value=SideType.BUY)
         order_qty = randint(1, 10)
         ord_type = OrdType(value=OrdType.LIMIT)
-        price = PriceType(80000000000000000)  # Initial price for buy orders
+        price_value = UINT32(order_number)
+        print(order_number)
+        realprice = price_value.value * 10**14
+        price = PriceType(realprice)
+        print(realprice,price)
         time_in_force = TimeInForceType(value=TimeInForceType.DAY)
         exec_inst = ExecInstType(value=ExecInstType.ParticipateDoNotInitiate)
         trading_capacity = TradingCapacityType(value=TradingCapacityType.CUSTOMER)
@@ -94,7 +98,11 @@ def send_new_order_single(client_socket, session_id, options_security_id, underl
         party_id = PartyID(efid)
         party_id_source = PartyIDSource('D')
         party_role = PartyRoleType(1)
-        parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role]])]
+        party_id1 = PartyID(efid)
+        party_id_source1 = PartyIDSource('D')
+        party_role1 = PartyRoleType(66)
+        parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role],[party_id1, party_id_source1, party_role1]])]
+        no_parties_groups = 2
 
         new_order_single = NewOrderSingle(
             sending_time=sending_time,
@@ -107,10 +115,13 @@ def send_new_order_single(client_socket, session_id, options_security_id, underl
             time_in_force=time_in_force,
             exec_inst=exec_inst,
             trading_capacity=trading_capacity,
-            parties_group=parties
+            parties_group=parties,
+            party_entries=no_parties_groups
         )
 
-        unsequenced_message = struct.pack('!BH', 104, 91)
+        messageLength = 73 + (18 * (no_parties_groups))
+        unsequenced_message = struct.pack('!BH', 104, messageLength)  # MessageType=104, MessageLength=91, TCP Header Length=102
+        # Encode the NewOrderSingle instance
         encoded_message = new_order_single.encode()
         message = unsequenced_message + encoded_message
 
@@ -118,13 +129,16 @@ def send_new_order_single(client_socket, session_id, options_security_id, underl
         time.sleep(0.2)  # Sleep for a short period between each message
 
     # Update price for sell orders
-    for _ in range(15):
+    for order_number in range(15):
         sending_time = UTCTimestampNanos(int(time.time() * 10**9))
         cl_ord_id = ''.join(choices(string.ascii_letters + string.digits, k=20))
         side = SideType(value=SideType.SELL)
         order_qty = randint(1, 10)
         ord_type = OrdType(value=OrdType.LIMIT)
-        price = PriceType(100000000000000000)  # Initial price for sell orders
+        price_value = UINT32(order_number)
+        realprice = price_value.value * 10**14
+        price = PriceType(realprice)
+        print(realprice,price)
         time_in_force = TimeInForceType(value=TimeInForceType.DAY)
         exec_inst = ExecInstType(value=ExecInstType.ParticipateDoNotInitiate)
         trading_capacity = TradingCapacityType(value=TradingCapacityType.CUSTOMER)
@@ -132,7 +146,11 @@ def send_new_order_single(client_socket, session_id, options_security_id, underl
         party_id = PartyID(efid)
         party_id_source = PartyIDSource('D')
         party_role = PartyRoleType(1)
-        parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role]])]
+        party_id1 = PartyID(efid)
+        party_id_source1 = PartyIDSource('D')
+        party_role1 = PartyRoleType(66)
+        parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role],[party_id1, party_id_source1, party_role1]])]
+        no_parties_groups = 2
 
         new_order_single = NewOrderSingle(
             sending_time=sending_time,
@@ -145,10 +163,13 @@ def send_new_order_single(client_socket, session_id, options_security_id, underl
             time_in_force=time_in_force,
             exec_inst=exec_inst,
             trading_capacity=trading_capacity,
-            parties_group=parties
+            parties_group=parties,
+            party_entries=no_parties_groups
         )
 
-        unsequenced_message = struct.pack('!BH', 104, 91)
+        messageLength = 73 + (18 * (no_parties_groups))
+        unsequenced_message = struct.pack('!BH', 104, messageLength)  # MessageType=104, MessageLength=91, TCP Header Length=102
+        # Encode the NewOrderSingle instance
         encoded_message = new_order_single.encode()
         message = unsequenced_message + encoded_message
 
@@ -166,7 +187,7 @@ def main():
             # Generate and send messages for NewOrderSingle for each underlier and associated option security ids
             for underlier, option_security_ids in underliers_and_options.items():
                 for option_security_id in option_security_ids:
-                    send_new_order_single(client_socket, session_id, option_security_id, underlier)
+                    send_new_order_single(client_socket, session_id, option_security_id, underlier,session_name)
 
             # Close the TCP connection for the current session
             client_socket.close()
@@ -179,21 +200,3 @@ if __name__ == '__main__':
 
 
 
-for order_number in range(15):
-    sending_time = UTCTimestampNanos(int(time.time() * 10**9))
-    cl_ord_id = ''.join(choices(string.ascii_letters + string.digits, k=20))
-    side = SideType(value=SideType.SELL)
-    order_qty = UINT32(value=randint(1, 10))  # Encoding order quantity
-    ord_type = OrdType(value=OrdType.LIMIT)
-    # Calculate price for each iteration, decreasing from 100 to 85
-    price = PriceType(10000000000000000 - order_number * 100000000000000)
-    time_in_force = TimeInForceType(value=TimeInForceType.DAY)
-    exec_inst = ExecInstType(value=ExecInstType.ParticipateDoNotInitiate)
-    trading_capacity = TradingCapacityType(value=TradingCapacityType.CUSTOMER)
-    efid = connection_config[session_name]['EFID']
-    party_id = PartyID(efid)
-    party_id_source = PartyIDSource('D')
-    party_role = PartyRoleType(1)
-    parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role]])]
-
-    # Now you can use these values to construct your sell order message
