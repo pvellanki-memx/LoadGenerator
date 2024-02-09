@@ -1,11 +1,4 @@
-9.1 Alert Management:
-
-Alert Management serves as a central hub for overseeing and addressing surveillance alerts efficiently.
-
-Alert Display: All alerts are listed with unique IDs, associated workflows (such as open, in progress, resolved), timestamps indicating when the ticket was opened, and tracking by age to prioritize based on urgency.
-Workflow Management: Alerts follow a workflow of statuses including open, in progress, and closed. Users can transition alerts through these statuses directly from the UI, ensuring timely handling and tracking of each alert.
-Audit Trail for Alerts: A robust audit trail records every action taken on alerts, including configuration changes, acknowledgments, and interventions. Each entry is logged with a timestamp, providing transparency and accountability in alert management.
-9.2 Case Management:
+9.2	Case Management:
 
 Case Management facilitates the structured handling and resolution of alerts triggered by the surveillance system.
 
@@ -13,15 +6,4 @@ Alert Ticket Creation Workflow: Automatic case creation upon alert generation, i
 Case Ticket Fields: Essential fields such as status, assigned to, severity, and matter ID categorize and prioritize cases effectively.
 Case Management UI Features: List view for easy access to open and closed cases, filtering and sorting options for quick identification, workflow actions for status updates and escalations, seamless integration with the alert system, and reporting capabilities for compliance and analysis.
 Workflow for Case Management: Cases follow a workflow of statuses including open, in progress, supervisor review, and closed. This structured approach ensures that cases are systematically reviewed and resolved, with opportunities for supervisor review to ensure quality and accuracy.
-Audit Trail for Cases: Similar to alerts, all actions related to case management, including status changes, resolutions, and updates, are logged in an audit trail. This comprehensive record ensures transparency and compliance with regulatory standards.
-
-
-9.3 Supervisor View:
-
-The supervisor view provides a comprehensive dashboard and reporting functionality for overseeing surveillance activities and generating custom reports.
-
-Dashboard Overview: A customizable dashboard displaying key statistics and metrics related to alerts and case management. Supervisors can monitor alert statuses, case progress, and other relevant data at a glance.
-Alert Statistics: Graphical representations and numerical summaries of alert volumes, distribution by severity, age tracking, and workflow statuses.
-Case Status Monitoring: Visual indicators and summaries of case statuses, including open, in progress, and closed cases. Supervisors can quickly assess the overall status of surveillance investigations.
-Custom Report Generation: Built-in tools for generating custom reports based on data stored in the system. Supervisors can specify parameters, filters, and formatting options to create reports tailored to their needs.
-Access Control: Role-based access control ensures that only authorized supervisors have access to the supervisor view. This safeguards sensitive surveillance data and ensures compliance with privacy regulations.
+Audit Trail for Cases: Like alerts, all actions related to case management, including status changes, resolutions, and updates, are logged in an audit trail. This comprehensive record ensures transparency and compliance with regulatory standards.
