@@ -1,99 +1,27 @@
-9	User Interface
+9.1 Alert Management:
 
-The user interface (UI) is designed to provide comprehensive functionality to the regulatory team, to efficiently manage and oversee the surveillance process. 
+Alert Management serves as a central hub for overseeing and addressing surveillance alerts efficiently.
 
-9.1	Audit Trail
+Alert Display: All alerts are listed with unique IDs, associated workflows (such as open, in progress, resolved), timestamps indicating when the ticket was opened, and tracking by age to prioritize based on urgency.
+Workflow Management: Alerts follow a workflow of statuses including open, in progress, and closed. Users can transition alerts through these statuses directly from the UI, ensuring timely handling and tracking of each alert.
+Audit Trail for Alerts: A robust audit trail records every action taken on alerts, including configuration changes, acknowledgments, and interventions. Each entry is logged with a timestamp, providing transparency and accountability in alert management.
+9.2 Case Management:
 
-•	[8.1.1] The UI includes a robust audit trail functionality, ensuring transparency and accountability in the surveillance activities.
-•	[8.1.2] Every action taken within the system, such as alert configuration changes, acknowledgment of alerts, and interventions, is logged with a timestamp.
-•	[8.1.3] The audit trail serves as a detailed record of user interactions, providing a transparent view of system activities for compliance and auditing purposes.
+Case Management facilitates the structured handling and resolution of alerts triggered by the surveillance system.
 
-9.2	Alert Configuration
-
-•	[8.2.1] Regulatory users have the capability to configure alert parameters and criteria directly from the user interface.
-•	[8.2.2] This flexibility allows the regulatory team to adapt surveillance strategies to evolving market conditions or regulatory requirements without requiring extensive technical expertise.
-
-9.3	Alert Acknowledgment and Action
-
-The UI enables regulatory users to acknowledge alerts and take necessary actions promptly.
-Upon receiving an alert, the regulatory team can acknowledge it directly from the UI, indicating awareness and initiating further investigation or intervention.
-
-9.4	User Roles and Permissions
-
-•	[8.4.1] The UI incorporates a role-based access control system, ensuring that regulatory team members have access to functionalities relevant to their responsibilities.
-•	[8.4.2] This role-based approach enhances security and streamlines workflow, allowing regulatory users to focus on their specific tasks within the surveillance process.
-
-9.5	Dashboards and Reporting:
-
-•	[8.5.1] The UI features a comprehensive dashboard that provides an overview of the current surveillance status, including the number and status of alerts, recent system activities, and pending actions.
-•	[8.5.2] Regulatory users can generate customizable reports from the UI, facilitating data-driven decision-making and regulatory compliance reporting.
-
-9.6	 Mockups
-
- 
-
- 
+Alert Ticket Creation Workflow: Automatic case creation upon alert generation, integration of alert details into the case, and provision for user input to provide context for investigation.
+Case Ticket Fields: Essential fields such as status, assigned to, severity, and matter ID categorize and prioritize cases effectively.
+Case Management UI Features: List view for easy access to open and closed cases, filtering and sorting options for quick identification, workflow actions for status updates and escalations, seamless integration with the alert system, and reporting capabilities for compliance and analysis.
+Workflow for Case Management: Cases follow a workflow of statuses including open, in progress, supervisor review, and closed. This structured approach ensures that cases are systematically reviewed and resolved, with opportunities for supervisor review to ensure quality and accuracy.
+Audit Trail for Cases: Similar to alerts, all actions related to case management, including status changes, resolutions, and updates, are logged in an audit trail. This comprehensive record ensures transparency and compliance with regulatory standards.
 
 
+9.3 Supervisor View:
 
-10	Case Management
+The supervisor view provides a comprehensive dashboard and reporting functionality for overseeing surveillance activities and generating custom reports.
 
-The case management tool within the user interface facilitates the efficient handling and tracking of alerts through a structured workflow. Each alert triggers the creation of a case, providing a systematic approach to investigation and resolution.
-
-10.1	Alert Ticket Creation Workflow
-
-•	[9.1.1] Automatic Case Creation: When an alert is generated, the system automatically creates a corresponding case with a unique identifier.
-  
-•	[9.1.2] Alert Details Integration: Relevant details from the alert, such as security identifier, timestamp, and alert type, are automatically populated into the case.
-
-•	[9.1.3] User Input: Users can input additional information related to the alert, providing context and insights for the investigation.
-
-10.2	Case Ticket Fields
-
-Each case ticket contains essential fields to manage and categorize the alert effectively.
-
-    [9.2.1] Status: The status of the case, indicating whether it is open, under investigation, resolved, or closed.
-
-    [9.2.2] Assigned To: The team member or user responsible for investigating and resolving the case.
-
-    [9.2.3] Severity: A classification of the severity level associated with the alert, helping prioritize investigations.
-
-    [9.2.4] Matter ID: A unique identifier linking the case to a specific regulatory matter or issue.
-
-10.3	Case Management UI Features
-
-•	[9.3.1] List View: Users can view a list of all open and closed cases, with relevant details such as case ID, status, assigned user, and severity.
-
-•	[9.3.2] Filtering and Sorting: Users can filter, and sort cases based on various parameters, allowing for quick identification of critical issues.
-
-•	[9.3.3] Workflow Actions: The UI provides actions to update case status, reassign cases, and escalate severity levels.
-
-•	[9.3.4] Alert Integration: The case management tool is integrated with the alert system, allowing users to navigate seamlessly between alerts and associated cases.
-
-•	[9.3.5] Reporting: Users can generate reports summarizing case statistics, resolution times, and other key metrics for compliance and analysis purposes.
-
-10.4	Case Resolution Workflow
-
-•	[9.4.1] Resolution Confirmation: Once the investigation is complete, users can confirm the resolution of the case.
-
-•	[9.4.2] Closure: Closed cases are marked as resolved or closed, providing a clear indication of case status.
-
-•	[9.4.3] Audit Trail: All actions related to case management, including status changes and resolutions, are logged in the audit trail for transparency and compliance.
-
-9.5   Case Management Security
-
-•	[9.5.1] Access Control: Role-based access control ensures that only authorized users have access to case management features.
-
-•	[9.5.2] Data Privacy: Case details are treated with confidentiality, and access is restricted to authorized personnel.
-
-
-
-
-
-
-
-
-
-
-
-
+Dashboard Overview: A customizable dashboard displaying key statistics and metrics related to alerts and case management. Supervisors can monitor alert statuses, case progress, and other relevant data at a glance.
+Alert Statistics: Graphical representations and numerical summaries of alert volumes, distribution by severity, age tracking, and workflow statuses.
+Case Status Monitoring: Visual indicators and summaries of case statuses, including open, in progress, and closed cases. Supervisors can quickly assess the overall status of surveillance investigations.
+Custom Report Generation: Built-in tools for generating custom reports based on data stored in the system. Supervisors can specify parameters, filters, and formatting options to create reports tailored to their needs.
+Access Control: Role-based access control ensures that only authorized supervisors have access to the supervisor view. This safeguards sensitive surveillance data and ensures compliance with privacy regulations.
