@@ -1,9 +1,15 @@
-9.2	Case Management:
+9.2 Case Management:
 
-Case Management facilitates the structured handling and resolution of alerts triggered by the surveillance system.
+Case Management facilitates the structured handling and resolution of alerts triggered by the surveillance system. Additionally, it supports the management of regulatory matters, which can be associated with multiple alerts and have their own workflow.
 
 Alert Ticket Creation Workflow: Automatic case creation upon alert generation, integration of alert details into the case, and provision for user input to provide context for investigation.
+
+Matter Creation and Association: Users can create regulatory matters within the system and associate them with multiple alerts. Matters serve as overarching entities to manage related alerts and have their own workflow for tracking and resolution.
+
 Case Ticket Fields: Essential fields such as status, assigned to, severity, and matter ID categorize and prioritize cases effectively.
-Case Management UI Features: List view for easy access to open and closed cases, filtering and sorting options for quick identification, workflow actions for status updates and escalations, seamless integration with the alert system, and reporting capabilities for compliance and analysis.
-Workflow for Case Management: Cases follow a workflow of statuses including open, in progress, supervisor review, and closed. This structured approach ensures that cases are systematically reviewed and resolved, with opportunities for supervisor review to ensure quality and accuracy.
-Audit Trail for Cases: Like alerts, all actions related to case management, including status changes, resolutions, and updates, are logged in an audit trail. This comprehensive record ensures transparency and compliance with regulatory standards.
+
+Case Management UI Features: List view for easy access to open and closed cases, filtering and sorting options for quick identification, workflow actions for status updates and escalations, seamless integration with the alert system and matter management, and reporting capabilities for compliance and analysis.
+
+Workflow for Case Management: Cases follow a workflow of statuses including open, in progress, supervisor review, and closed. This structured approach ensures that cases and associated matters are systematically reviewed and resolved, with opportunities for supervisor review to ensure quality and accuracy.
+
+Audit Trail for Cases and Matters: Similar to alerts, all actions related to case and matter management, including status changes, resolutions, and updates, are logged in an audit trail. This comprehensive record ensures transparency and compliance with regulatory standards.
