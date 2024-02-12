@@ -1,11 +1,6 @@
-
-        order_number=10
-  
-        # Generate and send messages for NewOrderSingle for each underlier and associated option security ids
-        for underlier, option_security_ids in underliers_and_options.items():
-            for option_security_id in option_security_ids:
-                new_order_single_message = generate_message("LongTwoSideBulkQuote", session_name,option_security_id,order_number)
-                send_message(client_socket, new_order_single_message)
-   
-        #option_security_id = "G0UG6kwM"
- 
+# Generate and send messages for LongTwoSideBulkQuote for each underlier and associated option security ids
+for underlier, option_security_ids in underliers_and_options.items():
+    for option_security_id in option_security_ids:
+        for order_number in range(10, 26):  # Loop over order numbers from 10 to 25
+            new_order_single_message = generate_message("LongTwoSideBulkQuote", session_name, option_security_id, order_number)
+            send_message(client_socket, new_order_single_message)
