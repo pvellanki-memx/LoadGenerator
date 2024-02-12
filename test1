@@ -1,4 +1,5 @@
 import pandas as pd
+import string
 
 # Read the CSV file into a DataFrame
 df = pd.read_csv('your_csv_file.csv')
@@ -6,20 +7,30 @@ df = pd.read_csv('your_csv_file.csv')
 # Get unique underliers
 underliers = df['UnderlyingSymbol'].unique()
 
-# Iterate over unique underliers
+# Group underliers by the first alphabet of their name
+underliers_by_alphabet = {letter: [] for letter in string.ascii_uppercase}
 for underlier in underliers:
-    # Filter data based on underlier
-    filtered_data = df[df['UnderlyingSymbol'] == underlier]
+    first_letter = underlier[0].upper()
+    underliers_by_alphabet[first_letter].append(underlier)
+
+# Sort underliers within each alphabet group
+for alphabet, underliers_list in underliers_by_alphabet.items():
+    underliers_by_alphabet[alphabet] = sorted(underliers_list)
+
+# Iterate over underliers grouped by alphabet
+for alphabet, underliers_list in underliers_by_alphabet.items():
+    # Filter data for underliers starting with the current alphabet
+    filtered_data = df[df['UnderlyingSymbol'].str.startswith(alphabet)]
 
     # Extract OptionID values
     option_ids = filtered_data['OptionId'].tolist()
 
     # Format OptionID values
-    formatted_option_ids = ','.join(option_ids)
+    formatted_option_ids = f"{alphabet} = {','.join(option_ids)}"
 
     # Write formatted_option_ids to a text file
-    output_file = f'{underlier}_option_ids.txt'
+    output_file = f'{alphabet}_option_ids.txt'
     with open(output_file, 'w') as file:
         file.write(formatted_option_ids)
 
-    print(f'Option IDs for {underlier} written to {output_file}')
+    print(f'Option IDs for underliers starting with {alphabet} written to {output_file}')
