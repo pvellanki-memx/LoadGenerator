@@ -22,11 +22,14 @@ for alphabet, underliers_list in underliers_by_alphabet.items():
     # Filter data for underliers starting with the current alphabet
     filtered_data = df[df['UnderlyingSymbol'].str.startswith(alphabet)]
 
-    # Extract OptionID values
-    option_ids = filtered_data['OptionId'].tolist()
+    # Group option IDs by underlier
+    option_ids_by_underlier = {}
+    for underlier in underliers_list:
+        underlier_data = filtered_data[filtered_data['UnderlyingSymbol'] == underlier]
+        option_ids_by_underlier[underlier] = underlier_data['OptionId'].tolist()
 
-    # Format OptionID values
-    formatted_option_ids = f"{alphabet} = {','.join(option_ids)}"
+    # Format option IDs by underlier
+    formatted_option_ids = '\n'.join([f"{underlier} = {','.join(option_ids)}" for underlier, option_ids in option_ids_by_underlier.items()])
 
     # Write formatted_option_ids to a text file
     output_file = f'{alphabet}_option_ids.txt'
