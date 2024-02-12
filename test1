@@ -3,19 +3,23 @@ import pandas as pd
 # Read the CSV file into a DataFrame
 df = pd.read_csv('your_csv_file.csv')
 
-# Filter data based on underlier
-underlier = 'A'  # Example underlier
-filtered_data = df[df['UnderlyingSymbol'] == underlier]
+# Get unique underliers
+underliers = df['UnderlyingSymbol'].unique()
 
-# Extract OptionID values
-option_ids = filtered_data['OptionId'].tolist()
+# Iterate over unique underliers
+for underlier in underliers:
+    # Filter data based on underlier
+    filtered_data = df[df['UnderlyingSymbol'] == underlier]
 
-# Format OptionID values
-formatted_option_ids = ','.join(option_ids)
+    # Extract OptionID values
+    option_ids = filtered_data['OptionId'].tolist()
 
-# Write formatted_option_ids to a text file
-output_file = f'{underlier}_option_ids.txt'
-with open(output_file, 'w') as file:
-    file.write(formatted_option_ids)
+    # Format OptionID values
+    formatted_option_ids = ','.join(option_ids)
 
-print(f'Option IDs for {underlier} written to {output_file}')
+    # Write formatted_option_ids to a text file
+    output_file = f'{underlier}_option_ids.txt'
+    with open(output_file, 'w') as file:
+        file.write(formatted_option_ids)
+
+    print(f'Option IDs for {underlier} written to {output_file}')
