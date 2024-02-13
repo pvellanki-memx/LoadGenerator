@@ -1,17 +1,5 @@
+
 # Read configuration from config.ini
 config = configparser.ConfigParser()
-config.read(config_ini_path)
+config.read('config.ini')
 
-# Check if the 'Server' section exists in the configuration
-if 'Server' not in config:
-    print("Error: 'Server' section not found in config.ini")
-    sys.exit(1)
-
-# Check if 'config_file' key exists in the 'Server' section
-if 'config_file' not in config['Server']:
-    print("Error: 'config_file' key not found in the 'Server' section of config.ini")
-    sys.exit(1)
-
-# Read the connection details file specified in the 'config_file' key
-connection_config = configparser.ConfigParser()
-connection_config.read(config['Server']['config_file'])
