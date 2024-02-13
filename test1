@@ -1,3 +1,15 @@
+[pvellanki@sys0412 buildbook]$ ls -l config.ini
+-rw-rw-r-- 1 pvellanki pvellanki 130 Feb 12 16:52 config.ini
+[pvellanki@sys0412 buildbook]$ vi test.py 
+[pvellanki@sys0412 buildbook]$ python3 test.py config.ini
+config_ini_path: config.ini
+config contents: <configparser.ConfigParser object at 0x7f1e67b92160>
+Traceback (most recent call last):
+  File "test.py", line 29, in <module>
+    connection_config.read(config['Server']['config_file'])
+  File "/usr/lib64/python3.6/configparser.py", line 959, in __getitem__
+    raise KeyError(key)
+KeyError: 'Server'
 [pvellanki@sys0412 buildbook]$ cat config.ini
 [Server]
 config_file = connections.cfg
@@ -6,3 +18,4 @@ config_file = connections.cfg
 [OptionsSecurityIDs]
 GLD = G0UG6mKL,G0UG6mKS,G0UG6mKU
 NFLX = N1tX8tTC,N1tX6ot5,N1tX6otf
+
