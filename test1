@@ -1,5 +1,23 @@
 
-# Read configuration from config.ini
-config = configparser.ConfigParser()
-config.read('config.ini')
+import sys
+import configparser
+
+if __name__ == "__main__":
+    # Check if the script is provided with the path to the config.ini file
+    if len(sys.argv) < 2:
+        print("Usage: python script.py <path_to_config_ini>")
+        sys.exit(1)
+
+    # Get the path to the config.ini file from the command-line argument
+    config_ini_path = sys.argv[1]
+
+    # Read configuration from config.ini
+    config = configparser.ConfigParser()
+    try:
+        config.read(config_ini_path)
+        print("Configuration loaded successfully.")
+        # Now you can access configuration values using config['section']['key']
+    except Exception as e:
+        print(f"Error loading configuration: {e}")
+
 
