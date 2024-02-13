@@ -1,61 +1,14 @@
-import pandas as pd
-import string
-import os
-
-# Read the CSV file into a DataFrame
-df = pd.read_csv('your_csv_file.csv')
-
-# Get unique underliers
-underliers = df['UnderlyingSymbol'].unique()
-
-# Group underliers by the first alphabet of their name
-underliers_by_alphabet = {letter: [] for letter in string.ascii_uppercase}
-for underlier in underliers:
-    first_letter = underlier[0].upper()
-    underliers_by_alphabet[first_letter].append(underlier)
-
-# Sort underliers within each alphabet group
-for alphabet, underliers_list in underliers_by_alphabet.items():
-    underliers_by_alphabet[alphabet] = sorted(underliers_list)
-
-# Text to append at the beginning of each file
-text_to_append = """
-[Server]
-config_file = connections.cfg
-
-[OptionsSecurityIDs]
-"""
-
-# Iterate over underliers grouped by alphabet
-for alphabet, underliers_list in underliers_by_alphabet.items():
-    # Filter data for underliers starting with the current alphabet
-    filtered_data = df[df['UnderlyingSymbol'].str.startswith(alphabet)]
-
-    # Group option IDs by underlier
-    option_ids_by_underlier = {}
-    for underlier in underliers_list:
-        underlier_data = filtered_data[filtered_data['UnderlyingSymbol'] == underlier]
-        option_ids_by_underlier[underlier] = underlier_data['OptionId'].tolist()
-
-    # Format option IDs by underlier
-    formatted_option_ids = '\n'.join([f"{underlier} = {','.join(option_ids)}" for underlier, option_ids in option_ids_by_underlier.items()])
-
-    # Write formatted_option_ids to a text file
-    output_file = f'{alphabet}_option_ids.txt'
-    with open(output_file, 'w') as file:
-        # Write the text_to_append at the beginning of the file
-        file.write(text_to_append)
-        file.write("\n\n")
-        file.write(formatted_option_ids)
-
-    print(f'Option IDs for underliers starting with {alphabet} written to {output_file}')
-
-
-
-
-
-import sys
 import configparser
+import socket
+import struct
+import time
+from multiprocessing import Process
+from sbe_encoder_decoder import UTCTimestampNanos, NewOrderSingle,  ShortTwoSidedQuote,ShortTwoSideBulkQuote, LongTwoSideBulkQuote, ShortOneSideBulkQuote, LongOneSideBulkQuote,MatchTradePreventionType,MtpGroupIDType, LongOneSideQuote,LongTwoSidedQuote,OrderCancelRequest,ExecutionAllocationsGroup,AllocationInstruction,MassCancelRequest
+from sbe_encoder_decoder import UINT32,UINT16,UINT8, OrdType, PriceType,TimeInForceType, ExecInstType, TradingCapacityType, SideType, PartyID, PartiesGroup,PartyIDSource, PartyRoleType, ShortPriceType, OptionsSecurityID,ShortOneSideQuote,AllocType,Char,AllocTransType,RequestedAllocationsGroup,NestedPartiesGroup,UnderlyingOrSeriesType
+from random import choices, randint
+import string
+import sys
+from random import choices, randint, uniform
 
 # Check if the script is provided with the path to the config.ini file
 if len(sys.argv) < 2:
@@ -67,4 +20,348 @@ config_ini_path = sys.argv[1]
 
 # Read configuration from config.ini
 config = configparser.ConfigParser()
-config.read(config_ini_path)
+config.read('config_ini_path')
+
+
+# Read connection details from connections.cfg
+connection_config = configparser.ConfigParser()
+connection_config.read(config['Server']['config_file'])
+
+underliers_and_options = {}
+for underlier, options in config.items('OptionsSecurityIDs'):
+    underliers_and_options[underlier] = options.split(',')
+
+
+
+# Establish SBE TCP session
+def establish_session(session_name):
+
+
+    # Get connection details for the specified session name
+    host = connection_config[session_name]['host']
+    port = int(connection_config[session_name]['port'])
+    user = connection_config[session_name]['user']
+    password = connection_config[session_name]['password']
+    token = f'{user}:{password}'
+    
+
+
+        # Login request
+    message_type = 100
+    token_type = 'P'  # Assuming token type is always 'P'
+    token_length = len(token)
+    header = struct.pack('!BHB', message_type, token_length + 1, token_type.encode('utf-8')[0])
+    message = header + token.encode('utf-8')
+
+    # Create a socket and establish the connection
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect((host, port))
+
+    # Set socket to binary mode
+    client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+
+        # Send the login request
+    client_socket.sendall(message)
+
+    # Receive and handle the response
+    response_header = client_socket.recv(3)
+    response_type, response_length = struct.unpack('!B H', response_header)
+    print(response_type, response_length)
+
+    if response_type == 1:  # Login Accepted
+        response_message = client_socket.recv(response_length)
+        print("Login Accepted:", response_message.decode('utf-8'))
+        session_id = None
+    elif response_type == 2:  # Login Rejected
+        response_message = client_socket.recv(response_length)
+        print("Login Rejected:", response_message.decode('utf-8'))
+        client_socket.close()
+        exit()  # Exit the script gracefully after login rejection
+    else:
+        print("Invalid response received.")
+        client_socket.close()
+        exit()  # Exit the script if an invalid response is received
+
+    # Continue with the session
+    while True:
+        response_header = client_socket.recv(11)
+        response_type, response_length, session_id = struct.unpack('!B H Q', response_header)
+        print(response_header, response_type, response_length)
+
+        if response_type == 3:  # Start of Session
+            print("Start of Session. Session ID:", session_id)
+            break
+        else:
+            print("Invalid response received.")
+
+
+    # Stream Request
+    stream_request_type = 103
+    stream_request_length = 16  # 4 bytes for message type and length, 8 bytes for session ID, 8 bytes for next sequence number
+    NEXT_SEQUENCE_NUMBER = 0
+    stream_request_header = struct.pack('!BHQQ', stream_request_type, stream_request_length, session_id, NEXT_SEQUENCE_NUMBER)
+    stream_request = stream_request_header
+
+    # Send the Stream Request
+    client_socket.sendall(stream_request)
+
+    response_header = client_socket.recv(3)
+    response_type, response_length = struct.unpack('!B H', response_header)
+    print(response_type, response_length)
+
+    if response_type == 9:  # Stream Rejected
+        response_message = client_socket.recv(response_length)
+        reject_code = response_message.decode('utf-8')
+        print("Stream Rejected. Reject Code:", reject_code)
+        client_socket.close()
+        exit()
+    elif response_type == 10:  # End of Stream
+        response_message = client_socket.recv(response_length)
+        print("End of Stream")
+        client_socket.close()
+        exit()
+    elif response_type == 8:  # Stream Begin
+        response_message = client_socket.recv(response_length - 2)
+        print(response_message)
+        NEXT_SEQUENCE_NUMBER  = struct.unpack('!Q', response_message[3:11])
+        print("Stream Begin received")
+    else:
+        print("Invalid Message received")
+    
+
+    return client_socket, session_id
+
+
+
+def generate_message(message_type,session_name, options_security_id,order_number):
+    new_order_single_message = None
+    order_cancel_message = None
+    if message_type == 'NewOrderSingle':
+  
+        # Generate values for the fields
+        sending_time = UTCTimestampNanos(int(time.time() * 10**9))
+        orig_cl_ord_id = ''.join(choices(string.ascii_letters + string.digits, k=20))
+        #options_security_id = choices(selected_options_security_ids)[0]
+        value=choices([SideType.BUY, SideType.SELL])
+        side = value[0]
+        order_qty = UINT32(value=randint(1, 10))
+        ord_type = OrdType(value=OrdType.LIMIT)
+        price_value = UINT32(value=randint(1, 10))
+        realprice = price_value.value * 10**14
+        #price = PriceType(50000000000000000)  # Set the price with 10^8 multiplier
+        price = PriceType(realprice) 
+        time_in_force = TimeInForceType(value=TimeInForceType.DAY)
+        #time_in_force = TimeInForceType(value=TimeInForceType.IMMEDIATE_OR_CANCEL)
+        exec_inst = ExecInstType(value=ExecInstType.ParticipateDoNotInitiate)  # Set the execution instructions
+        trading_capacity = TradingCapacityType(value=TradingCapacityType.CUSTOMER)  # Set the trading capacity
+        efid = connection_config[session_name]['EFID']
+        party_id = PartyID(efid)
+        party_id_source = PartyIDSource('D')
+        party_role = PartyRoleType(1)
+        party_id1 = PartyID(efid)
+        party_id_source1 = PartyIDSource('D')
+        party_role1 = PartyRoleType(66)
+        parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role],[party_id1, party_id_source1, party_role1]])]
+        no_parties_groups = 2
+
+        # Create an instance of NewOrderSingle and set the field values
+        new_order_single = NewOrderSingle(
+            sending_time=sending_time,
+            cl_ord_id=orig_cl_ord_id,
+            options_security_id=c,
+            side=side,
+            order_qty=order_qty,
+            ord_type=ord_type,
+            price=price,
+            time_in_force=time_in_force,
+            exec_inst=exec_inst,
+            trading_capacity=trading_capacity,
+            parties_group=parties,
+            party_entries=no_parties_groups
+        )
+
+        
+        messageLength = 73 + (18 * (no_parties_groups))
+        unsequenced_message = struct.pack('!BH', 104, messageLength)  # MessageType=104, MessageLength=91, TCP Header Length=102
+        # Encode the NewOrderSingle instance
+        encoded_message = new_order_single.encode()
+        message = unsequenced_message + encoded_message
+
+        new_order_single_message = message
+
+
+        return new_order_single_message
+
+
+
+
+
+
+    elif message_type == 'LongTwoSideBulkQuote':
+        # Generate LongTwoSideBulkQuote message
+        sending_time = UTCTimestampNanos(int(time.time() * 10**9))
+        cl_ord_id = ''.join(choices(string.ascii_uppercase + string.digits, k=20))
+        time_in_force = TimeInForceType(value=TimeInForceType.DAY)
+        #exec_inst = ExecInstType(value=ExecInstType.ParticipateDoNotInitiate)
+        exec_inst = UINT16(1)
+        trading_capacity = TradingCapacityType(value=TradingCapacityType.MARKET_MAKER)
+        mtp_group_id = MtpGroupIDType(0)
+        match_trade_prevention = MatchTradePreventionType(0)
+        cancel_group_id = UINT16(0)
+        risk_group_id = UINT16(0)
+        efid = connection_config[session_name]['EFID']
+        party_id = PartyID(efid)
+        party_id_source = PartyIDSource('D')
+        party_role = PartyRoleType(1)
+        party_id1 = PartyID(efid)
+        party_id_source1 = PartyIDSource('D')
+        party_role1 = PartyRoleType(66)
+        parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role],[party_id1, party_id_source1, party_role1]])]
+        price_value = UINT32(value=(order_number))
+        realprice = price_value.value * 10**16
+        #bidprice = PriceType(realprice)
+        ask_price_value = UINT32(value=(order_number+1))
+        askrealprice = ask_price_value.value * 10**16
+        #sellprice = PriceType(askrealprice)
+        print(askrealprice)
+        quote1 = LongTwoSidedQuote(list_seq_no=1, options_security_id=options_security_id, bid_size=10, bid_px=realprice,offer_size=20,offer_px=askrealprice)
+        quote2 = LongTwoSidedQuote(list_seq_no=2, options_security_id=options_security_id,bid_size=15,bid_px=20000000000000000, offer_size=25, offer_px=250000000000000000)
+
+        quotes = [quote1]
+        
+
+        long_two_side_bulk_quote = LongTwoSideBulkQuote(
+            sending_time=sending_time,
+            cl_ord_id=cl_ord_id,
+            time_in_force=time_in_force,
+            exec_inst=exec_inst,
+            trading_capacity=trading_capacity,
+            mtp_group_id=mtp_group_id,
+            match_trade_prevention=match_trade_prevention,
+            cancel_group_id=cancel_group_id,
+            risk_group_id=risk_group_id,
+            parties=parties,
+            quotes=quotes
+        )
+
+        # Encode the LongTwoSideBulkQuote instance
+        encoded_message = long_two_side_bulk_quote.encode()
+        no_parties_groups = 2
+        no_of_quotes = 1
+        messageLength = 50 + (18 * (no_parties_groups)) + (33 * (no_of_quotes))
+        unsequenced_message = struct.pack('!BH', 104, messageLength)  # MessageType=104, MessageLength=6, TCP Header Length=102
+        message = unsequenced_message + encoded_message
+        new_order_single_message = message
+
+        # Print the encoded messag´
+        print('long_two_side_bulk_quote:')
+        print(message)
+
+
+
+
+        return new_order_single_message
+
+     
+
+
+
+
+
+    else:
+        raise ValueError(f"Invalid message type: {message_type}")
+
+# Send the generated message over the TCP connection        
+def send_message(client_socket, message):
+
+
+    # Send the message
+    client_socket.sendall(message)
+
+    # Sleep for a short period to control the message rate
+    time.sleep(0.2)
+
+def session_worker(session_name):
+    #try:
+        # Establish SBE TCP session for the current session name
+        client_socket, session_id = establish_session(session_name)
+
+
+
+        # Generate and send messages for LongTwoSideBulkQuote for each underlier and associated option security ids
+        for underlier, option_security_ids in underliers_and_options.items():
+            for option_security_id in option_security_ids:
+                for order_number in range(10, 26):  # Loop over order numbers from 10 to 25
+                    new_order_single_message = generate_message("LongTwoSideBulkQuote", session_name, option_security_id, order_number)
+                    send_message(client_socket, new_order_single_message)
+   
+        #option_security_id = "G0UG6kwM"
+ 
+
+
+        
+
+        
+
+
+        # Close the TCP connection for the current session
+        client_socket.close()
+
+    #except Exception as e:
+    #   print(f"Failed to establish session for {session_name}: {str(e)}")
+
+def main():
+    # Read session names from connections.cfg
+    session_names = connection_config.sections()
+
+    # List to hold the worker processes
+    processes = []
+
+    # Iterate over session names and create worker processes
+    for session_name in session_names:
+        process = Process(target=session_worker, args=(session_name,))
+        processes.append(process)
+
+    # Start all the worker processes
+    for process in processes:
+        process.start()
+
+    # Wait for all worker processes to complete
+    for process in processes:
+        process.join()
+
+    # Print the number of active sessions
+    print(f"Total active sessions: {len(processes)}")
+
+# Start the main execution
+if __name__ == '__main__':
+    main()
+
+
+
+    def main():
+    # Iterate over session names and establish sessions
+        for session_name in connection_config.sections():
+            print(f"Processing session: {session_name}")
+            try:
+                # Establish SBE TCP session for the current session name
+                client_socket, session_id = establish_session(session_name)
+                
+
+                client_socket.close()
+
+            except Exception as e:
+                print(f"Failed to establish session for {session_name}: {str(e)}")
+
+
+
+
+
+
+[pvellanki@sys0412 buildbook]$ python3 test.py config.ini
+Traceback (most recent call last):
+  File "test.py", line 30, in <module>
+    connection_config.read(config['Server']['config_file'])
+  File "/usr/lib64/python3.6/configparser.py", line 959, in __getitem__
+    raise KeyError(key)
+KeyError: 'Server'
