@@ -370,3 +370,6 @@ if __name__ == '__main__':
 
             except Exception as e:
                 print(f"Failed to establish session for {session_name}: {str(e)}")
+
+
+with price 10 X 11, 11X 12, 12 X 13 etc. I fixed this to have it as - 10 X 11, 9 X 12, 8 X 13, 7 X 14…
