@@ -1,527 +1,66 @@
-
-
-
-
-
-
-
- 
-
-
-MEMX Market Surveillance System
-
-Business Requirements Document
-
-
-
-
-Document Version: 1.1
-Date: 2/8/2024
-
-
-
-
-
-
-
-
-
-
-
-Table of Contents
-1	EXECUTIVE SUMMARY	3
-2	INTRODUCTION	3
-3	OBJECTIVES	3
-4	SCOPE	3
-5	FUNCTIONAL REQUIREMENTS – MEMX US OPTIONS	4
-5.1	HIGH ORDER TO TRADE RATE	4
-5.2	REPEAT ORDERS	4
-5.3	CAPPING AND PEGGING	5
-5.4	PHISHING	5
-5.5	WASH SALES A TO B TO A	5
-5.6	MULTI-ORDER SPOOFING WITH BAIT AND SWITCH	6
-5.7	SPOOFING - RAPID ENTRY AND DELETE	6
-5.8	ORDER WITHDRAWAL (CONTINUES)	7
-5.9	LARGE TRADE	7
-6	FUNCTIONAL REQUIREMENTS – MEMX US EQUITIES/LTSE	8
-6.1	UNUSUAL PRICE MOVEMENT INTER-DAY	8
-6.2	UNUSUAL VOLUME INTRA-DAY	8
-6.3	MARKING THE CLOSE (NON-AUCTION CLOSE)	8
-6.4	PAINTING THE TAPE	9
-6.5	AGGRESSIVE BUY OR SELL	9
-6.6	NARROWING SPREAD FOLLOWED BY CROSSING	9
-6.7	WASH SALES (A TO A)	10
-6.8	WASH SALES A - B – A	10
-6.9	HIGH ORDER RATE	10
-6.10	HIGH SMALL ORDER RATE	11
-6.11	REPEAT ORDER	11
-6.12	HIGH ORDER TO TRADE RATIO	11
-7	FUNCTIONAL REQUIREMENTS – CUSTOM RULE CREATION	12
-8	REPLAY SERVICE:	12
-9	USER INTERFACE	13
-9.1	ALERT MANAGEMENT	13
-9.2	CASE MANAGEMENT	13
-9.3	SUPERVISOR VIEW	14
-10	BENCHMARKING	14
-11	NON-FUNCTIONAL REQUIREMENTS	15
-12	ASSUMPTIONS AND DEPENDENCIES	15
-13	CONSTRAINTS	15
-14	RISKS	15
-15	REVISION HISTORY	15
-
-
-
-
-1	Executive Summary
-
-The Surveillance System aims to monitor trading activity from the trading system to identify potential market abuse and irregularities. This document outlines the business requirements for the system, including specific alert scenarios for equities and options markers and their expected outputs.
-
-2	Introduction
-
-The Surveillance System will generate alerts based on predefined criteria to detect abnormal trading patterns, repeated orders, and other potential market abuses. The alerts will assist in maintaining a fair and transparent market environment.
-
-Trading activity is monitored by utilizing data store as the primary repository for trading data. Algorithms are executed within data store to generate alerts, and these alerts are inserted into a data store database. The UI interfaces with the Data Store to present and manage the alerts.
-
-
-3	Objectives
-
-The primary objectives of the Market Surveillance System are:
-
-•	Identify and generate alerts for potential market abuse.
-•	Provide detailed information and analysis for each alert scenario.
-•	Facilitate timely intervention and investigation by relevant authorities.
-
-4	Scope
-
-
-The surveillance system will serve as a direct replacement for the existing SMARTS (Surveillance, Monitoring, and Analysis Real-Time Systems) platform, providing an equivalent set of functionalities without introducing any new features. The transition from SMARTS to the new system aims to maintain continuity in monitoring trade and order data from the trading system.
-
-
-
-
-
-5	Functional Requirements – MEMX US Options
-
-5.1		High Order to Trade Rate
-
-Objective:
-Detect abnormal order-to-trade ratios, which may indicate potential market abuse, including High-Frequency Trading (HFT), quote stuffing, or attempts to create a false market.
-
-Description:
-This alert triggers when the order-to-trade ratio exceeds a defined threshold, indicating an unusual concentration of orders relative to executed trades. This could signify disruptive trading practices, such as market manipulation or false market creation.
-
-Required Information:
-
-Security identifier (e.g., ticker symbol)
-Timestamp of the event
-Number of orders and trades
-Order-to-trade ratio.
-Threshold for order-to-trade ratio
-Relevant system parameters (e.g., default order-to-trade ratio)
-
-5.2		Repeat Orders
-
-Objective:
-Identify repeated entry of large orders by the same broker with the same price and volume, suggesting potential system errors or attempts to manipulate the order book.
-
-Description:
-This alert triggers when a broker repeatedly enters orders with the same price and volume, potentially indicating a malfunctioning order entry system or intentional manipulation.
-
-Required Information:
-
-Security identifier (e.g., ticker symbol)
-Timestamp of the event
-Number of orders and trades
-Total consideration of the orders
-Minimum number of orders triggering the alert
-Price and volume of the repeated orders
-Minimum interval for retriggering the alert.
-
-
-5.3		Capping and Pegging
-
-Objective:
-Identify participants with significant positions in options contracts dominating trading in the underlying security before settlement.
-
-Description:
-This alert triggers when a participant holds a large position in a options contract, potentially influencing the underlying security's trading before the settlement price is set.
-
-Required Information:
-
-Security identifier (e.g., ticker symbol)
-Timestamp of the event
-Participant's position in options contracts
-Relevant settlement-related parameters
-
-5.4		Phishing
-
-Objective:
-Identify participants engaging in "pinging" the market with small orders to detect hidden volume and execute transactions with relatively large volume.
-
-Description:
-This alert triggers when a participant places small orders to detect hidden volume, followed by a large trade against the identified price, potentially indicating an attempt to exploit hidden liquidity.
-
-Required Information:
-
-Security identifier (e.g., ticker symbol)
-Timestamp of the event
-Number of pinging orders
-Best ask price detected.
-Volume and price of the subsequent large trade
-Minimum ping order count triggering the alert.
-
-5.5		Wash Sales A to B to A
-
-Objective:
-Identify wash sales, where a participant buys and sells the same volume of shares with another participant, potentially to manipulate or create misleading trading activity.
-
-Description:
-This alert triggers when a participant buys from another and then sells the same volume back, potentially indicating a wash sale. The alert distinguishes between normal and money passing wash sales.
-
-Required Information:
-
-Security identifier (e.g., ticker symbol)
-Timestamp of the event
-Involved brokers, traders, and clients.
-Price, volume, and total value of the transactions
-Indication of normal or money passing wash sale
-
-5.6		Multi-Order Spoofing with Bait and Switch
-
-Objective:
-Detect participants entering and deleting large orders that add liquidity to the order book for a short period, followed by a profitable trade on the opposite side.
-
-Description:
-This alert triggers when a participant enters and deletes several large orders, contributing to order book liquidity for a short time, and subsequently executes a profitable trade on the opposite side.
-
-Required Information:
-
-Security identifier (e.g., ticker symbol)
-Timestamp of the event
-Number of entered and deleted orders
-Lifespan of the orders
-Details of the profitable trade
-
-5.7		Spoofing - Rapid Entry and Delete
-
-Objective:
-Identify brokers entering and deleting many unexecuted orders within a short time, suggesting potential spoofing.
-
-Description:
-This alert triggers when a broker rapidly enters and deletes a significant number of unexecuted orders within a short period, potentially indicating spoofing behavior.
-
-Required Information:
-
-Security identifier (e.g., ticker symbol)
-Timestamp of the event
-Number of entered and deleted orders
-Timeframe for order existence
-Minimum genuine trade value and estimated profit thresholds
-
-5.8		Order Withdrawal (Continues)
-
-Objective:
-Identify the entry and deletion of large orders at the best bid or ask price, deleted before any executions, potentially indicating continuous attempts to game the market.
-
-Description:
-This alert triggers when a participant enters and deletes a large order at the best bid or ask price, with no executions, suggesting possible attempts to manipulate the market through continuous order withdrawal.
-
-Required Information:
-
-Security identifier (e.g., ticker symbol)
-Timestamp of the event
-Order details (price, volume, etc.)
-Maximum allowed alive time for an order.
-Threshold for considering the number of deleted orders excessive.
-
-5.9		Large trade
-
-Objective:
-Identify significantly large trades in an instrument, considering benchmarks, absolute value, and volume, to detect potential market impact.
-
-Description:
-This alert triggers when a trade's volume and value exceed predefined thresholds, indicating a significantly large transaction that may impact the market.
-
-Required Information:
-
-Security identifier (e.g., ticker symbol)
-Timestamp of the trade
-Trade volume and value
-Benchmark information.
-User-defined thresholds for large trade volume and value
-
-
-
-6	Functional Requirements – MEMX US Equities/LTSE
-
-6.1		Unusual Price Movement Inter-Day
-
-Objective:
-Identify unusual price movements against security-specific benchmarks for multiple configurable inter-day time ranges.
-
-Description:
-This alert identifies unusual price movements over configurable inter-day time ranges and identifies the participant responsible for the greatest number of price upticks or downticks during the triggering time range.
-
-Required Information:
-
-Security identifier (e.g., ticker symbol)
-Timestamp of the event
-Price movements against benchmarks
-Participant causing the most upticks or downticks.
-
-6.2		Unusual Volume Intra-Day
-
-Objective:
-Identify unusual levels of trading volume against security-specific benchmarks for multiple intra-day time ranges.
-
-Description:
-This alert identifies unusual trading volume levels over configurable intra-day time ranges and identifies the participant responsible for the most traded volume during the triggering time range.
-
-Required Information:
-
-Security identifier (e.g., ticker symbol)
-Timestamp of the event
-Trading volume against benchmarks
-Participant trading the most volume.
-3. Market Manipulation
-Objective:
-Identify different kinds of market manipulation behavior prevalent worldwide.
-
-6.3		Marking the Close (Non-Auction Close)
-
-Description:
-Identifies participants attempting to manipulate the price level of a security before the market closes. Unusual price movements, especially at quarter ends, may indicate market manipulation to artificially inflate prices.
-
-Required Information:
-
-Security identifier (e.g., ticker symbol)
-Timestamp of the event
-Unusual price movements before market close
-
-6.4		Painting the Tape
-
-Description:
-Identifies participants responsible for an unusual price movement and then reverse the direction of their trading to capitalize on the price movement they caused.
-
-Required Information:
-
-Security identifier (e.g., ticker symbol)
-Timestamp of the event
-Unusual price movement details
-
-6.5		Aggressive Buy or Sell
-
-Objective:
-Identify participants continually entering aggressive orders that break the market up or down.
-
-Description:
-This alert identifies participants aggressively entering orders that significantly impact the market.
-
-Required Information:
-
-Security identifier (e.g., ticker symbol)
-Timestamp of the event
-Details of aggressive buy or sell orders.
-
-6.6		Narrowing Spread Followed by Crossing
-
-Objective:
-Identify off-market transactions where the spread was narrowed just before the crossing of the transaction.
-
-Description:
-This alert identifies transactions where the spread was narrowed before crossing, indicating potential market manipulation.
-
-Required Information:
-
-Security identifier (e.g., ticker symbol)
-Timestamp of the event
-Details of spread narrowing and crossing
-
-6.7		Wash Sales (A to A)
-
-Objective:
-Identify participants executing trades in which they are both the buyer and the seller, increasing volume without changing beneficial ownership.
-
-Description:
-This alert identifies trades where participants act as both the buyer and seller.
-
-Required Information:
-
-Security identifier (e.g., ticker symbol)
-Timestamp of the event
-Details of the wash sale
-
-6.8		Wash Sales A - B – A
-
-Objective:
-Identify a series of trades that, when aggregated, appear to be a wash sale or a Money Pass.
-
-Description:
-This alert identifies a series of trades that may appear to be a wash sale or Money Pass, indicating potential market manipulation.
-
-Required Information:
-
-Security identifier (e.g., ticker symbol)
-Timestamp of the event
-Details of the trades
-
-6.9	 	High Order Rate
-
-Objective:
-Identify participants entering a larger than usual number of orders, indicating upcoming supply/demand shifts or erroneous order entries.
-
-Description:
-This alert identifies participants entering a higher than usual number of orders, suggesting potential shifts in supply/demand or erroneous entries.
-
-Required Information:
-
-Security identifier (e.g., ticker symbol)
-Timestamp of the event
-Number of orders
-
-6.10	 	High Small Order Rate
-
-Objective:
-Identify participants entering a high rate of small orders below a predefined volume when submitted into the order book for a security.
-
-Description:
-This alert identifies participants entering a high rate of small orders below a predefined volume.
-
-Required Information:
-
-Security identifier (e.g., ticker symbol)
-Timestamp of the event
-Details of small orders
-
-6.11	Repeat Order
-
-Objective:
-Identify unusually large numbers of orders entered by the same broker with the same price and volume.
-
-Description:
-This alert identifies unusually large numbers of orders entered by the same broker with consistent price and volume.
-
-Required Information:
-
-Security identifier (e.g., ticker symbol)
-Timestamp of the event
-Number of orders
-
-6.12	High Order to Trade Ratio
-
-Objective:
-Identify participants with a high order-to-trade ratio, indicating potential market abuse such as HFT/quote stuffing, creating a false market, or client account intrusion.
-
-Description:
-This alert serves as an indicator for several forms of market abuse, including HFT/quote stuffing, creating a false market, or client account intrusion.
-
-Required Information:
-
-Security identifier (e.g., ticker symbol)
-Timestamp of the event
-Order-to-trade ratio.
-Relevant system parameters
-
-7	Functional Requirements – Custom Rule Creation
-
-Objective:
-Enable the creation of custom surveillance rules based on user-defined parameters and arithmetic operations to detect emerging market abuse patterns not covered by predefined alert scenarios.
-
-Description:
-This feature allows authorized users to create custom surveillance rules on the fly, providing flexibility to adapt to evolving market conditions and emerging threats. Users can define rule parameters such as price, volume, reference data, and arithmetic operations (e.g., greater than, less than, equal to) to set dynamic thresholds for alert generation.
-
-Required Information:
-
-User-defined parameters for rule creation
-Arithmetic operations for threshold setting
-Threshold values for alert triggering
-
-8	Replay Service:
-
-A Replay Service is responsible for retrieving historical data and replaying it through the alerting algorithms. This service should operate independently and doesn't interfere with real-time monitoring. This will be a standalone service that will be triggered on demand when there is need to run surveillance on historical data.
-
-
-9	User Interface
-
-9.1	 Alert Management
-
-Alert Management serves as a central hub for overseeing and addressing surveillance alerts efficiently.
-
-•	Alert Display: All alerts are listed with unique IDs, associated workflows (such as open, in progress, resolved), timestamps indicating when the ticket was opened, and tracking by age to prioritize based on urgency.
-•	Workflow Management: Alerts follow a workflow of statuses including open, in progress, and closed. Users can transition alerts through these statuses directly from the UI, ensuring timely handling and tracking of each alert.
-•	Audit Trail for Alerts: A robust audit trail records every action taken on alerts, including configuration changes, acknowledgments, and interventions. Each entry is logged with a timestamp, providing transparency and accountability in alert management.
-
-9.2	 Case Management
-
-Case Management facilitates the structured handling and resolution of alerts triggered by the surveillance system. Additionally, it supports the management of regulatory matters, which can be associated with multiple alerts and have their own workflow.
-
-•	Alert Ticket Creation Workflow: Automatic case creation upon alert generation, integration of alert details into the case, and provision for user input to provide context for investigation.
-
-•	Matter Creation and Association: Users can create regulatory matters within the system and associate them with multiple alerts. Matters serve as overarching entities to manage related alerts and have their own workflow for tracking and resolution.
-
-•	Case Ticket Fields: Essential fields such as status, assigned to, severity, and matter ID categorize and prioritize cases effectively.
-
-•	Case Management UI Features: List view for easy access to open and closed cases, filtering and sorting options for quick identification, workflow actions for status updates and escalations, seamless integration with the alert system and matter management, and reporting capabilities for compliance and analysis.
-
-•	Workflow for Case Management: Cases follow a workflow of statuses including open, in progress, supervisor review, and closed. This structured approach ensures that cases and associated matters are systematically reviewed and resolved, with opportunities for supervisor review to ensure quality and accuracy.
-
-•	Audit Trail for Cases and Matters: Like alerts, all actions related to case and matter management, including status changes, resolutions, and updates, are logged in an audit trail. This comprehensive record ensures transparency and compliance with regulatory standards.
-
-9.3	 Supervisor View
-
-The supervisor view provides a comprehensive dashboard and reporting functionality for overseeing surveillance activities and generating custom reports.
-
-•	Dashboard Overview: A customizable dashboard displaying key statistics and metrics related to alerts and case management. Supervisors can monitor alert statuses, case progress, and other relevant data at a glance.
-•	Alert Statistics: Graphical representations and numerical summaries of alert volumes, distribution by severity, age tracking, and workflow statuses.
-•	Case Status Monitoring: Visual indicators and summaries of case statuses, including open, in progress, and closed cases. Supervisors can quickly assess the overall status of surveillance investigations.
-•	Custom Report Generation: Built-in tools for generating custom reports based on data stored in the system. Supervisors can specify parameters, filters, and formatting options to create reports tailored to their needs.
-•	Access Control: Role-based access control ensures that only authorized supervisors have access to the supervisor view. This safeguards sensitive surveillance data and ensures compliance with privacy regulations.
-
-
-10	Benchmarking
-
-Benchmarking is a dynamic and essential component of Surveillance System, enabling it to adapt to changing market conditions and ensuring the timely identification of suspicious activities. It involves the establishment of threshold values for various parameters by analyzing historical data using statistical methods. The primary goal of benchmarking is to identify fair benchmarks to surveil trading system.
-
-The system employs several benchmarking methods, including Standard Deviation, Distribution Cut-off, and Threshold Table, to determine thresholds for issuing alerts.
-
-•	[10.1] Benchmark parameters are periodically updated in the system's database.
-•	[10.2] Alert thresholds are calculated based on the selected benchmarking method for each specific alert type.
-•	[10.3] Calculated thresholds are then used to trigger alerts for potential market abuse or irregularities.
-
-
-
-11	Non-functional Requirements
-
-[TBD]
-
-
-12	Assumptions and Dependencies
-
-The trading system provides accurate and timely trade and order data.
-The surveillance system has access to necessary historical data for analysis.
-
-
-13	Constraints
-
-The system's performance may be impacted by fluctuations in trade and order volume.
-Regulatory changes may necessitate updates to alert criteria.
-
-
-
-14	Risks
-
-•	Inadequate data quality may lead to false alerts.
-•	Changes in market dynamics may require continuous refinement of alert criteria.
-
-15	Revision History
-
-Version	Date	Changes
-1.0	1/16/2024	Initial Draft
-1.1	2/8/2024	Added generating custom rule on the fly and adjusted user interface requirements.
-
-
-
-
-
-
-
+9. User Interface
+The user interface (UI) is designed to provide comprehensive functionality to different user roles, including analysts, supervisors, and administrators, to efficiently manage and oversee the surveillance process.
+
+9.1 Alerts Management View
+Alerts Management View serves as a central hub for overseeing and addressing surveillance alerts efficiently.
+
+Alert Display: All alerts are listed with unique IDs, associated workflows (such as open, in progress, resolved), timestamps indicating when the ticket was opened, and tracking by age to prioritize based on urgency.
+Workflow Management: Alerts follow a workflow of statuses including open, in progress, and closed. Users can transition alerts through these statuses directly from the UI, ensuring timely handling and tracking of each alert.
+Audit Trail for Alerts: A robust audit trail records every action taken on alerts, including configuration changes, acknowledgments, and interventions. Each entry is logged with a timestamp, providing transparency and accountability in alert management.
+9.2 Case Management View
+Case Management View facilitates the structured handling and resolution of alerts triggered by the surveillance system.
+
+Alert Ticket Creation Workflow: Automatic case creation upon alert generation, integration of alert details into the case, and provision for user input to provide context for investigation.
+Matter Creation and Association: Users can create regulatory matters within the system and associate them with multiple alerts. Matters serve as overarching entities to manage related alerts and have their own workflow for tracking and resolution.
+Case Ticket Fields: Essential fields such as status, assigned to, severity, and matter ID categorize and prioritize cases effectively.
+Case Management UI Features: List view for easy access to open and closed cases, filtering and sorting options for quick identification, workflow actions for status updates and escalations, seamless integration with the alert system and matter management, and reporting capabilities for compliance and analysis.
+Workflow for Case Management: Cases follow a workflow of statuses including open, in progress, supervisor review, and closed. This structured approach ensures that cases and associated matters are systematically reviewed and resolved, with opportunities for supervisor review to ensure quality and accuracy.
+Audit Trail for Cases and Matters: Like alerts, all actions related to case and matter management, including status changes, resolutions, and updates, are logged in an audit trail. This comprehensive record ensures transparency and compliance with regulatory standards.
+9.3 Custom Reports View
+The Custom Reports View enables users to generate custom reports based on data stored in the system.
+
+Report Generation: Built-in tools for generating custom reports, specifying parameters, filters, and formatting options tailored to user needs.
+Data-driven Decision Making: Reports facilitate data-driven decision-making and regulatory compliance reporting.
+Accessibility: Custom reports are accessible to authorized users based on their roles and permissions.
+9.4 Role-Based Access Control
+The UI incorporates a role-based access control system, ensuring that users have access to functionalities relevant to their responsibilities.
+
+Analyst: Responsible for monitoring alerts, investigating cases, and generating reports.
+Supervisor: Overseeing the surveillance process, managing cases, and ensuring the quality and accuracy of investigations.
+Administrator: Responsible for system configuration, user management, and overall system maintenance.
+9.5 Mockups
+Mockups illustrating the UI design for Alerts Management, Case Management, Custom Reports, and Role-Based Access Control will be provided for stakeholder review and approval.
+
+
+
+
+10. Non-Functional Requirements
+Non-functional requirements describe the quality attributes and constraints of the system, ensuring its effectiveness, reliability, security, and performance.
+
+10.1 Performance
+Responsiveness: The system should respond to user interactions within [TBD] milliseconds, ensuring a seamless user experience.
+Scalability: The system should be capable of handling increasing loads and users without significant performance degradation, maintaining response times within [TBD] milliseconds.
+Throughput: The system should efficiently process a large volume of data, alerts, and reports, achieving a throughput of [TBD] transactions per second.
+Availability: The system should be available and accessible to users at all times, with downtime limited to [TBD] hours per year for maintenance and upgrades.
+10.2 Security
+Authentication and Authorization: Users should be authenticated before accessing system functionalities, with role-based access control ensuring that users only have access to authorized features.
+Data Protection: Confidentiality, integrity, and availability of data should be ensured through encryption, access controls, and regular backups.
+Auditability: All user interactions, system activities, and data access should be logged and auditable for compliance and security purposes.
+Vulnerability Management: Regular security assessments and updates should be conducted to identify and mitigate potential vulnerabilities and threats.
+10.3 Reliability
+Fault Tolerance: The system should continue to operate in the event of hardware failures, network disruptions, or other system failures, ensuring uninterrupted surveillance activities.
+Error Handling: The system should provide informative error messages and gracefully handle errors to prevent data loss or system instability.
+Backup and Recovery: Regular backups of system data should be performed, with robust recovery mechanisms in place to restore data in case of data loss or corruption.
+10.4 Usability
+User-Friendly Interface: The user interface should be intuitive, easy to navigate, and visually appealing, enhancing user productivity and satisfaction.
+Accessibility: The system should be accessible to users with disabilities, complying with accessibility standards and guidelines.
+Training and Documentation: Comprehensive training materials and documentation should be provided to users, facilitating effective use of the system and minimizing user errors.
+10.5 Compliance
+Regulatory Compliance: The system should comply with relevant industry regulations, standards, and best practices, ensuring adherence to legal and regulatory requirements.
+Data Privacy: User data should be handled in compliance with data protection regulations such as GDPR, ensuring user privacy and confidentiality.
+Auditability: The system should support comprehensive auditing capabilities, allowing for compliance audits and regulatory inspections.
+10.6 Performance Metrics
+Response Time: The average time taken for the system to respond to user requests.
+Availability: The percentage of time the system is available for use within a specified period.
+Throughput: The rate at which the system processes data, alerts, and reports.
+Error Rate: The percentage of user interactions that result in errors or exceptions.
