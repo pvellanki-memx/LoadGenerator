@@ -71,3 +71,17 @@ def session_worker(session_name):
 
     except Exception as e:
         print(f"Failed to establish session for {session_name}: {str(e)}")
+
+
+
+
+buy_sell_prices = []
+
+for price_offset in range(0, 10):
+    buy_price = 10 + price_offset
+    sell_price = 11 - price_offset
+
+    # Append buy and sell prices to the list
+    buy_sell_prices.append((buy_price, sell_price))
+
+print(buy_sell_prices)
