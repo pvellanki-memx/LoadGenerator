@@ -22,3 +22,28 @@ Data Visualization Tools: Users will have access to graphical representations an
 Configuration Parameters: Administrators can configure parameters related to alert settings, such as thresholds and sensitivity levels.
 Rule Configuration: Administrators will be able to define rules for assigning alerts to specific users based on predefined criteria.
 The user interface will prioritize user-friendly design principles, intuitive navigation, and responsiveness to ensure an optimal user experience. Additionally, role-based access control mechanisms will be implemented to restrict access to sensitive functionalities based on user roles and permissions.
+
+
+
+Investigatory Tools:
+
+Purpose:
+
+Provide regulatory team analysts with detailed insights into the events triggering alerts.
+Functionality:
+
+Interface directly with the system's data store.
+Correlate alerted events with corresponding trading activity.
+Offer chronological sequence of events for comprehensive understanding.
+Data Access:
+
+Ensure seamless access to real-time data pertinent to trading activities.
+Access granular details including timestamps, security identifiers, participant information, and transaction specifics.
+Visualization Capabilities:
+
+Incorporate data visualization tools for enhanced analysis.
+Enable visualization of trading patterns, volume fluctuations, and price movements.
+Outcome:
+
+Empower analysts to conduct in-depth investigations.
+Facilitate well-informed decision-making based on comprehensive insights.
