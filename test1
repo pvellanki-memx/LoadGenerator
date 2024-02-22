@@ -7,43 +7,18 @@ from sbe_encoder_decoder import UTCTimestampNanos, NewOrderSingle,  ShortTwoSide
 from sbe_encoder_decoder import UINT32,UINT16,UINT8, OrdType, PriceType,TimeInForceType, ExecInstType, TradingCapacityType, SideType, PartyID, PartiesGroup,PartyIDSource, PartyRoleType, ShortPriceType, OptionsSecurityID,ShortOneSideQuote,AllocType,Char,AllocTransType,RequestedAllocationsGroup,NestedPartiesGroup,UnderlyingOrSeriesType
 from random import choices, randint
 import string
-import sys
 from random import choices, randint, uniform
 
-# Check if the script is provided with the path to the config.ini file
-if len(sys.argv) < 2:
-    print("Usage: python script.py <path_to_config_ini>")
-    sys.exit(1)
 
-# Get the path to the config.ini file from the command-line argument
-config_ini_path = sys.argv[1]
-print(config_ini_path)
 
 # Read configuration from config.ini
 config = configparser.ConfigParser()
-try:
-    config.read(config_ini_path)
-    print("Configuration loaded successfully.")
-    # Now you can access configuration values using config['section']['key']
-except Exception as e:
-    print(f"Error loading configuration: {e}")
-
-# Check if the 'Server' section exists in the configuration
-if 'Server' not in config:
-    print("Error: 'Server' section not found in config.ini")
-    sys.exit(1)
-
-# Check if 'config_file' key exists in the 'Server' section
-if 'config_file' not in config['Server']:
-    print("Error: 'config_file' key not found in the 'Server' section of config.ini")
-    sys.exit(1)
+config.read('config.ini')
 
 
 # Read connection details from connections.cfg
 connection_config = configparser.ConfigParser()
 connection_config.read(config['Server']['config_file'])
-
-print(config.keys)
 
 underliers_and_options = {}
 for underlier, options in config.items('OptionsSecurityIDs'):
@@ -61,7 +36,6 @@ def establish_session(session_name):
     user = connection_config[session_name]['user']
     password = connection_config[session_name]['password']
     token = f'{user}:{password}'
-    
 
 
         # Login request
@@ -235,10 +209,10 @@ def generate_message(message_type,session_name, options_security_id,order_number
         party_id_source1 = PartyIDSource('D')
         party_role1 = PartyRoleType(66)
         parties = [PartiesGroup(party_ids=[[party_id, party_id_source, party_role],[party_id1, party_id_source1, party_role1]])]
-        price_value = UINT32(value=(order_number))
+        price_value = UINT32(value=(40-(order_number)))
         realprice = price_value.value * 10**16
         #bidprice = PriceType(realprice)
-        ask_price_value = UINT32(value=(order_number+1))
+        ask_price_value = UINT32(value=(40+(order_number)))
         askrealprice = ask_price_value.value * 10**16
         #sellprice = PriceType(askrealprice)
         print(askrealprice)
@@ -370,6 +344,3 @@ if __name__ == '__main__':
 
             except Exception as e:
                 print(f"Failed to establish session for {session_name}: {str(e)}")
-
-
-with price 10 X 11, 11X 12, 12 X 13 etc. I fixed this to have it as - 10 X 11, 9 X 12, 8 X 13, 7 X 14…
