@@ -1,66 +1,24 @@
-9. User Interface
-The user interface (UI) is designed to provide comprehensive functionality to different user roles, including analysts, supervisors, and administrators, to efficiently manage and oversee the surveillance process.
+User Interface Section
 
-9.1 Alerts Management View
-Alerts Management View serves as a central hub for overseeing and addressing surveillance alerts efficiently.
+The user interface of the surveillance system will be designed to provide efficient management and oversight of surveillance alerts and cases, as well as configuration capabilities for administrators. The user interface will consist of three tabs within the portal: Alert Management, Case Management, and Admin.
 
-Alert Display: All alerts are listed with unique IDs, associated workflows (such as open, in progress, resolved), timestamps indicating when the ticket was opened, and tracking by age to prioritize based on urgency.
-Workflow Management: Alerts follow a workflow of statuses including open, in progress, and closed. Users can transition alerts through these statuses directly from the UI, ensuring timely handling and tracking of each alert.
-Audit Trail for Alerts: A robust audit trail records every action taken on alerts, including configuration changes, acknowledgments, and interventions. Each entry is logged with a timestamp, providing transparency and accountability in alert management.
-9.2 Case Management View
-Case Management View facilitates the structured handling and resolution of alerts triggered by the surveillance system.
+Alert Management Tab:
 
-Alert Ticket Creation Workflow: Automatic case creation upon alert generation, integration of alert details into the case, and provision for user input to provide context for investigation.
-Matter Creation and Association: Users can create regulatory matters within the system and associate them with multiple alerts. Matters serve as overarching entities to manage related alerts and have their own workflow for tracking and resolution.
-Case Ticket Fields: Essential fields such as status, assigned to, severity, and matter ID categorize and prioritize cases effectively.
-Case Management UI Features: List view for easy access to open and closed cases, filtering and sorting options for quick identification, workflow actions for status updates and escalations, seamless integration with the alert system and matter management, and reporting capabilities for compliance and analysis.
-Workflow for Case Management: Cases follow a workflow of statuses including open, in progress, supervisor review, and closed. This structured approach ensures that cases and associated matters are systematically reviewed and resolved, with opportunities for supervisor review to ensure quality and accuracy.
-Audit Trail for Cases and Matters: Like alerts, all actions related to case and matter management, including status changes, resolutions, and updates, are logged in an audit trail. This comprehensive record ensures transparency and compliance with regulatory standards.
-9.3 Custom Reports View
-The Custom Reports View enables users to generate custom reports based on data stored in the system.
+The Alert Management tab will display all surveillance alerts.
+Users will have the ability to filter alerts based on various criteria such as time range, symbol, alert type, and assignee.
+The interface will provide options for sorting and prioritizing alerts based on urgency and relevance.
+Users can acknowledge and take actions on alerts directly from this tab.
+Case Management Tab:
 
-Report Generation: Built-in tools for generating custom reports, specifying parameters, filters, and formatting options tailored to user needs.
-Data-driven Decision Making: Reports facilitate data-driven decision-making and regulatory compliance reporting.
-Accessibility: Custom reports are accessible to authorized users based on their roles and permissions.
-9.4 Role-Based Access Control
-The UI incorporates a role-based access control system, ensuring that users have access to functionalities relevant to their responsibilities.
+The Case Management tab will facilitate the structured handling and resolution of alerts triggered by the surveillance system.
+Users will be able to create cases, associate alerts with cases, and manage the workflow of cases.
+Each case will follow a workflow of statuses including open, in progress, resolved, and closed.
+Users can add context and details to cases, assign tasks to team members, and track the progress of case resolution.
+Admin Tab:
 
-Analyst: Responsible for monitoring alerts, investigating cases, and generating reports.
-Supervisor: Overseeing the surveillance process, managing cases, and ensuring the quality and accuracy of investigations.
-Administrator: Responsible for system configuration, user management, and overall system maintenance.
-9.5 Mockups
-Mockups illustrating the UI design for Alerts Management, Case Management, Custom Reports, and Role-Based Access Control will be provided for stakeholder review and approval.
-
-
-
-
-10. Non-Functional Requirements
-Non-functional requirements describe the quality attributes and constraints of the system, ensuring its effectiveness, reliability, security, and performance.
-
-10.1 Performance
-Responsiveness: The system should respond to user interactions within [TBD] milliseconds, ensuring a seamless user experience.
-Scalability: The system should be capable of handling increasing loads and users without significant performance degradation, maintaining response times within [TBD] milliseconds.
-Throughput: The system should efficiently process a large volume of data, alerts, and reports, achieving a throughput of [TBD] transactions per second.
-Availability: The system should be available and accessible to users at all times, with downtime limited to [TBD] hours per year for maintenance and upgrades.
-10.2 Security
-Authentication and Authorization: Users should be authenticated before accessing system functionalities, with role-based access control ensuring that users only have access to authorized features.
-Data Protection: Confidentiality, integrity, and availability of data should be ensured through encryption, access controls, and regular backups.
-Auditability: All user interactions, system activities, and data access should be logged and auditable for compliance and security purposes.
-Vulnerability Management: Regular security assessments and updates should be conducted to identify and mitigate potential vulnerabilities and threats.
-10.3 Reliability
-Fault Tolerance: The system should continue to operate in the event of hardware failures, network disruptions, or other system failures, ensuring uninterrupted surveillance activities.
-Error Handling: The system should provide informative error messages and gracefully handle errors to prevent data loss or system instability.
-Backup and Recovery: Regular backups of system data should be performed, with robust recovery mechanisms in place to restore data in case of data loss or corruption.
-10.4 Usability
-User-Friendly Interface: The user interface should be intuitive, easy to navigate, and visually appealing, enhancing user productivity and satisfaction.
-Accessibility: The system should be accessible to users with disabilities, complying with accessibility standards and guidelines.
-Training and Documentation: Comprehensive training materials and documentation should be provided to users, facilitating effective use of the system and minimizing user errors.
-10.5 Compliance
-Regulatory Compliance: The system should comply with relevant industry regulations, standards, and best practices, ensuring adherence to legal and regulatory requirements.
-Data Privacy: User data should be handled in compliance with data protection regulations such as GDPR, ensuring user privacy and confidentiality.
-Auditability: The system should support comprehensive auditing capabilities, allowing for compliance audits and regulatory inspections.
-10.6 Performance Metrics
-Response Time: The average time taken for the system to respond to user requests.
-Availability: The percentage of time the system is available for use within a specified period.
-Throughput: The rate at which the system processes data, alerts, and reports.
-Error Rate: The percentage of user interactions that result in errors or exceptions.
+The Admin tab will be accessible only to users with administrative privileges.
+It will serve multiple purposes:
+Data Visualization Tools: Users will have access to graphical representations and numerical summaries of surveillance data, allowing for deeper analysis and insights.
+Configuration Parameters: Administrators can configure parameters related to alert settings, such as thresholds and sensitivity levels.
+Rule Configuration: Administrators will be able to define rules for assigning alerts to specific users based on predefined criteria.
+The user interface will prioritize user-friendly design principles, intuitive navigation, and responsiveness to ensure an optimal user experience. Additionally, role-based access control mechanisms will be implemented to restrict access to sensitive functionalities based on user roles and permissions.
