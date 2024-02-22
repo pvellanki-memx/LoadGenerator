@@ -328,3 +328,10 @@ if __name__ == '__main__':
 
             except Exception as e:
                 print(f"Failed to establish session for {session_name}: {str(e)}")
+
+
+
+for price_offset in range(0, 10, 4):
+    buy_price = 10 + price_offset
+    sell_price = 11 - price_offset
+    print(f"For price_offset = {price_offset}, buy_price = {buy_price}, sell_price = {sell_price}")
