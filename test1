@@ -1,7 +1,23 @@
+import datetime
+import gzip
+import pandas as pd
+import os
+
 # Generate the timestamp for the file name up to minutes
 timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
 file_name = db_name[5:10]
 # Write the grouped_trade_data_frame and pivoted_trade_data_frame to an Excel file with separate sheets
 output_file_name = f'summary_trade_data_{file_name}.csv'
 
+# Dump DataFrame to CSV
 grouped_trade_data_frame.to_csv(output_file_name, index=False)
+
+
+with open(output_file_name, 'rb') as f_in:
+    with gzip.open(f'{output_file_name}.gz', 'wb') as f_out:
+        f_out.writelines(f_in)
+
+
+
+os.remove(output_file_name)
+
