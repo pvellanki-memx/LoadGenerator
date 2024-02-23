@@ -1,23 +1,90 @@
-import datetime
-import gzip
-import pandas as pd
-import os
-
-# Generate the timestamp for the file name up to minutes
-timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
-file_name = db_name[5:10]
-# Write the grouped_trade_data_frame and pivoted_trade_data_frame to an Excel file with separate sheets
-output_file_name = f'summary_trade_data_{file_name}.csv'
-
-# Dump DataFrame to CSV
-grouped_trade_data_frame.to_csv(output_file_name, index=False)
+#!/bin/bash
 
 
-with open(output_file_name, 'rb') as f_in:
-    with gzip.open(f'{output_file_name}.gz', 'wb') as f_out:
-        f_out.writelines(f_in)
+current_date=$(date +"%Y-%m-%d")
+date=$(date -d "$current_date - 1 day" +"%Y-%m-%d")
+
+mm_dd=$(date -d "$date" +"%m-%d")
+
+# Create the output directory if it doesn't exist
+output_dir="/mnt/occ/orsa-summary"
+
+# Define the directory where the files are located
+base_dir="/mnt/occ/downloads/prod"
+
+# Construct the file name using the provided date
+compressed_file_to_watch="memx_orsa_trades_$date.xml.Z"
+
+# Define the monitor folder
+monitor_folder="$base_dir"
+
+# Check if the file exists, wait up to 10 times
+retries=10
+while [ ! -e "$monitor_folder/$compressed_file_to_watch" ] && [ $retries -gt 0 ]; do
+    echo "$compressed_file_to_watch not found in $monitor_folder. Waiting..."
+    sleep 10  # Adjust the interval as needed
+    ((retries--))
+done
+
+if [ $retries -eq 0 ]; then
+    echo "Compressed file not found after 10 retries. Exiting."
+    exit 1
+fi
+
+echo "Found $compressed_file_to_watch"
+
+# Uncompress the file and wait for it to complete
+echo "Uncompressing $compressed_file_to_watch..."
+zcat "$monitor_folder/$compressed_file_to_watch" > "$monitor_folder/memx_orsa_trades_$date.xml"
+uncompress_pid=$!
+
+wait "$uncompress_pid"
+
+# Check if the XML file is complete by examining the last two lines
+last_two_lines=$(zcat "$monitor_folder/$compressed_file_to_watch" | tail -n 2)
+
+if [[ $last_two_lines != *"</FIXML>"* ]]; then
+    echo "XML file is not complete. Missing </FIXML> tag."
+    exit 1
+fi
 
 
+# Define a function to execute trades and exchange recon
+execute_trades_and_recon() {
+    # Add the content of run_trades.sh here
+    echo "Executing run_trades.sh..."
+    db_name="$date.db"
 
-os.remove(output_file_name)
+    # Step 1: Split the big XML file using split.py
+    python3 split_v4.py "$base_dir"/memx_orsa_trades_"$date".xml "$date"
 
+    # Step 2: Process each split file using xml_to_db.py
+    for split_file in "$date"_*; do
+        python3 xml_2_db_v6.py "$split_file" "$db_name" > log.txt &
+
+        # Capture the PID of the last background process
+        pid=$!
+
+        # Wait for the background process to complete
+        wait "$pid"
+
+        echo "Processing of $split_file completed."
+    done
+
+    # Step 4: Perform further processing using furtherstreaming.py
+    python3 dump2excel.py "$db_name"
+
+    dump2excel_pid=$!
+    # Wait for groupedexcel.py to complete
+    wait "$dump2excel_pid"
+
+    echo "Grouping summary csv generated."
+
+}
+
+# Execute the combined trades and exchange recon function
+execute_trades_and_recon
+
+mv *"$mm_dd.csv" "$output_dir/"
+
+echo "Scripts executed successfully."
