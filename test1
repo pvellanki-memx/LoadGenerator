@@ -13,35 +13,29 @@ output_dir="/mnt/occ/orsa-summary"
 base_dir="/mnt/occ/downloads/prod"
 
 # Construct the file name using the provided date
-compressed_file_to_watch="memx_orsa_trades_$date.xml.Z"
+uncompressed_file_to_watch="memx_orsa_trades_$date.xml"
 
 # Define the monitor folder
 monitor_folder="$base_dir"
 
 # Check if the file exists, wait up to 10 times
 retries=10
-while [ ! -e "$monitor_folder/$compressed_file_to_watch" ] && [ $retries -gt 0 ]; do
-    echo "$compressed_file_to_watch not found in $monitor_folder. Waiting..."
+while [ ! -e "$monitor_folder/$uncompressed_file_to_watch" ] && [ $retries -gt 0 ]; do
+    echo "$uncompressed_file_to_watch not found in $monitor_folder. Waiting..."
     sleep 10  # Adjust the interval as needed
     ((retries--))
 done
 
 if [ $retries -eq 0 ]; then
-    echo "Compressed file not found after 10 retries. Exiting."
+    echo "uncompressed file not found after 10 retries. Exiting."
     exit 1
 fi
 
-echo "Found $compressed_file_to_watch"
+echo "Found $Uncompressed_file_to_watch"
 
-# Uncompress the file and wait for it to complete
-echo "Uncompressing $compressed_file_to_watch..."
-zcat "$monitor_folder/$compressed_file_to_watch" > "$monitor_folder/memx_orsa_trades_$date.xml"
-uncompress_pid=$!
-
-wait "$uncompress_pid"
 
 # Check if the XML file is complete by examining the last two lines
-last_two_lines=$(zcat "$monitor_folder/$compressed_file_to_watch" | tail -n 2)
+last_two_lines=$(zcat "$monitor_folder/$uncompressed_file_to_watch" | tail -n 2)
 
 if [[ $last_two_lines != *"</FIXML>"* ]]; then
     echo "XML file is not complete. Missing </FIXML> tag."
