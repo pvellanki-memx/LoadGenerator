@@ -79,6 +79,12 @@ execute_trades_and_recon() {
 # Execute the combined trades and exchange recon function
 execute_trades_and_recon
 
+
+
+
+
+ ip route add 10.12.68.20/22  via 10.3.47.254
+Error: Invalid prefix for given prefix length.
 mv *"$mm_dd.csv" "$output_dir/"
 
 echo "Scripts executed successfully."
