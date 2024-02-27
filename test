@@ -47,3 +47,8 @@ Outcome:
 
 Empower analysts to conduct in-depth investigations.
 Facilitate well-informed decision-making based on comprehensive insights.
+
+
+
+ ip route add 10.12.68.20/22  via 10.3.47.254
+Error: Invalid prefix for given prefix length.
