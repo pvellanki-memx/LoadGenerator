@@ -1,1 +1,2 @@
- ip route del 10.12.68.20/24 via 10.3.47.254
+sudo du -hs /home/* | sort -rh | awk '{print $2 "\t" $1}'
+
