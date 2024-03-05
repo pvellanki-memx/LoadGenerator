@@ -1,22 +1,8 @@
-import openpyxl
-
-def get_sheet_names(file_path):
-    try:
-        workbook = openpyxl.load_workbook(file_path)
-        sheet_names = workbook.sheetnames
-        return sheet_names
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        return None
-
-# Example usage:
-file_path = 'example.xlsx'  # Replace 'example.xlsx' with the path to your Excel file
-sheet_names = get_sheet_names(file_path)
-if sheet_names:
-    print("Sheet Names:")
-    for name in sheet_names:
-        print(name)
-else:
-    print("Unable to extract sheet names.")
-
-
+pvellanki@orsa01:~$ systemctl status auto_options_OCV_pull.service
+○ auto_options_OCV_pull.service - Orsa OCV pull
+     Loaded: loaded (/etc/systemd/system/auto_options_OCV_pull.service; enabled; vendor preset: enabled)
+     Active: inactive (dead) since Tue 2024-03-05 09:00:12 EST; 5h 50min ago
+TriggeredBy: ● auto_options_OCV_pull.timer
+    Process: 51679 ExecStart=/bin/bash run_pricing.sh (code=exited, status=0/SUCCESS)
+   Main PID: 51679 (code=exited, status=0/SUCCESS)
+        CPU: 2.915s
