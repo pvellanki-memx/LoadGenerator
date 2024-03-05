@@ -1,2 +1,22 @@
-sudo du -hs /home/* | sort -rh | awk '{print $2 "\t" $1}'
+import openpyxl
+
+def get_sheet_names(file_path):
+    try:
+        workbook = openpyxl.load_workbook(file_path)
+        sheet_names = workbook.sheetnames
+        return sheet_names
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+
+# Example usage:
+file_path = 'example.xlsx'  # Replace 'example.xlsx' with the path to your Excel file
+sheet_names = get_sheet_names(file_path)
+if sheet_names:
+    print("Sheet Names:")
+    for name in sheet_names:
+        print(name)
+else:
+    print("Unable to extract sheet names.")
+
 
