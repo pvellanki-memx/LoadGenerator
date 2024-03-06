@@ -1,8 +1,4 @@
-pvellanki@orsa01:~$ systemctl status auto_options_OCV_pull.service
-○ auto_options_OCV_pull.service - Orsa OCV pull
-     Loaded: loaded (/etc/systemd/system/auto_options_OCV_pull.service; enabled; vendor preset: enabled)
-     Active: inactive (dead) since Tue 2024-03-05 09:00:12 EST; 5h 50min ago
-TriggeredBy: ● auto_options_OCV_pull.timer
-    Process: 51679 ExecStart=/bin/bash run_pricing.sh (code=exited, status=0/SUCCESS)
-   Main PID: 51679 (code=exited, status=0/SUCCESS)
-        CPU: 2.915s
+I have uploaded all artifacts here. Here you will see a Execution sheet which contains functional area -> Respective test suites and the # of cases in it. A total of 6595 testcases were run. 
+For each functional area, there is a folder which has corresponding Test scenarios doc. This doc lists the testcase objective and other details. This folder also has zip files which show the execution results. each zip file has html page init, which gives a list of testcases executed and their results.
+
+Please help review these and let me know if you see any discrepencies. From the experience of EDX, I have validated that all cases are sequentially executed as in the test suite and are in Passed state.
