@@ -1,4 +1,7 @@
-Starting a conversation to review QA artifacts for LTSE
-I have uploaded all artifacts here. Here you will see a Execution sheet which contains functional area -> Respective test suites and the # of cases in it. A total of 6595 testcases were run.
-For each functional area, there is a folder which has corresponding Test scenarios doc. This doc lists the testcase objective and other details. This folder also has zip files which show the execution results. each zip file has html page init, which gives a list of testcases executed and their results.
-Please help review these and let me know if you see any discrepencies. From the experience of EDX, I have validated that all cases are sequentially executed as in the test suite and are in Passed state.
+Starting a conversation to review QA artifacts for LTSE.
+
+I have uploaded all artifacts here. You will find an Execution sheet containing functional areas, their respective test suites, and the number of cases in each. A total of 6595 test cases were run.
+
+For each functional area, there is a folder containing corresponding Test Scenario documents. These documents list the test case objectives and other details. Additionally, each folder contains zip files displaying the execution results. Each zip file includes an HTML page providing a list of executed test cases and their results.
+
+Please review these artifacts and let me know if you notice any discrepancies. Drawing from the experience of EDX, I have validated that all cases are sequentially executed as per the test suite and are in a "Passed" state.
