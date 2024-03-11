@@ -1,7 +1,34 @@
-Starting a conversation to review QA artifacts for LTSE.
+mdesembrana@sftp01:/etc/systemd/system$ cat sync_occ_files.service 
+[Unit]
+Description=sync occ files daily service
 
-I have uploaded all artifacts here. You will find an Execution sheet containing functional areas, their respective test suites, and the number of cases in each. A total of 6595 test cases were run.
+[Service]
+Type=simple
+User=techops-files-download
+ExecStart=/opt/techops/scripts/sync_occ_files_daily.sh
+StandardOutput=journal
+SyslogIdentifier=sync_occ_files
 
-For each functional area, there is a folder containing corresponding Test Scenario documents. These documents list the test case objectives and other details. Additionally, each folder contains zip files displaying the execution results. Each zip file includes an HTML page providing a list of executed test cases and their results.
+[Install]
+WantedBy=multi-user.target
+mdesembrana@sftp01:/etc/systemd/system$ cat /opt/techops/scripts/sync_occ_files_daily.sh
+#!/bin/bash
 
-Please review these artifacts and let me know if you notice any discrepancies. Drawing from the experience of EDX, I have validated that all cases are sequentially executed as per the test suite and are in a "Passed" state.
+d=$(date +%Y-%m-%d)
+
+echo "Syncing files to S3"
+
+/usr/local/bin/aws s3 sync /mnt/occ/downloads/prod/ s3://memx-options-security-files --profile memx-options-security-files-user
+/usr/local/bin/aws s3 sync /mnt/occ/orsa-summary s3://memx-options-security-files/orsa-summary --exclude "*" --include "*.csv" --profile memx-options-security-files-user
+
+echo "File upload completed"
+mdesembrana@sftp01:/etc/systemd/system$ cat sync_occ_files.timer
+[Unit]
+Description=sync occ files timer
+
+[Timer]
+OnCalendar=Mon,Tue,Wed,Thu,Fri,Sat *-*-* 01..05:00,15,30,45:00
+Unit=sync_occ_files.service
+
+[Install]
+WantedBy=multi-user.target
