@@ -5,17 +5,29 @@ import os
 
 
 class MyApplication(fix.Application):
-    def __init__(self):
+    def __init__(self, message_rate_limit=10):
         super().__init__()
         self.sessions = {}
         self.log_directory = "log"
-        
+        self.message_rate_limit = message_rate_limit
+        self.last_message_time = {}
 
     def onCreate(self, sessionID):
         print("Session created -", sessionID.toString())
         self.sessions[sessionID] = fix.Session.lookupSession(sessionID)
 
     def fromApp(self, message, sessionID):
+        # Throttle incoming messages based on message rate limit
+        if sessionID in self.last_message_time:
+            current_time = time.time()
+            last_time = self.last_message_time.get(sessionID, 0)
+            time_diff = current_time - last_time
+            if time_diff < 1 / self.message_rate_limit:
+                # If message rate limit exceeded, delay processing
+                time.sleep(1 / self.message_rate_limit - time_diff)
+        self.last_message_time[sessionID] = time.time()
+
+        # Process the incoming message here
         # Log the received message to the specified file
         log_file_path = self.get_log_file()
         with open(log_file_path, "a") as log_file:
@@ -41,13 +53,11 @@ class MyApplication(fix.Application):
         print("Logon Successful -", sessionID.toString())
 
     def get_log_file(self):
-        log_directory="log"
+        log_directory = "log"
         os.makedirs(log_directory, exist_ok=True)
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H")
         log_file_name = f"log_file_{timestamp}.log"
-        print(os.path.join(self.log_directory, log_file_name))
         return os.path.join(self.log_directory, log_file_name)
-
 
     def run(self):
         settings = fix.SessionSettings(self.connection_config_file)
@@ -59,7 +69,7 @@ class MyApplication(fix.Application):
         application.stop()
 
 
-app = MyApplication()
+app = MyApplication(message_rate_limit=5)  # Set the desired message rate limit
 app.connection_config_file = "acceptor.cfg"
 
 
