@@ -1,33 +1,4 @@
-2024-03-12T14:24:49-04:00 gc22008.options.ewr2.memx.tech bash[1912512]: 2024/03/12 18:24:49.566603283 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : FixPublisher : Live outbound sequence 1323125
-2024-03-12T14:24:49-04:00 gc22008.options.ewr2.memx.tech bash[1912512]: 2024/03/12 18:24:49.566630546 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : ClientConsumer : Completed logon: nextExpectedSequence=55805
-2024-03-12T14:24:51-04:00 gc22008.options.ewr2.memx.tech bash[1912512]: 2024/03/12 18:24:51.000297598 UTC gc22008 [WARN ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : ClientConsumer : Discarding extra event received after already receiving Logout: header=35=0|49=SMRT03|56=TEST01|34=55808|52=20240312-18:24:51.000|, fields=8=FIXT.1.1|9=59|35=0|34=55808|49=SMRT03|52=20240312-18:24:51.000|56=TEST01|10=062
-2024-03-12T14:24:52-04:00 gc22008.options.ewr2.memx.tech bash[1912512]: 2024/03/12 18:24:52.000202026 UTC gc22008 [WARN ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : ClientConsumer : Discarding extra event received after already receiving Logout: header=35=0|49=SMRT03|56=TEST01|34=55809|52=20240312-18:24:52.000|, fields=8=FIXT.1.1|9=59|35=0|34=55809|49=SMRT03|52=20240312-18:24:52.000|56=TEST01|10=064
-2024-03-12T14:24:53-04:00 gc22008.options.ewr2.memx.tech bash[1912512]: 2024/03/12 18:24:52.737891536 UTC gc22008 [WARN ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : EventServer : Remote Client took too long to disconnect - forcing disconnect
 
-
-[pvellanki@sys0412 tools]$ cat acceptor.cfg
-[DEFAULT]
-ConnectionType=initiator
-ReconnectInterval=10
-FileStorePath=./Sessions/
-FileLogPath=log
-
-
-[SESSION]
-BeginString = FIXT.1.1
-SenderCompID = SMRT03
-TargetCompID = TEST01
-SocketConnectHost = 10.3.128.182
-SocketConnectPort = 31997
-DefaultApplVerID = 9
-StartTime = 03:00:00
-EndTime = 03:00:00
-HeartBtInt = 1
-DataDictionary = FIX50SP2.xml
-TransportDataDictionary = FIXT.1.1.xml
-LogonTimeout = 30
-MaxMessagesPerSecond=1000
-MaxLatency=5
-ValidateUserDefinedFields=N
-DefaultCstmApplVerID = 1.3
-FileLogPath=log
+2024-03-12T14:36:51-04:00 gc22008.options.ewr2.memx.tech bash[1912512]: 2024/03/12 18:36:51.874863286 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : FixPublisher : Live outbound sequence 1324067
+2024-03-12T14:36:51-04:00 gc22008.options.ewr2.memx.tech bash[1912512]: 2024/03/12 18:36:51.874893676 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : ClientConsumer : Completed logon: nextExpectedSequence=72542
+2024-03-12T14:36:54-04:00 gc22008.options.ewr2.memx.tech bash[1912512]: 2024/03/12 18:36:54.000084682 UTC gc22008 [INFO ] ACTOR.STREAM_MATCH_01: SMARTS_QA_TESTING_MATCH_01: CUSTOMER : FixConnection : Remote Client shutdown: [local=10.3.128.182:31997,remote=10.3.44.2:58182]
