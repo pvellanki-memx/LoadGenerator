@@ -27,14 +27,20 @@ class MyApplication(fix.Application):
                 time.sleep(1 / self.message_rate_limit - time_diff)
         self.last_message_time[sessionID] = time.time()
 
-        # Process the incoming message here
-        # Log the received message to the specified file
+
         log_file_path = self.get_log_file()
         with open(log_file_path, "a") as log_file:
             log_file.write(f"Received FIX Message: {message.toString()}\n")
 
     def toApp(self, message, sessionID):
-        pass
+         msg_type = message.getHeader().getField(fix.MsgType()).getString()
+
+        # Log the message to the specified file
+        log_file_path = self.get_log_file()
+        with open(log_file_path, "a") as log_file:
+            log_file.write(f"Sent FIX Message: {message.toString()}\n")
+
+    return super().toApp(message, sessionID)
 
     def fromAdmin(self, message, sessionID):
         pass
