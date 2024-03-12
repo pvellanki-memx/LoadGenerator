@@ -1,83 +1,14 @@
-import quickfix as fix
-import time
-import datetime
-import os
+def toAdmin(self, message, sessionID):
+    msg_type = message.getHeader().getField(fix.MsgType()).getString()
 
+    # Log the message to the specified file
+    log_file_path = self.get_log_file()
+    with open(log_file_path, "a") as log_file:
+        log_file.write(f"Sent Admin FIX Message: {message.toString()}\n")
 
-class MyApplication(fix.Application):
-    def __init__(self, message_rate_limit=10):
-        super().__init__()
-        self.sessions = {}
-        self.log_directory = "log"
-        self.message_rate_limit = message_rate_limit
-        self.last_message_time = {}
+    if msg_type == fix.MsgType_Logon:
+        message.getHeader().setField(1408, "1.3")
+        message.getHeader().setField(43, "Y")
+        print("Sent admin message:", message.toString())
 
-    def onCreate(self, sessionID):
-        print("Session created -", sessionID.toString())
-        self.sessions[sessionID] = fix.Session.lookupSession(sessionID)
-
-    def fromApp(self, message, sessionID):
-        # Throttle incoming messages based on message rate limit
-        if sessionID in self.last_message_time:
-            current_time = time.time()
-            last_time = self.last_message_time.get(sessionID, 0)
-            time_diff = current_time - last_time
-            if time_diff < 1 / self.message_rate_limit:
-                # If message rate limit exceeded, delay processing
-                time.sleep(1 / self.message_rate_limit - time_diff)
-        self.last_message_time[sessionID] = time.time()
-
-
-        log_file_path = self.get_log_file()
-        with open(log_file_path, "a") as log_file:
-            log_file.write(f"Received FIX Message: {message.toString()}\n")
-
-    def toApp(self, message, sessionID):
-         msg_type = message.getHeader().getField(fix.MsgType()).getString()
-
-        # Log the message to the specified file
-        log_file_path = self.get_log_file()
-        with open(log_file_path, "a") as log_file:
-            log_file.write(f"Sent FIX Message: {message.toString()}\n")
-
-    return super().toApp(message, sessionID)
-
-    def fromAdmin(self, message, sessionID):
-        pass
-
-    def toAdmin(self, message, sessionID):
-        if message.getHeader().getField(fix.MsgType()).getString() == fix.MsgType_Logon:
-            message.getHeader().setField(1408, "1.3")
-            message.getHeader().setField(43, "Y")
-            print("sent admin message", message.toString())
-        return True
-
-    def onLogout(self, sessionID):
-        print("Logout initiated -", sessionID.toString())
-
-    def onLogon(self, sessionID):
-        print("Logon Successful -", sessionID.toString())
-
-    def get_log_file(self):
-        log_directory = "log"
-        os.makedirs(log_directory, exist_ok=True)
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H")
-        log_file_name = f"log_file_{timestamp}.log"
-        return os.path.join(self.log_directory, log_file_name)
-
-    def run(self):
-        settings = fix.SessionSettings(self.connection_config_file)
-        application = fix.SocketInitiator(self, fix.FileStoreFactory(settings), settings)
-        application.start()
-
-        time.sleep(1)
-
-        application.stop()
-
-
-app = MyApplication(message_rate_limit=5)  # Set the desired message rate limit
-app.connection_config_file = "acceptor.cfg"
-
-
-# Run the FIX application
-app.run()
+    return True
