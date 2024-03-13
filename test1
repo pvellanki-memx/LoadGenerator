@@ -1,6 +1,13 @@
+ 8=FIXT.1.1^A9=127^A35=f^A34=206898^A43=Y^A49=TEST01^A52=20240313-17:57:58.584^A56=SMRT03^A122=20240313-11:07:37.791^A55=GNRC240816P00155000^A326=3^A625=23^A10=038^A
 
 
-
-
-[DEFAULT]
-ValidateFieldsOutOfOrder=N
+        <message name="SecurityStatus" messageId="f" sender="server">
+            <description>
+                The Security Status message is used by the Exchange to report changes in the state of a security.
+            </description>
+            <fields>
+                <field name="Symbol" tag="55" length="32" type="string" required="true" />
+                <field name="SecurityTradingStatus" tag="326" type="SmartsSecurityTradingStatus" required="true" />
+                <field name="TradingSessionSubID" tag="625"  type="SmartsTradingSessionSubId" required="true" />
+            </fields>
+        </message>
