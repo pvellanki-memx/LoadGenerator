@@ -1,11 +1,78 @@
-Sent Admin FIX Message: 8=FIXT.1.1^A9=78^A35=A^A34=72544^A49=SMRT03^A52=20240312-19:53:46.676^A56=TEST01^A98=0^A108=30^A1137=9^A10=194^A
-Sent Admin FIX Message: 8=FIXT.1.1^A9=73^A35=2^A34=72545^A49=SMRT03^A52=20240312-19:53:46.676^A56=TEST01^A7=394420^A16=0^A10=211^A
-Received FIX Message: 8=FIXT.1.1^A9=126^A35=f^A34=394420^A43=Y^A49=TEST01^A52=20240312-19:53:46.677^A56=SMRT03^A122=20240312-11:08:07.378^A55=QQQ240315C00353780^A326=3^A625=23^A10=218^A
-Received FIX Message: 8=FIXT.1.1^A9=126^A35=f^A34=394421^A43=Y^A49=TEST01^A52=20240312-19:53:46.677^A56=SMRT03^A122=20240312-11:08:07.378^A55=QQQ240315C00354780^A326=3^A625=23^A10=220^A
+import quickfix as fix
+import datetime
+import os
+import logging
+import time
 
+class MyApplication(fix.Application):
+    def __init__(self):
+        super().__init__()
+        self.log_directory = "log"
+        self.log_file_path = self.get_log_file()
+        self.logger = self.setup_logger()
 
-Received FIX Message: 8=FIXT.1.1^A9=127^A35=f^A34=423023^A43=Y^A49=TEST01^A52=20240312-19:53:46.723^A56=SMRT03^A122=20240312-11:08:07.679^A55=SAVA240412C00012500^A326=3^A625=23^A10=243^A
-Received FIX Message: 8=FIXT.1.1^A9=127^A35=f^A34=423024^A43=Y^A49=TEST01^A52=20240312-19:53:46.723^A56=SMRT03^A122=20240312-11:08:07.679^A55=SAVA240412C00015000^A326=3^A625=23^A10=242^A
-Logout initiated - FIXT.1.1:SMRT03->TEST01
+    def onCreate(self, sessionID):
+        self.logger.info(f"Session created - {sessionID.toString()}")
 
+    def fromApp(self, message, sessionID):
+        self.logger.debug(f"Received FIX Message: {message.toString()}")
 
+    def toApp(self, message, sessionID):
+        pass
+
+    def fromAdmin(self, message, sessionID):
+        msg_type = message.getHeader().getField(fix.MsgType()).getString()
+        if msg_type == fix.MsgType_Logout:
+            reason = message.getField(58)  # Extract the logout reason
+            self.logger.warning(f"Received Logout: {reason}")
+
+    def toAdmin(self, message, sessionID):
+        if message.getHeader().getField(fix.MsgType()).getString() == fix.MsgType_Logon:
+            message.getHeader().setField(1408, "1.3")
+            message.getHeader().setField(43, "Y")
+            self.logger.info(f"Sent admin message: {message.toString()}")
+        return True
+
+    def onLogout(self, sessionID):
+        self.logger.info(f"Logout initiated - {sessionID.toString()}")
+
+    def onLogon(self, sessionID):
+        self.logger.info(f"Logon Successful - {sessionID.toString()}")
+
+    def get_log_file(self):
+        log_directory = "log"
+        os.makedirs(log_directory, exist_ok=True)
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H")
+        log_file_name = f"log_file_{timestamp}.log"
+        return os.path.join(self.log_directory, log_file_name)
+
+    def setup_logger(self):
+        logger = logging.getLogger(__name__)
+        logger.setLevel(logging.DEBUG)
+        
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+
+        file_handler = logging.FileHandler(self.log_file_path)
+        file_handler.setLevel(logging.DEBUG)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.INFO)
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
+
+        return logger
+
+    def run(self):
+        settings = fix.SessionSettings(self.connection_config_file)
+        application = fix.SocketInitiator(self, fix.FileStoreFactory(settings), settings)
+        application.start()
+
+        time.sleep(1)
+
+        application.stop()
+
+app = MyApplication()
+app.connection_config_file = "acceptor.cfg"
+app.run()
