@@ -1,6 +1,6 @@
-[Unit]
-Description=sync occ files timer
 
-[Timer]
-OnCalendar=Mon,Tue,Wed,Thu,Fri,Sat *-*-* 01..05:00,15,30,45:00
-Unit=sync_occ_files.service
+
+
+
+[DEFAULT]
+ValidateFieldsOutOfOrder=N
