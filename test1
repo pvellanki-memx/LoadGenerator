@@ -1,1 +1,41 @@
-OnCalendar=Mon,Tue,Wed,Thu,Fri,Sat *-*-* 08..13:00,15,30,45:00
+Additional Requirement: Daily Market Maker Continuous Quoting Check
+Objective:
+To ensure market makers are quoting actively, a daily check is required to verify that market makers are quoting at least 60% of the time when assets are trading.
+
+Description:
+A daily process will run to check the quoting activity of market makers. This process will compare the duration of market maker quotes against the total duration of trading activity for assets. If a market maker's quoting duration falls below 60% of the total trading duration, an alert will be generated for further investigation.
+
+Required Information:
+Timestamp of the check
+Duration of market maker quoting activity
+Total duration of trading activity for assets
+List of market makers and their quoting activity durations
+Threshold for acceptable quoting activity (e.g., 60%)
+Workflow:
+Retrieve trading activity data for assets.
+Identify market makers involved in quoting activities during the trading period.
+Calculate the duration of quoting activity for each market maker.
+Calculate the total duration of trading activity for assets.
+Compare each market maker's quoting duration to the total trading duration.
+If a market maker's quoting duration is less than 60% of the total trading duration, generate an alert for further investigation.
+Notify relevant stakeholders about the generated alerts for review and action.
+Expected Output:
+Generation of alerts for market makers with quoting activity below the 60% threshold.
+Notification to regulatory team for review and further investigation of alerts.
+Logging of the daily check results in the audit trail for transparency and accountability.
+Revision to Functional Requirements - Equities:
+7.13 Market Maker Continuous Quoting Check
+Objective:
+Detect market makers failing to quote at least 60% of the time during trading activities.
+
+Description:
+This alert triggers when a market maker's quoting activity falls below 60% of the total trading duration for assets, indicating potential non-compliance or market manipulation.
+
+Required Information:
+Timestamp of the event
+Duration of market maker quoting activity
+Total duration of trading activity for assets
+Threshold for acceptable quoting activity (e.g., 60%)
+8. User Interface (UI)
+Dashboard and Reporting:
+8.5.3 The UI provides visualization and reporting tools to monitor market maker quoting activity, including trends over time and compliance with the 60% quoting requirement.
