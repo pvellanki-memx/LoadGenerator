@@ -6,18 +6,18 @@ import os
 class MyApplication(fix.Application):
     def __init__(self):
         super().__init__()
+        self.sessions = {}
         self.log_directory = "log"
 
     def onCreate(self, sessionID):
         print("Session created -", sessionID.toString())
+        self.sessions[sessionID] = fix.Session.lookupSession(sessionID)
 
     def fromApp(self, message, sessionID):
-        # Log the received message to the specified file
-        log_file_path = self.get_log_file()
-        with open(log_file_path, "a") as log_file:
-            log_file.write(f"Received FIX Message: {message.toString()}\n")
-
-        # Handle incoming messages here
+        msg_type = message.getHeader().getField(fix.MsgType()).getString()
+        if msg_type == fix.MsgType_NewOrderSingle:
+            print("Received New Order Single:", message.toString())
+            self.sendExecutionReportFilled(message, sessionID)
 
     def toApp(self, message, sessionID):
         pass
@@ -34,25 +34,37 @@ class MyApplication(fix.Application):
     def onLogon(self, sessionID):
         print("Logon Successful -", sessionID.toString())
 
-    def get_log_file(self):
-        log_directory = "log"
-        os.makedirs(log_directory, exist_ok=True)
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H")
-        log_file_name = f"log_file_{timestamp}.log"
-        return os.path.join(self.log_directory, log_file_name)
+    def sendExecutionReportFilled(self, new_order_single_message, sessionID):
+        # Create Execution Report message
+        exec_report = fix.Message()
+        header = exec_report.getHeader()
+        header.setField(fix.MsgType(fix.MsgType_ExecutionReport))
+        header.setField(fix.BeginString("FIXT.1.1"))
+        header.setField(fix.SenderCompID(new_order_single_message.getHeader().getField(fix.TargetCompID()).getString()))
+        header.setField(fix.TargetCompID(new_order_single_message.getHeader().getField(fix.SenderCompID()).getString()))
+        header.setField(fix.MsgSeqNum(fix.DefaultMsgSeqNums_Increment))
+        header.setField(fix.SendingTime())
+        exec_report.setField(fix.OrderID("12345"))
+        exec_report.setField(fix.ExecID("EXEC12345"))
+        exec_report.setField(fix.ExecType(fix.ExecType_FILL))
+        exec_report.setField(fix.OrdStatus(fix.OrdStatus_FILLED))
+        exec_report.setField(fix.Symbol(new_order_single_message.getField(fix.Symbol()).getString()))
+        exec_report.setField(fix.Side(new_order_single_message.getField(fix.Side()).getString()))
+        exec_report.setField(fix.LeavesQty(0))
+        exec_report.setField(fix.LastShares(new_order_single_message.getField(fix.OrderQty()).getString()))
+        exec_report.setField(fix.LastPx(100.0))
+        exec_report.setField(fix.CumQty(new_order_single_message.getField(fix.OrderQty()).getString()))
+        exec_report.setField(fix.AvgPx(100.0))
+        fix.Session.sendToTarget(exec_report, sessionID)
 
     def run(self):
         settings = fix.SessionSettings("acceptor.cfg")
         application = fix.SocketAcceptor(self, fix.FileStoreFactory(settings), settings)
         application.start()
 
-        while True:
-            time.sleep(1)
+        time.sleep(1)
 
         application.stop()
 
-
 app = MyApplication()
-
-# Run the FIX application
 app.run()
