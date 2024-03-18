@@ -1,70 +1,8 @@
-import quickfix as fix
-import time
-import datetime
-import os
-
-class MyApplication(fix.Application):
-    def __init__(self):
-        super().__init__()
-        self.sessions = {}
-        self.log_directory = "log"
-
-    def onCreate(self, sessionID):
-        print("Session created -", sessionID.toString())
-        self.sessions[sessionID] = fix.Session.lookupSession(sessionID)
-
-    def fromApp(self, message, sessionID):
-        msg_type = message.getHeader().getField(fix.MsgType()).getString()
-        if msg_type == fix.MsgType_NewOrderSingle:
-            print("Received New Order Single:", message.toString())
-            self.sendExecutionReportFilled(message, sessionID)
-
-    def toApp(self, message, sessionID):
-        pass
-
-    def fromAdmin(self, message, sessionID):
-        pass
-
-    def toAdmin(self, message, sessionID):
-        pass
-
-    def onLogout(self, sessionID):
-        print("Logout initiated -", sessionID.toString())
-
-    def onLogon(self, sessionID):
-        print("Logon Successful -", sessionID.toString())
-
-    def sendExecutionReportFilled(self, new_order_single_message, sessionID):
-        # Create Execution Report message
-        exec_report = fix.Message()
-        header = exec_report.getHeader()
-        header.setField(fix.MsgType(fix.MsgType_ExecutionReport))
-        header.setField(fix.BeginString("FIXT.1.1"))
-        header.setField(fix.SenderCompID(new_order_single_message.getHeader().getField(fix.TargetCompID()).getString()))
-        header.setField(fix.TargetCompID(new_order_single_message.getHeader().getField(fix.SenderCompID()).getString()))
-        header.setField(fix.MsgSeqNum(fix.DefaultMsgSeqNums_Increment))
-        header.setField(fix.SendingTime())
-        exec_report.setField(fix.OrderID("12345"))
-        exec_report.setField(fix.ExecID("EXEC12345"))
-        exec_report.setField(fix.ExecType(fix.ExecType_FILL))
-        exec_report.setField(fix.OrdStatus(fix.OrdStatus_FILLED))
-        exec_report.setField(fix.Symbol(new_order_single_message.getField(fix.Symbol()).getString()))
-        exec_report.setField(fix.Side(new_order_single_message.getField(fix.Side()).getString()))
-        exec_report.setField(fix.LeavesQty(0))
-        exec_report.setField(fix.LastShares(new_order_single_message.getField(fix.OrderQty()).getString()))
-        exec_report.setField(fix.LastPx(100.0))
-        exec_report.setField(fix.CumQty(new_order_single_message.getField(fix.OrderQty()).getString()))
-        exec_report.setField(fix.AvgPx(100.0))
-        fix.Session.sendToTarget(exec_report, sessionID)
-
-    def run(self):
-        settings = fix.SessionSettings("acceptor.cfg")
-        application = fix.SocketAcceptor(self, fix.FileStoreFactory(settings), settings)
-        application.start()
-
-        time.sleep(1)
-
-        application.stop()
-
-app = MyApplication()
-app.run()
+ens786f0np0.120: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 10.2.44.2  netmask 255.255.252.0  broadcast 10.2.47.255
+        inet6 fe80::20f:53ff:fe88:9bd0  prefixlen 64  scopeid 0x20<link>
+        ether 00:0f:53:88:9b:d0  txqueuelen 1000  (Ethernet)
+        RX packets 2782709811  bytes 348396554761 (324.4 GiB)
+        RX errors 0  dropped 19580412  overruns 0  frame 0
+        TX packets 2197989225  bytes 1645193807323 (1.4 TiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
