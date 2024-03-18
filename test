@@ -1,8 +1,1 @@
-ens786f0np0.120: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
-        inet 10.2.44.2  netmask 255.255.252.0  broadcast 10.2.47.255
-        inet6 fe80::20f:53ff:fe88:9bd0  prefixlen 64  scopeid 0x20<link>
-        ether 00:0f:53:88:9b:d0  txqueuelen 1000  (Ethernet)
-        RX packets 2782709811  bytes 348396554761 (324.4 GiB)
-        RX errors 0  dropped 19580412  overruns 0  frame 0
-        TX packets 2197989225  bytes 1645193807323 (1.4 TiB)
-        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+SocketBindAddress=10.2.44.2 
