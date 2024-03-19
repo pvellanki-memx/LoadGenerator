@@ -20,6 +20,27 @@ class MyApplication(fix.Application):
 
         # Handle incoming messages here
 
+        # Check if the message type is New Order - Single (35=D)
+        if message.getHeader().getField(fix.MsgType()).getString() == fix.MsgType_NewOrderSingle:
+            # Respond with Execution Report - Filled (35=8)
+            self.send_execution_report_filled(sessionID)
+
+    def send_execution_report_filled(self, sessionID):
+        execution_report = fix.Message()
+        header = execution_report.getHeader()
+        header.setField(fix.BeginString(fix.BeginString_FIX44))
+        header.setField(fix.MsgType(fix.MsgType_ExecutionReport))
+        header.setField(fix.SenderCompID(sessionID.getSenderCompID()))
+        header.setField(fix.TargetCompID(sessionID.getTargetCompID()))
+        header.setField(fix.MsgSeqNum(fix.MsgSeqNum()))
+        header.setField(fix.SendingTime(fix.SendingTime()))
+        execution_report.setField(fix.ExecID("123"))
+        execution_report.setField(fix.ExecType(fix.ExecType_FILL))
+        execution_report.setField(fix.OrdStatus(fix.OrdStatus_FILLED))
+        # Add more fields as needed
+        
+        fix.Session.sendToTarget(execution_report, sessionID)
+
     def toApp(self, message, sessionID):
         msg_type = message.getHeader().getField(fix.MsgType()).getString()
 
