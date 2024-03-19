@@ -7,12 +7,10 @@ import socket
 class MyApplication(fix.Application):
     def __init__(self):
         super().__init__()
-        self.sessions = {}
         self.log_directory = "log"
 
     def onCreate(self, sessionID):
         print("Session created -", sessionID.toString())
-        self.sessions[sessionID] = fix.Session.lookupSession(sessionID)
 
     def fromApp(self, message, sessionID):
         # Log the received message to the specified file
@@ -20,33 +18,38 @@ class MyApplication(fix.Application):
         with open(log_file_path, "a") as log_file:
             log_file.write(f"Received FIX Message: {message.toString()}\n")
 
+        # Handle incoming messages here
+
     def toApp(self, message, sessionID):
-        pass
+        msg_type = message.getHeader().getField(fix.MsgType()).getString()
+
+        # Log the message to the specified file
+        log_file_path = self.get_log_file()
+        with open(log_file_path, "a") as log_file:
+            log_file.write(f"Sent FIX Message: {message.toString()}\n")
+
+        return super().toApp(message, sessionID)
 
     def fromAdmin(self, message, sessionID):
-        msg_type = message.getHeader().getField(fix.MsgType()).getString()
-        if msg_type == fix.MsgType_Logout:
-            reason = message.getField(58)  # Extract the logout reason
-            print(f"Received Logout: {reason}")
-            # Log the logout reason
-            log_file_path = self.get_log_file()
-            with open(log_file_path, "a") as log_file:
-                log_file.write(f"Received Logout: {reason}\n")
-        # Handle other administrative messages if needed
+        pass
 
     def toAdmin(self, message, sessionID):
-        if message.getHeader().getField(fix.MsgType()).getString() == fix.MsgType_Logon:
+        msg_type = message.getHeader().getField(fix.MsgType()).getString()
+
+        # Log the message to the specified file
+        log_file_path = self.get_log_file()
+        with open(log_file_path, "a") as log_file:
+            log_file.write(f"Sent Admin FIX Message: {message.toString()}\n")
+
+        if msg_type == fix.MsgType_Logon:
             message.getHeader().setField(1408, "1.3")
             message.getHeader().setField(43, "Y")
-            print("sent admin message", message.toString())
+            print("Sent admin message:", message.toString())
+
         return True
 
     def onLogout(self, sessionID):
         print("Logout initiated -", sessionID.toString())
-        # Log the logout event
-        log_file_path = self.get_log_file()
-        with open(log_file_path, "a") as log_file:
-            log_file.write(f"Logout initiated - {sessionID.toString()}\n")
 
     def onLogon(self, sessionID):
         print("Logon Successful -", sessionID.toString())
@@ -59,31 +62,25 @@ class MyApplication(fix.Application):
         return os.path.join(self.log_directory, log_file_name)
 
     def run(self):
-        # Define the interface and port
         interface = '10.2.44.2'
-        port = 31996
+        port = 31991
 
-        # Create a socket object
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        # Bind the socket to the interface and port
         sock.bind((interface, port))
         print(f"Socket bound to {interface}:{port}")
-
-        # Listen for incoming connections
         sock.listen(5)
-
-        settings = fix.SessionSettings(self.connection_config_file)
-        application = fix.SocketInitiator(self, fix.FileStoreFactory(settings), settings)
+        settings = fix.SessionSettings("acceptor.cfg")
+        application = fix.SocketAcceptor(self, fix.FileStoreFactory(settings), settings)
         application.start()
 
-        time.sleep(1)
+        while True:
+            time.sleep(1)
 
         application.stop()
 
 
 app = MyApplication()
-app.connection_config_file = "acceptor.cfg"
 
 # Run the FIX application
 app.run()
