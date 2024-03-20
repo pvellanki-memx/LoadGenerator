@@ -1,1 +1,32 @@
-=SUMIFS(S:S, B:B, "C", G:G, 0) - SUMIFS(S:S, B:B, "C", G:G, 1)
+import openpyxl
+
+def apply_formula(input_file, output_file):
+    # Load the input Excel file
+    wb = openpyxl.load_workbook(input_file)
+    ws = wb.active
+
+    # Initialize sums
+    sum_0 = 0
+    sum_1 = 0
+
+    # Iterate through rows and apply conditions
+    for row in ws.iter_rows(min_row=2, values_only=True):
+        if row[1] == "C" and row[6] == 0:
+            sum_0 += row[18]  # Assuming column S is the 18th column (0-indexed)
+        elif row[1] == "C" and row[6] == 1:
+            sum_1 += row[18]  # Assuming column S is the 18th column (0-indexed)
+
+    # Apply formula
+    result = sum_0 - sum_1
+
+    # Write the result to a new Excel file
+    wb_result = openpyxl.Workbook()
+    ws_result = wb_result.active
+    ws_result['A1'] = result
+    wb_result.save(output_file)
+
+# Example usage:
+input_file = "input.xlsx"
+output_file = "output.xlsx"
+apply_formula(input_file, output_file)
+
