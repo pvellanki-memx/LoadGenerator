@@ -1,23 +1,52 @@
-[DEFAULT]
-ConnectionType=acceptor
-ReconnectInterval=10
-FileStorePath=./Sessions/
-FileLogPath=log
-
-
-[SESSION]
-BeginString = FIXT.1.1
-SenderCompID = MS_UAT
-TargetCompID = MEMX_UAT
-SocketBindAddress=10.2.44.2 
-SocketAcceptPort = 31996
-DefaultApplVerID = 9
-StartTime = 03:00:00
-EndTime = 03:00:00
-HeartBtInt = 30
-DataDictionary = FIX50SP2.xml
-TransportDataDictionary = FIXT.1.1.xml
-MaxMessagesPerSecond=1000
-ValidateUserDefinedFields=N
-DefaultCstmApplVerID = 1.3
-FileLogPath=log
+	3/20/24
+4:27:25.000 PM	
+2024-03-20T16:27:25-04:00 gc22071.equities.ewr2.memx.tech sh[33127]: 2024/03/20 20:27:25.269000887 UTC gc22071 [DEBUG] MIDS - GATEWAY_MDE_FIX_MSDMA_01 - FIX:MSDMA_FIX_CLIENT - CHANNEL:GATEWAY_MDE_FIX_MSDMA_01 - Transitioning from state 'Disconnected' to state 'Opening'
+host = gc22071.equities.ewr2.memx.techsource = /var/log/SYSLOG/2024/03/20/gc22071.equities.ewr2.memx.tech/sh.logsourcetype = syslog
+3/20/24
+4:27:25.000 PM	
+2024-03-20T16:27:25-04:00 gc22071.equities.ewr2.memx.tech sh[33127]: 2024/03/20 20:27:25.269003356 UTC gc22071 [DEBUG] MIDS - GATEWAY_MDE_FIX_MSDMA_01 - FIX:MSDMA_FIX_CLIENT - CHANNEL:GATEWAY_MDE_FIX_MSDMA_01 - Opening 10.2.44.2:31991 sender:MEMX_UAT target:MS_UAT
+host = gc22071.equities.ewr2.memx.techsource = /var/log/SYSLOG/2024/03/20/gc22071.equities.ewr2.memx.tech/sh.logsourcetype = syslog
+3/20/24
+4:27:25.000 PM	
+2024-03-20T16:27:25-04:00 gc22071.equities.ewr2.memx.tech sh[33127]: 2024/03/20 20:27:25.269550645 UTC gc22071 [INFO ] MIDS - GATEWAY_MDE_FIX_MSDMA_01 - MsDMAAwayGatewayStrategyFIX Client connected: GATEWAY_MDE_FIX_MSDMA_01
+host = gc22071.equities.ewr2.memx.techsource = /var/log/SYSLOG/2024/03/20/gc22071.equities.ewr2.memx.tech/sh.logsourcetype = syslog
+3/20/24
+4:27:25.000 PM	
+2024-03-20T16:27:25-04:00 gc22071.equities.ewr2.memx.tech sh[33127]: 2024/03/20 20:27:25.269559305 UTC gc22071 [INFO ] MIDS - GATEWAY_MDE_FIX_MSDMA_01 - Connection established
+host = gc22071.equities.ewr2.memx.techsource = /var/log/SYSLOG/2024/03/20/gc22071.equities.ewr2.memx.tech/sh.logsourcetype = syslog
+3/20/24
+4:27:25.000 PM	
+2024-03-20T16:27:25-04:00 gc22071.equities.ewr2.memx.tech sh[33127]: 2024/03/20 20:27:25.269595452 UTC gc22071 [DEBUG] MIDS - GATEWAY_MDE_FIX_MSDMA_01 - FIX:MSDMA_FIX_CLIENT - CHANNEL:GATEWAY_MDE_FIX_MSDMA_01 - Transitioning from state 'Opening' to state 'Logon'
+host = gc22071.equities.ewr2.memx.techsource = /var/log/SYSLOG/2024/03/20/gc22071.equities.ewr2.memx.tech/sh.logsourcetype = syslog
+3/20/24
+4:27:25.000 PM	
+2024-03-20T16:27:25-04:00 gc22071.equities.ewr2.memx.tech sh[33127]: 2024/03/20 20:27:25.269598336 UTC gc22071 [INFO ] MIDS - GATEWAY_MDE_FIX_MSDMA_01 - FIX:MSDMA_FIX_CLIENT - CHANNEL:GATEWAY_MDE_FIX_MSDMA_01 - Logging in
+host = gc22071.equities.ewr2.memx.techsource = /var/log/SYSLOG/2024/03/20/gc22071.equities.ewr2.memx.tech/sh.logsourcetype = syslog
+3/20/24
+4:27:25.000 PM	
+2024-03-20T16:27:25-04:00 gc22071.equities.ewr2.memx.tech sh[33127]: 2024/03/20 20:27:25.269605826 UTC gc22071 [DEBUG] MIDS - GATEWAY_MDE_FIX_MSDMA_01 - FIX:MSDMA_FIX_CLIENT - CHANNEL:GATEWAY_MDE_FIX_MSDMA_01 - FIX Out:Logon { MsgSeqNum=[0] SenderCompId=[MS_UAT] TargetCompId=[MEMX_UAT] ErrorTag=[0] ErrorCode=[0] encryptMethod=0 heartbeatInt=30 resetSeqNum=false}
+host = gc22071.equities.ewr2.memx.techsource = /var/log/SYSLOG/2024/03/20/gc22071.equities.ewr2.memx.tech/sh.logsourcetype = syslog
+3/20/24
+4:27:24.000 PM	
+2024-03-20T16:27:24-04:00 gc22071.equities.ewr2.memx.tech sh[33127]: 2024/03/20 20:27:24.269000639 UTC gc22071 [DEBUG] MIDS - GATEWAY_MDE_FIX_MSDMA_01 - FIX:MSDMA_FIX_CLIENT - CHANNEL:GATEWAY_MDE_FIX_MSDMA_01 - Transitioning from state 'Disconnected' to state 'Opening'
+host = gc22071.equities.ewr2.memx.techsource = /var/log/SYSLOG/2024/03/20/gc22071.equities.ewr2.memx.tech/sh.logsourcetype = syslog
+3/20/24
+4:27:24.000 PM	
+2024-03-20T16:27:24-04:00 gc22071.equities.ewr2.memx.tech sh[33127]: 2024/03/20 20:27:24.269002303 UTC gc22071 [DEBUG] MIDS - GATEWAY_MDE_FIX_MSDMA_01 - FIX:MSDMA_FIX_CLIENT - CHANNEL:GATEWAY_MDE_FIX_MSDMA_01 - Opening 10.2.44.2:31991 sender:MEMX_UAT target:MS_UAT
+host = gc22071.equities.ewr2.memx.techsource = /var/log/SYSLOG/2024/03/20/gc22071.equities.ewr2.memx.tech/sh.logsourcetype = syslog
+3/20/24
+4:27:24.000 PM	
+2024-03-20T16:27:24-04:00 gc22071.equities.ewr2.memx.tech sh[33127]: 2024/03/20 20:27:24.269775483 UTC gc22071 [DEBUG] MIDS - GATEWAY_MDE_FIX_MSDMA_01 - FIX:MSDMA_FIX_CLIENT - CHANNEL:GATEWAY_MDE_FIX_MSDMA_01 - Connection error: [111] Connection refused for 10.2.44.2:31991 sender:MEMX_UAT target:MS_UAT
+host = gc22071.equities.ewr2.memx.techsource = /var/log/SYSLOG/2024/03/20/gc22071.equities.ewr2.memx.tech/sh.logsourcetype = syslog
+3/20/24
+4:27:24.000 PM	
+2024-03-20T16:27:24-04:00 gc22071.equities.ewr2.memx.tech sh[33127]: 2024/03/20 20:27:24.269777181 UTC gc22071 [DEBUG] MIDS - GATEWAY_MDE_FIX_MSDMA_01 - FIX:MSDMA_FIX_CLIENT - CHANNEL:GATEWAY_MDE_FIX_MSDMA_01 - Transitioning from state 'Opening' to state 'Disconnected'
+host = gc22071.equities.ewr2.memx.techsource = /var/log/SYSLOG/2024/03/20/gc22071.equities.ewr2.memx.tech/sh.logsourcetype = syslog
+3/20/24
+4:27:23.000 PM	
+2024-03-20T16:27:23-04:00 gc22071.equities.ewr2.memx.tech sh[33127]: 2024/03/20 20:27:23.269000741 UTC gc22071 [DEBUG] MIDS - GATEWAY_MDE_FIX_MSDMA_01 - FIX:MSDMA_FIX_CLIENT - CHANNEL:GATEWAY_MDE_FIX_MSDMA_01 - Transitioning from state 'Disconnected' to state 'Opening'
+host = gc22071.equities.ewr2.memx.techsource = /var/log/SYSLOG/2024/03/20/gc22071.equities.ewr2.memx.tech/sh.logsourcetype = syslog
+3/20/24
+4:27:23.000 PM	
+2024-03-20T16:27:23-04:00 gc22071.equities.ewr2.memx.tech sh[33127]: 2024/03/20 20:27:23.269002600 UTC gc22071 [DEBUG] MIDS - GATEWAY_MDE_FIX_MSDMA_01 - FIX:MSDMA_FIX_CLIENT - CHANNEL:GATEWAY_MDE_FIX_MSDMA_01 - Opening 10.2.44.2:31991 sender:MEMX_UAT target:MS_UAT
+host = gc22071.equities.ewr2.memx.techsource = /var/log/SYSLOG/2024/03/20/gc22071.equities.ewr2.memx.tech/sh.logsourcetype = syslog
