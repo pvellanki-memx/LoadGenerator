@@ -1,52 +1,115 @@
-	3/20/24
-4:27:25.000 PM	
-2024-03-20T16:27:25-04:00 gc22071.equities.ewr2.memx.tech sh[33127]: 2024/03/20 20:27:25.269000887 UTC gc22071 [DEBUG] MIDS - GATEWAY_MDE_FIX_MSDMA_01 - FIX:MSDMA_FIX_CLIENT - CHANNEL:GATEWAY_MDE_FIX_MSDMA_01 - Transitioning from state 'Disconnected' to state 'Opening'
-host = gc22071.equities.ewr2.memx.techsource = /var/log/SYSLOG/2024/03/20/gc22071.equities.ewr2.memx.tech/sh.logsourcetype = syslog
-3/20/24
-4:27:25.000 PM	
-2024-03-20T16:27:25-04:00 gc22071.equities.ewr2.memx.tech sh[33127]: 2024/03/20 20:27:25.269003356 UTC gc22071 [DEBUG] MIDS - GATEWAY_MDE_FIX_MSDMA_01 - FIX:MSDMA_FIX_CLIENT - CHANNEL:GATEWAY_MDE_FIX_MSDMA_01 - Opening 10.2.44.2:31991 sender:MEMX_UAT target:MS_UAT
-host = gc22071.equities.ewr2.memx.techsource = /var/log/SYSLOG/2024/03/20/gc22071.equities.ewr2.memx.tech/sh.logsourcetype = syslog
-3/20/24
-4:27:25.000 PM	
-2024-03-20T16:27:25-04:00 gc22071.equities.ewr2.memx.tech sh[33127]: 2024/03/20 20:27:25.269550645 UTC gc22071 [INFO ] MIDS - GATEWAY_MDE_FIX_MSDMA_01 - MsDMAAwayGatewayStrategyFIX Client connected: GATEWAY_MDE_FIX_MSDMA_01
-host = gc22071.equities.ewr2.memx.techsource = /var/log/SYSLOG/2024/03/20/gc22071.equities.ewr2.memx.tech/sh.logsourcetype = syslog
-3/20/24
-4:27:25.000 PM	
-2024-03-20T16:27:25-04:00 gc22071.equities.ewr2.memx.tech sh[33127]: 2024/03/20 20:27:25.269559305 UTC gc22071 [INFO ] MIDS - GATEWAY_MDE_FIX_MSDMA_01 - Connection established
-host = gc22071.equities.ewr2.memx.techsource = /var/log/SYSLOG/2024/03/20/gc22071.equities.ewr2.memx.tech/sh.logsourcetype = syslog
-3/20/24
-4:27:25.000 PM	
-2024-03-20T16:27:25-04:00 gc22071.equities.ewr2.memx.tech sh[33127]: 2024/03/20 20:27:25.269595452 UTC gc22071 [DEBUG] MIDS - GATEWAY_MDE_FIX_MSDMA_01 - FIX:MSDMA_FIX_CLIENT - CHANNEL:GATEWAY_MDE_FIX_MSDMA_01 - Transitioning from state 'Opening' to state 'Logon'
-host = gc22071.equities.ewr2.memx.techsource = /var/log/SYSLOG/2024/03/20/gc22071.equities.ewr2.memx.tech/sh.logsourcetype = syslog
-3/20/24
-4:27:25.000 PM	
-2024-03-20T16:27:25-04:00 gc22071.equities.ewr2.memx.tech sh[33127]: 2024/03/20 20:27:25.269598336 UTC gc22071 [INFO ] MIDS - GATEWAY_MDE_FIX_MSDMA_01 - FIX:MSDMA_FIX_CLIENT - CHANNEL:GATEWAY_MDE_FIX_MSDMA_01 - Logging in
-host = gc22071.equities.ewr2.memx.techsource = /var/log/SYSLOG/2024/03/20/gc22071.equities.ewr2.memx.tech/sh.logsourcetype = syslog
-3/20/24
-4:27:25.000 PM	
-2024-03-20T16:27:25-04:00 gc22071.equities.ewr2.memx.tech sh[33127]: 2024/03/20 20:27:25.269605826 UTC gc22071 [DEBUG] MIDS - GATEWAY_MDE_FIX_MSDMA_01 - FIX:MSDMA_FIX_CLIENT - CHANNEL:GATEWAY_MDE_FIX_MSDMA_01 - FIX Out:Logon { MsgSeqNum=[0] SenderCompId=[MS_UAT] TargetCompId=[MEMX_UAT] ErrorTag=[0] ErrorCode=[0] encryptMethod=0 heartbeatInt=30 resetSeqNum=false}
-host = gc22071.equities.ewr2.memx.techsource = /var/log/SYSLOG/2024/03/20/gc22071.equities.ewr2.memx.tech/sh.logsourcetype = syslog
-3/20/24
-4:27:24.000 PM	
-2024-03-20T16:27:24-04:00 gc22071.equities.ewr2.memx.tech sh[33127]: 2024/03/20 20:27:24.269000639 UTC gc22071 [DEBUG] MIDS - GATEWAY_MDE_FIX_MSDMA_01 - FIX:MSDMA_FIX_CLIENT - CHANNEL:GATEWAY_MDE_FIX_MSDMA_01 - Transitioning from state 'Disconnected' to state 'Opening'
-host = gc22071.equities.ewr2.memx.techsource = /var/log/SYSLOG/2024/03/20/gc22071.equities.ewr2.memx.tech/sh.logsourcetype = syslog
-3/20/24
-4:27:24.000 PM	
-2024-03-20T16:27:24-04:00 gc22071.equities.ewr2.memx.tech sh[33127]: 2024/03/20 20:27:24.269002303 UTC gc22071 [DEBUG] MIDS - GATEWAY_MDE_FIX_MSDMA_01 - FIX:MSDMA_FIX_CLIENT - CHANNEL:GATEWAY_MDE_FIX_MSDMA_01 - Opening 10.2.44.2:31991 sender:MEMX_UAT target:MS_UAT
-host = gc22071.equities.ewr2.memx.techsource = /var/log/SYSLOG/2024/03/20/gc22071.equities.ewr2.memx.tech/sh.logsourcetype = syslog
-3/20/24
-4:27:24.000 PM	
-2024-03-20T16:27:24-04:00 gc22071.equities.ewr2.memx.tech sh[33127]: 2024/03/20 20:27:24.269775483 UTC gc22071 [DEBUG] MIDS - GATEWAY_MDE_FIX_MSDMA_01 - FIX:MSDMA_FIX_CLIENT - CHANNEL:GATEWAY_MDE_FIX_MSDMA_01 - Connection error: [111] Connection refused for 10.2.44.2:31991 sender:MEMX_UAT target:MS_UAT
-host = gc22071.equities.ewr2.memx.techsource = /var/log/SYSLOG/2024/03/20/gc22071.equities.ewr2.memx.tech/sh.logsourcetype = syslog
-3/20/24
-4:27:24.000 PM	
-2024-03-20T16:27:24-04:00 gc22071.equities.ewr2.memx.tech sh[33127]: 2024/03/20 20:27:24.269777181 UTC gc22071 [DEBUG] MIDS - GATEWAY_MDE_FIX_MSDMA_01 - FIX:MSDMA_FIX_CLIENT - CHANNEL:GATEWAY_MDE_FIX_MSDMA_01 - Transitioning from state 'Opening' to state 'Disconnected'
-host = gc22071.equities.ewr2.memx.techsource = /var/log/SYSLOG/2024/03/20/gc22071.equities.ewr2.memx.tech/sh.logsourcetype = syslog
-3/20/24
-4:27:23.000 PM	
-2024-03-20T16:27:23-04:00 gc22071.equities.ewr2.memx.tech sh[33127]: 2024/03/20 20:27:23.269000741 UTC gc22071 [DEBUG] MIDS - GATEWAY_MDE_FIX_MSDMA_01 - FIX:MSDMA_FIX_CLIENT - CHANNEL:GATEWAY_MDE_FIX_MSDMA_01 - Transitioning from state 'Disconnected' to state 'Opening'
-host = gc22071.equities.ewr2.memx.techsource = /var/log/SYSLOG/2024/03/20/gc22071.equities.ewr2.memx.tech/sh.logsourcetype = syslog
-3/20/24
-4:27:23.000 PM	
-2024-03-20T16:27:23-04:00 gc22071.equities.ewr2.memx.tech sh[33127]: 2024/03/20 20:27:23.269002600 UTC gc22071 [DEBUG] MIDS - GATEWAY_MDE_FIX_MSDMA_01 - FIX:MSDMA_FIX_CLIENT - CHANNEL:GATEWAY_MDE_FIX_MSDMA_01 - Opening 10.2.44.2:31991 sender:MEMX_UAT target:MS_UAT
-host = gc22071.equities.ewr2.memx.techsource = /var/log/SYSLOG/2024/03/20/gc22071.equities.ewr2.memx.tech/sh.logsourcetype = syslog
+import quickfix as fix
+import time
+import datetime
+import os
+import socket
+
+class MyApplication(fix.Application):
+    def __init__(self):
+        super().__init__()
+        self.log_directory = "log"
+
+    def onCreate(self, sessionID):
+        print("Session created -", sessionID.toString())
+        self.log_event(f"Session created - {sessionID.toString()}")
+
+    def fromApp(self, message, sessionID):
+        # Log the received message to the specified file
+        log_file_path = self.get_log_file()
+        with open(log_file_path, "a") as log_file:
+            log_file.write(f"Received FIX Message: {message.toString()}\n")
+
+        # Handle incoming messages here
+
+        # Check if the message type is New Order - Single (35=D)
+        if message.getHeader().getField(fix.MsgType()).getString() == fix.MsgType_NewOrderSingle:
+            # Respond with Execution Report - Filled (35=8)
+            self.send_execution_report_filled(sessionID)
+
+    def send_execution_report_filled(self, sessionID):
+        execution_report = fix.Message()
+        header = execution_report.getHeader()
+        header.setField(fix.BeginString(fix.BeginString_FIX44))
+        header.setField(fix.MsgType(fix.MsgType_ExecutionReport))
+        header.setField(fix.SenderCompID(sessionID.getSenderCompID()))
+        header.setField(fix.TargetCompID(sessionID.getTargetCompID()))
+        header.setField(fix.MsgSeqNum(fix.MsgSeqNum()))
+        header.setField(fix.SendingTime(fix.SendingTime()))
+        execution_report.setField(fix.ExecID("123"))
+        execution_report.setField(fix.ExecType(fix.ExecType_FILL))
+        execution_report.setField(fix.OrdStatus(fix.OrdStatus_FILLED))
+        # Add more fields as needed
+        
+        fix.Session.sendToTarget(execution_report, sessionID)
+
+    def toApp(self, message, sessionID):
+        msg_type = message.getHeader().getField(fix.MsgType()).getString()
+
+        # Log the message to the specified file
+        log_file_path = self.get_log_file()
+        with open(log_file_path, "a") as log_file:
+            log_file.write(f"Sent FIX Message: {message.toString()}\n")
+
+        return super().toApp(message, sessionID)
+
+    def fromAdmin(self, message, sessionID):
+        print("Received Admin FIX Message:", message.toString())
+        self.log_event(f"Received Admin FIX Message: {message.toString()}")
+
+    def toAdmin(self, message, sessionID):
+        msg_type = message.getHeader().getField(fix.MsgType()).getString()
+
+        print("Sending Admin FIX Message:", message.toString())
+        self.log_event(f"Sent Admin FIX Message: {message.toString()}")
+
+        if msg_type == fix.MsgType_Logon:
+            message.getHeader().setField(1408, "1.3")
+            message.getHeader().setField(43, "Y")
+            print("Sent admin message:", message.toString())
+            self.log_event(f"Sent admin message: {message.toString()}")
+
+        return True
+
+    def onLogout(self, sessionID):
+        print("Logout initiated -", sessionID.toString())
+        self.log_event(f"Logout initiated - {sessionID.toString()}")
+
+    def onLogon(self, sessionID):
+        print("Logon Successful -", sessionID.toString())
+        self.log_event(f"Logon Successful - {sessionID.toString()}")
+
+    def log_event(self, message):
+        log_file_path = self.get_log_file()
+        with open(log_file_path, "a") as log_file:
+            log_file.write(f"{message}\n")
+
+    def get_log_file(self):
+        log_directory = "log"
+        os.makedirs(log_directory, exist_ok=True)
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H")
+        log_file_name = f"log_file_{timestamp}.log"
+        return os.path.join(self.log_directory, log_file_name)
+
+    def run(self):
+        interface = '10.2.44.2'
+        port = 31991
+
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        sock.bind((interface, port))
+        print(f"Socket bound to {interface}:{port}")
+        sock.listen(5)
+        settings = fix.SessionSettings("acceptor.cfg")
+        application = fix.SocketAcceptor(self, fix.FileStoreFactory(settings), settings)
+        application.start()
+
+        while True:
+            time.sleep(1)
+
+        application.stop()
+
+
+app = MyApplication()
+
+# Run the FIX application
+app.run()
