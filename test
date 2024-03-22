@@ -82,4 +82,4 @@ Success will be, MEMX being able to:
 •	Run test market surveillance patterns that attempt to identify market manipulation, and inserts the results into the persisted data store.
 •	The system needs to persist the reference data and order/trade data across several sessions (days).
 
-df -kh | grep 'Avail\|stream'
+
