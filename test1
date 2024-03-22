@@ -39,3 +39,12 @@ Threshold for acceptable quoting activity (e.g., 60%)
 8. User Interface (UI)
 Dashboard and Reporting:
 8.5.3 The UI provides visualization and reporting tools to monitor market maker quoting activity, including trends over time and compliance with the 60% quoting requirement.
+
+
+
+[DEFAULT]
+ValidateFieldsOutOfOrder=N
+ValidateFieldsHaveValues=N
+ValidateUserDefinedFields=N
+ValidateIncomingMessage=N
+ResetOnLogon=Y
