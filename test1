@@ -14,13 +14,14 @@ def generate_report(conn):
 
     # Query to calculate the duration of quotes available for each firmId/AccountId and UnderlyingSymbol pair
     query = """
-        SELECT q.firmId, q.AccountId, q.UnderlyingSymbol, 
+        SELECT m.firmId, q.AccountId, q.UnderlyingSymbol, 
                COUNT(*) * 1.0 / ? AS quote_duration_percentage
-        FROM Quotes q
+        FROM MM m
+        JOIN Quotes q ON m.firmId = q.AccountId
         JOIN ReferenceData r ON q.UnderlyingSymbol = r.UnderlyingSymbol
         WHERE q.Timestamp BETWEEN '9:30' AND '16:15'
-        AND r.ExchangeTradingState = 'Open'
-        GROUP BY q.firmId, q.AccountId, q.UnderlyingSymbol
+        AND r.ExchangeTradingState = 'Trading'
+        GROUP BY m.firmId, q.UnderlyingSymbol
     """
 
     cursor.execute(query, (trading_time,))
@@ -50,7 +51,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 
 
 
