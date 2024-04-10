@@ -1,30 +1,17 @@
-"Painting the tape" is a market manipulation technique where traders create artificial activity in a security by executing trades among themselves to give the appearance of increased trading volume or price movement. It's a form of market manipulation aimed at attracting other investors to buy or sell securities based on false signals of market activity.
+Quotes:
+Timestamp
+AccountId
+RequestEventType
+UnderlyingSymbol
 
-To detect "painting the tape" or similar market manipulation patterns, various input data would be necessary:
-
-Trade Data: Information about executed trades, including timestamps, trade prices, trade volume, and the identities of the parties involved. This data helps identify patterns of coordinated trading activity among specific market participants.
-
-Order Book Data: Data related to buy and sell orders placed in the market, including order timestamps, order prices, order sizes, and order cancellations/modifications. Analyzing order book data alongside trade data can reveal discrepancies between trading activity and actual market demand.
-
-Time Series Data: Historical data spanning multiple trading sessions or days is crucial for detecting patterns over time. This includes data on trade prices, volumes, and order book dynamics over different time intervals.
-
-Market Depth Data: Information about the liquidity of a security, such as the number of buy and sell orders at various price levels in the order book. Changes in market depth can indicate attempts to manipulate the market by creating false liquidity or artificially moving prices.
-
-Participant Identification Data: Identifying the market participants involved in trading activity is essential for tracing patterns of collusion or manipulation. This includes information about trading firms, individual traders, or other market participants.
-
-Market Surveillance Patterns: Established algorithms or rules designed to detect suspicious trading activity can provide valuable insights into potential instances of market manipulation. These patterns may include unusual trading volumes, price movements inconsistent with market conditions, or patterns indicative of coordinated trading efforts.
+Mm
+firmId
+numSymbols
+optionClass
 
 
-
-
-Deployment of Software: Successful deployment of the 3Forge software in the MEMX UAT environment, including setup, installation, and configuration. This is crucial for initiating the evaluation process.
-
-Implementation of FIX Drop Ingesters: Implementation of at least 2 FIX drop ingesters connecting to the MEMX Market Data Environment (MDE) system. These ingesters should effectively capture order/trade data from multiple FIX sources and store it in the 3Forge data store.
-
-Implementation of Reference Data Ingesters: Implementation of ingesters to read and store reference data (in JSON and CSV formats) into the 3Forge data store. This ensures that alongside trading data, necessary reference data is available for analysis.
-
-Basic Data Store API Implementation: Implementation of a basic Data Store API providing access to stored data. This API should support various functionalities such as retrieving data with different filters and iterators, facilitating efficient data access for analysis purposes.
-
-Algorithm Implementation for Trading Patterns Detection: Utilization of the 3Forge Data Store API to run algorithms aimed at detecting trading patterns. These algorithms should cover multi-day surveillance and "painting the tape," with the capability to analyze data from several past days for identifying potential market manipulation. Additionally, alerts generated from these algorithms should be inserted into the data store for further analysis and monitoring.
-
-Persistence of Data Across Multiple Sessions/Days: Ensuring that both reference data and order/trade data are persisted across several sessions and days. This guarantees historical data availability, allowing for comprehensive analysis and surveillance activities over time.
+ReferenceData
+ExchangeTradingState
+UnderlyingSymbol
+IsActive
+OptionId
