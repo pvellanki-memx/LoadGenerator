@@ -166,11 +166,29 @@ if __name__ == "__main__":
 
 
 
-Traceback (most recent call last):
-  File "/Users/pvellanki/Documents/MM_report/setupDB.py", line 101, in <module>
-    main()
-  File "/Users/pvellanki/Documents/MM_report/setupDB.py", line 93, in main
-    insert_quotes_data(conn, data)
-  File "/Users/pvellanki/Documents/MM_report/setupDB.py", line 43, in insert_quotes_data
-    cursor.executemany("""
-sqlite3.ProgrammingError: Incorrect number of bindings supplied. The current statement uses 4, and there are 10 supplied.
+ReferenceData.csv
+
+ExchangeTradingState	IsAdministrative	EQ_IsPennyPilot	EQ_IsETP	EQ_IsActive	EQ_DefaultTradingState	EQ_RegulatoryTradingState	EQ_ExchangeTradingState	EQ_IsAdministrativeHalted	EQ_OpenedOrClosedState	EQ_Timestamp	OptionId	UnderlyingSymbol	OptionRootCode	IsTest	IsActive	IsRoutable	IsClosingOnly	DefaultTradingState	PutCallCode	ExpirationMonth	ExpirationDay	ExpirationYear	StrikePrice	SeriesIndex
+Trading	FALSE	FALSE	FALSE	TRUE	Auto	Trading	Trading	FALSE	AdministrativelyOpened	2024-04-09T07:06:27.424161086	A001ixlX	A	A	FALSE	TRUE	TRUE	FALSE	Auto	Put	4	19	24	100	1
+Trading	FALSE	FALSE	FALSE	TRUE	Auto	Trading	Trading	FALSE	AdministrativelyOpened	2024-04-09T07:06:27.424161086	A001ixlY	A	A	FALSE	TRUE	TRUE	FALSE	Auto	Put	4	19	24	105	2
+Trading	FALSE	FALSE	FALSE	TRUE	Auto	Trading	Trading	FALSE	AdministrativelyOpened	2024-04-09T07:06:27.424161086	A001ixlZ	A	A	FALSE	TRUE	TRUE	FALSE	Auto	Put	4	19	24	110	3
+Trading	FALSE	FALSE	FALSE	TRUE	Auto	Trading	Trading	FALSE	AdministrativelyOpened	2024-04-09T07:06:27.424161086	A001ixm0	A	A	FALSE	TRUE	TRUE	FALSE	Auto	Put	4	19	24	115	4
+Trading	FALSE	FALSE	FALSE	TRUE	Auto	Trading	Trading	FALSE	AdministrativelyOpened	2024-04-09T07:06:27.424161086	A001ixm1	A	A	FALSE	TRUE	TRUE	FALSE	Auto	Put	4	19	24	120	5
+Trading	FALSE	FALSE	FALSE	TRUE	Auto	Trading	Trading	FALSE	AdministrativelyOpened	2024-04-09T07:06:27.424161086	A001ixm2	A	A	FALSE	TRUE	TRUE	FALSE	Auto	Put	4	19	24	125	6
+Trading	FALSE	FALSE	FALSE	TRUE	Auto	Trading	Trading	FALSE	AdministrativelyOpened	2024-04-09T07:06:27.424161086	A001ixm3	A	A	FALSE	TRUE	TRUE	FALSE	Auto	Put	4	19	24	130	7
+
+Quotes.csv
+
+SourceId	Sequence	Timestamp	AccountId	RequestId	RequestEventType	ReasonCode	ReasonDetails	EFID	UnderlyingSymbol
+MATCH02	6,355,876	2024-04-09T12:16:17.754012988	OPE2S10	216,316,818,137,023,000	Done				NUE
+MATCH02	6,355,876	2024-04-09T12:16:17.754012988	OPE2S10	216,316,818,137,023,000	Accepted			MT24	NUE
+MATCH02	6,355,811	2024-04-09T12:16:17.447418301	OPE2S12	216,279,434,741,678,000	Done				NUE
+MATCH02	6,355,811	2024-04-09T12:16:17.447418301	OPE2S12	216,279,434,741,678,000	Accepted			MT25	NUE
+MATCH02	6,331,291	2024-04-09T12:15:57.174027268	OPE2S10	216,316,818,137,023,000	Done				NUE
+
+mm.csv
+
+firmId	numSymbols	optionClass	optionClass	...	optionClass								
+CITMODE1	10	AMZN	UBER	XOM	GOOG	SBUX	PYPL	SOFI	AAPL	SPY	AMD		
+GLTESTT2	5	ABCD	DCBA	AAPL	TEST	GOOG							
+IMCC10	12	BB	BOIL	BSX	BUD	C	CAT	CHK	CMG	COIN	DPST	ED	EL
