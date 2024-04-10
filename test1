@@ -1,17 +1,163 @@
-Quotes:
-Timestamp
-AccountId
-RequestEventType
-UnderlyingSymbol
+import sqlite3
 
-Mm
-firmId
-numSymbols
-optionClass
+def calculate_trading_time(start_time, end_time):
+    """Calculate trading time duration in minutes."""
+    start_hour, start_minute = map(int, start_time.split(':'))
+    end_hour, end_minute = map(int, end_time.split(':'))
+    total_minutes = (end_hour - start_hour) * 60 + (end_minute - start_minute)
+    return total_minutes
+
+def generate_report(conn):
+    cursor = conn.cursor()
+    # Calculate trading time duration
+    trading_time = calculate_trading_time('9:30', '16:15')
+
+    # Query to calculate the duration of quotes available for each firmId/AccountId and UnderlyingSymbol pair
+    query = """
+        SELECT q.firmId, q.AccountId, q.UnderlyingSymbol, 
+               COUNT(*) * 1.0 / ? AS quote_duration_percentage
+        FROM Quotes q
+        JOIN ReferenceData r ON q.UnderlyingSymbol = r.UnderlyingSymbol
+        WHERE q.Timestamp BETWEEN '9:30' AND '16:15'
+        AND r.ExchangeTradingState = 'Open'
+        GROUP BY q.firmId, q.AccountId, q.UnderlyingSymbol
+    """
+
+    cursor.execute(query, (trading_time,))
+    results = cursor.fetchall()
+
+    # Filter results to include only those with at least 60% quote duration
+    filtered_results = [(firmId, accountId, underlyingSymbol, quote_duration_percentage)
+                        for firmId, accountId, underlyingSymbol, quote_duration_percentage in results
+                        if quote_duration_percentage >= 0.6]
+
+    return filtered_results
+
+def main():
+    # Connect to SQLite database
+    conn = sqlite3.connect('my_database.db')
+
+    # Generate report
+    report = generate_report(conn)
+
+    # Print report
+    print("firmId | AccountId | UnderlyingSymbol | Quote Duration Percentage")
+    for row in report:
+        print(row)
+
+    # Close connection
+    conn.close()
+
+if __name__ == "__main__":
+    main()
 
 
-ReferenceData
-ExchangeTradingState
-UnderlyingSymbol
-IsActive
-OptionId
+
+
+
+
+
+
+
+
+
+import sqlite3
+import csv
+
+def create_tables(conn):
+    """Create tables if they don't exist."""
+    cursor = conn.cursor()
+    
+    # Quotes table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS Quotes (
+            Timestamp TEXT,
+            AccountId INTEGER,
+            RequestEventType TEXT,
+            UnderlyingSymbol TEXT
+        )
+    """)
+    
+    # MM table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS MM (
+            firmId INTEGER,
+            UnderlyingSymbol TEXT,
+            PRIMARY KEY (firmId, UnderlyingSymbol)
+        )
+    """)
+    
+    # ReferenceData table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS ReferenceData (
+            ExchangeTradingState TEXT,
+            UnderlyingSymbol TEXT,
+            IsActive INTEGER,
+            OptionId INTEGER
+        )
+    """)
+    
+    conn.commit()
+
+def insert_quotes_data(conn, data):
+    """Insert data into the Quotes table."""
+    cursor = conn.cursor()
+    cursor.executemany("""
+        INSERT INTO Quotes (Timestamp, AccountId, RequestEventType, UnderlyingSymbol) VALUES (?, ?, ?, ?)
+    """, data)
+    conn.commit()
+
+def insert_mm_data(conn, data):
+    """Insert data into the MM table."""
+    cursor = conn.cursor()
+    cursor.executemany("""
+        INSERT INTO MM (firmId, UnderlyingSymbol) VALUES (?, ?)
+    """, data)
+    conn.commit()
+
+def insert_reference_data(conn, data):
+    """Insert data into the ReferenceData table."""
+    cursor = conn.cursor()
+    cursor.executemany("""
+        INSERT INTO ReferenceData (ExchangeTradingState, UnderlyingSymbol, IsActive, OptionId) VALUES (?, ?, ?, ?)
+    """, data)
+    conn.commit()
+
+def main():
+    # Connect to SQLite database
+    conn = sqlite3.connect('my_database.db')
+    
+    # Create tables if they don't exist
+    create_tables(conn)
+    
+    # Define CSV files and corresponding table names
+    csv_files = {
+        'Quotes': 'quotes.csv',
+        'MM': 'mm.csv',
+        'ReferenceData': 'reference_data.csv'
+    }
+    
+    # Insert data into database
+    for table_name, csv_file in csv_files.items():
+        with open(csv_file, 'r') as file:
+            csv_reader = csv.reader(file)
+            header = next(csv_reader)
+            data = [tuple(row) for row in csv_reader]
+            if table_name == 'MM':
+                mm_data = []
+                for row in data:
+                    firmId = row[0]
+                    underliers = row[1:]
+                    for underlier in underliers:
+                        mm_data.append((firmId, underlier))
+                insert_mm_data(conn, mm_data)
+            elif table_name == 'Quotes':
+                insert_quotes_data(conn, data)
+            else:
+                insert_reference_data(conn, data)
+
+    # Close connection
+    conn.close()
+
+if __name__ == "__main__":
+    main()
