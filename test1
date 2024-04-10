@@ -1,4 +1,5 @@
 import sqlite3
+import datetime
 
 def calculate_trading_time(start_time, end_time):
     """Calculate trading time duration in minutes."""
@@ -7,29 +8,44 @@ def calculate_trading_time(start_time, end_time):
     total_minutes = (end_hour - start_hour) * 60 + (end_minute - start_minute)
     return total_minutes
 
+def calculate_quote_duration(quote_timestamps, trading_time):
+    """Calculate quote duration percentage."""
+    if not quote_timestamps:
+        return 0.0
+    
+    trading_duration = datetime.timedelta(minutes=trading_time)
+    total_quote_duration = sum((timestamp - quote_timestamps[i - 1] for i, timestamp in enumerate(quote_timestamps) if i > 0 and timestamp.time() >= datetime.time(9, 30)), datetime.timedelta())
+    
+    return total_quote_duration.total_seconds() / trading_duration.total_seconds()
+
 def generate_report(conn):
     cursor = conn.cursor()
     # Calculate trading time duration
     trading_time = calculate_trading_time('9:30', '16:15')
 
-    # Query to calculate the duration of quotes available for each firmId/AccountId and UnderlyingSymbol pair
-    query = """
-        SELECT m.firmId, q.AccountId, q.UnderlyingSymbol, 
-               COUNT(*) * 1.0 / ? AS quote_duration_percentage
+    # Query to retrieve all distinct AccountId/UnderlyingSymbol pairs from MM table
+    cursor.execute("""
+        SELECT DISTINCT m.firmId, m.UnderlyingSymbol
         FROM MM m
-        JOIN Quotes q ON m.firmId = q.AccountId
-        JOIN ReferenceData r ON q.UnderlyingSymbol = r.UnderlyingSymbol
-        WHERE q.Timestamp BETWEEN '9:30' AND '16:15'
-        AND r.ExchangeTradingState = 'Trading'
-        GROUP BY m.firmId, q.UnderlyingSymbol
-    """
+    """)
+    account_underlier_pairs = cursor.fetchall()
 
-    cursor.execute(query, (trading_time,))
-    results = cursor.fetchall()
+    # Query to retrieve quote timestamps for each AccountId/UnderlyingSymbol pair
+    report_data = []
+    for account_id, underlier_symbol in account_underlier_pairs:
+        cursor.execute("""
+            SELECT Timestamp
+            FROM Quotes
+            WHERE AccountId = ? AND UnderlyingSymbol = ?
+            ORDER BY Timestamp
+        """, (account_id, underlier_symbol))
+        quote_timestamps = [datetime.datetime.fromisoformat(row[0]) for row in cursor.fetchall()]
+        quote_duration_percentage = calculate_quote_duration(quote_timestamps, trading_time)
+        report_data.append((account_id, underlier_symbol, quote_duration_percentage))
 
     # Filter results to include only those with at least 60% quote duration
-    filtered_results = [(firmId, accountId, underlyingSymbol, quote_duration_percentage)
-                        for firmId, accountId, underlyingSymbol, quote_duration_percentage in results
+    filtered_results = [(account_id, underlier_symbol, quote_duration_percentage)
+                        for account_id, underlier_symbol, quote_duration_percentage in report_data
                         if quote_duration_percentage >= 0.6]
 
     return filtered_results
@@ -42,7 +58,7 @@ def main():
     report = generate_report(conn)
 
     # Print report
-    print("firmId | AccountId | UnderlyingSymbol | Quote Duration Percentage")
+    print("AccountId | UnderlyingSymbol | Quote Duration Percentage")
     for row in report:
         print(row)
 
