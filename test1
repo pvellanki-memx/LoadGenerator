@@ -14,9 +14,19 @@ def calculate_quote_duration(quote_timestamps, trading_time):
         return 0.0
     
     trading_duration = datetime.timedelta(minutes=trading_time)
-    total_quote_duration = sum((timestamp - quote_timestamps[i - 1] for i, timestamp in enumerate(quote_timestamps) if i > 0 and timestamp.time() >= datetime.time(9, 30)), datetime.timedelta())
+    quote_duration = datetime.timedelta()
+    last_quote_time = None
     
-    return total_quote_duration.total_seconds() / trading_duration.total_seconds()
+    for timestamp in quote_timestamps:
+        quote_time = datetime.datetime.strptime(timestamp[:19], '%Y-%m-%dT%H:%M:%S')
+        if last_quote_time is not None:
+            time_difference = (quote_time - last_quote_time).total_seconds()
+            if time_difference >= 0 and last_quote_time.time() >= datetime.time(9, 30):
+                quote_duration += min(trading_duration - quote_duration, datetime.timedelta(seconds=time_difference))
+        last_quote_time = quote_time
+    
+    return quote_duration.total_seconds() / trading_duration.total_seconds()
+
 
 def generate_report(conn):
     cursor = conn.cursor()
