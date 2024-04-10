@@ -58,9 +58,6 @@ if __name__ == "__main__":
 
 
 
-
-
-
 import sqlite3
 import csv
 
@@ -72,7 +69,7 @@ def create_tables(conn):
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS Quotes (
             Timestamp TEXT,
-            AccountId INTEGER,
+            AccountId TEXT,
             RequestEventType TEXT,
             UnderlyingSymbol TEXT
         )
@@ -81,9 +78,8 @@ def create_tables(conn):
     # MM table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS MM (
-            firmId INTEGER,
-            UnderlyingSymbol TEXT,
-            PRIMARY KEY (firmId, UnderlyingSymbol)
+            firmId TEXT,
+            UnderlyingSymbol TEXT
         )
     """)
     
@@ -93,7 +89,7 @@ def create_tables(conn):
             ExchangeTradingState TEXT,
             UnderlyingSymbol TEXT,
             IsActive INTEGER,
-            OptionId INTEGER
+            OptionId TEXT
         )
     """)
     
@@ -123,44 +119,68 @@ def insert_reference_data(conn, data):
     """, data)
     conn.commit()
 
+def read_quotes_csv(file_path):
+    """Read data from Quotes.csv."""
+    with open(file_path, 'r') as file:
+        csv_reader = csv.DictReader(file)
+        data = [(row['Timestamp'], row['AccountId'], row['RequestEventType'], row['UnderlyingSymbol']) for row in csv_reader]
+    return data
+
+def read_mm_csv(file_path):
+    """Read data from mm.csv."""
+    with open(file_path, 'r') as file:
+        csv_reader = csv.reader(file)
+        next(csv_reader)  # Skip header row
+        data = []
+        for row in csv_reader:
+            firm_id = row[0]
+            underliers = row[2:]  # Skip the first two columns (firmId and numSymbols)
+            for underlier in underliers:
+                data.append((firm_id, underlier))
+    return data
+
+def read_reference_data_csv(file_path):
+    """Read data from ReferenceData.csv."""
+    with open(file_path, 'r') as file:
+        csv_reader = csv.DictReader(file)
+        data = [(row['ExchangeTradingState'], row['UnderlyingSymbol'], row['IsActive'], row['OptionId']) for row in csv_reader]
+    return data
+
 def main():
     # Connect to SQLite database
     conn = sqlite3.connect('my_database.db')
-    
+
     # Create tables if they don't exist
     create_tables(conn)
     
-    # Define CSV files and corresponding table names
-    csv_files = {
-        'Quotes': 'quotes.csv',
-        'MM': 'mm.csv',
-        'ReferenceData': 'reference_data.csv'
-    }
+    # Read data from Quotes.csv
+    quotes_data = read_quotes_csv('Quotes.csv')
+
+    # Insert data into Quotes table
+    insert_quotes_data(conn, quotes_data)
     
-    # Insert data into database
-    for table_name, csv_file in csv_files.items():
-        with open(csv_file, 'r') as file:
-            csv_reader = csv.reader(file)
-            header = next(csv_reader)
-            data = [tuple(row) for row in csv_reader]
-            if table_name == 'MM':
-                mm_data = []
-                for row in data:
-                    firmId = row[0]
-                    underliers = row[1:]
-                    for underlier in underliers:
-                        mm_data.append((firmId, underlier))
-                insert_mm_data(conn, mm_data)
-            elif table_name == 'Quotes':
-                insert_quotes_data(conn, data)
-            else:
-                insert_reference_data(conn, data)
+    # Read data from mm.csv
+    mm_data = read_mm_csv('mm.csv')
+
+    # Insert data into MM table
+    insert_mm_data(conn, mm_data)
+
+    # Read data from ReferenceData.csv
+    reference_data = read_reference_data_csv('ReferenceData.csv')
+
+    # Insert data into ReferenceData table
+    insert_reference_data(conn, reference_data)
 
     # Close connection
     conn.close()
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
 
 
 
