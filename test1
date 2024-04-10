@@ -161,3 +161,16 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+Traceback (most recent call last):
+  File "/Users/pvellanki/Documents/MM_report/setupDB.py", line 101, in <module>
+    main()
+  File "/Users/pvellanki/Documents/MM_report/setupDB.py", line 93, in main
+    insert_quotes_data(conn, data)
+  File "/Users/pvellanki/Documents/MM_report/setupDB.py", line 43, in insert_quotes_data
+    cursor.executemany("""
+sqlite3.ProgrammingError: Incorrect number of bindings supplied. The current statement uses 4, and there are 10 supplied.
