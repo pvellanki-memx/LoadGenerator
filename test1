@@ -1,5 +1,6 @@
 import sqlite3
 import datetime
+import csv
 
 def calculate_trading_time(start_time, end_time):
     """Calculate trading time duration in minutes."""
@@ -27,8 +28,7 @@ def calculate_quote_duration(quote_timestamps, trading_time):
     
     return quote_duration.total_seconds() / trading_duration.total_seconds()
 
-
-def generate_report(conn):
+def generate_report(conn, output_file):
     cursor = conn.cursor()
     # Calculate trading time duration
     trading_time = calculate_trading_time('9:30', '16:15')
@@ -50,28 +50,25 @@ def generate_report(conn):
             ORDER BY Timestamp
         """, (account_id, underlier_symbol))
         quote_timestamps = [datetime.datetime.fromisoformat(row[0]) for row in cursor.fetchall()]
-        print(f"Quote timestamps for {account_id}/{underlier_symbol}: {quote_timestamps}")
         quote_duration_percentage = calculate_quote_duration(quote_timestamps, trading_time)
         report_data.append((account_id, underlier_symbol, quote_duration_percentage))
 
-    # Filter results to include only those with at least 60% quote duration
-    filtered_results = [(account_id, underlier_symbol, quote_duration_percentage)
-                        for account_id, underlier_symbol, quote_duration_percentage in report_data
-                        if quote_duration_percentage >= 0.6]
-
-    return filtered_results
+    # Write report data to CSV
+    with open(output_file, 'w', newline='') as csvfile:
+        csv_writer = csv.writer(csvfile)
+        csv_writer.writerow(["AccountId", "UnderlyingSymbol", "Quote Duration Percentage"])
+        for row in report_data:
+            csv_writer.writerow(row)
 
 def main():
     # Connect to SQLite database
     conn = sqlite3.connect('my_database.db')
 
-    # Generate report
-    report = generate_report(conn)
+    # Define output CSV file
+    output_file = 'report.csv'
 
-    # Print report
-    print("AccountId | UnderlyingSymbol | Quote Duration Percentage")
-    for row in report:
-        print(row)
+    # Generate report
+    generate_report(conn, output_file)
 
     # Close connection
     conn.close()
