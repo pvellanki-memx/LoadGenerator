@@ -73,5 +73,8 @@ def main():
     # Close connection
     conn.close()
 
+
+(d) Continuous Quotes. A Market Maker must enter continuous bids and offers (in accordance with the requirements in Rules 22.5 and 22.6) in 60% of the cumulative number of seconds, or such higher percentage as the Exchange may announce in advance, for which that Market Maker’s appointed classes are open for trading, excluding any adjusted series, any intraday add-on series on the day during which such series are added for trading, any Quarterly Option Series, and any series with an expiration of greater than 270 days.
+
 if __name__ == "__main__":
     main()
