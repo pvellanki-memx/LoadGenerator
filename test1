@@ -1,80 +1,167 @@
-import sqlite3
-import datetime
-import csv
+= SPEC-01: Trading Surveillance System
+:sectnums:
+:toc:
 
-def calculate_trading_time(start_time, end_time):
-    """Calculate trading time duration in minutes."""
-    start_hour, start_minute = map(int, start_time.split(':'))
-    end_hour, end_minute = map(int, end_time.split(':'))
-    total_minutes = (end_hour - start_hour) * 60 + (end_minute - start_minute)
-    return total_minutes
+== Background
 
-def calculate_quote_duration(quote_timestamps, trading_time):
-    """Calculate quote duration percentage."""
-    if not quote_timestamps:
-        return 0.0
-    
-    trading_duration = datetime.timedelta(minutes=trading_time)
-    quote_duration = datetime.timedelta()
-    last_quote_time = None
-    
-    for timestamp in quote_timestamps:
-        quote_time = datetime.datetime.strptime(timestamp[:19], '%Y-%m-%dT%H:%M:%S')
-        if last_quote_time is not None:
-            time_difference = (quote_time - last_quote_time).total_seconds()
-            if time_difference >= 0 and last_quote_time.time() >= datetime.time(9, 30):
-                quote_duration += min(trading_duration - quote_duration, datetime.timedelta(seconds=time_difference))
-        last_quote_time = quote_time
-    
-    return quote_duration.total_seconds() / trading_duration.total_seconds()
+The Trading Surveillance System is designed to monitor and analyze trading activities to detect potential market manipulation and ensure compliance with financial regulations. The need for this system has been driven by increased scrutiny from regulatory bodies and the complexity of modern financial markets.
 
-def generate_report(conn, output_file):
-    cursor = conn.cursor()
-    # Calculate trading time duration
-    trading_time = calculate_trading_time('9:30', '16:15')
+== Requirements
 
-    # Query to retrieve all distinct AccountId/UnderlyingSymbol pairs from MM table
-    cursor.execute("""
-        SELECT DISTINCT m.firmId, m.UnderlyingSymbol
-        FROM MM m
-    """)
-    account_underlier_pairs = cursor.fetchall()
+=== Functional Requirements (FRS)
+- Detect and alert on patterns indicating market manipulation, such as spoofing, layering, and wash trading.
+- Real-time processing of trade and order data to generate timely alerts.
+- Comprehensive audit trails for all actions and alerts.
+- User interface for monitoring alerts and managing investigations.
 
-    # Query to retrieve quote timestamps for each AccountId/UnderlyingSymbol pair
-    report_data = []
-    for account_id, underlier_symbol in account_underlier_pairs:
-        cursor.execute("""
-            SELECT Timestamp
-            FROM Quotes
-            WHERE AccountId = ? AND UnderlyingSymbol = ?
-            ORDER BY Timestamp
-        """, (account_id, underlier_symbol))
-        quote_timestamps = [datetime.datetime.fromisoformat(row[0]) for row in cursor.fetchall()]
-        quote_duration_percentage = calculate_quote_duration(quote_timestamps, trading_time)
-        report_data.append((account_id, underlier_symbol, quote_duration_percentage))
+=== Non-Functional Requirements
+- High throughput and low latency processing to handle large volumes of real-time financial data.
+- Scalability to adapt to growing data volumes and user load.
+- High availability and fault tolerance to minimize downtime and data loss.
 
-    # Write report data to CSV
-    with open(output_file, 'w', newline='') as csvfile:
-        csv_writer = csv.writer(csvfile)
-        csv_writer.writerow(["AccountId", "UnderlyingSymbol", "Quote Duration Percentage"])
-        for row in report_data:
-            csv_writer.writerow(row)
+== Method
 
-def main():
-    # Connect to SQLite database
-    conn = sqlite3.connect('my_database.db')
+=== Architecture Overview
+The system architecture includes several key components:
+- FIX Gateway for receiving trade and order data.
+- Apache Kafka for data ingestion and streaming.
+- Apache Flink for real-time stream processing.
+- Time-Series Database for storing time-indexed data.
+- User Interface for displaying alerts and providing an interactive investigation platform.
 
-    # Define output CSV file
-    output_file = 'report.csv'
+=== Component Design
 
-    # Generate report
-    generate_report(conn, output_file)
+==== FIX Gateway
+Handles incoming FIX messages, ensuring they are correctly parsed and forwarded to Kafka for processing.
 
-    # Close connection
-    conn.close()
+==== Apache Kafka
+Serves as the central messaging backbone, buffering incoming data and providing it to Flink for processing. This decouples the data ingestion from processing, enhancing system scalability and resilience.
+
+==== Apache Flink
+Processes streams of trade and order data in real-time. Implements complex event processing (CEP) to detect patterns of market manipulation. Generates alerts based on predefined criteria.
+
+==== Time-Series Database
+Stores historical and real-time processed data, supporting high-speed queries and data retrieval for analysis and reporting purposes.
+
+==== User Interface
+Provides a dashboard for real-time monitoring of alerts and administrative tools for managing alert configurations. Supports audit trails and comprehensive reporting capabilities.
+
+=== Integration
+Data flows seamlessly from the FIX Gateway to Kafka, then to Flink, and either back to Kafka for further consumption or to the Time-Series Database for storage. The User Interface fetches necessary data from the database and presents it to regulatory users.
+
+== Implementation
+
+Refer to the WBS for detailed task breakdowns and scheduling.
+
+=== System Setup and Configuration
+Setting up servers, configuring network equipment, and installing all necessary software components.
+
+=== Development Phases
+Development of each component according to the specifications and integration to ensure smooth data flow and functionality.
+
+=== Testing and Deployment
+Systematic testing, including unit testing, integration testing, and performance testing, followed by staging and production deployments.
+
+== Milestones
+- M1: Project Kickoff
+- M2: System Setup Completion
+- M3: End of Development Phase
+- M4: Completion of Integration and Initial Testing
+- M5: Production Deployment
+- M6: Project Closeout
+
+== Gathering Results
+- Continuous monitoring and optimization based on system performance and feedback.
+- Regular updates and patches to enhance functionalities and address emerging requirements.
 
 
-(d) Continuous Quotes. A Market Maker must enter continuous bids and offers (in accordance with the requirements in Rules 22.5 and 22.6) in 60% of the cumulative number of seconds, or such higher percentage as the Exchange may announce in advance, for which that Market Maker’s appointed classes are open for trading, excluding any adjusted series, any intraday add-on series on the day during which such series are added for trading, any Quarterly Option Series, and any series with an expiration of greater than 270 days.
 
-if __name__ == "__main__":
-    main()
+
+
+
+= SPEC-02: Trading Surveillance System with Benchmarking
+:sectnums:
+:toc:
+
+== Background
+
+The enhanced Trading Surveillance System is an advanced solution designed for real-time monitoring of trading activities, with an emphasis on data-driven benchmarking to identify anomalies and potential manipulative behaviors. This system integrates a sophisticated benchmarking process to calibrate the surveillance algorithms, leveraging InfluxDB for time-series data storage, enabling efficient and rapid detection of unusual patterns.
+
+== Requirements
+
+=== Functional Requirements
+- Benchmark-based alerting for identifying deviations from established trading patterns.
+- Real-time analysis of trades against historical data in InfluxDB.
+- Intuitive User Interface for surveillance monitoring and alert management.
+- Efficient workflow for alert investigation and case management.
+
+=== Non-Functional Requirements
+- Benchmarking process should be automated and run at configurable intervals.
+- The Surveillance Engine must process data with minimal latency.
+- The User Interface should provide real-time updates without perceptible delay.
+- Alert Management & Workflow system must support concurrent use by multiple operators.
+
+== Method
+
+=== Architecture Overview
+The system is composed of distinct but interconnected components:
+- **Benchmarking**: Sets the baseline for normal trading activities.
+- **InfluxDB**: Stores time-series data used for benchmarking and real-time analysis.
+- **Surveillance Engine**: Analyzes streaming data, compares against benchmarks, and generates alerts.
+- **User Interface**: Allows users to view and manage alerts.
+- **Alert Management & Workflow**: Manages the lifecycle of alerts and supports case investigation processes.
+
+=== Component Design
+
+==== Benchmarking
+- Determines thresholds and patterns that represent normal trading behavior.
+- Periodically updates to adapt to changing market conditions.
+- Supplies the Surveillance Engine with dynamic parameters for anomaly detection.
+
+==== InfluxDB
+- Stores granular trade and order data with precise timestamping.
+- Provides fast querying capabilities for real-time analytics.
+- Serves as the historical data repository for the benchmarking process.
+
+==== Surveillance Engine
+- Processes data streams in real-time, leveraging benchmarks for anomaly detection.
+- Generates alerts for activities that significantly deviate from the benchmark.
+- Integrates with InfluxDB for continuous data retrieval and analysis.
+
+==== User Interface
+- Displays a dashboard for real-time surveillance updates.
+- Provides tools for configuring benchmark parameters and alert thresholds.
+- Offers investigative functionalities for deep dives into specific alerts.
+
+==== Alert Management & Workflow
+- Tracks the status of each alert from generation to resolution.
+- Supports assignment, acknowledgment, and documentation of investigative actions.
+- Integrates audit trails for compliance and retrospective analysis.
+
+== Implementation
+
+The implementation process follows the WBS structure with specified tasks and timelines.
+
+=== System Setup and Configuration
+Involves configuring InfluxDB, setting up the benchmarking module, and establishing the initial parameters for the Surveillance Engine.
+
+=== Development
+Encompasses the development of the Surveillance Engine with benchmarking integration, the User Interface design and creation, and the Alert Management & Workflow system.
+
+=== Integration and Testing
+Focuses on integrating all components, ensuring data flows correctly, and validating the functionality of the entire system.
+
+=== Deployment
+Includes staging and production deployment, ensuring the system is operational and ready for use.
+
+== Milestones
+- M1: Completion of InfluxDB Setup and Benchmarking Integration
+- M2: Development of Surveillance Engine and UI Completion
+- M3: Full System Integration
+- M4: Successful Staging Deployment
+- M5: Production Deployment and System Go-Live
+- M6: Post-Deployment Review and Operational Handoff
+
+== Gathering Results
+Evaluates system performance based on the accuracy and efficiency of alert generation, benchmarking effectiveness, and user feedback on the Interface and Workflow system.
+
