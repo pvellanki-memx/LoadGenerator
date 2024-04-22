@@ -166,14 +166,76 @@ Includes staging and production deployment, ensuring the system is operational a
 Evaluates system performance based on the accuracy and efficiency of alert generation, benchmarking effectiveness, and user feedback on the Interface and Workflow system.
 
 
-ip route add 10.12.88.0/22 via 10.12.44.30 dev ens786f0np0.720
-Error: Nexthop has invalid gateway.
 
-ens786f0np0.720: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
-        inet 10.12.44.1  netmask 255.255.255.240  broadcast 10.12.44.15
-        inet6 fe80::20f:53ff:fe88:9bd0  prefixlen 64  scopeid 0x20<link>
-        ether 00:0f:53:88:9b:d0  txqueuelen 1000  (Ethernet)
-        RX packets 0  bytes 0 (0.0 B)
-        RX errors 0  dropped 0  overruns 0  frame 0
-        TX packets 0  bytes 0 (0.0 B)
-        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+
+
+Tables Involved:
+MM Table:
+This table stores market making data.
+It contains information about firms engaged in market making, including their IDs (firmId), the number of symbols they are quoting (numSymbols), and the option classes they are quoting for (optionClass).
+Quotes Table:
+This table stores quote data.
+It contains information about quotes submitted by various accounts, including the account IDs (AccountId), the underlying symbols they are quoting for (UnderlyingSymbol), and the timestamps of the quotes (Timestamp).
+SQL Query Description:
+The SQL query accomplishes the following tasks:
+
+Define Trading Time Window:
+It starts by defining the trading time window from 9:30 AM to 4:15 PM.
+Calculate Quote Duration:
+It calculates the total number of quotes and the total trading time in seconds for each AccountId/UnderlyingSymbol pair within the trading time window.
+It calculates the total trading time per day in seconds.
+Calculate Quote Duration Percentage:
+It calculates the quote duration percentage for each AccountId/UnderlyingSymbol pair by dividing the total trading time with quotes by the total trading time per day.
+Left Join MM Table with Quote Duration Percentage:
+It left joins the MM table with the calculated quote duration percentages.
+This ensures that all combinations of firmId/UnderlyingSymbol from the MM table are included in the result set.
+If a combination does not have any quotes, it assigns a quote duration percentage of 0.
+Final Result:
+The final result includes the firmId, UnderlyingSymbol, and the calculated quote_duration_percentage.
+This result set provides insights into the quoting activity of firms for different underlying symbols, including instances where firms may not have quoted at all.
+
+
+WITH TradingTime AS (
+    SELECT
+        TIME('09:30') AS start_time,
+        TIME('16:15') AS end_time
+),
+QuotesDuration AS (
+    SELECT
+        q.AccountId,
+        q.UnderlyingSymbol,
+        COUNT(q.Timestamp) AS total_quotes,
+        strftime('%s', MAX(q.Timestamp)) - strftime('%s', MIN(q.Timestamp)) AS total_trading_seconds,
+        (SELECT strftime('%s', '2000-01-01T16:15:00') - strftime('%s', '2000-01-01T09:30:00')) AS total_trading_seconds_per_day
+    FROM
+        Quotes q
+    WHERE
+        TIME(q.Timestamp) >= (SELECT start_time FROM TradingTime)
+        AND TIME(q.Timestamp) <= (SELECT end_time FROM TradingTime)
+    GROUP BY
+        q.AccountId, q.UnderlyingSymbol
+),
+QuoteDurationPercentage AS (
+    SELECT
+        qd.AccountId,
+        qd.UnderlyingSymbol,
+        CASE
+            WHEN qd.total_quotes = 0 THEN 0
+            ELSE (1.0 * qd.total_trading_seconds) / qd.total_trading_seconds_per_day
+        END AS quote_duration_percentage
+    FROM
+        QuotesDuration qd
+)
+SELECT
+    mm.firmId AS AccountId,
+    mm.UnderlyingSymbol,
+    COALESCE(qdp.quote_duration_percentage, 0) AS quote_duration_percentage
+FROM
+    MM mm
+LEFT JOIN
+    QuoteDurationPercentage qdp
+ON
+    mm.firmId = qdp.AccountId
+    AND mm.UnderlyingSymbol = qdp.UnderlyingSymbol;
+
