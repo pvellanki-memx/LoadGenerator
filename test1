@@ -167,3 +167,4 @@ Evaluates system performance based on the accuracy and efficiency of alert gener
 
 
 ip route add 10.12.88.0/22 via 10.12.44.30 dev ens786f0np0.720
+Error: Nexthop has invalid gateway.
