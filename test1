@@ -165,3 +165,5 @@ Includes staging and production deployment, ensuring the system is operational a
 == Gathering Results
 Evaluates system performance based on the accuracy and efficiency of alert generation, benchmarking effectiveness, and user feedback on the Interface and Workflow system.
 
+
+ip route add 10.12.88.0/22 via 10.12.44.30 dev ens786f0np0.720
