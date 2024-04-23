@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 current_date=$(date +"%Y-%m-%d")
 date=$(date -d "$current_date - 1 day" +"%Y-%m-%d")
 
@@ -8,6 +7,7 @@ mm_dd=$(date -d "$date" +"%m-%d")
 
 # Create the output directory if it doesn't exist
 output_dir="/mnt/occ/orsa-summary"
+mkdir -p "$output_dir"
 
 # Define the directory where the files are located
 base_dir="/mnt/occ/downloads/prod"
@@ -47,7 +47,6 @@ if [[ $last_two_lines != *"</FIXML>"* ]]; then
     echo "XML file is not complete. Missing </FIXML> tag."
     exit 1
 fi
-
 
 # Define a function to execute trades and exchange recon
 execute_trades_and_recon() {
@@ -103,8 +102,6 @@ execute_trades_and_recon() {
     echo "Executing run_exchange_recon.sh..."
     db_name="$date.db"
 
-
-
     # Step 1: Group the data in the database using groupedexcel.py
     python3 grouptradesbyexch.py "$db_name"
 
@@ -125,7 +122,7 @@ execute_trades_and_recon() {
     python3 exchangrecon.py "$db_name"
 
     exchangerecon_pid=$!
-    wait "$exchangerecon_pid"
+    wait "$exchangrecon_pid"
 
     echo "exchange recon against OCC Completed"
 
