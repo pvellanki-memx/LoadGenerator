@@ -239,3 +239,9 @@ ON
     mm.firmId = qdp.AccountId
     AND mm.UnderlyingSymbol = qdp.UnderlyingSymbol;
 
+
+
+
+
+
+can we please reach out to OCC and see if we can restore the ORSA trade file from April 4th. The one we pulled was incomplete . The occ sftp folder currently goes back until April 15th only. 
