@@ -244,4 +244,8 @@ ON
 
 
 
-can we please reach out to OCC and see if we can restore the ORSA trade file from April 4th. The one we pulled was incomplete . The occ sftp folder currently goes back until April 15th only. 
+pvellanki@orsa01:/data/pvellanki/orsa-package-2$ ./run.sh 
+Found memx_orsa_trades_2024-04-04.xml.Z
+Uncompressing memx_orsa_trades_2024-04-04.xml.Z...
+./run.sh: line 42: wait: `’: not a pid or valid job spec
+XML file is not complete. Missing </FIXML> tag.
