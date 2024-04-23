@@ -1,251 +1,145 @@
-= SPEC-01: Trading Surveillance System
-:sectnums:
-:toc:
-
-== Background
-
-The Trading Surveillance System is designed to monitor and analyze trading activities to detect potential market manipulation and ensure compliance with financial regulations. The need for this system has been driven by increased scrutiny from regulatory bodies and the complexity of modern financial markets.
-
-== Requirements
-
-=== Functional Requirements (FRS)
-- Detect and alert on patterns indicating market manipulation, such as spoofing, layering, and wash trading.
-- Real-time processing of trade and order data to generate timely alerts.
-- Comprehensive audit trails for all actions and alerts.
-- User interface for monitoring alerts and managing investigations.
-
-=== Non-Functional Requirements
-- High throughput and low latency processing to handle large volumes of real-time financial data.
-- Scalability to adapt to growing data volumes and user load.
-- High availability and fault tolerance to minimize downtime and data loss.
-
-== Method
-
-=== Architecture Overview
-The system architecture includes several key components:
-- FIX Gateway for receiving trade and order data.
-- Apache Kafka for data ingestion and streaming.
-- Apache Flink for real-time stream processing.
-- Time-Series Database for storing time-indexed data.
-- User Interface for displaying alerts and providing an interactive investigation platform.
-
-=== Component Design
-
-==== FIX Gateway
-Handles incoming FIX messages, ensuring they are correctly parsed and forwarded to Kafka for processing.
-
-==== Apache Kafka
-Serves as the central messaging backbone, buffering incoming data and providing it to Flink for processing. This decouples the data ingestion from processing, enhancing system scalability and resilience.
-
-==== Apache Flink
-Processes streams of trade and order data in real-time. Implements complex event processing (CEP) to detect patterns of market manipulation. Generates alerts based on predefined criteria.
-
-==== Time-Series Database
-Stores historical and real-time processed data, supporting high-speed queries and data retrieval for analysis and reporting purposes.
-
-==== User Interface
-Provides a dashboard for real-time monitoring of alerts and administrative tools for managing alert configurations. Supports audit trails and comprehensive reporting capabilities.
-
-=== Integration
-Data flows seamlessly from the FIX Gateway to Kafka, then to Flink, and either back to Kafka for further consumption or to the Time-Series Database for storage. The User Interface fetches necessary data from the database and presents it to regulatory users.
-
-== Implementation
-
-Refer to the WBS for detailed task breakdowns and scheduling.
-
-=== System Setup and Configuration
-Setting up servers, configuring network equipment, and installing all necessary software components.
-
-=== Development Phases
-Development of each component according to the specifications and integration to ensure smooth data flow and functionality.
-
-=== Testing and Deployment
-Systematic testing, including unit testing, integration testing, and performance testing, followed by staging and production deployments.
-
-== Milestones
-- M1: Project Kickoff
-- M2: System Setup Completion
-- M3: End of Development Phase
-- M4: Completion of Integration and Initial Testing
-- M5: Production Deployment
-- M6: Project Closeout
-
-== Gathering Results
-- Continuous monitoring and optimization based on system performance and feedback.
-- Regular updates and patches to enhance functionalities and address emerging requirements.
+#!/bin/bash
 
 
+current_date=$(date +"%Y-%m-%d")
+date=$(date -d "$current_date - 1 day" +"%Y-%m-%d")
+
+mm_dd=$(date -d "$date" +"%m-%d")
+
+# Create the output directory if it doesn't exist
+output_dir="/mnt/occ/orsa-summary"
+
+# Define the directory where the files are located
+base_dir="/mnt/occ/downloads/prod"
+
+# Construct the file name using the provided date
+compressed_file_to_watch="memx_orsa_trades_$date.xml.Z"
+
+# Define the monitor folder
+monitor_folder="$base_dir"
+
+# Check if the file exists, wait up to 10 times
+retries=10
+while [ ! -e "$monitor_folder/$compressed_file_to_watch" ] && [ $retries -gt 0 ]; do
+    echo "$compressed_file_to_watch not found in $monitor_folder. Waiting..."
+    sleep 10  # Adjust the interval as needed
+    ((retries--))
+done
+
+if [ $retries -eq 0 ]; then
+    echo "Compressed file not found after 10 retries. Exiting."
+    exit 1
+fi
+
+echo "Found $compressed_file_to_watch"
+
+# Uncompress the file and wait for it to complete
+echo "Uncompressing $compressed_file_to_watch..."
+zcat "$monitor_folder/$compressed_file_to_watch" > "$monitor_folder/memx_orsa_trades_$date.xml"
+uncompress_pid=$!
+
+wait "$uncompress_pid"
+
+# Check if the XML file is complete by examining the last two lines
+last_two_lines=$(zcat "$monitor_folder/$compressed_file_to_watch" | tail -n 2)
+
+if [[ $last_two_lines != *"</FIXML>"* ]]; then
+    echo "XML file is not complete. Missing </FIXML> tag."
+    exit 1
+fi
 
 
+# Define a function to execute trades and exchange recon
+execute_trades_and_recon() {
+    # Add the content of run_trades.sh here
+    echo "Executing run_trades.sh..."
+    db_name="$date.db"
+
+    # Step 1: Split the big XML file using split.py
+    python3 split_v4.py "$base_dir"/memx_orsa_trades_"$date".xml "$date"
+
+    # Step 2: Process each split file using xml_to_db.py
+    for split_file in "$date"_*; do
+        python3 xml_2_db_v5.py "$split_file" "$db_name" > log.txt &
+
+        # Capture the PID of the last background process
+        pid=$!
+
+        # Wait for the background process to complete
+        wait "$pid"
+
+        echo "Processing of $split_file completed."
+    done
+
+    # Step 3: Group the data in the database using groupedexcel.py
+    python3 groupedexcel_v5.py "$db_name"
+
+    grouped_pid=$!
+    # Wait for groupedexcel.py to complete
+    wait "$grouped_pid"
+
+    echo "Grouping of data completed."
+
+    # Step 4: Perform further processing using furtherstreaming.py
+    python3 streamfurther_v4.py "$db_name"
+
+    streamfurther_pid=$!
+    # Wait for groupedexcel.py to complete
+    wait "$streamfurther_pid"
+
+    echo "Grouping summary of data completed."
 
 
-= SPEC-02: Trading Surveillance System with Benchmarking
-:sectnums:
-:toc:
+    # Step 4: Perform further processing using furtherstreaming.py
+    python3 dump2excel.py "$db_name"
 
-== Background
+    dump2excel_pid=$!
+    # Wait for groupedexcel.py to complete
+    wait "$dump2excel_pid"
 
-The enhanced Trading Surveillance System is an advanced solution designed for real-time monitoring of trading activities, with an emphasis on data-driven benchmarking to identify anomalies and potential manipulative behaviors. This system integrates a sophisticated benchmarking process to calibrate the surveillance algorithms, leveraging InfluxDB for time-series data storage, enabling efficient and rapid detection of unusual patterns.
+    echo "Grouping summary csv generated."
 
-== Requirements
-
-=== Functional Requirements
-- Benchmark-based alerting for identifying deviations from established trading patterns.
-- Real-time analysis of trades against historical data in InfluxDB.
-- Intuitive User Interface for surveillance monitoring and alert management.
-- Efficient workflow for alert investigation and case management.
-
-=== Non-Functional Requirements
-- Benchmarking process should be automated and run at configurable intervals.
-- The Surveillance Engine must process data with minimal latency.
-- The User Interface should provide real-time updates without perceptible delay.
-- Alert Management & Workflow system must support concurrent use by multiple operators.
-
-== Method
-
-=== Architecture Overview
-The system is composed of distinct but interconnected components:
-- **Benchmarking**: Sets the baseline for normal trading activities.
-- **InfluxDB**: Stores time-series data used for benchmarking and real-time analysis.
-- **Surveillance Engine**: Analyzes streaming data, compares against benchmarks, and generates alerts.
-- **User Interface**: Allows users to view and manage alerts.
-- **Alert Management & Workflow**: Manages the lifecycle of alerts and supports case investigation processes.
-
-=== Component Design
-
-==== Benchmarking
-- Determines thresholds and patterns that represent normal trading behavior.
-- Periodically updates to adapt to changing market conditions.
-- Supplies the Surveillance Engine with dynamic parameters for anomaly detection.
-
-==== InfluxDB
-- Stores granular trade and order data with precise timestamping.
-- Provides fast querying capabilities for real-time analytics.
-- Serves as the historical data repository for the benchmarking process.
-
-==== Surveillance Engine
-- Processes data streams in real-time, leveraging benchmarks for anomaly detection.
-- Generates alerts for activities that significantly deviate from the benchmark.
-- Integrates with InfluxDB for continuous data retrieval and analysis.
-
-==== User Interface
-- Displays a dashboard for real-time surveillance updates.
-- Provides tools for configuring benchmark parameters and alert thresholds.
-- Offers investigative functionalities for deep dives into specific alerts.
-
-==== Alert Management & Workflow
-- Tracks the status of each alert from generation to resolution.
-- Supports assignment, acknowledgment, and documentation of investigative actions.
-- Integrates audit trails for compliance and retrospective analysis.
-
-== Implementation
-
-The implementation process follows the WBS structure with specified tasks and timelines.
-
-=== System Setup and Configuration
-Involves configuring InfluxDB, setting up the benchmarking module, and establishing the initial parameters for the Surveillance Engine.
-
-=== Development
-Encompasses the development of the Surveillance Engine with benchmarking integration, the User Interface design and creation, and the Alert Management & Workflow system.
-
-=== Integration and Testing
-Focuses on integrating all components, ensuring data flows correctly, and validating the functionality of the entire system.
-
-=== Deployment
-Includes staging and production deployment, ensuring the system is operational and ready for use.
-
-== Milestones
-- M1: Completion of InfluxDB Setup and Benchmarking Integration
-- M2: Development of Surveillance Engine and UI Completion
-- M3: Full System Integration
-- M4: Successful Staging Deployment
-- M5: Production Deployment and System Go-Live
-- M6: Post-Deployment Review and Operational Handoff
-
-== Gathering Results
-Evaluates system performance based on the accuracy and efficiency of alert generation, benchmarking effectiveness, and user feedback on the Interface and Workflow system.
+    
+    echo "Executing run_exchange_recon.sh..."
+    db_name="$date.db"
 
 
 
+    # Step 1: Group the data in the database using groupedexcel.py
+    python3 grouptradesbyexch.py "$db_name"
 
+    groupedbyexch_pid=$!
+    # Wait for groupedexcel.py to complete
+    wait "$groupedbyexch_pid"
 
+    echo "Grouping by exchange completed."
 
-Tables Involved:
-MM Table:
-This table stores market making data.
-It contains information about firms engaged in market making, including their IDs (firmId), the number of symbols they are quoting (numSymbols), and the option classes they are quoting for (optionClass).
-Quotes Table:
-This table stores quote data.
-It contains information about quotes submitted by various accounts, including the account IDs (AccountId), the underlying symbols they are quoting for (UnderlyingSymbol), and the timestamps of the quotes (Timestamp).
-SQL Query Description:
-The SQL query accomplishes the following tasks:
+    # Step 4: Perform further processing using furtherstreaming.py
+    python3 streamfurther_v5.py "$db_name"
 
-Define Trading Time Window:
-It starts by defining the trading time window from 9:30 AM to 4:15 PM.
-Calculate Quote Duration:
-It calculates the total number of quotes and the total trading time in seconds for each AccountId/UnderlyingSymbol pair within the trading time window.
-It calculates the total trading time per day in seconds.
-Calculate Quote Duration Percentage:
-It calculates the quote duration percentage for each AccountId/UnderlyingSymbol pair by dividing the total trading time with quotes by the total trading time per day.
-Left Join MM Table with Quote Duration Percentage:
-It left joins the MM table with the calculated quote duration percentages.
-This ensures that all combinations of firmId/UnderlyingSymbol from the MM table are included in the result set.
-If a combination does not have any quotes, it assigns a quote duration percentage of 0.
-Final Result:
-The final result includes the firmId, UnderlyingSymbol, and the calculated quote_duration_percentage.
-This result set provides insights into the quoting activity of firms for different underlying symbols, including instances where firms may not have quoted at all.
+    SF5_pid=$!
+    wait "$SF5_pid"
 
+    echo "grouping summary bu exchange completed"
 
-WITH TradingTime AS (
-    SELECT
-        TIME('09:30') AS start_time,
-        TIME('16:15') AS end_time
-),
-QuotesDuration AS (
-    SELECT
-        q.AccountId,
-        q.UnderlyingSymbol,
-        COUNT(q.Timestamp) AS total_quotes,
-        strftime('%s', MAX(q.Timestamp)) - strftime('%s', MIN(q.Timestamp)) AS total_trading_seconds,
-        (SELECT strftime('%s', '2000-01-01T16:15:00') - strftime('%s', '2000-01-01T09:30:00')) AS total_trading_seconds_per_day
-    FROM
-        Quotes q
-    WHERE
-        TIME(q.Timestamp) >= (SELECT start_time FROM TradingTime)
-        AND TIME(q.Timestamp) <= (SELECT end_time FROM TradingTime)
-    GROUP BY
-        q.AccountId, q.UnderlyingSymbol
-),
-QuoteDurationPercentage AS (
-    SELECT
-        qd.AccountId,
-        qd.UnderlyingSymbol,
-        CASE
-            WHEN qd.total_quotes = 0 THEN 0
-            ELSE (1.0 * qd.total_trading_seconds) / qd.total_trading_seconds_per_day
-        END AS quote_duration_percentage
-    FROM
-        QuotesDuration qd
-)
-SELECT
-    mm.firmId AS AccountId,
-    mm.UnderlyingSymbol,
-    COALESCE(qdp.quote_duration_percentage, 0) AS quote_duration_percentage
-FROM
-    MM mm
-LEFT JOIN
-    QuoteDurationPercentage qdp
-ON
-    mm.firmId = qdp.AccountId
-    AND mm.UnderlyingSymbol = qdp.UnderlyingSymbol;
+    python3 exchangrecon.py "$db_name"
 
+    exchangerecon_pid=$!
+    wait "$exchangerecon_pid"
 
+    echo "exchange recon against OCC Completed"
 
+    python3 excel.py "$db_name"
 
+    excel_pid=$!
+    wait "$excel_pid"
 
+    echo "Common aggregates file generated"
+}
 
-pvellanki@orsa01:/data/pvellanki/orsa-package-2$ ./run.sh 
-Found memx_orsa_trades_2024-04-04.xml.Z
-Uncompressing memx_orsa_trades_2024-04-04.xml.Z...
-./run.sh: line 42: wait: `’: not a pid or valid job spec
-XML file is not complete. Missing </FIXML> tag.
+# Execute the combined trades and exchange recon function
+execute_trades_and_recon
+
+echo "Scripts executed successfully."
+
+mv *"$mm_dd.csv" "$output_dir/"
