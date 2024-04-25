@@ -1,142 +1,147 @@
-#!/bin/bash
+= FRS: Surveillance Engine Functional Requirements
+:sectnums:
+:toc:
 
-current_date=$(date +"%Y-%m-%d")
-date=$(date -d "$current_date - 1 day" +"%Y-%m-%d")
+== Overview
 
-mm_dd=$(date -d "$date" +"%m-%d")
+The Surveillance Engine is a critical component of the Trading Surveillance System. Its primary function is to analyze trade and order data in real-time to detect and alert on potential market abuses and irregularities in trading activities. The functional requirements outlined here align with the objectives and scope detailed in the Surveillance BRD.
 
-# Create the output directory if it doesn't exist
-output_dir="/mnt/occ/orsa-summary"
-mkdir -p "$output_dir"
+== Functional Requirements
 
-# Define the directory where the files are located
-base_dir="/mnt/occ/downloads/prod"
+=== FR1: Data Ingestion and Normalization
+- FR1.1: The engine must ingest real-time trade and order data continuously with no data loss.
+- FR1.2: Data normalization must conform to a predefined schema to ensure consistency across all data points.
 
-# Construct the file name using the provided date
-compressed_file_to_watch="memx_orsa_trades_$date.xml.Z"
+=== FR2: Benchmarking Integration
+- FR2.1: The engine shall integrate with the Benchmarking module to retrieve current benchmark parameters for various trade instruments.
+- FR2.2: It should automatically adjust the detection algorithms based on updated benchmark data.
 
-# Define the monitor folder
-monitor_folder="$base_dir"
+=== FR3: Pattern Recognition and Anomaly Detection
+- FR3.1: Must identify known patterns of market manipulation, such as spoofing, wash trades, and layering, based on configurable rules and benchmarks.
+- FR3.2: Should use statistical analysis to detect anomalies that could indicate market manipulation or irregularities.
 
-# Check if the file exists, wait up to 10 times
-retries=10
-while [ ! -e "$monitor_folder/$compressed_file_to_watch" ] && [ $retries -gt 0 ]; do
-    echo "$compressed_file_to_watch not found in $monitor_folder. Waiting..."
-    sleep 10  # Adjust the interval as needed
-    ((retries--))
-done
+=== FR4: Alert Generation
+- FR4.1: The engine is required to generate alerts for any detected activities that deviate from the benchmark or match known patterns of market abuse.
+- FR4.2: Each alert must include relevant details such as security identifier, timestamp, and a description of the detected irregularity.
 
-if [ $retries -eq 0 ]; then
-    echo "Compressed file not found after 10 retries. Exiting."
-    exit 1
-fi
+=== FR5: Real-Time Processing
+- FR5.1: Real-time data processing should occur with minimal latency to enable timely detection and alerting.
+- FR5.2: Must support processing and analysis of data across multiple trading venues simultaneously.
 
-echo "Found $compressed_file_to_watch"
+=== FR6: Scalability
+- FR6.1: The engine must be scalable to handle increasing volumes of data without degradation in performance.
+- FR6.2: Should provide mechanisms to scale horizontally, adding more processing power as the data volume increases.
 
-# Uncompress the file and wait for it to complete
-echo "Uncompressing $compressed_file_to_watch..."
-zcat "$monitor_folder/$compressed_file_to_watch" > "$monitor_folder/memx_orsa_trades_$date.xml"
-uncompress_pid=$!
+=== FR7: Historical Data Analysis
+- FR7.1: Should have the capability to analyze historical data for back-testing and refining detection algorithms.
+- FR7.2: Must maintain a historical database of alerts and outcomes to improve future detection accuracy.
 
-wait "$uncompress_pid"
+=== FR8: User-Defined Rules and Parameters
+- FR8.1: Must allow regulatory users to configure and modify the rules and parameters used for market abuse detection.
+- FR8.2: Should include a user-friendly interface for setting these parameters without needing to change the underlying code.
 
-# Check if the XML file is complete by examining the last two lines
-last_two_lines=$(zcat "$monitor_folder/$compressed_file_to_watch" | tail -n 2)
+=== FR9: Reporting and Audit Trails
+- FR9.1: The engine must record all generated alerts along with decisions and actions taken as a result.
+- FR9.2: Must provide comprehensive reporting capabilities for auditing and compliance purposes.
 
-if [[ $last_two_lines != *"</FIXML>"* ]]; then
-    echo "XML file is not complete. Missing </FIXML> tag."
-    exit 1
-fi
+=== FR10: Fault Tolerance and Reliability
+- FR10.1: Must have failover capabilities to ensure continuous operation.
+- FR10.2: Should maintain data integrity and provide accurate processing outcomes even in the event of partial system failures.
 
-# Define a function to execute trades and exchange recon
-execute_trades_and_recon() {
-    # Add the content of run_trades.sh here
-    echo "Executing run_trades.sh..."
-    db_name="$date.db"
+== Validation Criteria
 
-    # Step 1: Split the big XML file using split.py
-    python3 split_v4.py "$base_dir"/memx_orsa_trades_"$date".xml "$date"
+Each functional requirement will have associated validation tests to ensure they are met. The system will be subjected to various scenarios, including simulated market conditions, to validate the accuracy and efficiency of the Surveillance Engine.
 
-    # Step 2: Process each split file using xml_to_db.py
-    for split_file in "$date"_*; do
-        python3 xml_2_db_v5.py "$split_file" "$db_name" > log.txt &
+== Compliance and Performance Standards
 
-        # Capture the PID of the last background process
-        pid=$!
-
-        # Wait for the background process to complete
-        wait "$pid"
-
-        echo "Processing of $split_file completed."
-    done
-
-    # Step 3: Group the data in the database using groupedexcel.py
-    python3 groupedexcel_v5.py "$db_name"
-
-    grouped_pid=$!
-    # Wait for groupedexcel.py to complete
-    wait "$grouped_pid"
-
-    echo "Grouping of data completed."
-
-    # Step 4: Perform further processing using furtherstreaming.py
-    python3 streamfurther_v4.py "$db_name"
-
-    streamfurther_pid=$!
-    # Wait for groupedexcel.py to complete
-    wait "$streamfurther_pid"
-
-    echo "Grouping summary of data completed."
+The Surveillance Engine must comply with relevant financial industry regulations and standards. It must also meet defined performance benchmarks, including but not limited to processing latency and alert accuracy rates.
 
 
-    # Step 4: Perform further processing using furtherstreaming.py
-    python3 dump2excel.py "$db_name"
 
-    dump2excel_pid=$!
-    # Wait for groupedexcel.py to complete
-    wait "$dump2excel_pid"
 
-    echo "Grouping summary csv generated."
+= SPEC-02: Trading Surveillance System with Benchmarking
+:sectnums:
+:toc:
 
-    
-    echo "Executing run_exchange_recon.sh..."
-    db_name="$date.db"
+== Background
 
-    # Step 1: Group the data in the database using groupedexcel.py
-    python3 grouptradesbyexch.py "$db_name"
+The enhanced Trading Surveillance System is an advanced solution designed for real-time monitoring of trading activities, with an emphasis on data-driven benchmarking to identify anomalies and potential manipulative behaviors. This system integrates a sophisticated benchmarking process to calibrate the surveillance algorithms, leveraging InfluxDB for time-series data storage, enabling efficient and rapid detection of unusual patterns.
 
-    groupedbyexch_pid=$!
-    # Wait for groupedexcel.py to complete
-    wait "$groupedbyexch_pid"
+== Requirements
 
-    echo "Grouping by exchange completed."
+=== Functional Requirements
+- Benchmark-based alerting for identifying deviations from established trading patterns.
+- Real-time analysis of trades against historical data in InfluxDB.
+- Intuitive User Interface for surveillance monitoring and alert management.
+- Efficient workflow for alert investigation and case management.
 
-    # Step 4: Perform further processing using furtherstreaming.py
-    python3 streamfurther_v5.py "$db_name"
+=== Non-Functional Requirements
+- Benchmarking process should be automated and run at configurable intervals.
+- The Surveillance Engine must process data with minimal latency.
+- The User Interface should provide real-time updates without perceptible delay.
+- Alert Management & Workflow system must support concurrent use by multiple operators.
 
-    SF5_pid=$!
-    wait "$SF5_pid"
+== Method
 
-    echo "grouping summary bu exchange completed"
+=== Architecture Overview
+The system is composed of distinct but interconnected components:
+- **Benchmarking**: Sets the baseline for normal trading activities.
+- **InfluxDB**: Stores time-series data used for benchmarking and real-time analysis.
+- **Surveillance Engine**: Analyzes streaming data, compares against benchmarks, and generates alerts.
+- **User Interface**: Allows users to view and manage alerts.
+- **Alert Management & Workflow**: Manages the lifecycle of alerts and supports case investigation processes.
 
-    python3 exchangrecon.py "$db_name"
+=== Component Design
 
-    exchangerecon_pid=$!
-    wait "$exchangrecon_pid"
+==== Benchmarking
+- Determines thresholds and patterns that represent normal trading behavior.
+- Periodically updates to adapt to changing market conditions.
+- Supplies the Surveillance Engine with dynamic parameters for anomaly detection.
 
-    echo "exchange recon against OCC Completed"
+==== InfluxDB
+- Stores granular trade and order data with precise timestamping.
+- Provides fast querying capabilities for real-time analytics.
+- Serves as the historical data repository for the benchmarking process.
 
-    python3 excel.py "$db_name"
+==== Surveillance Engine
+- Processes data streams in real-time, leveraging benchmarks for anomaly detection.
+- Generates alerts for activities that significantly deviate from the benchmark.
+- Integrates with InfluxDB for continuous data retrieval and analysis.
 
-    excel_pid=$!
-    wait "$excel_pid"
+==== User Interface
+- Displays a dashboard for real-time surveillance updates.
+- Provides tools for configuring benchmark parameters and alert thresholds.
+- Offers investigative functionalities for deep dives into specific alerts.
 
-    echo "Common aggregates file generated"
-}
+==== Alert Management & Workflow
+- Tracks the status of each alert from generation to resolution.
+- Supports assignment, acknowledgment, and documentation of investigative actions.
+- Integrates audit trails for compliance and retrospective analysis.
 
-# Execute the combined trades and exchange recon function
-execute_trades_and_recon
+== Implementation
 
-echo "Scripts executed successfully."
+The implementation process follows the WBS structure with specified tasks and timelines.
 
-mv *"$mm_dd.csv" "$output_dir/"
+=== System Setup and Configuration
+Involves configuring InfluxDB, setting up the benchmarking module, and establishing the initial parameters for the Surveillance Engine.
+
+=== Development
+Encompasses the development of the Surveillance Engine with benchmarking integration, the User Interface design and creation, and the Alert Management & Workflow system.
+
+=== Integration and Testing
+Focuses on integrating all components, ensuring data flows correctly, and validating the functionality of the entire system.
+
+=== Deployment
+Includes staging and production deployment, ensuring the system is operational and ready for use.
+
+== Milestones
+- M1: Completion of InfluxDB Setup and Benchmarking Integration
+- M2: Development of Surveillance Engine and UI Completion
+- M3: Full System Integration
+- M4: Successful Staging Deployment
+- M5: Production Deployment and System Go-Live
+- M6: Post-Deployment Review and Operational Handoff
+
+== Gathering Results
+Evaluates system performance based on the accuracy and efficiency of alert generation, benchmarking effectiveness, and user feedback on the Interface and Workflow system.
+
