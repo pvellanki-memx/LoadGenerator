@@ -157,56 +157,38 @@ Evaluates system performance based on the accuracy and efficiency of alert gener
 
 
 
-sqlite> select * from grouped_trades limit 10;
-Side  Sub_ID  Rpt_ID      Ultimate_Clearing_Firm  Entering_Firm_Col1  EXCH  TRANS_TYPE  BIZ_DT      CFI     PREVLY_RPTD  RPT_TYP  MTCH_STAT  TRD_SUB_TYPE  TRD_DT      SYM   MMY  MATDT       STRKPX  Quantity
-----  ------  ----------  ----------------------  ------------------  ----  ----------  ----------  ------  -----------  -------  ---------  ------------  ----------  ----  ---  ----------  ------  --------
-1     C       1053194308  00534                   00477               XCBO  0           2024-04-26  OPEICS  N            2        0          0             2024-04-26  SPXW       2024-04-26  4955    4       
-2     M       1053194308  00813                   00695               XCBO  0           2024-04-26  OPEICS  N            2        0          0             2024-04-26  SPXW       2024-04-26  4955    4       
-1     C       1053194309  00534                   00477               XCBO  0           2024-04-26  OCEICS  N            2        0                        2024-04-26  SPXW       2024-05-03  5185    1       
-2     M       1053194309                          00695               XCBO  0           2024-04-26  OCEICS  N            2        0                        2024-04-26  SPXW       2024-05-03  5185    1       
-1     M       1053194310  00813                   00695               XCBO  0           2024-04-26  OPEICS  N            2        0          0             2024-04-26  SPXW       2024-04-26  4975    4       
-2     C       1053194310  00534                   00477               XCBO  0           2024-04-26  OPEICS  N            2        0          0             2024-04-26  SPXW       2024-04-26  4975    4       
-1     M       1053194312                          00695               XCBO  0           2024-04-26  OCEICS  N            2        0          0             2024-04-26  SPXW       2024-05-03  5200    2       
-2     C       1053194312  00534                   00477               XCBO  0           2024-04-26  OCEICS  N            2        0          0             2024-04-26  SPXW       2024-05-03  5200    2       
-1     C       1053194314  00534                   00477               XCBO  0           2024-04-26  OCEICS  N            2        0                        2024-04-26  SPXW       2024-04-26  5155    1       
-2     M       1053194314                          00695               XCBO  0           2024-04-26  OCEICS  N            2        0                        2024-04-26  SPXW       2024-04-26  5155    1 
-
-
-
 import pandas as pd
 import sqlite3
-import datetime
 import sys
 import os
-import gzip
 
 db_name = sys.argv[1]
 # Connect to the SQLite database
 conn = sqlite3.connect(db_name)
 
-# Query the data from the grouped_trades_new table
+# Query the data from the grouped_trades table
 query = "SELECT * FROM grouped_trades"
-
-# Fetch the data into a pandas DataFrame
 grouped_trade_data_frame = pd.read_sql_query(query, conn)
 
 # Close the database connection
 conn.close()
 
-# Generate the timestamp for the file name up to minutes
-timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
-file_name = db_name[5:10]
-# Write the grouped_trade_data_frame and pivoted_trade_data_frame to an Excel file with separate sheets
-output_file_name = f'summary_trade_data_{file_name}.csv'
+# Symbols to handle separately
+symbols = ['SPY', 'QQQ', 'TSLA', 'AAPL', 'NVDA', 'IWM']
 
-grouped_trade_data_frame.to_csv(output_file_name, index=False)
+# Base file name from the database name
+base_file_name = db_name[5:10]
 
-with open(output_file_name, 'rb') as f_in:
-    with gzip.open(f'{output_file_name}.gz', 'wb') as f_out:
-        f_out.writelines(f_in)
+# Loop through each symbol and save the corresponding CSV
+for symbol in symbols:
+    df_filtered = grouped_trade_data_frame[grouped_trade_data_frame['SYM'] == symbol]
+    output_file_name = f'summary_trade_data_{base_file_name}_{symbol}.csv'
+    df_filtered.to_csv(output_file_name, index=False)
 
+# Handle all other symbols
+other_symbols_df = grouped_trade_data_frame[~grouped_trade_data_frame['SYM'].isin(symbols)]
+output_file_name = f'summary_trade_data_{base_file_name}_OTHERS.csv'
+other_symbols_df.to_csv(output_file_name, index=False)
 
+print("Data from grouped_trades has been successfully processed and saved.")
 
-os.remove(output_file_name)
-
-print(f"Data from grouped_trades_summary has been successfully dumped to '{output_file_name}'.")
