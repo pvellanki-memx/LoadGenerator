@@ -194,25 +194,23 @@ print("Data from grouped_trades has been successfully processed and saved.")
 
 
 
- lscpu
-Architecture:           x86_64
-  CPU op-mode(s):       32-bit, 64-bit
-  Address sizes:        46 bits physical, 48 bits virtual
-  Byte Order:           Little Endian
-CPU(s):                 32
-  On-line CPU(s) list:  0-31
-Vendor ID:              GenuineIntel
-  Model name:           Intel(R) Xeon(R) Gold 6242 CPU @ 2.80GHz
-    CPU family:         6
-    Model:              85
-    Thread(s) per core: 1
-    Core(s) per socket: 16
-    Socket(s):          2
-    Stepping:           7
-    CPU max MHz:        2800.0000
-
-Memory:
- free -h
-               total        used        free      shared  buff/cache   available
-Mem:           376Gi       260Gi       109Gi       2.0Mi       7.3Gi        89Gi
-Swap:             0B          0B          0B
+Virtual Machine Specifications
+CPU Requirements:
+Model: Intel Xeon Gold 6242
+Cores: 16 cores per socket, dual socket configuration (total of 32 cores)
+Threads per Core: 1 thread per core
+Base Frequency: 2.80 GHz
+Architecture: x86_64
+CPU Modes: Support for both 32-bit and 64-bit processing
+Memory Requirements:
+Total RAM: 376 GB
+Storage Requirements:
+Total Disk Space: 1 TB
+Disk Type: SSD preferred for better performance
+Operating System:
+Preferred OS: [Your choice, e.g., Ubuntu 20.04 LTS, Windows Server 2019, etc.]
+Network Configuration:
+IP Address: DHCP (if acceptable) or a static IP if required for the application
+Internet Access: Required
+Other Network Settings: [Specify any additional network configurations if needed]
+Additional Software/Tools: [List any specific software, databases, development tools, etc., that need to be pre-installed.]
