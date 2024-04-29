@@ -192,3 +192,27 @@ other_symbols_df.to_csv(output_file_name, index=False)
 
 print("Data from grouped_trades has been successfully processed and saved.")
 
+
+
+ lscpu
+Architecture:           x86_64
+  CPU op-mode(s):       32-bit, 64-bit
+  Address sizes:        46 bits physical, 48 bits virtual
+  Byte Order:           Little Endian
+CPU(s):                 32
+  On-line CPU(s) list:  0-31
+Vendor ID:              GenuineIntel
+  Model name:           Intel(R) Xeon(R) Gold 6242 CPU @ 2.80GHz
+    CPU family:         6
+    Model:              85
+    Thread(s) per core: 1
+    Core(s) per socket: 16
+    Socket(s):          2
+    Stepping:           7
+    CPU max MHz:        2800.0000
+
+Memory:
+ free -h
+               total        used        free      shared  buff/cache   available
+Mem:           376Gi       260Gi       109Gi       2.0Mi       7.3Gi        89Gi
+Swap:             0B          0B          0B
