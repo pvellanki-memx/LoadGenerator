@@ -194,23 +194,12 @@ print("Data from grouped_trades has been successfully processed and saved.")
 
 
 
-Virtual Machine Specifications
-CPU Requirements:
-Model: Intel Xeon Gold 6242
-Cores: 16 cores per socket, dual socket configuration (total of 32 cores)
-Threads per Core: 1 thread per core
-Base Frequency: 2.80 GHz
-Architecture: x86_64
-CPU Modes: Support for both 32-bit and 64-bit processing
-Memory Requirements:
-Total RAM: 376 GB
-Storage Requirements:
-Total Disk Space: 1 TB
-Disk Type: SSD preferred for better performance
-Operating System:
-Preferred OS: [Your choice, e.g., Ubuntu 20.04 LTS, Windows Server 2019, etc.]
-Network Configuration:
-IP Address: DHCP (if acceptable) or a static IP if required for the application
-Internet Access: Required
-Other Network Settings: [Specify any additional network configurations if needed]
-Additional Software/Tools: [List any specific software, databases, development tools, etc., that need to be pre-installed.]
+Proficient in Java, with a solid understanding of its ecosystems.
+Strong experience with real-time data processing frameworks and systems.
+Experience working with time-series databases, preferably InfluxDB.
+Knowledge of distributed systems architecture and complex event processing.
+Familiarity with financial markets, trading systems, or related fields is a plus.
+Excellent problem-solving skills and attention to detail.
+Ability to work in a fast-paced, team-oriented environment.
+Preferred Qualifications
+Experience with Apache Kafka, Apache Flink, or similar streaming technologies.
