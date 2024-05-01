@@ -196,5 +196,9 @@ print("Data from grouped_trades has been successfully processed and saved.")
 
 http://ec2-35-170-218-11.compute-1.amazonaws.com/
 
+
+
+gc22022.ex10.ewr2.memx.tech:2005 primary_boats_general> actors.STREAM_BOATS.actors.SYMBOL_ADMIN.updatePriorDayClosingPrice SYMBOL-ID=ZTEST CLOSE-PRICE=10
+
 ifconfig mext.740:40024 10.12.68.108/22
 arping -c 2 -U -I mext.740:40024 10.12.68.108 &
