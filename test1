@@ -211,3 +211,4 @@ done
 
 echo "Total rows: $total"
 
+du -h --max-depth=1 /path/to/directory | sort -hr
