@@ -201,14 +201,7 @@ http://ec2-35-170-218-11.compute-1.amazonaws.com/
 tail -n +2 file.csv | wc -l
 
 
+sftp -i /path/to/your/private_key.pem username@ec2-35-170-218-11.compute-1.amazonaws.com:/path/on/server/ <<< $'put /path/to/local/file'
 
-total=0
-for file in summary_04_15_*.csv; do
-    rows=$(tail -n +2 "$file" | wc -l)
-    echo "File: $file, Rows: $rows"
-    total=$((total + rows))
-done
-
-echo "Total rows: $total"
 
 du -h --max-depth=1 /path/to/directory | sort -hr
