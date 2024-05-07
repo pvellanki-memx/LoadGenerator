@@ -205,3 +205,7 @@ sftp -i /path/to/your/private_key.pem username@ec2-35-170-218-11.compute-1.amazo
 
 
 du -h --max-depth=1 /path/to/directory | sort -hr
+
+mv *"$mm-dd.csv" "$output_dir/"
+
+
