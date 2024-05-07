@@ -212,18 +212,38 @@ mv *"${mm_dd}"*.csv "$output_dir/"
 
 
 
-[root@sys0412 ~]# head 10 OptionsQuoteRequestComponentsState_1B.csv
-head: cannot open '10' for reading: No such file or directory
-==> OptionsQuoteRequestComponentsState_1B.csv <==
-DeephavenPartitionID,SessionId,SourceId,Sequence,Timestamp,AccountId,RequestId,ListSeqNo,Side,RequestEventType,ReasonCode,ReasonDetails,EFID,OptionId,UnderlyingSymbol
-2024-05-03,OM01.1714732001,MA01EN08,1325535,2024-05-03T09:25:26.104726654 NY,IMCCPE11,720644110100201473,1,Sell,Rejected,ExchangeClosed,None,MMXD,Q1v77OUW,QQQ
-2024-05-03,OM01.1714732001,MA01EN08,1325536,2024-05-03T09:25:26.104812772 NY,IMCCPE11,720644110100201474,1,Sell,Rejected,ExchangeClosed,None,MMXD,Q1v77OUX,QQQ
-2024-05-03,OM01.1714732001,MA01EN08,1325538,2024-05-03T09:25:26.105062421 NY,IMCCPE10,720583636960673793,1,Sell,Rejected,ExchangeClosed,None,MMXD,Q1v77OUV,QQQ
-2024-05-03,OM01.1714732001,MA01EN08,1325540,2024-05-03T09:25:26.105506520 NY,IMCCPE11,720644110100201475,1,Buy,Rejected,ExchangeClosed,None,MMXD,Q1v77OTo,QQQ
-2024-05-03,OM01.1714732001,MA01EN08,1325540,2024-05-03T09:25:26.105506520 NY,IMCCPE11,720644110100201475,1,Sell,Rejected,ExchangeClosed,None,MMXD,Q1v77OTo,QQQ
-2024-05-03,OM01.1714732001,MA01EN08,1325542,2024-05-03T09:25:26.106697956 NY,IMCCPE10,720583636960673794,1,Sell,Rejected,ExchangeClosed,None,MMXD,Q1v77OUY,QQQ
-2024-05-03,OM01.1714732001,MA01EN08,1325544,2024-05-03T09:25:26.106762251 NY,IMCCPE11,720644110100201476,1,Sell,Rejected,ExchangeClosed,None,MMXD,Q1v77OTp,QQQ
-2024-05-03,OM01.1714732001,MA01EN08,1325546,2024-05-03T09:25:26.107132142 NY,IMCCPE10,720583636960673795,1,Sell,Rejected,ExchangeClosed,None,MMXD,Q1v77OV1,QQQ
-2024-05-03,OM01.1714732001,MA01EN08,1325548,2024-05-03T09:25:26.107322606 NY,IMCCPE11,720644110100201477,1,Sell,Rejected,ExchangeClosed,None,MMXD,Q1v77OTn,QQQ
-[root@sys0412 ~]# 
+import pandas as pd
+import sqlite3
+import sys
+import os
+
+db_name = sys.argv[1]
+# Connect to the SQLite database
+conn = sqlite3.connect(db_name)
+
+# Query the data from the grouped_trades table
+query = "SELECT * FROM grouped_trades"
+grouped_trade_data_frame = pd.read_sql_query(query, conn)
+
+# Close the database connection
+conn.close()
+
+# Symbols to handle separately
+symbols = ['SPY', 'QQQ', 'TSLA', 'AAPL', 'NVDA', 'IWM']
+
+# Base file name from the database name
+base_file_name = db_name[5:10]
+
+# Loop through each symbol and save the corresponding CSV
+for symbol in symbols:
+    df_filtered = grouped_trade_data_frame[grouped_trade_data_frame['SYM'] == symbol]
+    output_file_name = f'summary_trade_data_{base_file_name}_{symbol}.csv'
+    df_filtered.to_csv(output_file_name, index=False)
+
+# Handle all other symbols
+other_symbols_df = grouped_trade_data_frame[~grouped_trade_data_frame['SYM'].isin(symbols)]
+output_file_name = f'summary_trade_data_{base_file_name}_OTHERS.csv'
+other_symbols_df.to_csv(output_file_name, index=False)
+
+print("Data from grouped_trades has been successfully processed and saved.")
 
