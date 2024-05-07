@@ -208,4 +208,13 @@ du -h --max-depth=1 /path/to/directory | sort -hr
 
 mv *"$mm-dd.csv" "$output_dir/"
 
+#!/bin/bash
 
+
+current_date=$(date +"%Y-%m-%d")
+date=$(date -d "$current_date - 1 day" +"%Y-%m-%d")
+
+mm_dd=$(date -d "$date" +"%m-%d")
+
+# Create the output directory if it doesn't exist
+output_dir="/mnt/occ/orsa-summary"
