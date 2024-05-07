@@ -216,6 +216,7 @@ import pandas as pd
 import sqlite3
 import sys
 import os
+import numpy as np
 
 db_name = sys.argv[1]
 # Connect to the SQLite database
@@ -240,10 +241,16 @@ for symbol in symbols:
     output_file_name = f'summary_trade_data_{base_file_name}_{symbol}.csv'
     df_filtered.to_csv(output_file_name, index=False)
 
-# Handle all other symbols
+# Handle all other symbols and split into two parts
 other_symbols_df = grouped_trade_data_frame[~grouped_trade_data_frame['SYM'].isin(symbols)]
-output_file_name = f'summary_trade_data_{base_file_name}_OTHERS.csv'
-other_symbols_df.to_csv(output_file_name, index=False)
+
+# Splitting the DataFrame into two parts
+split_dfs = np.array_split(other_symbols_df, 2)
+
+# Save each part to a separate file
+for i, df_part in enumerate(split_dfs, start=1):
+    output_file_name = f'summary_trade_data_{base_file_name}_OTHERS_part{i}.csv'
+    df_part.to_csv(output_file_name, index=False)
 
 print("Data from grouped_trades has been successfully processed and saved.")
 
