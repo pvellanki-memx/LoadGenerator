@@ -206,28 +206,6 @@ sftp -i /path/to/your/private_key.pem username@ec2-35-170-218-11.compute-1.amazo
 
 du -h --max-depth=1 /path/to/directory | sort -hr
 
-mv *"$mm-dd.csv" "$output_dir/"
-
-#!/bin/bash
 
 
-current_date=$(date +"%Y-%m-%d")
-date=$(date -d "$current_date - 1 day" +"%Y-%m-%d")
-
-mm_dd=$(date -d "$date" +"%m-%d")
-
-# Create the output directory if it doesn't exist
-output_dir="/mnt/occ/orsa-summary"
-
-
-
-
--rw-r--r-- 1 techops-files-download operators    91602338 May  7 09:20 summary_trade_data_05-06_SPY.csv
--rw-r--r-- 1 techops-files-download operators    41721155 May  7 09:20 summary_trade_data_05-06_QQQ.csv
--rw-r--r-- 1 techops-files-download operators    37866385 May  7 09:20 summary_trade_data_05-06_TSLA.csv
--rw-r--r-- 1 techops-files-download operators    21078018 May  7 09:20 summary_trade_data_05-06_AAPL.csv
--rw-r--r-- 1 techops-files-download operators    46171710 May  7 09:20 summary_trade_data_05-06_NVDA.csv
--rw-r--r-- 1 techops-files-download operators    10331513 May  7 09:20 summary_trade_data_05-06_IWM.csv
--rw-r--r-- 1 techops-files-download operators   475734769 May  7 09:21 summary_trade_data_05-06_OTHERS.csv
-pvellanki@orsa01:/data/pvellanki/bizdev$ vi run_pricing.sh 
-
+mv *"${mm_dd}"*.csv "$output_dir/"
