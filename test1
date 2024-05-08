@@ -275,6 +275,13 @@ debug1: Exit status 1
 Connection closed
 
 
+
+
+sftp -vvv -i /home/pvellanki/memx.pem memx@ec2-35-170-218-11.compute-1.amazonaws.com
+
+
+
+
 mv *"${mm_dd}"*.csv "$output_dir/"
 
 
