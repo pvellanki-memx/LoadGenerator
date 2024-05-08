@@ -200,6 +200,8 @@ http://ec2-35-170-218-11.compute-1.amazonaws.com/
 
 tail -n +2 file.csv | wc -l
 
+ sftp -i /home/pvellanki/memx.pem memx@ec2-35-170-218-11.compute-1.amazonaws.com <<< $'put OptionsQuoteRequestComponentsState_1B.csv.gz'
+
 
 sftp -i /path/to/your/private_key.pem username@ec2-35-170-218-11.compute-1.amazonaws.com:/path/on/server/ <<< $'put /path/to/local/file'
 
