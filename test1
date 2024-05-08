@@ -211,6 +211,7 @@ du -h --max-depth=1 /path/to/directory | sort -hr
 chmod 400 /home/pvellanki/memx.pem
 ssh -i /home/pvellanki/memx.pem memx@ec2-35-170-218-11.compute-1.amazonaws.com
 Subsystem sftp /usr/lib/openssh/sftp-server
+sftp -v -i /home/pvellanki/memx.pem memx@ec2-35-170-218-11.compute-1.amazonaws.com <<< $'put OptionsQuoteRequestComponentsState_1B.csv.gz'
 
 
 mv *"${mm_dd}"*.csv "$output_dir/"
