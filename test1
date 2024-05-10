@@ -380,4 +380,4 @@ for i, df_part in enumerate(split_dfs, start=1):
 print("Data from grouped_trades has been successfully processed and saved.")
 
 
-Virtusa sent a CR which added 4 roles( 2 java dev, 1 devops, 1 QA) in lieu of 3 resources converting to MEMX FT. 3 of these roles were a trade off to 3 MEMX resoucres and 1 role is for surveillance project.
+Virtusa sent a change request that added four roles—two Java developers, one DevOps, and one QA—in exchange for converting three resources to MEMX full-time. Three of these roles were a trade-off for three MEMX resources, and one role was designated for the surveillance project."
