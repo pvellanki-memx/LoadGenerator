@@ -379,5 +379,76 @@ for i, df_part in enumerate(split_dfs, start=1):
 
 print("Data from grouped_trades has been successfully processed and saved.")
 
+acceptor.cfg
 
-Virtusa sent a change request that added four roles—two Java developers, one DevOps, and one QA—in exchange for converting three resources to MEMX full-time. Three of these roles were a trade-off for three MEMX resources, and one role was designated for the surveillance project."
+[DEFAULT]
+ConnectionType=acceptor
+ReconnectInterval=20
+PersistMessages=Y
+FileStorePath=store
+FileLogPath=log
+
+[SESSION]
+BeginString=FIX.4.4
+SenderCompID=TRFSIMULATOR
+TargetCompID=YOURCLIENTID
+SocketAcceptPort=9876
+StartTime=00:00:00
+EndTime=23:59:59
+HeartBtInt=30
+
+
+import quickfix as fix
+import quickfix44 as fix44
+
+class TradeCaptureAcceptor(fix.Application):
+    def onCreate(self, sessionID):
+        print(f"Session created: {sessionID}")
+
+    def onLogon(self, sessionID):
+        print(f"Session logon: {sessionID}")
+
+    def onLogout(self, sessionID):
+        print(f"Session logout: {sessionID}")
+
+    def toAdmin(self, message, sessionID):
+        print(f"Sending Admin Message: {message.toString()}")
+
+    def fromAdmin(self, message, sessionID):
+        print(f"Received Admin Message: {message.toString()}")
+
+    def toApp(self, message, sessionID):
+        print(f"Sending App Message: {message.toString()}")
+
+    def fromApp(self, message, sessionID):
+        print(f"Received App Message: {message.toString()}")
+        self.onMessage(message, sessionID)
+
+    def onMessage(self, message, sessionID):
+        msgType = fix.MsgType()
+        message.getHeader().getField(msgType)
+        if msgType.getValue() == fix.MsgType_TradeCaptureReport:
+            self.handleTradeCaptureReport(message, sessionID)
+
+    def handleTradeCaptureReport(self, message, sessionID):
+        print("Handling Trade Capture Report")
+        # Process trade report logic here
+        # For example, validate and acknowledge the message
+
+        # Example response (Echo the incoming message for simplicity)
+        response = fix.Message(message)
+        fix.Session.sendToTarget(response, sessionID)
+
+def main(config_file):
+    settings = fix.SessionSettings(config_file)
+    application = TradeCaptureAcceptor()
+    storeFactory = fix.FileStoreFactory(settings)
+    logFactory = fix.FileLogFactory(settings)
+    acceptor = fix.SocketAcceptor(application, storeFactory, settings, logFactory)
+    acceptor.start()
+    # Keep the acceptor running
+    input("Press <ENTER> to quit\n")
+    acceptor.stop()
+
+if __name__ == "__main__":
+    main("quickfix_acceptor.cfg")
