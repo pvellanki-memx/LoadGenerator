@@ -59,3 +59,54 @@ Performance Considerations:
 
 Use partitioning on the Trades and Orders tables based on timestamp to manage large datasets efficiently.
 Consider using connection pooling to manage database connections and optimize performance.
+
+
+
+
+
+
+
+
+
+
+
+
+Real-Time Processing in Matching Engine
+Real-time rules in the matching engine are typically simpler, faster to evaluate, and based on single transactions or very recent data patterns. These rules are designed to instantly identify potential issues as trades and orders occur.
+
+High Order to Trade Ratio:
+
+Detects abnormal order-to-trade ratios in real time as transactions occur, indicating potential market abuse like quote stuffing.
+Rapid Entry and Delete (Spoofing):
+
+Monitors for quick insertion and removal of large orders, which can distort market perception.
+Order Withdrawal (Continuous):
+
+Observes patterns of orders being repeatedly placed and then withdrawn before execution, potentially to manipulate the market.
+High Order Rate:
+
+Detects a high number of orders entered by a single participant within a short time frame, suggesting potential market manipulation or system errors.
+High Small Order Rate:
+
+Identifies excessive entry of small orders below a predefined threshold, which might indicate layering or other disruptive strategies.
+Complex Analysis in Deephaven DB
+Deephaven DB is used for more complex analyses that require historical data aggregation, pattern recognition over longer periods, or more detailed and computationally intensive calculations.
+
+Phishing and Multi-Order Spoofing with Bait and Switch:
+
+Analyzes sequences of small probing orders followed by large trades, or complex patterns of order additions and deletions followed by advantageous trades.
+Unusual Price Movement Inter-Day and Unusual Volume Intra-Day:
+
+Compares current trading patterns against historical data to detect anomalies in price movements or trading volumes over configurable time ranges.
+Wash Sales A to B to A:
+
+Identifies circular trading patterns that are intended to artificially inflate trade volumes or manipulate market prices.
+Painting the Tape and Aggressive Buy or Sell:
+
+Analyzes trading behavior that attempts to influence market prices through aggressive trading strategies.
+Narrowing Spread Followed by Crossing:
+
+Detects instances where the market spread is manipulated followed by trades that take advantage of the altered market condition.
+Marking the Close (Non-Auction Close):
+
+Monitors end-of-day trading to detect attempts to influence closing prices.
