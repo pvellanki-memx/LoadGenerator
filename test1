@@ -110,3 +110,30 @@ Detects instances where the market spread is manipulated followed by trades that
 Marking the Close (Non-Auction Close):
 
 Monitors end-of-day trading to detect attempts to influence closing prices.
+
+
+#!/bin/bash
+
+TARGET="23:00"
+SCRIPT="updateclosingprice.sh"
+
+run_script() {
+    echo "Running script at $(date)"
+    bash "$SCRIPT"
+}
+
+while true; do
+    CURRENT_TIME=$(date +%H:%M)
+    if [[ "$CURRENT_TIME" == "$TARGET" ]]; then
+        run_script
+        sleep 1800
+    else
+        MINUTE=$(date +%M)
+        if (( MINUTE < 30 )); then
+            SLEEP_TIME=$(( (30 - MINUTE) * 60 - $(date +%S) ))
+        else
+            SLEEP_TIME=$(( (60 - MINUTE) * 60 - $(date +%S) ))
+        fi
+        sleep $SLEEP_TIME
+    fi
+done
