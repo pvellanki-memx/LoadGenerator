@@ -114,7 +114,7 @@ Monitors end-of-day trading to detect attempts to influence closing prices.
 
 #!/bin/bash
 
-TARGET="23:00"
+TARGETS=("09:00" "23:00")
 SCRIPT="updateclosingprice.sh"
 
 run_script() {
@@ -124,16 +124,30 @@ run_script() {
 
 while true; do
     CURRENT_TIME=$(date +%H:%M)
-    if [[ "$CURRENT_TIME" == "$TARGET" ]]; then
-        run_script
-        sleep 1800
-    else
-        MINUTE=$(date +%M)
-        if (( MINUTE < 30 )); then
-            SLEEP_TIME=$(( (30 - MINUTE) * 60 - $(date +%S) ))
-        else
-            SLEEP_TIME=$(( (60 - MINUTE) * 60 - $(date +%S) ))
+    for TARGET in "${TARGETS[@]}"; do
+        if [[ "$CURRENT_TIME" == "$TARGET" ]]; then
+            run_script
+            sleep 1800
+            break
         fi
-        sleep $SLEEP_TIME
+    done
+
+    if [[ "$TARGET" != "$CURRENT_TIME" ]]; then
+        NEXT_TARGET=""
+        for TARGET in "${TARGETS[@]}"; do
+            if [[ "$TARGET" > "$CURRENT_TIME" ]]; then
+                NEXT_TARGET="$TARGET"
+                break
+            fi
+        done
+
+        if [[ -n "$NEXT_TARGET" ]]; then
+            SECONDS_TO_NEXT=$(( $(date -d "$NEXT_TARGET" +%s) - $(date +%s) ))
+        else
+            NEXT_DAY_TARGET="${TARGETS[0]}"
+            SECONDS_TO_NEXT=$(( $(date -d "tomorrow $NEXT_DAY_TARGET" +%s) - $(date +%s) ))
+        fi
+
+        sleep $SECONDS_TO_NEXT
     fi
 done
