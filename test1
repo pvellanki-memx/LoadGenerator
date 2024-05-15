@@ -1,454 +1,61 @@
-= FRS: Surveillance Engine Functional Requirements
-:sectnums:
-:toc:
-
-== Overview
-
-The Surveillance Engine is a critical component of the Trading Surveillance System. Its primary function is to analyze trade and order data in real-time to detect and alert on potential market abuses and irregularities in trading activities. The functional requirements outlined here align with the objectives and scope detailed in the Surveillance BRD.
-
-== Functional Requirements
-
-=== FR1: Data Ingestion and Normalization
-- FR1.1: The engine must ingest real-time trade and order data continuously with no data loss.
-- FR1.2: Data normalization must conform to a predefined schema to ensure consistency across all data points.
-
-=== FR2: Benchmarking Integration
-- FR2.1: The engine shall integrate with the Benchmarking module to retrieve current benchmark parameters for various trade instruments.
-- FR2.2: It should automatically adjust the detection algorithms based on updated benchmark data.
-
-=== FR3: Pattern Recognition and Anomaly Detection
-- FR3.1: Must identify known patterns of market manipulation, such as spoofing, wash trades, and layering, based on configurable rules and benchmarks.
-- FR3.2: Should use statistical analysis to detect anomalies that could indicate market manipulation or irregularities.
-
-=== FR4: Alert Generation
-- FR4.1: The engine is required to generate alerts for any detected activities that deviate from the benchmark or match known patterns of market abuse.
-- FR4.2: Each alert must include relevant details such as security identifier, timestamp, and a description of the detected irregularity.
-
-=== FR5: Real-Time Processing
-- FR5.1: Real-time data processing should occur with minimal latency to enable timely detection and alerting.
-- FR5.2: Must support processing and analysis of data across multiple trading venues simultaneously.
-
-=== FR6: Scalability
-- FR6.1: The engine must be scalable to handle increasing volumes of data without degradation in performance.
-- FR6.2: Should provide mechanisms to scale horizontally, adding more processing power as the data volume increases.
-
-=== FR7: Historical Data Analysis
-- FR7.1: Should have the capability to analyze historical data for back-testing and refining detection algorithms.
-- FR7.2: Must maintain a historical database of alerts and outcomes to improve future detection accuracy.
-
-=== FR8: User-Defined Rules and Parameters
-- FR8.1: Must allow regulatory users to configure and modify the rules and parameters used for market abuse detection.
-- FR8.2: Should include a user-friendly interface for setting these parameters without needing to change the underlying code.
-
-=== FR9: Reporting and Audit Trails
-- FR9.1: The engine must record all generated alerts along with decisions and actions taken as a result.
-- FR9.2: Must provide comprehensive reporting capabilities for auditing and compliance purposes.
-
-=== FR10: Fault Tolerance and Reliability
-- FR10.1: Must have failover capabilities to ensure continuous operation.
-- FR10.2: Should maintain data integrity and provide accurate processing outcomes even in the event of partial system failures.
-
-== Validation Criteria
-
-Each functional requirement will have associated validation tests to ensure they are met. The system will be subjected to various scenarios, including simulated market conditions, to validate the accuracy and efficiency of the Surveillance Engine.
-
-== Compliance and Performance Standards
-
-The Surveillance Engine must comply with relevant financial industry regulations and standards. It must also meet defined performance benchmarks, including but not limited to processing latency and alert accuracy rates.
-
-
-
-
-= SPEC-02: Trading Surveillance System with Benchmarking
-:sectnums:
-:toc:
-
-== Background
-
-The enhanced Trading Surveillance System is an advanced solution designed for real-time monitoring of trading activities, with an emphasis on data-driven benchmarking to identify anomalies and potential manipulative behaviors. This system integrates a sophisticated benchmarking process to calibrate the surveillance algorithms, leveraging InfluxDB for time-series data storage, enabling efficient and rapid detection of unusual patterns.
-
-== Requirements
-
-=== Functional Requirements
-- Benchmark-based alerting for identifying deviations from established trading patterns.
-- Real-time analysis of trades against historical data in InfluxDB.
-- Intuitive User Interface for surveillance monitoring and alert management.
-- Efficient workflow for alert investigation and case management.
-
-=== Non-Functional Requirements
-- Benchmarking process should be automated and run at configurable intervals.
-- The Surveillance Engine must process data with minimal latency.
-- The User Interface should provide real-time updates without perceptible delay.
-- Alert Management & Workflow system must support concurrent use by multiple operators.
-
-== Method
-
-=== Architecture Overview
-The system is composed of distinct but interconnected components:
-- **Benchmarking**: Sets the baseline for normal trading activities.
-- **InfluxDB**: Stores time-series data used for benchmarking and real-time analysis.
-- **Surveillance Engine**: Analyzes streaming data, compares against benchmarks, and generates alerts.
-- **User Interface**: Allows users to view and manage alerts.
-- **Alert Management & Workflow**: Manages the lifecycle of alerts and supports case investigation processes.
-
-=== Component Design
-
-==== Benchmarking
-- Determines thresholds and patterns that represent normal trading behavior.
-- Periodically updates to adapt to changing market conditions.
-- Supplies the Surveillance Engine with dynamic parameters for anomaly detection.
-
-==== InfluxDB
-- Stores granular trade and order data with precise timestamping.
-- Provides fast querying capabilities for real-time analytics.
-- Serves as the historical data repository for the benchmarking process.
-
-==== Surveillance Engine
-- Processes data streams in real-time, leveraging benchmarks for anomaly detection.
-- Generates alerts for activities that significantly deviate from the benchmark.
-- Integrates with InfluxDB for continuous data retrieval and analysis.
-
-==== User Interface
-- Displays a dashboard for real-time surveillance updates.
-- Provides tools for configuring benchmark parameters and alert thresholds.
-- Offers investigative functionalities for deep dives into specific alerts.
-
-==== Alert Management & Workflow
-- Tracks the status of each alert from generation to resolution.
-- Supports assignment, acknowledgment, and documentation of investigative actions.
-- Integrates audit trails for compliance and retrospective analysis.
-
-== Implementation
-
-The implementation process follows the WBS structure with specified tasks and timelines.
-
-=== System Setup and Configuration
-Involves configuring InfluxDB, setting up the benchmarking module, and establishing the initial parameters for the Surveillance Engine.
-
-=== Development
-Encompasses the development of the Surveillance Engine with benchmarking integration, the User Interface design and creation, and the Alert Management & Workflow system.
-
-=== Integration and Testing
-Focuses on integrating all components, ensuring data flows correctly, and validating the functionality of the entire system.
-
-=== Deployment
-Includes staging and production deployment, ensuring the system is operational and ready for use.
-
-== Milestones
-- M1: Completion of InfluxDB Setup and Benchmarking Integration
-- M2: Development of Surveillance Engine and UI Completion
-- M3: Full System Integration
-- M4: Successful Staging Deployment
-- M5: Production Deployment and System Go-Live
-- M6: Post-Deployment Review and Operational Handoff
-
-== Gathering Results
-Evaluates system performance based on the accuracy and efficiency of alert generation, benchmarking effectiveness, and user feedback on the Interface and Workflow system.
-
-
-
-
-
-
-
-
-
-
-
-
-
-import pandas as pd
-import sqlite3
-import sys
-import os
-
-db_name = sys.argv[1]
-# Connect to the SQLite database
-conn = sqlite3.connect(db_name)
-
-# Query the data from the grouped_trades table
-query = "SELECT * FROM grouped_trades"
-grouped_trade_data_frame = pd.read_sql_query(query, conn)
-
-# Close the database connection
-conn.close()
-
-# Symbols to handle separately
-symbols = ['SPY', 'QQQ', 'TSLA', 'AAPL', 'NVDA', 'IWM']
-
-# Base file name from the database name
-base_file_name = db_name[5:10]
-
-# Loop through each symbol and save the corresponding CSV
-for symbol in symbols:
-    df_filtered = grouped_trade_data_frame[grouped_trade_data_frame['SYM'] == symbol]
-    output_file_name = f'summary_trade_data_{base_file_name}_{symbol}.csv'
-    df_filtered.to_csv(output_file_name, index=False)
-
-# Handle all other symbols
-other_symbols_df = grouped_trade_data_frame[~grouped_trade_data_frame['SYM'].isin(symbols)]
-output_file_name = f'summary_trade_data_{base_file_name}_OTHERS.csv'
-other_symbols_df.to_csv(output_file_name, index=False)
-
-print("Data from grouped_trades has been successfully processed and saved.")
-
-
-
-http://ec2-35-170-218-11.compute-1.amazonaws.com/
-
-
-
-tail -n +2 file.csv | wc -l
-
- sftp -i /home/pvellanki/memx.pem memx@ec2-35-170-218-11.compute-1.amazonaws.com <<< $'put OptionsQuoteRequestComponentsState_1B.csv.gz'
-
-
-sftp -i /path/to/your/private_key.pem username@ec2-35-170-218-11.compute-1.amazonaws.com:/path/on/server/ <<< $'put /path/to/local/file'
-
-
-du -h --max-depth=1 /path/to/directory | sort -hr
-
-chmod 400 /home/pvellanki/memx.pem
-ssh -i /home/pvellanki/memx.pem memx@ec2-35-170-218-11.compute-1.amazonaws.com
-
-# ~/.bashrc: executed by bash(1) for non-login shells.
-# see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
-# for examples
-
-# If not running interactively, don't do anything
-case $- in
-    *i*) ;;
-      *) return;;
-esac
-
-# don't put duplicate lines or lines starting with space in the history.
-# See bash(1) for more options
-HISTCONTROL=ignoreboth
-
-# append to the history file, don't overwrite it
-shopt -s histappend
-
-# for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
-HISTSIZE=1000
-HISTFILESIZE=2000
-
-# check the window size after each command and, if necessary,
-# update the values of LINES and COLUMNS.
-shopt -s checkwinsize
-
-# If set, the pattern "**" used in a pathname expansion context will
-# match all files and zero or more directories and subdirectories.
-#shopt -s globstar
-
-# make less more friendly for non-text input files, see lesspipe(1)
-[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
-
-# set variable identifying the chroot you work in (used in the prompt below)
-if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
-    debian_chroot=$(cat /etc/debian_chroot)
-fi
-
-# set a fancy prompt (non-color, unless we know we "want" color)
-case "$TERM" in
-    xterm-color|*-256color) color_prompt=yes;;
-esac
-
-# uncomment for a colored prompt, if the terminal has the capability; turned
-# off by default to not distract the user: the focus in a terminal window
-# should be on the output of commands, not on the prompt
-#force_color_prompt=yes
-
-if [ -n "$force_color_prompt" ]; then
-    if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
-	# We have color support; assume it's compliant with Ecma-48
-	# (ISO/IEC-6429). (Lack of such support is extremely rare, and such
-	# a case would tend to support setf rather than setaf.)
-	color_prompt=yes
-    else
-	color_prompt=
-    fi
-fi
-
-if [ "$color_prompt" = yes ]; then
-    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
-else
-    PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
-fi
-unset color_prompt force_color_prompt
-
-# If this is an xterm set the title to user@host:dir
-case "$TERM" in
-xterm*|rxvt*)
-    PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
-    ;;
-*)
-    ;;
-esac
-
-# enable color support of ls and also add handy aliases
-if [ -x /usr/bin/dircolors ]; then
-    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
-    alias ls='ls --color=auto'
-    #alias dir='dir --color=auto'
-    #alias vdir='vdir --color=auto'
-
-    alias grep='grep --color=auto'
-    alias fgrep='fgrep --color=auto'
-    alias egrep='egrep --color=auto'
-fi
-
-# colored GCC warnings and errors
-#export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
-
-# some more ls aliases
-alias ll='ls -alF'
-alias la='ls -A'
-alias l='ls -CF'
-
-# Add an "alert" alias for long running commands.  Use like so:
-#   sleep 10; alert
-alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
-
-# Alias definitions.
-# You may want to put all your additions into a separate file like
-# ~/.bash_aliases, instead of adding them here directly.
-# See /usr/share/doc/bash-doc/examples in the bash-doc package.
-
-if [ -f ~/.bash_aliases ]; then
-    . ~/.bash_aliases
-fi
-
-# enable programmable completion features (you don't need to enable
-# this, if it's already enabled in /etc/bash.bashrc and /etc/profile
-# sources /etc/bash.bashrc).
-if ! shopt -oq posix; then
-  if [ -f /usr/share/bash-completion/bash_completion ]; then
-    . /usr/share/bash-completion/bash_completion
-  elif [ -f /etc/bash_completion ]; then
-    . /etc/bash_completion
-  fi
-fi
-
-
-
-
-
-mv *"${mm_dd}"*.csv "$output_dir/"
-
-
-
-import pandas as pd
-import sqlite3
-import sys
-import os
-import numpy as np
-
-db_name = sys.argv[1]
-# Connect to the SQLite database
-conn = sqlite3.connect(db_name)
-
-# Query the data from the grouped_trades table
-query = "SELECT * FROM grouped_trades"
-grouped_trade_data_frame = pd.read_sql_query(query, conn)
-
-# Close the database connection
-conn.close()
-
-# Symbols to handle separately
-symbols = ['SPY', 'QQQ', 'TSLA', 'AAPL', 'NVDA', 'IWM']
-
-# Base file name from the database name
-base_file_name = db_name[5:10]
-
-# Loop through each symbol and save the corresponding CSV
-for symbol in symbols:
-    df_filtered = grouped_trade_data_frame[grouped_trade_data_frame['SYM'] == symbol]
-    output_file_name = f'summary_trade_data_{base_file_name}_{symbol}.csv'
-    df_filtered.to_csv(output_file_name, index=False)
-
-# Handle all other symbols and split into two parts
-other_symbols_df = grouped_trade_data_frame[~grouped_trade_data_frame['SYM'].isin(symbols)]
-
-# Splitting the DataFrame into two parts
-split_dfs = np.array_split(other_symbols_df, 2)
-
-# Save each part to a separate file
-for i, df_part in enumerate(split_dfs, start=1):
-    output_file_name = f'summary_trade_data_{base_file_name}_OTHERS_part{i}.csv'
-    df_part.to_csv(output_file_name, index=False)
-
-print("Data from grouped_trades has been successfully processed and saved.")
-
-acceptor.cfg
-
-[DEFAULT]
-ConnectionType=acceptor
-ReconnectInterval=20
-PersistMessages=Y
-FileStorePath=store
-FileLogPath=log
-
-[SESSION]
-BeginString=FIX.4.4
-SenderCompID=TRFSIMULATOR
-TargetCompID=YOURCLIENTID
-SocketAcceptPort=9876
-StartTime=00:00:00
-EndTime=23:59:59
-HeartBtInt=30
-
-
-import quickfix as fix
-import quickfix44 as fix44
-
-class TradeCaptureAcceptor(fix.Application):
-    def onCreate(self, sessionID):
-        print(f"Session created: {sessionID}")
-
-    def onLogon(self, sessionID):
-        print(f"Session logon: {sessionID}")
-
-    def onLogout(self, sessionID):
-        print(f"Session logout: {sessionID}")
-
-    def toAdmin(self, message, sessionID):
-        print(f"Sending Admin Message: {message.toString()}")
-
-    def fromAdmin(self, message, sessionID):
-        print(f"Received Admin Message: {message.toString()}")
-
-    def toApp(self, message, sessionID):
-        print(f"Sending App Message: {message.toString()}")
-
-    def fromApp(self, message, sessionID):
-        print(f"Received App Message: {message.toString()}")
-        self.onMessage(message, sessionID)
-
-    def onMessage(self, message, sessionID):
-        msgType = fix.MsgType()
-        message.getHeader().getField(msgType)
-        if msgType.getValue() == fix.MsgType_TradeCaptureReport:
-            self.handleTradeCaptureReport(message, sessionID)
-
-    def handleTradeCaptureReport(self, message, sessionID):
-        print("Handling Trade Capture Report")
-        # Process trade report logic here
-        # For example, validate and acknowledge the message
-
-        # Example response (Echo the incoming message for simplicity)
-        response = fix.Message(message)
-        fix.Session.sendToTarget(response, sessionID)
-
-def main(config_file):
-    settings = fix.SessionSettings(config_file)
-    application = TradeCaptureAcceptor()
-    storeFactory = fix.FileStoreFactory(settings)
-    logFactory = fix.FileLogFactory(settings)
-    acceptor = fix.SocketAcceptor(application, storeFactory, settings, logFactory)
-    acceptor.start()
-    # Keep the acceptor running
-    input("Press <ENTER> to quit\n")
-    acceptor.stop()
-
-if __name__ == "__main__":
-    main("quickfix_acceptor.cfg")
+PostgreSQL Database Schema Design
+Tables Overview:
+
+Trades: Stores detailed information about each trade.
+Orders: Stores order details, including attempts that may not result in trades.
+Alerts: Logs alerts generated by the surveillance engine.
+Audit: Tracks changes and actions taken within the system.
+Users: Manages user information and roles.
+Schema Details:
+
+Trades Table:
+
+trade_id: Primary Key
+security_id: Foreign Key (links to Securities table)
+broker_id: Foreign Key (links to Brokers table)
+trade_volume: Integer
+trade_price: Decimal
+timestamp: DateTime
+Orders Table:
+
+order_id: Primary Key
+security_id: Foreign Key
+broker_id: Foreign Key
+order_type: Text (e.g., buy, sell)
+order_volume: Integer
+order_price: Decimal
+status: Text (e.g., executed, cancelled)
+timestamp: DateTime
+Alerts Table:
+
+alert_id: Primary Key
+type: Text (e.g., spoofing, wash sale)
+description: Text
+relevant_trade_id: Foreign Key (links to Trades table)
+relevant_order_id: Foreign Key (links to Orders table)
+timestamp: DateTime
+Audit Table:
+
+audit_id: Primary Key
+user_id: Foreign Key (links to Users table)
+action: Text
+description: Text
+timestamp: DateTime
+Users Table:
+
+user_id: Primary Key
+username: Text
+role: Text
+password_hash: Text
+Indexes:
+
+Indexes on timestamp fields in Trades, Orders, and Alerts tables for faster query performance.
+Indexes on security_id and broker_id in Trades and Orders to speed up joins and searches.
+Security:
+
+Implement role-based access control at the database level.
+Use encryption for sensitive data like password_hash in Users table.
+Performance Considerations:
+
+Use partitioning on the Trades and Orders tables based on timestamp to manage large datasets efficiently.
+Consider using connection pooling to manage database connections and optimize performance.
