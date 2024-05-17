@@ -112,42 +112,38 @@ Marking the Close (Non-Auction Close):
 Monitors end-of-day trading to detect attempts to influence closing prices.
 
 
-#!/bin/bash
 
-TARGETS=("09:00" "23:00")
-SCRIPT="updateclosingprice.sh"
+executions.csv
 
-run_script() {
-    echo "Running script at $(date)"
-    bash "$SCRIPT"
-}
+DeephavenPartitionID	SessionId	SourceId	Sequence	Timestamp	OptionId	UnderlyingSymbol	EFID	ExchangeOrderId	MatchId	ExecId	Side	ExecutionFlags	ExecutionPrice	ExecutionQuantity	TradeSequence	LiquidityCode	ExchangeCode	ActionableId	SubAccount	OptionalOCCData	GiveUp	CMTA	ClearingMemberNum	ContraEFID	ContraSubAccount	ContraGiveUp	ContraCMTA	PositionEffect
+5/17/24	OM07.1715941582	MA07EN01	634,852,195	21:08.7	A1v8ae9t	AAPL	CEDL	576,572,902,503,587,000	576,572,902,489,457,000	576,572,902,517,799,000	Sell	0	0.09	2	8	Added	MXOP		CIT					DFIN			769	Unknown
+5/17/24	OM07.1715941582	MA07EN01	634,852,194	21:08.7	A1v8ae9t	AAPL	DFIN	576,572,902,503,650,000	576,572,902,489,457,000	576,572,902,517,799,000	Buy	1	0.09	2	8	Removed	MXOP	664775e33c				769		CEDL	CIT			Open
+5/17/24	OM07.1715941582	MA07EN13	634,455,572	21:03.8	R1OJ4T7a	RIOT	IBKR	576,538,817,634,517,000	576,538,817,628,995,000	576,538,817,640,012,000	Sell	0	2.78	1	3	Added	MXOP	U633243				534		CEDL	CIT			Open
 
-while true; do
-    CURRENT_TIME=$(date +%H:%M)
-    for TARGET in "${TARGETS[@]}"; do
-        if [[ "$CURRENT_TIME" == "$TARGET" ]]; then
-            run_script
-            sleep 1800
-            break
-        fi
-    done
+accounts.csv
+DeephavenPartitionID	SessionId	SourceId	Sequence	Timestamp	AccountId	FirmId	IsTest	IsActive	IsCancelInDisconnect	DefaultEFID	IsRiskIdFilteringEnabled	IsEFIDFilteringEnabled	IsMTPGroupIdFilteringEnabled	IsCancelGroupIdFilteringEnabled
+5/17/24	OPCC.1715941588	ACCTSPIN	556	32:11.1	BOFAPDR1	BOFAOPT1	FALSE	TRUE	TRUE	MLCC	FALSE	TRUE	FALSE	FALSE
+5/17/24	OPCC.1715941588	ACCTSPIN	559	32:11.1	BOFAPDR2	BOFAOPT1	FALSE	TRUE	TRUE	MLCC	FALSE	TRUE	FALSE	FALSE
+5/17/24	OPCC.1715941588	ACCTSPIN	562	32:11.1	BOFAPDR3	BOFAOPT1	FALSE	TRUE	TRUE	MLCC	FALSE	TRUE	FALSE	FALSE
 
-    if [[ "$TARGET" != "$CURRENT_TIME" ]]; then
-        NEXT_TARGET=""
-        for TARGET in "${TARGETS[@]}"; do
-            if [[ "$TARGET" > "$CURRENT_TIME" ]]; then
-                NEXT_TARGET="$TARGET"
-                break
-            fi
-        done
+orderstate.csv
+DeephavenPartitionID	SessionId	SourceId	Sequence	Timestamp	AccountId	RequestId	RequestEventType	ReasonCode	ReasonDetails	EFID	OptionId	UnderlyingSymbol
+5/17/24	OM04.1715941572	MA04EN05	636,715,805	16:56.2	OPTIPE40	864,758,198,664,431,000	Accepted			OPTE	T28w0jel	TSLA
+5/17/24	OM03.1715941569	MA03EN13	875,998,833	16:54.9	OPTIPE49	864,761,497,199,317,000	Accepted			OPTE	N1xA2UQE	NVDA
+5/17/24	OM03.1715941569	MA03EN13	875,241,825	16:48.4	OPTIPE49	864,761,497,199,317,000	Accepted			OPTE	N1xA4jka	NVDA
 
-        if [[ -n "$NEXT_TARGET" ]]; then
-            SECONDS_TO_NEXT=$(( $(date -d "$NEXT_TARGET" +%s) - $(date +%s) ))
-        else
-            NEXT_DAY_TARGET="${TARGETS[0]}"
-            SECONDS_TO_NEXT=$(( $(date -d "tomorrow $NEXT_DAY_TARGET" +%s) - $(date +%s) ))
-        fi
 
-        sleep $SECONDS_TO_NEXT
-    fi
-done
+efids.csv
+DeephavenPartitionID	SessionId	SourceId	Sequence	Timestamp	EFID	FirmId	IsTest	IsActive	ClearingMemberNum
+5/17/24	OPCC.1715941588	EFIDSPIN	382	32:11.0	BAMA	BOFAOPT1	FALSE	TRUE	161
+5/17/24	OPCC.1715941588	EFIDSPIN	383	32:11.0	BAMB	BOFAOPT1	FALSE	TRUE	792
+5/17/24	OPCC.1715941588	EFIDSPIN	384	32:11.0	MLCC	BOFAOPT1	FALSE	TRUE	792
+5/17/24	OPCC.1715941588	EFIDSPIN	385	32:11.0	MLCO	BOFAOPT1	FALSE	TRUE	161
+
+
+firms.csv
+DeephavenPartitionID	SessionId	SourceId	Sequence	Timestamp	FirmId	InstitutionName	IsActive	IsMarketMaker	CanRouteOrders	AggregationId	CRDNumber	OrderEntryStreamIndex
+5/17/24	OPCC.1715941588	FIRMSPIN	351	32:10.8	BELVOPT1	Belvedere Trading LLC	TRUE	TRUE	TRUE	0	132,605	13
+5/17/24	OPCC.1715941588	FIRMSPIN	352	32:10.8	BOFAOPT1	BofA Securities, Inc.	TRUE	FALSE	TRUE	0	283,942	13
+5/17/24	OPCC.1715941588	FIRMSPIN	353	32:10.8	CITAOPR1	Citadel Securities LLC	TRUE	FALSE	TRUE	0	116,797	13
+5/17/24	OPCC.1715941588	FIRMSPIN	354	32:10.8	CITAOPT1	Citadel Securities LLC	TRUE	TRUE	TRUE	0	116,797	11
